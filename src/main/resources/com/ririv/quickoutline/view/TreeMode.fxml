@@ -1,0 +1,21 @@
+<?import com.jfoenix.controls.JFXTreeTableView?>
+<?import com.jfoenix.controls.JFXTreeTableColumn?>
+<?import javafx.scene.layout.HBox?>
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.ririv.quickoutline.view.TreeModeController">
+
+    <JFXTreeTableView fx:id="tree" HBox.hgrow="ALWAYS">
+        <columns>
+            <JFXTreeTableColumn  fx:id="titleColumn" sortable="false" prefWidth="500" text="标题"  />
+            <JFXTreeTableColumn fx:id="offsetPageColumn" sortable="false" prefWidth="100" text="页码" />
+        </columns>
+    </JFXTreeTableView>
+<!--    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" styleClass="out-shadow" vgap="50">-->
+<!--        <JFXButton fx:id="gradeBtn"   mnemonicParsing="false" prefWidth="75.0" text="升级" />-->
+<!--        <JFXButton fx:id="degradeBtn"  mnemonicParsing="false" prefWidth="75.0" text="降级" />-->
+<!--        <Label />-->
+<!--    </FlowPane>-->
+
+
+</HBox>

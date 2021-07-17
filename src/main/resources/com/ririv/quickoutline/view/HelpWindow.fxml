@@ -1,0 +1,40 @@
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<AnchorPane
+            xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1"
+            fx:id="helpPane"
+            style="-fx-background-color: white"
+            fx:controller="com.ririv.quickoutline.view.HelpController">
+
+    <FlowPane fx:id="innerPane"
+              alignment="CENTER"
+              orientation="VERTICAL"
+              AnchorPane.leftAnchor="80"
+              AnchorPane.bottomAnchor="0"
+              AnchorPane.topAnchor="0"
+              vgap="10"
+    >
+        <FlowPane>
+            <Text>使用说明:</Text>
+            <Hyperlink onMouseClicked="#browseHelpOnZhihu">@知乎</Hyperlink>
+            <Hyperlink onMouseClicked="#browseHelpOnGithub">@Github</Hyperlink>
+        </FlowPane>
+
+        <FlowPane>
+            <Text>本软件</Text>
+            <Hyperlink onMouseClicked="#browseRemoteRepo">开放源代码</Hyperlink>
+            <Text>, Licence: AGPL</Text>
+        </FlowPane>
+        <Text>Version: 1.0.0</Text>
+        <Text>开源软件使用: iText7, JFoenix...</Text>
+        <Text>不得用于任何商业行为，否则使用者后果自负</Text>
+        <FlowPane>
+            <Text>By </Text>
+            <Hyperlink onMouseClicked="#browseHelpOnMyPage" >小红花</Hyperlink>
+            <Text fill="#fd5656">🌺</Text>
+        </FlowPane>
+    </FlowPane>
+
+
+</AnchorPane>

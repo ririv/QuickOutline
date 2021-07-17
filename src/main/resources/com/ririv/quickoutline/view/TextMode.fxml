@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<HBox style="-fx-background-color: white;"
+      xmlns="http://javafx.com/javafx/11.0.2"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:id="root"
+      fx:controller="com.ririv.quickoutline.view.TextModeController">
+    <StackPane fx:id="shade" HBox.hgrow="ALWAYS">
+        <TextArea fx:id="contentsText" prefWidth="800" promptText="请输入目录文本">
+         <StackPane.margin>
+<!--             设置右margin，防止右边sidebar的阴影效果挡住滚动条（能看到。但按不了）,并且消除了边框&ndash;&gt;-->
+            <Insets right="5.0" />
+         </StackPane.margin>
+        </TextArea>
+
+        <Label fx:id="label"  textFill="gray" visible="false">
+
+        </Label>
+    </StackPane>
+    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" styleClass="out-shadow" vgap="50">
+        <JFXButton fx:id="externalEditorBtn" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
+            <tooltip >
+                <Tooltip text="打开VSCode以使用高级编辑功能，编辑器内文本会自动同步至窗口"/>
+            </tooltip>
+        </JFXButton>
+
+        <JFXButton fx:id="autoFormat" mnemonicParsing="false" prefWidth="75.0" text="自动缩进">
+            <tooltip >
+                <Tooltip text="格式化文本，并按序号对文本内容自动缩进"/>
+            </tooltip>
+        </JFXButton>
+        <Label />
+    </FlowPane>
+</HBox>

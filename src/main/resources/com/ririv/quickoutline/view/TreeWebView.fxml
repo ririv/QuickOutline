@@ -1,0 +1,16 @@
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.web.WebView?>
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.ririv.quickoutline.view.TreeWebVIewController">
+
+
+    <WebView fx:id="treeWebView"  HBox.hgrow="ALWAYS"/>
+    <!--    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" styleClass="out-shadow" vgap="50">-->
+    <!--        <JFXButton fx:id="gradeBtn"   mnemonicParsing="false" prefWidth="75.0" text="升级" />-->
+    <!--        <JFXButton fx:id="degradeBtn"  mnemonicParsing="false" prefWidth="75.0" text="降级" />-->
+    <!--        <Label />-->
+    <!--    </FlowPane>-->
+
+
+</HBox>

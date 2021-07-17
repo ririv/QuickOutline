@@ -1,0 +1,134 @@
+plugins {
+    id 'application'
+//    请不要使用0.0.9版本，有bug
+    id 'org.openjfx.javafxplugin' version '0.0.10'
+    id 'org.beryx.jlink' version '2.24.0'
+    id 'idea'
+}
+
+version = '1.0.0'
+
+javafx {
+    version = "16"
+    modules = ['javafx.controls', 'javafx.fxml','javafx.web']
+}
+
+application{
+    mainModule.set("quickoutline")
+    mainClass.set("com.ririv.quickoutline.view.App")
+}
+
+//不用加模块名，我也不知道为什么，控制台显示，在模块"..."中寻找此类，加了反而重复
+//mainClassName = 'com.ririv.quickoutline.view.App'
+
+//compile 不要用了，已经废弃了
+dependencies {
+    implementation 'com.jfoenix:jfoenix:9.0.10'
+    implementation 'com.itextpdf:itextpdf:5.5.13'
+    implementation 'com.itextpdf:kernel:7.1.15'
+    implementation 'com.itextpdf:io:7.1.15'
+    implementation 'com.itextpdf:layout:7.1.15'
+    implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
+    //一定要与sl4j-api版本一致，在Libraries查找版本
+//    testImplementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.30'
+
+}
+repositories {
+    maven {
+        //使用https，http会报警告
+        url 'https://maven.aliyun.com/nexus/content/groups/public/'
+    }
+    mavenCentral()
+}
+
+[compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+
+//task copyResources(type: Copy) {
+//    from "${projectDir}/src/main/resources"
+//    into "${buildDir}/classes/java/main"
+//}
+//processResources.dependsOn copyResources
+
+
+
+def args = [
+        "--add-exports=javafx.controls/com.sun.javafx.scene.control=com.jfoenix",
+        "--add-exports=javafx.base/com.sun.javafx.binding=com.jfoenix",
+        "--add-exports=javafx.controls/javafx.scene.control.skin=com.jfoenix",
+        "--add-exports=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-exports=java.base/java.lang.reflect=com.jfoenix",
+        "--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED",
+        "--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=com.jfoenix",
+        "--add-exports=javafx.graphics/com.sun.javafx.stage=com.jfoenix",
+        "--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED",
+        "--add-exports=javafx.graphics/com.sun.javafx.scene=ALL-UNNAMED",
+        "--add-exports=javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED",
+        "--add-exports=javafx.base/com.sun.javafx.event=com.jfoenix",
+        "--add-opens=javafx.controls/javafx.scene.control.skin=com.jfoenix",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=com.jfoenix"
+]
+
+
+run {
+    jvmArgs = args
+}
+
+//https://badass-jlink-plugin.beryx.org/releases/latest/
+jlink {
+    launcher {
+        name = 'Quick Outline'
+        jvmArgs = args
+
+    }
+//    https://walczak.it/blog/distributing-javafx-desktop-applications-without-requiring-jvm-using-jlink-and-jpackage
+    jpackage {
+//        skipInstaller = true
+        icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.ico'
+//        imageOptions = [
+//        ]
+        installerOptions = [
+                '--vendor', 'riri Personal', //必须加，否则报错
+                '--app-version', version
+        ]
+//        if (org.gradle.internal.os.OperatingSystem.current().windows) {
+//            installerOptions += ['--win-per-user-install', '--win-dir-chooser', '--win-menu']
+//        }
+        installerType = project.findProperty('installerType') // we will pass this from the command line (example: -PinstallerType=msi)
+        if (installerType == 'msi') {
+            installerOptions += [
+                    '--win-per-user-install', '--win-dir-chooser',
+                    '--win-menu', '--win-shortcut'
+            ]
+        }
+        if (installerType == 'deb') {
+            installerOptions += [
+                    '--linux-deb-maintainer', 'office@walczak.it'
+            ]
+        }
+        if (installerType == 'rpm') {
+            installerOptions += [
+                    '--linux-rpm-license-type', 'GPLv3'
+            ]
+        }
+    }
+
+}
+
+//jpackage {
+//    doFirst {
+//        project.getProperty('installerType') // throws exception if its missing
+//    }
+//}
+
+
+
+
+
+
+
