@@ -82,7 +82,7 @@ run {
 //https://badass-jlink-plugin.beryx.org/releases/latest/
 jlink {
     launcher {
-        name = 'Quick Outline'
+        name = 'QuickOutline'
         jvmArgs = args
 
     }
