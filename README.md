@@ -105,6 +105,8 @@ VSCode 中的内容会自动同步至软件窗口中
 
 Windows（可直接运行）
 
+[下载地址](https://github.com/ririv/QuickQutline/releases)
+
 Mac（稍等中）
 
 由于自己没有mac，所以没法验证mac上的程序是否可用，后续等我找个小伙伴验证下立即就发布（有小伙伴主动举手的也可以找我）
