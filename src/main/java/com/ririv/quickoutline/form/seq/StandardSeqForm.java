@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public interface StandardSeqForm  {
 
     Pattern standardPattern = Pattern.compile(
-            "^(\\s*)?([0-9.]+)?\\s*(.*?)\\s*(-?[0-9]+)?\\s*$");
+            "^(\\s*)?([0-9.]+)?\\s*(.*?)[\\s. ]*(-?[0-9]+)?\\s*$");
 
 /*
    注意标准格式应符合格式。如：1.2.5  我是标题  页码

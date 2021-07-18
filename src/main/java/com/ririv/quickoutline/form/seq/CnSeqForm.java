@@ -17,7 +17,7 @@ public class CnSeqForm extends Form implements StandardSeqForm {
                   +  "(\\S?\\s?[零一二三四五六七八九十百千0-9]+\\s?(篇|章|节|部分)|[0-9.]+)?"  //序号$2   $3不用
                   +  "\\s*"
                   +  "(.*?)" //标题$4
-                  +  "\\s*"
+                  +  "[\\s. ]*"
                   +  "(-?[0-9]+)?" //页码$5
                   +  "\\s*$");
 
