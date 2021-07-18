@@ -87,9 +87,7 @@ public class MainController {
         filepathText.textProperty().addListener((observable, oldValue, newValue) -> {
             //重置操作
             if (!oldValue.equals(newValue)) {
-                offsetText.setText(null); //必须在前，否则缓存的offset会影响下面的函数
-                getCurrentContents();
-                if (treeTab.isSelected()) reconstructTree();
+                reset();
             }
         });
 
@@ -108,6 +106,11 @@ public class MainController {
 
         //鼠标送开时，会执行且只执行一遍
         root.setOnDragDropped(e -> {
+            Dragboard dragboard = e.getDragboard();
+            File file = dragboard.getFiles().get(0);
+
+
+
             if (!textModeController.contentsText.getText().isEmpty()) {
                 Optional<ButtonType> buttonType = showAlert(
                         Alert.AlertType.CONFIRMATION,
@@ -119,9 +122,12 @@ public class MainController {
 
             }
 
-            Dragboard dragboard = e.getDragboard();
-            File file = dragboard.getFiles().get(0);
-            filepathText.setText(file.getPath());
+            //这是由于如果filepathText一样，监听不能触发
+            if (filepathText.getText().equals(file.getAbsolutePath())){
+                reset();
+            }else{
+                filepathText.setText(file.getPath());
+            }
 
         });
 
@@ -186,7 +192,7 @@ public class MainController {
 
             try {
                 PdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodGroup.getSelectedToggle().getUserData());
-            } catch ( BookmarkFormatException e) {
+            } catch (BookmarkFormatException e) {
                 e.printStackTrace();
                 File file = new File(destFilePath);
                 boolean deleteSuccess = file.delete();  //删除损坏的文件
@@ -200,11 +206,11 @@ public class MainController {
 //                }
                 return;
             }
-            ButtonType openButton = new ButtonType("打开文件所在位置",ButtonBar.ButtonData.OK_DONE);
+            ButtonType openButton = new ButtonType("打开文件所在位置", ButtonBar.ButtonData.OK_DONE);
             var result = showAlert(Alert.AlertType.INFORMATION,
                     "文件存储在\n" + destFilePath, root.getScene().getWindow(),
-                    openButton,new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
-            if (result.isPresent()&&result.get()==openButton) {
+                    openButton, new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
+            if (result.isPresent() && result.get() == openButton) {
                 try {
 //                    Desktop.getDesktop().browse(new File(filepathText.getText()).toURI()); //打开文件
                     //打开文件所在文件夹并选择文件
@@ -218,6 +224,12 @@ public class MainController {
             }
 
         });
+    }
+
+    private void reset(){
+        offsetText.setText(null); //必须在前，否则缓存的offset会影响下面的函数
+        getCurrentContents();
+        if (treeTab.isSelected()) reconstructTree();
     }
 
 
@@ -261,7 +273,7 @@ public class MainController {
         Parent helpWinRoot = loader.load();
 
         helpStage.setTitle("帮助");
-        helpStage.setScene(new Scene(helpWinRoot,400,300));
+        helpStage.setScene(new Scene(helpWinRoot, 400, 300));
 
         helpStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon/help_black.png"))));
         helpStage.setResizable(false); //不可调整大小，且使最大化不可用
