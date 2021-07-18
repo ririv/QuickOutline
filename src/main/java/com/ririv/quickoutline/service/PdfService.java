@@ -3,15 +3,13 @@ package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.enums.Method;
-import com.ririv.quickoutline.form.seq.CnSeqForm;
-import com.ririv.quickoutline.form.Form;
-import com.ririv.quickoutline.form.IndentForm;
+import com.ririv.quickoutline.textProcess.form.seq.CnSeqForm;
+import com.ririv.quickoutline.textProcess.form.Form;
+import com.ririv.quickoutline.textProcess.form.IndentForm;
 import com.ririv.quickoutline.process.PdfProcess;
-import com.ririv.quickoutline.process.TextProcess;
 import com.ririv.quickoutline.process.itextImpl.Itext7Process;
 
 import java.io.IOException;
-import java.util.List;
 
 
 public class PdfService {
@@ -48,10 +46,8 @@ public class PdfService {
         } else {
             form = new IndentForm();
         }
-//        List<String> preprocessedText = TextProcess.preprocess(text,isSkipEmptyLine);
-        List<String> preprocessedText = TextProcess.preprocess(text);
 
-        return form.generateBookmark(preprocessedText, offset);
+        return form.generateBookmark(text, offset);
     }
 
 

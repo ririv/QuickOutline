@@ -7,12 +7,14 @@ import com.itextpdf.text.pdf.SimpleBookmark;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.process.PdfProcess;
-import com.ririv.quickoutline.process.TextProcess;
+import com.ririv.quickoutline.textProcess.PreProcess;
 
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import static com.ririv.quickoutline.entity.Bookmark.buildLine;
 
 
 //itext5已弃用，本类不再改动
@@ -89,7 +91,7 @@ public class Itext5Process implements PdfProcess {
         for (HashMap<String, Object> entry : outLines) {
             int  pageNum = Integer.parseInt(entry.get("Page").toString().split(" ")[0]) - offset;
 
-            TextProcess.toLine(text, level, (String) entry.get("Title"), Integer.toString(pageNum));
+            buildLine(text, level, (String) entry.get("Title"), Integer.toString(pageNum));
 
             if (entry.get("Kids") != null) {
                 outlinesToText((List<HashMap<String, Object>>) entry.get("Kids"), text, offset, level + 1);

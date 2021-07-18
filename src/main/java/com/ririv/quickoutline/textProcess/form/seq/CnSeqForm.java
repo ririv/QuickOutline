@@ -1,14 +1,15 @@
-package com.ririv.quickoutline.form.seq;
+package com.ririv.quickoutline.textProcess.form.seq;
 
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
-import com.ririv.quickoutline.form.Form;
+import com.ririv.quickoutline.textProcess.form.Form;
+import com.ririv.quickoutline.textProcess.form.seq.StandardSeqForm;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.ririv.quickoutline.process.TextProcess.OneBlank;
-import static com.ririv.quickoutline.process.TextProcess.TwoBlank;
+import static com.ririv.quickoutline.textProcess.PreProcess.OneBlank;
+import static com.ririv.quickoutline.textProcess.PreProcess.TwoBlank;
 
 
 public class CnSeqForm extends Form implements StandardSeqForm {
@@ -17,7 +18,7 @@ public class CnSeqForm extends Form implements StandardSeqForm {
                   +  "(\\S?\\s?[零一二三四五六七八九十百千0-9]+\\s?(篇|章|节|部分)|[0-9.]+)?"  //序号$2   $3不用
                   +  "\\s*"
                   +  "(.*?)" //标题$4
-                  +  "[\\s. ]*"
+                  +  "[\\s.]*"
                   +  "(-?[0-9]+)?" //页码$5
                   +  "\\s*$");
 
