@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.form;
+package com.ririv.quickoutline.textProcess.form;
 
 
 import com.ririv.quickoutline.exception.BookmarkFormatException;
@@ -19,7 +19,7 @@ public class IndentForm extends Form {
     final Pattern indentPatternOfLine = Pattern.compile(
                        "^(\\s*)?"  //缩进 $1
                     +  "(.*?)" //标题,包含序号 $2
-                    +  "\\s*"
+                    +  "[\\s.]*"
                     +  "(-?[0-9]+)?" //页码 $3
                     +  "\\s*$");
 

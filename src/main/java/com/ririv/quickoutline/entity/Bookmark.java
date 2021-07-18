@@ -1,11 +1,11 @@
 package com.ririv.quickoutline.entity;
 
-import com.ririv.quickoutline.process.TextProcess;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static com.ririv.quickoutline.textProcess.PreProcess.TwoBlank;
 
 //一个顶级目录为一个bookmark
 public class Bookmark implements Serializable {
@@ -117,7 +117,7 @@ public class Bookmark implements Serializable {
         else {
             StringBuilder text = new StringBuilder();
             String pageNumStr = getPageNum().map(String::valueOf).orElse("");
-            TextProcess.toLine(text, getLevel(), getTitle(), pageNumStr);
+            buildLine(text, getLevel(), getTitle(), pageNumStr);
             return text.toString();
         }
     }
@@ -147,7 +147,7 @@ public class Bookmark implements Serializable {
 
 
             String pageNumStr = bookmark.getPageNum().map(String::valueOf).orElse("");
-            TextProcess.toLine(text, bookmark.getLevel(),
+            buildLine(text, bookmark.getLevel(),
                     bookmark.getTitle(), pageNumStr);
 
 //            if (bookmark.getParent().getLevel()==0 && bookmark.getOwnerList().get(bookmark.getOwnerList().size()-1) == bookmark){
@@ -162,6 +162,14 @@ public class Bookmark implements Serializable {
                 bookmarkToText(text, child);
             }
         }
+    }
+
+    public static void buildLine(StringBuilder text, int level, String title, String pageNum) {
+        text.append("\t".repeat(level));
+        text.append(title);
+        text.append(TwoBlank);
+        text.append(pageNum);
+        text.append("\n");
     }
 
 

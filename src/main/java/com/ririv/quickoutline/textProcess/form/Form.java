@@ -1,7 +1,8 @@
-package com.ririv.quickoutline.form;
+package com.ririv.quickoutline.textProcess.form;
 
 
 import com.ririv.quickoutline.entity.Bookmark;
+import com.ririv.quickoutline.textProcess.PreProcess;
 
 import java.util.List;
 
@@ -43,11 +44,14 @@ public abstract class Form {
     /**
      * @return rootBookmark 根结点
      */
-    public Bookmark generateBookmark(List<String> lines, int offset) {
+    public Bookmark generateBookmark(String text, int offset) {
         Bookmark last = rootBookmark;
 
+        //        List<String> preprocessedText = PreProcess.preprocess(text,isSkipEmptyLine);
+        List<String> preprocessedText = PreProcess.preprocess(text);
+
         int i = 1;
-        for (String line : lines) {
+        for (String line : preprocessedText) {
             //空行处理
 //            if (line.matches("^ *$")){
 //                Bookmark current  = new Bookmark(line,null,last.getLevel());
@@ -62,4 +66,8 @@ public abstract class Form {
     }
 
     public abstract Bookmark addBookmarkByLine(int offset, Bookmark last, String line,int index);
+
+
+    //后处理应是对处理完成后对结构进行再调整的处理，用于应对，如"Part Ⅰ","第一部分" TODO
+//    public abstract Bookmark postProcess(Bookmark rootBookmark);
 }

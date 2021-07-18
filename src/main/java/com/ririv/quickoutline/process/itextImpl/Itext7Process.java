@@ -6,10 +6,12 @@ import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.process.PdfProcess;
-import com.ririv.quickoutline.process.TextProcess;
+import com.ririv.quickoutline.textProcess.PreProcess;
 
 import java.io.IOException;
 import java.util.Map;
+
+import static com.ririv.quickoutline.entity.Bookmark.buildLine;
 
 
 public class Itext7Process implements PdfProcess {
@@ -168,7 +170,7 @@ public class Itext7Process implements PdfProcess {
                 int pageNum = srcDoc.getPageNumber((PdfDictionary) child.getDestination().getDestinationPage(names));
                 pageNum = pageNum - offset; //原始页码
 
-                TextProcess.toLine(text, level, child.getTitle(), Integer.toString(pageNum));
+                buildLine(text, level, child.getTitle(), Integer.toString(pageNum));
 
                 outlinesToText(child, text, offset, level + 1, names, srcDoc);
             }
