@@ -190,6 +190,12 @@ public class MainController {
                 return;
             }
 
+//            if (offsetText.getText().isEmpty()) {
+//                showAlert(Alert.AlertType.ERROR, "请输入页码偏移量，无偏移量则输入0", root.getScene().getWindow());
+//                offsetText.requestFocus();
+//                return;
+//            }
+
             try {
                 PdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodGroup.getSelectedToggle().getUserData());
             } catch (BookmarkFormatException e) {
