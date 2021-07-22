@@ -9,7 +9,7 @@ import java.util.List;
 public abstract class Form {
 
     //interface 中的变量必须是 static final，但abstract class不需要
-    protected final Bookmark rootBookmark = new Bookmark();
+    protected final Bookmark rootBookmark = Bookmark.CreateRoot();
 
     //一定要设置parent
     /**
