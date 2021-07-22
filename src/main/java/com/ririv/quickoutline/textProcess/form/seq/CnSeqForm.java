@@ -5,6 +5,7 @@ import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.textProcess.form.Form;
 import com.ririv.quickoutline.textProcess.form.seq.StandardSeqForm;
 
+import javax.validation.constraints.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
