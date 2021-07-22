@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static com.ririv.quickoutline.textProcess.PreProcess.TwoBlank;
 
@@ -14,6 +15,7 @@ public class Bookmark implements Serializable {
     /*
      * TODO：有些书会有”Part Ⅱ“的顶级目录，此时将”1.2.5“向从第二级目录开始处理
      *  一种方案是采用 ”Ⅱ.1.2.5“的形式
+     *  另一种方案是，是用postprocess
      * */
     private String seq;
     private String title;
@@ -29,6 +31,11 @@ public class Bookmark implements Serializable {
 //        isEmpty = empty;
 //    }
 
+    /*
+     * TODO 对于空行的处理，原将Bookmark添加字段isEmpty的方案已启用，这会使得有效的子Bookmark添加到无效的empty bookmark中
+     *  现考虑增加字段：此bookmark随后跟的空行数(int)
+     * */
+
     public Bookmark(String title, Integer pageNum, int level) {
         this.title = title;
         this.pageNum = pageNum;
@@ -39,11 +46,10 @@ public class Bookmark implements Serializable {
         this.index = index;
     }
 
-    //仅用来创造根结点，非顶级目录
-    public Bookmark() {
-        this.title = "root";//原字符串应为"Outlines"
-        this.pageNum = -1;
-        this.level = -1;
+    //用来创造根结点，非顶级目录
+    public static Bookmark CreateRoot() {
+        //"root",原字符串应为"Outlines"
+        return new Bookmark("root", -1, -1);
     }
 
     public int getIndex() {
@@ -126,40 +132,27 @@ public class Bookmark implements Serializable {
     //包含子节点
     public String toText() {
         StringBuilder text = new StringBuilder();
-        bookmarkToText(text, this);
+        traverse(this,
+                e -> {
+                    String pageNumStr = e.getPageNum().map(String::valueOf).orElse("");
+                    buildLine(text, e.getLevel(),
+                            e.getTitle(), pageNumStr);
+                });
 
         return text.toString();
     }
 
 
-
-/*    Note: 递归，此方法写在工具类中也是一样的，但为了更好地封装，写在了实体类
+    /*    Note: 递归，此方法写在工具类中也是一样的，但为了更好地封装，写在了实体类
             设为static，防止人为错误地修改代码，以致于无限调用 子bookmark 中的此递归方法
           */
-
-    private static void bookmarkToText(StringBuilder text, Bookmark bookmark) {
+    public static void traverse(Bookmark bookmark, Consumer<Bookmark> operate) {
         if (bookmark.getLevel() != -1) { //非根节点时
-
-
-//            if (bookmark.isEmpty()){
-//                text.append("\n");
-//            } else {
-
-
-            String pageNumStr = bookmark.getPageNum().map(String::valueOf).orElse("");
-            buildLine(text, bookmark.getLevel(),
-                    bookmark.getTitle(), pageNumStr);
-
-//            if (bookmark.getParent().getLevel()==0 && bookmark.getOwnerList().get(bookmark.getOwnerList().size()-1) == bookmark){
-//                text.append("\n");
-//            }
-//            }
-
-
+            operate.accept(bookmark);
         }
         if (bookmark.getChildren().size() != 0) { //不要使用isEmpty方法
             for (Bookmark child : bookmark.getChildren()) {
-                bookmarkToText(text, child);
+                traverse(child, operate);
             }
         }
     }

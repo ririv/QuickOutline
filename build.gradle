@@ -30,6 +30,7 @@ dependencies {
     implementation 'com.itextpdf:layout:7.1.15'
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
+//    implementation 'io.github.palexdev:materialfx:11.12.0'  //考虑换一个UI库
     //一定要与sl4j-api版本一致，在Libraries查找版本
 //    testImplementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.30'
 
