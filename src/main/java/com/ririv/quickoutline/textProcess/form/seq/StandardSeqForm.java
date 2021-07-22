@@ -1,7 +1,14 @@
 package com.ririv.quickoutline.textProcess.form.seq;
 
+import com.ririv.quickoutline.entity.Bookmark;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 /*   针对不同标题中的seq，有些标题甚至没有seq，应该进行自我识别，而不是让用户操作
@@ -10,7 +17,7 @@ import java.util.regex.Pattern;
      */
 
 
-public interface StandardSeqForm  {
+public interface StandardSeqForm {
 
     Pattern standardPattern = Pattern.compile(
             "^(\\s*)?([0-9.]+)?\\s*(.*?)[\\s.]*(-?[0-9]+)?\\s*$");
@@ -40,6 +47,22 @@ public interface StandardSeqForm  {
             level++;
         }
         return level;
+    }
+
+    default void locateSameStructure(Bookmark root) {
+        Map<String, List<Bookmark>> countMap = new HashMap<>();
+        root.traverse(e -> {
+            if (countMap.get(e.getTitle()) != null) {
+                List<Bookmark> sameTitleList = new ArrayList<>();
+                sameTitleList.add(e);
+                countMap.put(e.getTitle(), sameTitleList);
+            } else countMap.get(e.getTitle()).add(e);
+        });
+
+        var filterList = countMap.values().stream().filter(e ->e.size()>1).collect(Collectors.toList());
+        for (var list:filterList) {
+            
+        }
     }
 
 

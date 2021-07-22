@@ -62,6 +62,7 @@ public abstract class Form {
 //            else
                 last = addBookmarkByLine(offset, last, line,i++);
         }
+        postProcess(rootBookmark);
         return rootBookmark;
     }
 
@@ -69,5 +70,5 @@ public abstract class Form {
 
 
     //后处理应是对处理完成后对结构进行再调整的处理，用于应对，如"Part Ⅰ","第一部分" TODO
-//    public abstract Bookmark postProcess(Bookmark rootBookmark);
+    public abstract void postProcess(Bookmark rootBookmark);
 }

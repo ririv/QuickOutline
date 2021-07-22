@@ -2,6 +2,7 @@ package com.ririv.quickoutline.entity;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -23,43 +24,31 @@ public class Bookmark implements Serializable {
     private Integer pageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
     private final List<Bookmark> children = new ArrayList<>();
     private Bookmark parent;
-    private int level; //0为顶级目录，-1为根结点（隐藏的）
     private int index; //行号，非必要，仅用来记录其所在text中的位置信息
-//    private boolean isEmpty = false; //是否有效，如是否为空行
-
-
-//    public void setEmpty(boolean empty) {
-//        isEmpty = empty;
-//    }
 
     /*
      * TODO 对于空行的处理，原将Bookmark添加字段isEmpty的方案已启用，这会使得有效的子Bookmark添加到无效的empty bookmark中
      *  现考虑增加字段：此bookmark随后跟的空行数(int)
      * */
 
-    public Bookmark(String title, Integer pageNum, int level) {
+    public Bookmark(String title, Integer pageNum) {
         this.title = title;
         this.pageNum = pageNum;
-        this.level = level;
+    }
+
+    //用来创造根结点，非顶级目录
+    public static Bookmark createRoot() {
+        //"root",原字符串应为"Outlines"
+        return new Bookmark("root", -1);
     }
 
     public void setIndex(int index) {
         this.index = index;
     }
 
-    //用来创造根结点，非顶级目录
-    public static Bookmark createRoot() {
-        //"root",原字符串应为"Outlines"
-        return new Bookmark("root", -1, -1);
-    }
-
     public int getIndex() {
         return index;
     }
-
-//    public boolean isEmpty() {
-//        return isEmpty;
-//    }
 
 
     public void setSeq(String seq) {
@@ -93,15 +82,28 @@ public class Bookmark implements Serializable {
         this.title = title;
     }
 
-    public int getLevel() {
+
+    //0为顶级目录，-1为根结点root（隐藏的）
+    public int getLevel(){
+        int level = -1;
+        Bookmark parent = this.getParent();
+        while (parent != null) {
+            level++;
+
+            parent = parent.getParent();
+        };
+        System.out.println(title+ " "+level);
         return level;
     }
 
+    public void changePos(Bookmark parent){
+        this.setParent(parent);
+        parent.getChildren().add(this);
+        this.getOwnerList().removeIf(current -> current == this);
+    }
+
     public Bookmark getParent() {
-        if (parent != null) {
-            return parent;
-        }
-        throw new RuntimeException(title + " 所在bookmark无parent");
+        return parent;
     }
 
     public void setParent(Bookmark parent) {
@@ -120,7 +122,7 @@ public class Bookmark implements Serializable {
 
     @Override
     public String toString() {
-        if (getLevel() == -1) return "root\n";
+        if (getLevel() == -1) return "root";
         else {
             StringBuilder text = new StringBuilder();
             String pageNumStr = getPageNum().map(String::valueOf).orElse("");
@@ -167,6 +169,5 @@ public class Bookmark implements Serializable {
         text.append(pageNum);
         text.append("\n");
     }
-
 
 }

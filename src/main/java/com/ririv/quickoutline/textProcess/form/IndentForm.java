@@ -39,7 +39,7 @@ public class IndentForm extends Form {
             }
 
 
-            Bookmark current = new Bookmark(title, pageNum, level);
+            Bookmark current = new Bookmark(title, pageNum);
             current.setIndex(index);
             last = addBookmarkByLevel(current, last, level); //更新last
 
@@ -51,6 +51,11 @@ public class IndentForm extends Form {
         }
         return last;
     }
+
+    @Override
+    public void postProcess(Bookmark rootBookmark) {
+    }
+
 
     public int checkLevelByLnIndent(String lineIndent) {
         int level = 0;
