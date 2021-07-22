@@ -50,19 +50,4 @@ Part I  监督学习  25
         pdfProcess.addContents(rootBookmark,path2,"D:/gen.pdf");
     }
 
-
-    @org.junit.jupiter.api.Test
-    void test2(){
-        Bookmark bookmark = Bookmark.createRoot();
-        Bookmark child1 = new Bookmark("affair",10,1);
-        Bookmark child2 = new Bookmark("b22sa",11,1);
-        Bookmark child3 = new Bookmark("c22sa",13,2);
-        bookmark.getChildren().add(child1);
-        bookmark.getChildren().add(child2);
-        bookmark.getChildren().get(0).getChildren().add(child3);
-        System.out.println(bookmark);
-    }
-
-
-
 }

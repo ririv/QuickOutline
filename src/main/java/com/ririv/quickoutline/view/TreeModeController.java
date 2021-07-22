@@ -142,6 +142,7 @@ public class TreeModeController {
 
 
             row.setOnDragDropped(event -> {
+
                 Dragboard db = event.getDragboard();
                 int dropIndex; //新行号
                 if (db.hasContent(SERIALIZED_MIME_TYPE)) {
@@ -150,7 +151,6 @@ public class TreeModeController {
 
                         int dragIndex = dragItem.getParent().getChildren().indexOf(dragItem); //拖拽中的行号
 //                    TreeItem<Bookmark> item = tree.getTreeItem(dragIndex);
-
 
                         if (row.isEmpty()) {
                             dropIndex = tree.getExpandedItemCount();
