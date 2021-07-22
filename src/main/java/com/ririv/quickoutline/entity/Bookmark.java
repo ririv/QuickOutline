@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.ririv.quickoutline.textProcess.PreProcess.TwoBlank;
 
@@ -132,8 +133,7 @@ public class Bookmark implements Serializable {
     //包含子节点
     public String toText() {
         StringBuilder text = new StringBuilder();
-        traverse(this,
-                e -> {
+        traverse(e -> {
                     String pageNumStr = e.getPageNum().map(String::valueOf).orElse("");
                     buildLine(text, e.getLevel(),
                             e.getTitle(), pageNumStr);
@@ -142,17 +142,20 @@ public class Bookmark implements Serializable {
         return text.toString();
     }
 
+    public void traverse(Consumer<Bookmark> operate){
+        recursiveTraverse(this,operate);
+    }
 
     /*    Note: 递归，此方法写在工具类中也是一样的，但为了更好地封装，写在了实体类
             设为static，防止人为错误地修改代码，以致于无限调用 子bookmark 中的此递归方法
           */
-    public static void traverse(Bookmark bookmark, Consumer<Bookmark> operate) {
+    private static void recursiveTraverse(Bookmark bookmark, Consumer<Bookmark> operate) {
         if (bookmark.getLevel() != -1) { //非根节点时
             operate.accept(bookmark);
         }
         if (bookmark.getChildren().size() != 0) { //不要使用isEmpty方法
             for (Bookmark child : bookmark.getChildren()) {
-                traverse(child, operate);
+                recursiveTraverse(child, operate);
             }
         }
     }

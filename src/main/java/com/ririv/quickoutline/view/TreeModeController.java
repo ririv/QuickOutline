@@ -12,6 +12,9 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 
+import java.util.ArrayList;
+import java.util.List;
+
 //import static com.ririv.contents.view.MainController.mainController;
 
 
