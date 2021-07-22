@@ -50,6 +50,9 @@ public class Bookmark implements Serializable {
         return index;
     }
 
+    public void setPageNum(Integer pageNum) {
+        this.pageNum = pageNum;
+    }
 
     public void setSeq(String seq) {
         if (seq == null) {
@@ -84,23 +87,41 @@ public class Bookmark implements Serializable {
 
 
     //0为顶级目录，-1为根结点root（隐藏的）
-    public int getLevel(){
+    public int getLevel() {
         int level = -1;
         Bookmark parent = this.getParent();
         while (parent != null) {
             level++;
 
             parent = parent.getParent();
-        };
-        System.out.println(title+ " "+level);
+        }
+        ;
+//        System.out.println(title+ " "+level);
         return level;
     }
 
-    public void changePos(Bookmark parent){
+    public boolean isRoot(){
+        return getLevel()==-1;
+    }
+
+    public boolean isTopLevel(){
+        return getLevel()==0;
+    }
+
+
+    public void changePos(Bookmark parent) {
         this.setParent(parent);
         parent.getChildren().add(this);
         this.getOwnerList().removeIf(current -> current == this);
     }
+
+    public void changePos(Bookmark parent,int index) {
+        this.setParent(parent);
+        parent.getChildren().add(index,this);
+        this.getOwnerList().removeIf(current -> current == this);
+    }
+
+
 
     public Bookmark getParent() {
         return parent;
@@ -117,6 +138,21 @@ public class Bookmark implements Serializable {
     //得到该bookmark所属的列表,非子列表
     public List<Bookmark> getOwnerList() {
         return this.getParent().getChildren();
+    }
+
+    public Bookmark getPre() {
+        int i = this.getOwnerList().indexOf(this);
+        var temp = this.getOwnerList().get(i - 1);
+        while (temp.getChildren().size() != 0) {
+            temp = temp.getChildren().get(temp.getChildren().size() - 1);
+        }
+        return temp;
+    }
+
+    public List<Bookmark> genLinearList(){
+        List<Bookmark> linearList = new ArrayList<>();
+        this.traverse(linearList::add);
+        return linearList;
     }
 
 
@@ -136,16 +172,16 @@ public class Bookmark implements Serializable {
     public String toText() {
         StringBuilder text = new StringBuilder();
         traverse(e -> {
-                    String pageNumStr = e.getPageNum().map(String::valueOf).orElse("");
-                    buildLine(text, e.getLevel(),
-                            e.getTitle(), pageNumStr);
-                });
+            String pageNumStr = e.getPageNum().map(String::valueOf).orElse("");
+            buildLine(text, e.getLevel(),
+                    e.getTitle(), pageNumStr);
+        });
 
         return text.toString();
     }
 
-    public void traverse(Consumer<Bookmark> operate){
-        recursiveTraverse(this,operate);
+    public void traverse(Consumer<Bookmark> operate) {
+        recursiveTraverse(this, operate);
     }
 
     /*    Note: 递归，此方法写在工具类中也是一样的，但为了更好地封装，写在了实体类

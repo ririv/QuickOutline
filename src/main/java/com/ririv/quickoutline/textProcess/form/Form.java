@@ -3,15 +3,22 @@ package com.ririv.quickoutline.textProcess.form;
 
 import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.textProcess.PreProcess;
+import com.ririv.quickoutline.utils.Pair;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class Form {
 
     //interface 中的变量必须是 static final，但abstract class不需要
     protected final Bookmark rootBookmark = Bookmark.createRoot();
 
+    //不用List，而用有序map，这样就可以直接通过key bookmark修改value level的值
+    protected Map<Bookmark, Integer> linearBookmarkLevelMap = new LinkedHashMap<>();
+
     //一定要设置parent
+
     /**
      * @return currentBookmark - 但应使用last接受返回值，因为add完current，last就得更新了，current变为新的last
      */
@@ -40,35 +47,44 @@ public abstract class Form {
         return current;
     }
 
-
-    /**
-     * @return rootBookmark 根结点
-     */
-    public Bookmark generateBookmark(String text, int offset) {
-        Bookmark last = rootBookmark;
-
-        //        List<String> preprocessedText = PreProcess.preprocess(text,isSkipEmptyLine);
+    public Map<Bookmark, Integer> createLinearBookmarkMap(String text, int offset) {
         List<String> preprocessedText = PreProcess.preprocess(text);
 
         int i = 1;
         for (String line : preprocessedText) {
-            //空行处理
-//            if (line.matches("^ *$")){
-//                Bookmark current  = new Bookmark(line,null,last.getLevel());
-//                current.setIndex(i++);
-//                current.setEmpty(true);
-//                last = addBookmarkByLevel(current,last,last.getLevel());
-//            }
-//            else
-                last = addBookmarkByLine(offset, last, line,i++);
+            var current = lineToBookmark(offset, line, i++);
+            linearBookmarkLevelMap.put(current.getX(),current.getY());
         }
-        postProcess(rootBookmark);
+//        postProcess1(linearBookmarkLevelMap);
+        return linearBookmarkLevelMap;
+    }
+
+
+    public Bookmark linearListToTree(Map<Bookmark, Integer> linearBookmarkMap) {
+        Bookmark last = rootBookmark;
+        for (var current : linearBookmarkMap.keySet()) {
+            last = addBookmarkByLevel(current,last,linearBookmarkMap.get(current));
+        }
         return rootBookmark;
     }
 
-    public abstract Bookmark addBookmarkByLine(int offset, Bookmark last, String line,int index);
+    /**
+     * @return rootBookmark 根结点
+     */
+    public Bookmark generateBookmarkTree(String text, int offset) {
+        var linearBookmarkLevelMap = createLinearBookmarkMap(text,offset);
+        var root = linearListToTree(linearBookmarkLevelMap);
+//        postProcess2(root);
+        return root;
 
+    }
+
+    //返回一个 bookmark,level 键值对
+    public abstract Pair<Bookmark,Integer> lineToBookmark(int offset, String line, int index);
 
     //后处理应是对处理完成后对结构进行再调整的处理，用于应对，如"Part Ⅰ","第一部分" TODO
-    public abstract void postProcess(Bookmark rootBookmark);
+    public abstract void postProcess1(Map<Bookmark, Integer> linearBookmarkLevelMap);
+
+    public abstract void postProcess2(Bookmark rootBookmark);
+
 }

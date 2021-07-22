@@ -5,7 +5,7 @@ import com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.Exte
 import com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.VscodeImpl;
 import com.ririv.quickoutline.service.syncWithExternelEditor.watchFile.FileModifiedWatcherImpl;
 import com.ririv.quickoutline.service.syncWithExternelEditor.watchFile.FileWatcher;
-import com.ririv.quickoutline.utils.Coordinate2D;
+import com.ririv.quickoutline.utils.Pair;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -37,8 +37,8 @@ public class SyncWithExternalEditorService {
         }
     }
 
-    public void exec(Coordinate2D pos, Consumer<String> sync,
-                     Runnable before, Runnable after,Runnable handleError) {
+    public void exec(Pair<Integer,Integer> pos, Consumer<String> sync,
+                     Runnable before, Runnable after, Runnable handleError) {
         FileWatcher fileWatcher = new FileModifiedWatcherImpl(temp, sync);
 /*
             共创建了2个线程：

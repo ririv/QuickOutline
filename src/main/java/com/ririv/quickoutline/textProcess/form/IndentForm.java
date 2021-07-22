@@ -3,7 +3,9 @@ package com.ririv.quickoutline.textProcess.form;
 
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
+import com.ririv.quickoutline.utils.Pair;
 
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,7 +26,7 @@ public class IndentForm extends Form {
                     +  "\\s*$");
 
 
-    public Bookmark addBookmarkByLine(int offset, Bookmark last, String line,int index) {
+    public Pair<Bookmark,Integer> lineToBookmark(int offset, String line, int index) {
         Matcher matcher = indentPatternOfLine.matcher(line);
         if (matcher.find()) {
 
@@ -41,7 +43,7 @@ public class IndentForm extends Form {
 
             Bookmark current = new Bookmark(title, pageNum);
             current.setIndex(index);
-            last = addBookmarkByLevel(current, last, level); //更新last
+            return new Pair<>(current,level);
 
 
         } else {
@@ -49,11 +51,14 @@ public class IndentForm extends Form {
                     "添加页码错误\n\"%s\"格式不正确",
                     line),index);
         }
-        return last;
     }
 
     @Override
-    public void postProcess(Bookmark rootBookmark) {
+    public void postProcess1(Map<Bookmark, Integer> linearBookmarkLevelMap ) {
+    }
+
+    @Override
+    public void postProcess2(Bookmark bookmark) {
     }
 
 
@@ -71,7 +76,6 @@ public class IndentForm extends Form {
             lineIndent = lineIndent.replaceFirst(blankOfOneLevel, "");
             level++;
         }
-
 
         System.out.println(level);
 

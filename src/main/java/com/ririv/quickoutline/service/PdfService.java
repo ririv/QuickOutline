@@ -47,7 +47,7 @@ public class PdfService {
             form = new IndentForm();
         }
 
-        return form.generateBookmark(text, offset);
+        return form.generateBookmarkTree(text, offset);
     }
 
 
