@@ -47,7 +47,7 @@ public class Bookmark implements Serializable {
     }
 
     //用来创造根结点，非顶级目录
-    public static Bookmark CreateRoot() {
+    public static Bookmark createRoot() {
         //"root",原字符串应为"Outlines"
         return new Bookmark("root", -1, -1);
     }
