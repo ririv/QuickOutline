@@ -2,7 +2,7 @@ package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
-import com.ririv.quickoutline.utils.Coordinate2D;
+import com.ririv.quickoutline.utils.Pair;
 import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -109,7 +109,7 @@ public class TextModeController {
     }
 
 
-    private Coordinate2D getCoordinate() {
+    private Pair<Integer,Integer> getCoordinate() {
 
         int x = 0;
         int y = 0;
@@ -126,7 +126,7 @@ public class TextModeController {
             if (pos == 0) break;
         }
 
-        return new Coordinate2D(x, y);
+        return new Pair<Integer,Integer> (x, y);
     }
 
     //暂时有bug

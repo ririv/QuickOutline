@@ -2,10 +2,7 @@ package com.ririv.quickoutline.textProcess.form.seq;
 
 import com.ririv.quickoutline.entity.Bookmark;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -49,20 +46,38 @@ public interface StandardSeqForm {
         return level;
     }
 
-    default void locateSameStructure(Bookmark root) {
-        Map<String, List<Bookmark>> countMap = new HashMap<>();
-        root.traverse(e -> {
-            if (countMap.get(e.getTitle()) != null) {
+    default void locateSameStructure(Map<Bookmark,Integer> linearBookmarkLevelMap) {
+        Map<String, List<Bookmark>> countMap = new LinkedHashMap<>();
+
+        linearBookmarkLevelMap.forEach((bookmark,level) -> {
+            if (countMap.get(bookmark.getTitle()) == null) {
                 List<Bookmark> sameTitleList = new ArrayList<>();
-                sameTitleList.add(e);
-                countMap.put(e.getTitle(), sameTitleList);
-            } else countMap.get(e.getTitle()).add(e);
+                sameTitleList.add(bookmark);
+                countMap.put(bookmark.getTitle(), sameTitleList);
+            } else countMap.get(bookmark.getTitle()).add(bookmark);
         });
 
-        var filterList = countMap.values().stream().filter(e ->e.size()>1).collect(Collectors.toList());
-        for (var list:filterList) {
-            
+
+        var filterList = countMap.values().stream().filter(e -> e.size() > 1).collect(Collectors.toList());
+
+        var linearList = new ArrayList<>(linearBookmarkLevelMap.keySet());
+
+        for (var list : filterList) {
+            int start = linearBookmarkLevelMap.get(list.get(0));
+            int end = linearBookmarkLevelMap.get(list.get(1));
+            int level = 0;
+            for (; start < end; start++) {
+                if (linearList.get(start).isTopLevel()) {
+                    level = linearList.get(start).getLevel();
+                    break;
+                }
+            }
+            for (var bookmark : list) {
+                linearBookmarkLevelMap.put(bookmark,level);
+            }
+
         }
+
     }
 
 
