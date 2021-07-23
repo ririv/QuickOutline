@@ -54,11 +54,7 @@ public class IndentForm extends Form {
     }
 
     @Override
-    public void postProcess1(Map<Bookmark, Integer> linearBookmarkLevelMap ) {
-    }
-
-    @Override
-    public void postProcess2(Bookmark bookmark) {
+    public void postProcess(Map<Bookmark, Integer> linearBookmarkLevelMap ) {
     }
 
 

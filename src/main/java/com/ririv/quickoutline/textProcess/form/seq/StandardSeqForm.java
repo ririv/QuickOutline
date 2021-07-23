@@ -5,6 +5,7 @@ import com.ririv.quickoutline.entity.Bookmark;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 
@@ -46,7 +47,7 @@ public interface StandardSeqForm {
         return level;
     }
 
-    default void locateSameStructure(Map<Bookmark,Integer> linearBookmarkLevelMap) {
+    default List<Bookmark> locateSameStructure(Map<Bookmark,Integer> linearBookmarkLevelMap) {
         Map<String, List<Bookmark>> countMap = new LinkedHashMap<>();
 
         linearBookmarkLevelMap.forEach((bookmark,level) -> {
@@ -60,23 +61,16 @@ public interface StandardSeqForm {
 
         var filterList = countMap.values().stream().filter(e -> e.size() > 1).collect(Collectors.toList());
 
-        var linearList = new ArrayList<>(linearBookmarkLevelMap.keySet());
+        List<Bookmark> collectList = new ArrayList<>();
+        filterList.forEach(collectList::addAll);
 
         for (var list : filterList) {
-            int start = linearBookmarkLevelMap.get(list.get(0));
-            int end = linearBookmarkLevelMap.get(list.get(1));
-            int level = 0;
-            for (; start < end; start++) {
-                if (linearList.get(start).isTopLevel()) {
-                    level = linearList.get(start).getLevel();
-                    break;
-                }
-            }
             for (var bookmark : list) {
-                linearBookmarkLevelMap.put(bookmark,level);
+                linearBookmarkLevelMap.put(bookmark,1);
             }
-
         }
+
+        return collectList;
 
     }
 
