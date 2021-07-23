@@ -55,12 +55,12 @@ public abstract class Form {
             var current = lineToBookmark(offset, line, i++);
             linearBookmarkLevelMap.put(current.getX(),current.getY());
         }
-//        postProcess1(linearBookmarkLevelMap);
+        postProcess(linearBookmarkLevelMap);
         return linearBookmarkLevelMap;
     }
 
 
-    public Bookmark linearListToTree(Map<Bookmark, Integer> linearBookmarkMap) {
+    public Bookmark mapToTree(Map<Bookmark, Integer> linearBookmarkMap) {
         Bookmark last = rootBookmark;
         for (var current : linearBookmarkMap.keySet()) {
             last = addBookmarkByLevel(current,last,linearBookmarkMap.get(current));
@@ -73,18 +73,13 @@ public abstract class Form {
      */
     public Bookmark generateBookmarkTree(String text, int offset) {
         var linearBookmarkLevelMap = createLinearBookmarkMap(text,offset);
-        var root = linearListToTree(linearBookmarkLevelMap);
-//        postProcess2(root);
-        return root;
-
+        return mapToTree(linearBookmarkLevelMap);
     }
 
     //返回一个 bookmark,level 键值对
     public abstract Pair<Bookmark,Integer> lineToBookmark(int offset, String line, int index);
 
     //后处理应是对处理完成后对结构进行再调整的处理，用于应对，如"Part Ⅰ","第一部分" TODO
-    public abstract void postProcess1(Map<Bookmark, Integer> linearBookmarkLevelMap);
-
-    public abstract void postProcess2(Bookmark rootBookmark);
+    public abstract void postProcess(Map<Bookmark, Integer> linearBookmarkLevelMap);
 
 }
