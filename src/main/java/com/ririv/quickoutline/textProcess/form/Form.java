@@ -55,7 +55,7 @@ public abstract class Form {
             var current = lineToBookmark(offset, line, i++);
             linearBookmarkLevelMap.put(current.getX(),current.getY());
         }
-        postProcess(linearBookmarkLevelMap);
+//        postProcess(linearBookmarkLevelMap);
         return linearBookmarkLevelMap;
     }
 
