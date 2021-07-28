@@ -221,8 +221,8 @@ public class MainController {
 //                    Desktop.getDesktop().browse(new File(filepathText.getText()).toURI()); //打开文件
                     //打开文件所在文件夹并选择文件
                     if (OsTypeUtil.isWindows()) Runtime.getRuntime().exec(
-                            "explorer.exe /select, " + destFilePath.replaceAll("/", "\\\\")); //windows
-                    else if (OsTypeUtil.isMacOS()) Runtime.getRuntime().exec("open -R " + destFilePath); //macos
+                            "explorer.exe /select, \"" + destFilePath.replaceAll("/", "\\\\" + "\"")); //windows
+                    else if (OsTypeUtil.isMacOS()) Runtime.getRuntime().exec("open -R \"" + destFilePath + "\""); //macos
 
                 } catch (IOException e) {
                     e.printStackTrace();
