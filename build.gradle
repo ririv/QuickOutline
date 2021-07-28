@@ -102,8 +102,8 @@ jlink {
 //        }
         installerType = project.findProperty('installerType') // we will pass this from the command line (example: -PinstallerType=msi)
 
-        if (installerType == 'pkg'){
-            imageOptions = ['--icon', 'src/main/resources/com/ririv/quickoutline/view/icon/icon.ic']
+        if (installerType == 'pkg' || installerType == "dmg"){
+            imageOptions = ['--icon', 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns']
         }
 
     }
