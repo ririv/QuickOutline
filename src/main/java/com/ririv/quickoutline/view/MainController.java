@@ -220,10 +220,12 @@ public class MainController {
                 try {
 //                    Desktop.getDesktop().browse(new File(filepathText.getText()).toURI()); //打开文件
                     //打开文件所在文件夹并选择文件
-                    if (OsTypeUtil.isWindows()) Runtime.getRuntime().exec(
-                            "explorer.exe /select, \"" + destFilePath.replaceAll("/", "\\\\" + "\"")); //windows
-                    else if (OsTypeUtil.isMacOS()) Runtime.getRuntime().exec("open -R \"" + destFilePath + "\""); //macos
-
+                    String command = "";
+                    if (OsTypeUtil.isWindows()) command = "explorer.exe /select, \"" + destFilePath.replaceAll("/", "\\\\" + "\""); //windows
+                    else if (OsTypeUtil.isMacOS()) command = "open -R \"" + destFilePath + "\""; //macos
+                    else if (OsTypeUtil.isLinux()) command = "xdg-open \"" + destFilePath + "\""; // or "gvfs-open"?
+                    Runtime.getRuntime().exec(command);
+                    System.out.println("exec command: "+ command);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
