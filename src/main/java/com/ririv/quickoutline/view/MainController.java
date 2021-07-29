@@ -18,8 +18,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -223,9 +222,16 @@ public class MainController {
                     String command = "";
                     if (OsTypeUtil.isWindows()) command = "explorer.exe /select, \"" + destFilePath.replaceAll("/", "\\\\" + "\""); //windows
                     else if (OsTypeUtil.isMacOS()) command = "open -R \"" + destFilePath + "\""; //macos
-                    else if (OsTypeUtil.isLinux()) command = "xdg-open \"" + destFilePath + "\""; // or "gvfs-open"?
-                    Runtime.getRuntime().exec(command);
+                    else if (OsTypeUtil.isLinux()) command = "nautilus \"" + destFilePath + "\""; // 打开文件可以使用 xdg-open
+                    Process p = Runtime.getRuntime().exec(command);
                     System.out.println("exec command: "+ command);
+                    InputStream is = p.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                    String s;
+                    while ((s = reader.readLine()) != null) {
+                        System.out.println(s);
+                    }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

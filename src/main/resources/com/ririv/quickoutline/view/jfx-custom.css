@@ -7,6 +7,10 @@
     -jfx-rippler-fill: #fc9494;
 }
 
+.jfx-tab-pane .headers-region{
+    -fx-pref-height: 35;
+}
+
 .jfx-tab-pane .headers-region .tab-selected-line {
     -fx-background-color: #2d9cfd;
 }

@@ -95,7 +95,7 @@ jlink {
 //        ]
         installerOptions = [
                 '--vendor', 'riri Personal', //必须加，否则报错
-                '--app-version', version
+                '--app-version', version,
         ]
 //        if (org.gradle.internal.os.OperatingSystem.current().windows) {
 //            installerOptions += ['--win-per-user-install', '--win-dir-chooser', '--win-menu']
