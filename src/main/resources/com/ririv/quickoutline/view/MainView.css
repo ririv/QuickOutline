@@ -7,10 +7,10 @@
     /*-fx-effect: dropshadow(three-pass-box, #9c9c9c, 10,0,0,0);*/
 }
 
-
 #helpBtn{
     -fx-background-color: white;
-    -fx-pref-height: 35;
+    /*需要与tab的高度一致，否则出现不同系统效果不一样的情况*/
+    -fx-pref-height: 35px;
     -fx-effect: none;
     -fx-text-fill: red;
 }
@@ -30,9 +30,6 @@
     -fx-background-color: snow;
     -fx-text-fill: black;
 }
-
-
-
 
 
 
