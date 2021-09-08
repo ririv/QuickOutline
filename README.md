@@ -119,5 +119,3 @@ Mac: 提供安装包，目前打开所生成的PDF文件所在位置功能有点
 
 [下载地址](https://github.com/ririv/QuickQutline/releases)
 
-由于自己没有mac，所以没法验证mac上的程序是否可用，后续等我找个小伙伴验证下立即就发布（有小伙伴主动举手的也可以找我）
-
