@@ -28,14 +28,14 @@ public class HelpController {
     }
 
     public void browseRemoteRepo(){
-        browse("https://github.com/ririv/QuickQutline");
+        browse("https://github.com/ririv/QuickOutline");
     }
 
     public void browseHelpOnZhihu(){
         browse("https://zhuanlan.zhihu.com/p/390719305");
     }
     public void browseHelpOnGithub(){
-        browse("https://github.com/ririv/QuickQutline/README.md");
+        browse("https://github.com/ririv/QuickOutline/blob/master/README.md");
     }
 
     public void browseHelpOnMyPage(){
