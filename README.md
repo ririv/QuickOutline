@@ -117,5 +117,5 @@ Windows: 解压后直接运行.exe文件
 
 Mac: 提供安装包，目前打开所生成的PDF文件所在位置功能有点小问题，不可用
 
-[下载地址](https://github.com/ririv/QuickQutline/releases)
+[下载地址](https://github.com/ririv/QuickOutline/releases)
 
