@@ -38,6 +38,7 @@ public abstract class Form {
                 List<Bookmark> currentList = null;
                 for (int dif = last.getLevel() - level; dif != 0; dif--) {
                     currentList = last.getParent().getOwnerList();
+                    last = last.getParent(); //
                 }
                 assert currentList != null;
                 currentList.add(current);
