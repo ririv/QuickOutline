@@ -26,7 +26,7 @@
             <Hyperlink onMouseClicked="#browseRemoteRepo">开放源代码</Hyperlink>
             <Text>, Licence: AGPL</Text>
         </FlowPane>
-        <Text>Version: 1.0.0</Text>
+        <Text>Version: 1.0.1</Text>
         <Text>开源软件使用: iText7, JFoenix...</Text>
         <Text>不得用于任何商业行为，否则使用者后果自负</Text>
         <FlowPane>
