@@ -84,9 +84,8 @@ public class MainController {
 
 
         filepathText.textProperty().addListener((observable, oldValue, newValue) -> {
-            //重置操作
             if (!oldValue.equals(newValue)) {
-                reset();
+                resetState();
             }
         });
 
@@ -108,25 +107,27 @@ public class MainController {
             Dragboard dragboard = e.getDragboard();
             File file = dragboard.getFiles().get(0);
 
+            if (!textModeController.contentsText.getText().isEmpty() && !filepathText.getText().equals(file.getAbsolutePath())) {
 
-
-            if (!textModeController.contentsText.getText().isEmpty()) {
-                Optional<ButtonType> buttonType = showAlert(
+                ButtonType keepContentsText = new ButtonType("保留", ButtonBar.ButtonData.OK_DONE);
+                ButtonType noKeepContentsText = new ButtonType("否", ButtonBar.ButtonData.OK_DONE);
+                Optional<ButtonType> result = showAlert(
                         Alert.AlertType.CONFIRMATION,
-                        "文本域中含有可能未保存的内容，是否确认?",
-                        root.getScene().getWindow());
-                if (buttonType.isPresent() && buttonType.get().getButtonData().isCancelButton()) {
+                        "正在打开新文件，是否保留文本域中的内容?",
+                        root.getScene().getWindow(),
+                        keepContentsText,noKeepContentsText,new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE));
+                if (result.isPresent() && result.get().getButtonData().isCancelButton()) {
                     return;
                 }
-
+                else if (result.isPresent() && result.get() == keepContentsText) {
+                    String tempText = textModeController.contentsText.getText();
+                    Toggle tempToggle = methodGroup.getSelectedToggle();
+                    filepathText.setText(file.getPath());
+                    methodGroup.selectToggle(tempToggle);
+                    textModeController.contentsText.setText(tempText);
+                }
             }
-
-            //这是由于如果filepathText一样，监听不能触发
-            if (filepathText.getText().equals(file.getAbsolutePath())){
-                reset();
-            }else{
-                filepathText.setText(file.getPath());
-            }
+            filepathText.setText(file.getPath());
 
         });
 
@@ -144,7 +145,7 @@ public class MainController {
             if (!textModeController.contentsText.getText().isEmpty()) {
                 Optional<ButtonType> buttonType = showAlert(
                         Alert.AlertType.CONFIRMATION,
-                        "文本域中含有可能未保存的内容，是否确认?",
+                        "正在获取文件的目录文本，文本域中含有可能未保存的内容，是否确认?",
                         root.getScene().getWindow());
                 if (buttonType.isPresent() && buttonType.get().getButtonData().isCancelButton()) {
                     return;
@@ -240,7 +241,11 @@ public class MainController {
         });
     }
 
-    private void reset(){
+    private void getCurrentState(){
+    }
+
+    //重置，并获得目录
+    private void resetState(){
         offsetText.setText(null); //必须在前，否则缓存的offset会影响下面的函数
         getCurrentContents();
         if (treeTab.isSelected()) reconstructTree();
