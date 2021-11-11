@@ -23,6 +23,7 @@ public abstract class Form {
      * @return currentBookmark - 但应使用last接受返回值，因为add完current，last就得更新了，current变为新的last
      */
     protected Bookmark addBookmarkByLevel(Bookmark current, Bookmark last, int level) {
+
         if (level == 0) {
             rootBookmark.getChildren().add(current);
             current.setParent(rootBookmark);
@@ -36,9 +37,10 @@ public abstract class Form {
                 current.setParent(last);
             } else { //回到上级，可能跳级
                 List<Bookmark> currentList = null;
+                Bookmark temp = last;
                 for (int dif = last.getLevel() - level; dif != 0; dif--) {
-                    currentList = last.getParent().getOwnerList();
-                    last = last.getParent(); //
+                    currentList = temp.getParent().getOwnerList();
+                    temp = temp.getParent();
                 }
                 assert currentList != null;
                 currentList.add(current);
