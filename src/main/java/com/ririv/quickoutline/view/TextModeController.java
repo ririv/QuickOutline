@@ -68,7 +68,7 @@ public class TextModeController {
 
                         getCoordinate(),
 
-                        fileText -> contentsText.setText(fileText),
+                        fileText -> Platform.runLater(()-> contentsText.setText(fileText)),
 
                         () -> {
                             syncWithExternalEditorService.writeTemp(contentsText.getText());

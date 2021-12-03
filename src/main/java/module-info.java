@@ -14,4 +14,5 @@ module quickoutline {
     exports com.ririv.quickoutline.view;
     exports com.ririv.quickoutline.entity;
     exports com.ririv.quickoutline.enums;
+    exports com.ririv.quickoutline.utils;
 }
