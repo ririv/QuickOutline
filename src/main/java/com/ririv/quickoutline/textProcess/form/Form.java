@@ -14,6 +14,7 @@ public abstract class Form {
     //interface 中的变量必须是 static final，但abstract class不需要
     protected final Bookmark rootBookmark = Bookmark.createRoot();
 
+    //key:bookmark, value: 层级
     //不用List，而用有序map，这样就可以直接通过key bookmark修改value level的值
     protected Map<Bookmark, Integer> linearBookmarkLevelMap = new LinkedHashMap<>();
 
@@ -55,7 +56,7 @@ public abstract class Form {
 
         int i = 1;
         for (String line : preprocessedText) {
-            var current = lineToBookmark(offset, line, i++);
+            var current = line2BookmarkWithLevel(offset, line, i++);
             linearBookmarkLevelMap.put(current.getX(),current.getY());
         }
 //        postProcess(linearBookmarkLevelMap);
@@ -80,9 +81,6 @@ public abstract class Form {
     }
 
     //返回一个 bookmark,level 键值对
-    public abstract Pair<Bookmark,Integer> lineToBookmark(int offset, String line, int index);
-
-    //后处理应是对处理完成后对结构进行再调整的处理，用于应对，如"Part Ⅰ","第一部分" TODO
-    public abstract void postProcess(Map<Bookmark, Integer> linearBookmarkLevelMap);
+    public abstract Pair<Bookmark,Integer> line2BookmarkWithLevel(int offset, String line, int index);
 
 }

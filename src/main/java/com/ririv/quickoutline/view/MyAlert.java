@@ -24,6 +24,7 @@ public class MyAlert extends Alert {
         this.setHeaderText(null);
         configure();
     }
+
     public MyAlert(AlertType alertType,String contentText,Window owner,ButtonType... buttons) {
         super(alertType,contentText,buttons);
         super.initOwner(owner);

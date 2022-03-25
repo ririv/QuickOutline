@@ -1,12 +1,11 @@
-package com.ririv.quickoutline.process.itextImpl;//package com.ririv.contents.utils.impl;
+package com.ririv.quickoutline.pdfProcess.itextImpl;//package com.ririv.contents.utils.impl;
 
 
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
-import com.ririv.quickoutline.process.PdfProcess;
-import com.ririv.quickoutline.textProcess.PreProcess;
+import com.ririv.quickoutline.pdfProcess.PdfProcess;
 
 import java.io.IOException;
 import java.util.Map;
@@ -17,7 +16,7 @@ import static com.ririv.quickoutline.entity.Bookmark.buildLine;
 public class Itext7Process implements PdfProcess {
 
     @Override
-    public void addContents(Bookmark rootBookmark, String srcFile, String destFile) throws IOException {
+    public void setContents(Bookmark rootBookmark, String srcFile, String destFile) throws IOException {
 
         PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile), new PdfWriter(destFile));
 
@@ -101,7 +100,7 @@ public class Itext7Process implements PdfProcess {
             rootOutline = rootOutline.addOutline(title);
 
             int pageNumMax = srcDoc.getNumberOfPages();
-            int pageNum = rootBookmark.getPageNum().orElseThrow(() ->{
+            int pageNum = rootBookmark.getOffsetPageNum().orElseThrow(() ->{
                     srcDoc.close();
                     return new BookmarkFormatException(String.format(
                             "添加页码错误\n\"%s\"无页码",
@@ -151,7 +150,7 @@ public class Itext7Process implements PdfProcess {
             System.out.println("The doc has no outline");
             return "";
         }
-        else outlinesToText(rootOutline, text, offset, 0, names, srcDoc);
+        else outlines2Text(rootOutline, text, offset, 0, names, srcDoc);
 
 //        }
         srcDoc.close(); //记得关闭
@@ -160,7 +159,7 @@ public class Itext7Process implements PdfProcess {
     }
 
 
-    private void outlinesToText(PdfOutline outlines, StringBuilder text, int offset, int level, Map<
+    private void outlines2Text(PdfOutline outlines, StringBuilder text, int offset, int level, Map<
             String, PdfObject> names, PdfDocument srcDoc) {
 
         if (outlines.getAllChildren() != null) {
@@ -172,7 +171,7 @@ public class Itext7Process implements PdfProcess {
 
                 buildLine(text, level, child.getTitle(), Integer.toString(pageNum));
 
-                outlinesToText(child, text, offset, level + 1, names, srcDoc);
+                outlines2Text(child, text, offset, level + 1, names, srcDoc);
             }
         }
     }

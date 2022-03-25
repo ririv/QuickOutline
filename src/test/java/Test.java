@@ -1,7 +1,7 @@
 import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.enums.Method;
-import com.ririv.quickoutline.process.PdfProcess;
-import com.ririv.quickoutline.process.itextImpl.Itext7Process;
+import com.ririv.quickoutline.pdfProcess.PdfProcess;
+import com.ririv.quickoutline.pdfProcess.itextImpl.Itext7Process;
 
 import java.io.IOException;
 import static com.ririv.quickoutline.service.PdfService.textToBookmarkByMethod;
@@ -47,7 +47,7 @@ Part I  监督学习  25
     @org.junit.jupiter.api.Test
     void test1() throws IOException {
         PdfProcess pdfProcess = new Itext7Process();
-        pdfProcess.addContents(rootBookmark,path2,"D:/gen.pdf");
+        pdfProcess.setContents(rootBookmark,path2,"D:/gen.pdf");
     }
 
 }

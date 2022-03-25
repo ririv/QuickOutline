@@ -6,8 +6,8 @@ import com.ririv.quickoutline.enums.Method;
 import com.ririv.quickoutline.textProcess.form.seq.CnSeqForm;
 import com.ririv.quickoutline.textProcess.form.Form;
 import com.ririv.quickoutline.textProcess.form.IndentForm;
-import com.ririv.quickoutline.process.PdfProcess;
-import com.ririv.quickoutline.process.itextImpl.Itext7Process;
+import com.ririv.quickoutline.pdfProcess.PdfProcess;
+import com.ririv.quickoutline.pdfProcess.itextImpl.Itext7Process;
 
 import java.io.IOException;
 
@@ -24,7 +24,7 @@ public class PdfService {
         Bookmark rootBookmark = textToBookmarkByMethod(text, offset, method);
 
         try {
-            pdfProcess.addContents(rootBookmark, srcFile, destFile);
+            pdfProcess.setContents(rootBookmark, srcFile, destFile);
         }
         catch (IOException e){
             e.printStackTrace();

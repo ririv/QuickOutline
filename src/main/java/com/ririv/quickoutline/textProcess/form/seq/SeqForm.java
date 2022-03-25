@@ -5,8 +5,6 @@ import com.ririv.quickoutline.entity.Bookmark;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 
 /*   针对不同标题中的seq，有些标题甚至没有seq，应该进行自我识别，而不是让用户操作
@@ -15,7 +13,7 @@ import java.util.stream.Collectors;
      */
 
 
-public interface StandardSeqForm {
+public interface SeqForm {
 
     Pattern standardPattern = Pattern.compile(
             "^(\\s*)?([0-9A-Z.]+)?\\s*(.*?)[\\s.]*(-?[0-9]+)?\\s*$");
@@ -29,7 +27,7 @@ public interface StandardSeqForm {
     转换 rawSeq，如：第1章 -> 1
     返回 standard seq, 如：1.2.5
     */
-    default String checkSeq(String rawSeq) {
+    default String standardizeSeq(String rawSeq) {
         Pattern pattern = Pattern.compile("[0-9.]+");
         Matcher matcher = pattern.matcher(rawSeq);
         if (matcher.find()) return matcher.group(0);
@@ -47,32 +45,8 @@ public interface StandardSeqForm {
         return level;
     }
 
-    default List<Bookmark> locateSameStructure(Map<Bookmark,Integer> linearBookmarkLevelMap) {
-        Map<String, List<Bookmark>> countMap = new LinkedHashMap<>();
-
-        linearBookmarkLevelMap.forEach((bookmark,level) -> {
-            if (countMap.get(bookmark.getTitle()) == null) {
-                List<Bookmark> sameTitleList = new ArrayList<>();
-                sameTitleList.add(bookmark);
-                countMap.put(bookmark.getTitle(), sameTitleList);
-            } else countMap.get(bookmark.getTitle()).add(bookmark);
-        });
-
-
-        var filterList = countMap.values().stream().filter(e -> e.size() > 1).collect(Collectors.toList());
-
-        List<Bookmark> collectList = new ArrayList<>();
-        filterList.forEach(collectList::addAll);
-
-        for (var list : filterList) {
-            for (var bookmark : list) {
-                linearBookmarkLevelMap.put(bookmark,1);
-            }
-        }
-
-        return collectList;
-
-    }
+    // 应在生成tree之前，对文本处理
+    default List<Bookmark> recognizeStruct(String text){ return null; }
 
 
 }

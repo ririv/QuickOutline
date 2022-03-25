@@ -1,17 +1,14 @@
 package com.ririv.quickoutline.entity;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static com.ririv.quickoutline.textProcess.PreProcess.TwoBlank;
 
 //一个顶级目录为一个bookmark
-public class Bookmark implements Serializable {
+public class Bookmark{
 
     //仅在格式为标准格式下使用，如”1.2.5“
     /*
@@ -21,19 +18,15 @@ public class Bookmark implements Serializable {
      * */
     private String seq;
     private String title;
-    private Integer pageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
+    private Integer offsetPageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
     private final List<Bookmark> children = new ArrayList<>();
     private Bookmark parent;
     private int index; //行号，非必要，仅用来记录其所在text中的位置信息
+    
 
-    /*
-     * TODO 对于空行的处理，原将Bookmark添加字段isEmpty的方案已启用，这会使得有效的子Bookmark添加到无效的empty bookmark中
-     *  现考虑增加字段：此bookmark随后跟的空行数(int)
-     * */
-
-    public Bookmark(String title, Integer pageNum) {
+    public Bookmark(String title, Integer offsetPageNum) {
         this.title = title;
-        this.pageNum = pageNum;
+        this.offsetPageNum = offsetPageNum;
     }
 
     //用来创造根结点，非顶级目录
@@ -50,8 +43,8 @@ public class Bookmark implements Serializable {
         return index;
     }
 
-    public void setPageNum(Integer pageNum) {
-        this.pageNum = pageNum;
+    public void setOffsetPageNum(Integer offsetPageNum) {
+        this.offsetPageNum = offsetPageNum;
     }
 
     public void setSeq(String seq) {
@@ -72,8 +65,8 @@ public class Bookmark implements Serializable {
         return seq;
     }
 
-    public Optional<Integer> getPageNum() {
-        return Optional.ofNullable(pageNum);
+    public Optional<Integer> getOffsetPageNum() {
+        return Optional.ofNullable(offsetPageNum);
     }
 
 
@@ -161,8 +154,8 @@ public class Bookmark implements Serializable {
         if (getLevel() == -1) return "root";
         else {
             StringBuilder text = new StringBuilder();
-            String pageNumStr = getPageNum().map(String::valueOf).orElse("");
-            buildLine(text, getLevel(), getTitle(), pageNumStr);
+            String offsetPageNumStr = getOffsetPageNum().map(String::valueOf).orElse("");
+            buildLine(text, getLevel(), getTitle(), offsetPageNumStr);
             return text.toString();
         }
     }
@@ -172,7 +165,7 @@ public class Bookmark implements Serializable {
     public String toText() {
         StringBuilder text = new StringBuilder();
         traverse(e -> {
-            String pageNumStr = e.getPageNum().map(String::valueOf).orElse("");
+            String pageNumStr = e.getOffsetPageNum().map(String::valueOf).orElse("");
             buildLine(text, e.getLevel(),
                     e.getTitle(), pageNumStr);
         });
