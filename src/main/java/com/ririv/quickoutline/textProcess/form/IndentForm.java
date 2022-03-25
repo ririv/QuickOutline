@@ -5,7 +5,6 @@ import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.utils.Pair;
 
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +17,8 @@ public class IndentForm extends Form {
     boolean isChecked = false; //经反复尝试，此变量很重要
     String blankOfOneLevel = ""; //每级缩进占用的空格，初始为一个空格
 
-    final Pattern indentPatternOfLine = Pattern.compile(
+    //识别单位：行
+    final Pattern indentPattern = Pattern.compile(
                        "^(\\s*)?"  //缩进 $1
                     +  "(.*?)" //标题,包含序号 $2
                     +  "[\\s.]*"
@@ -26,8 +26,8 @@ public class IndentForm extends Form {
                     +  "\\s*$");
 
 
-    public Pair<Bookmark,Integer> lineToBookmark(int offset, String line, int index) {
-        Matcher matcher = indentPatternOfLine.matcher(line);
+    public Pair<Bookmark,Integer> line2BookmarkWithLevel(int offset, String line, int index) {
+        Matcher matcher = indentPattern.matcher(line);
         if (matcher.find()) {
 
             String lnIndent = matcher.group(1); //行缩进
@@ -51,10 +51,6 @@ public class IndentForm extends Form {
                     "添加页码错误\n\"%s\"格式不正确",
                     line),index);
         }
-    }
-
-    @Override
-    public void postProcess(Map<Bookmark, Integer> linearBookmarkLevelMap ) {
     }
 
 

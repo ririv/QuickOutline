@@ -12,9 +12,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 
-import java.util.ArrayList;
-import java.util.List;
-
 //import static com.ririv.contents.view.MainController.mainController;
 
 
@@ -188,7 +185,7 @@ public class TreeModeController {
 
 
         offsetPageColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<Bookmark, String> p) -> {
-            var pageNum = p.getValue().getValue().getPageNum();
+            var pageNum = p.getValue().getValue().getOffsetPageNum();
             String pageNumStr;
             pageNumStr = pageNum.map(integer -> Integer.toString(integer)).orElse("");
             return new ReadOnlyStringWrapper(pageNumStr);
@@ -203,7 +200,7 @@ public class TreeModeController {
     //实际应用中此功能没有需求场景
     public void updatePageNum(int offset) {
         offsetPageColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<Bookmark, String> p) -> {
-            var pageNum = p.getValue().getValue().getPageNum();
+            var pageNum = p.getValue().getValue().getOffsetPageNum();
             String offsetPageNumStr = pageNum.map(integer -> Integer.toString(integer+offset)).orElse("");
 
             String offsetCellValue;

@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.process.itextImpl;
+package com.ririv.quickoutline.pdfProcess.itextImpl;
 
 
 import com.itextpdf.text.pdf.PdfReader;
@@ -6,8 +6,7 @@ import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.SimpleBookmark;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
-import com.ririv.quickoutline.process.PdfProcess;
-import com.ririv.quickoutline.textProcess.PreProcess;
+import com.ririv.quickoutline.pdfProcess.PdfProcess;
 
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ import static com.ririv.quickoutline.entity.Bookmark.buildLine;
 public class Itext5Process implements PdfProcess {
 
     //添加目录，并输出到指定路径
-    public void addContents(Bookmark rootBookmark, String srcFile, String destFile) {
+    public void setContents(Bookmark rootBookmark, String srcFile, String destFile) {
         List<HashMap<String, Object>> rootOutlines = new ArrayList<>(); //顶级目录,定义此类型的原因是因为itext5中直接获得的类型
         bookmarkToOutlines(rootBookmark, rootOutlines);
 
@@ -69,7 +68,7 @@ public class Itext5Process implements PdfProcess {
                 outline.put("Title", subBookmark.getTitle());
                 outline.put("Action", "GoTo");
 //        if (rootBookmark.getPageNum() >= 0)
-                outline.put("Page", String.format("%d", subBookmark.getPageNum().orElseThrow(()->
+                outline.put("Page", String.format("%d", subBookmark.getOffsetPageNum().orElseThrow(()->
                         new BookmarkFormatException(String.format(
                                 "添加页码错误\n\"%s\"无页码",
                                 subBookmark.getTitle()),subBookmark.getIndex()

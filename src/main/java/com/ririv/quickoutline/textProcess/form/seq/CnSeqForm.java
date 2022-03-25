@@ -5,8 +5,6 @@ import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.textProcess.form.Form;
 import com.ririv.quickoutline.utils.Pair;
 
-import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,9 +12,9 @@ import static com.ririv.quickoutline.textProcess.PreProcess.OneBlank;
 import static com.ririv.quickoutline.textProcess.PreProcess.TwoBlank;
 
 
-public class CnSeqForm extends Form implements StandardSeqForm {
+public class CnSeqForm extends Form implements SeqForm {
     final Pattern cnPattern = Pattern.compile(
-            "^(\\s*)?"  //缩进$1
+                      "^(\\s*)?"  //缩进$1
                     + "(\\S?\\s?[零一二三四五六七八九十百千0-9]+\\s?(篇|章|节|部分)|[0-9A-Z.]+)?"  //序号$2   $3不用
                     + "\\s*"
                     + "(.*?)" //标题$4
@@ -25,19 +23,14 @@ public class CnSeqForm extends Form implements StandardSeqForm {
                     + "\\s*$");
 
 
-    private String secondPreprocess(String line, Matcher matcher) {
-        return null;
-    }
-
-
-    public Pair<Bookmark, Integer> lineToBookmark(int offset, String line, int index) {
+    public Pair<Bookmark, Integer> line2BookmarkWithLevel(int offset, String line, int index) {
         Matcher standard = standardPattern.matcher(line);
         Matcher matcher = cnPattern.matcher(line);
         if (matcher.find()) {
             String lnIndent = matcher.group(1); //行缩进
             String rawSeq = matcher.group(2) != null ? matcher.group(2) : ""; //原seq字符串
             rawSeq = rawSeq.replaceAll(OneBlank, "");
-            String seq = checkSeq(rawSeq); //检测到的seq
+            String seq = standardizeSeq(rawSeq); //检测到的seq
             String title = (rawSeq + TwoBlank + matcher.group(4)).trim();
             Integer pageNum;
 
@@ -61,34 +54,5 @@ public class CnSeqForm extends Form implements StandardSeqForm {
         }
     }
 
-
-    //下面两个先使用standard的，以后再写更具体的，以兼容更多不同格式的目录
-//    public String checkSeq(String rawSeq) {
-//        return null;
-//    }
-//
-//    public int checkLevelBySeq(String seq) {
-//
-//        return 0;
-//    }
-
-    @Override
-    public void postProcess(Map<Bookmark, Integer> linearBookmarkLevelMap) {
-        List<Bookmark> list = locateSameStructure(linearBookmarkLevelMap);
-        locatePart(linearBookmarkLevelMap, list);
-    }
-
-    public void locatePart(Map<Bookmark, Integer> linearBookmarkLevelMap, List<Bookmark> excludedList) {
-        boolean isLocated = false;
-        for (Bookmark current : linearBookmarkLevelMap.keySet()) {
-            if (current.getTitle().matches("^第[零一二三四五六七八九十百千0-9]部分.*")) {
-                isLocated = true;
-            } else if (!current.getTitle().matches("^(第.*章|[0-9.]+).*") && !excludedList.contains(current)) {
-                isLocated = false;
-            } else if (isLocated) {
-                linearBookmarkLevelMap.put(current, linearBookmarkLevelMap.get(current) + 1);
-            }
-        }
-    }
 
 }
