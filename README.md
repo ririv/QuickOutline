@@ -1,5 +1,7 @@
 # Quick Outline
 
+注：本人学业+实习繁忙，所有issues将于2024年统一处理。在此之前，如有pr可直接提交，没问题我会merge
+
 ## 界面
 
 ![interface](image/screenshot.png)
@@ -105,7 +107,7 @@ VSCode 中的内容会自动同步至软件窗口中（需在VSCode中保存文�
 
 ## Licence
 
-本软件由于使用 iText7，因此采用 AGPL 方式开源
+请注意：本软件由于使用 iText7，使用时请遵循iText7的开源协议
 
 ## 下载
 
