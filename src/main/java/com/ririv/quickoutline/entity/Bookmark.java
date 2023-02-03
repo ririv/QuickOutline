@@ -22,7 +22,6 @@ public class Bookmark{
     private final List<Bookmark> children = new ArrayList<>();
     private Bookmark parent;
     private int index; //行号，非必要，仅用来记录其所在text中的位置信息
-    
 
     public Bookmark(String title, Integer offsetPageNum) {
         this.title = title;

@@ -24,11 +24,11 @@
         <FlowPane>
             <Text>本软件</Text>
             <Hyperlink onMouseClicked="#browseRemoteRepo">开放源代码</Hyperlink>
-            <Text>, Licence: AGPL</Text>
         </FlowPane>
         <Text>Version: 1.0.1</Text>
         <Text>开源软件使用: iText7, JFoenix...</Text>
-        <Text>不得用于任何商业行为，否则使用者后果自负</Text>
+        <Text fill="#fd5656">使用时请注意遵循 iText7 Licence (AGPL)</Text>
+        <Text fill="#fd5656">否则造成的后果由使用者承担一切责任</Text>
         <FlowPane>
             <Text>By </Text>
             <Hyperlink onMouseClicked="#browseHelpOnMyPage" >小红花</Hyperlink>
