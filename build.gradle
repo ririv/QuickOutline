@@ -1,15 +1,15 @@
 plugins {
     id 'application'
 //    请不要使用0.0.9版本，有bug
-    id 'org.openjfx.javafxplugin' version '0.0.10'
-    id 'org.beryx.jlink' version '2.24.0'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'org.beryx.jlink' version '2.26.0'
     id 'idea'
 }
 
 version = '1.0.1'
 
 javafx {
-    version = "17"
+    version = "19"
     modules = ['javafx.controls', 'javafx.fxml','javafx.web']
 }
 
@@ -46,6 +46,7 @@ repositories {
 [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+//    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" //TODO
 }
 
 

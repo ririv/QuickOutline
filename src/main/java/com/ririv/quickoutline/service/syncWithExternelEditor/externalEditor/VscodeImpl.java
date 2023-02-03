@@ -27,6 +27,7 @@ public class VscodeImpl implements ExternalEditor {
 
         String command;
         if (OsTypeUtil.isWindows()) command = "code.cmd -n -w -g %s:%d:%d ";
+        else if (OsTypeUtil.isMacOS()) command = "open -a \"Visual Studio Code.app\"";
         else command = "code -n -w -g %s:%d:%d ";
 
         command = String.format(command, file.getAbsolutePath(), x, y);
