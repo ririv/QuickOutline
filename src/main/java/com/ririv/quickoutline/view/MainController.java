@@ -69,7 +69,15 @@ public class MainController {
         seqRBtn.setSelected(true);
 
         offsetText.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null && !newValue.matches("\\d*")) offsetText.setText(newValue.replaceAll("[^\\d]", ""));
+            if (newValue != null && !newValue.isEmpty() && !newValue.matches("^-?[1-9]\\d*$|^0$|^-$")) {
+                if (newValue.charAt(0) == '-') {
+                    newValue = newValue.substring(1);
+                    newValue = newValue.replaceAll("[^0-9]", "");
+                    newValue = '-'+newValue;
+                }
+                else newValue = newValue.replaceAll("[^0-9]", "");
+                offsetText.setText(newValue);
+            }
         });
 
 //        pageNumOffset.focusedProperty().addListener((observable, oldValue, newValue) -> {
