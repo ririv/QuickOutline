@@ -53,6 +53,7 @@ public class MainController {
 
     public AnchorPane shade;
     public Button helpBtn;
+    PdfService pdfService = new PdfService();
 
 
 //    public static MainController mainController;
@@ -61,6 +62,8 @@ public class MainController {
     public void initialize() {
 //        mainController = this;
 
+        textModeController.setPdfService(this.pdfService);
+        treeModeController.setPdfService(this.pdfService);
 
         seqRBtn.setToggleGroup(methodGroup);
         indentRBtn.setToggleGroup(methodGroup);
@@ -205,7 +208,7 @@ public class MainController {
 //            }
 
             try {
-                PdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodGroup.getSelectedToggle().getUserData());
+                pdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodGroup.getSelectedToggle().getUserData());
             } catch (BookmarkFormatException e) {
                 e.printStackTrace();
                 File file = new File(destFilePath);
@@ -268,7 +271,7 @@ public class MainController {
 
     private void getCurrentContents() {
 //        这里传入offset是用来相减，以获得原始页码
-        String contents = PdfService.getContents(filepathText.getText(), offset());
+        String contents = pdfService.getContents(filepathText.getText(), offset());
 
 
         textModeController.contentsText.setText(contents);
@@ -289,7 +292,7 @@ public class MainController {
     public void reconstructTree() {
         if (textModeController.contentsText.getText().isEmpty()) return;
 
-        Bookmark rootBookmark = PdfService.textToBookmarkByMethod(
+        Bookmark rootBookmark = pdfService.textToBookmarkByMethod(
                 textModeController.contentsText.getText(), 0,
                 (Method) methodGroup.getSelectedToggle().getUserData()
 //                ,true

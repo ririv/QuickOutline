@@ -2,10 +2,9 @@ import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.enums.Method;
 import com.ririv.quickoutline.pdfProcess.PdfProcess;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcess;
+import com.ririv.quickoutline.service.PdfService;
 
 import java.io.IOException;
-
-import static com.ririv.quickoutline.service.PdfService.textToBookmarkByMethod;
 
 
 public class Test {
@@ -43,7 +42,8 @@ Part I  监督学习  25
     final String path2 = "D:/test1.pdf";
     final Method method = Method.SEQ;
 
-    final Bookmark rootBookmark = textToBookmarkByMethod(text, 2, method);
+    PdfService pdfService = new PdfService();
+    final Bookmark rootBookmark = pdfService.textToBookmarkByMethod(text, 2, method);
 
     @org.junit.jupiter.api.Test
     void test1() throws IOException {
