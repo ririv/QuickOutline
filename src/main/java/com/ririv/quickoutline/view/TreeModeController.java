@@ -9,7 +9,10 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
 import javafx.scene.paint.Paint;
 
 //import static com.ririv.contents.view.MainController.mainController;
@@ -27,6 +30,12 @@ public class TreeModeController {
 
     TreeItem<Bookmark> dragItem;
     TreeTableRow<Bookmark> lastDragRow;
+
+    PdfService pdfService;
+
+    public void setPdfService(PdfService pdfService) {
+        this.pdfService = pdfService;
+    }
 
 
     //不要在此方法中访问mainController，因此此时还没有产生此实例，得到null
@@ -58,7 +67,7 @@ public class TreeModeController {
             sb.append(line).append("\n");
         }
         System.out.println(sb);
-        rootBookmark = PdfService.textToBookmarkByMethod(sb.toString(), 0, Method.INDENT
+        rootBookmark = pdfService.textToBookmarkByMethod(sb.toString(), 0, Method.INDENT
 //                ,true
         );
 

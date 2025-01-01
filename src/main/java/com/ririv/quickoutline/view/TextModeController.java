@@ -4,10 +4,10 @@ import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.utils.Pair;
 import javafx.application.Platform;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
@@ -29,7 +29,11 @@ public class TextModeController {
 
     public static TextModeController textModelController;
     public HBox root;
+    PdfService pdfService;
 
+    public void setPdfService(PdfService pdfService) {
+        this.pdfService = pdfService;
+    }
 
     public void initialize() {
         textModelController = this;
@@ -56,7 +60,7 @@ public class TextModeController {
                 """);
 
         autoFormat.setOnAction(event -> {
-            contentsText.setText(PdfService.autoFormatBySeq(contentsText.getText()));
+            contentsText.setText(pdfService.autoFormatBySeq(contentsText.getText()));
             syncWithExternalEditorService.writeTemp(contentsText.getText());
             //自动格式化后，将方式切换为"indent",由于操作较为隐蔽，使用者不易发现变化，容易迷惑使用者，所以关闭
 //            methodGroup.selectToggle(indentRBtn);
