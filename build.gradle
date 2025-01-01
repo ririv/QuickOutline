@@ -1,15 +1,33 @@
 plugins {
     id 'application'
-//    请不要使用0.0.9版本，有bug
-    id 'org.openjfx.javafxplugin' version '0.0.13'
-    id 'org.beryx.jlink' version '2.26.0'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+
+    // 参考 https://github.com/openjfx/javafx-gradle-plugin#extra-plugins
+    // 不加入此会出现找不到模块错误
+    id 'org.javamodularity.moduleplugin' version '1.8.15'
+
+    // 请使用高版本，’2.26.0‘实测出现 "Unsupported class file major version 65"错误
+    id 'org.beryx.jlink' version '3.1.1'
+
     id 'idea'
+    id 'java'
+}
+
+//java {
+//    modularity.inferModulePath.set(false)
+//}
+
+// java版本选择21（LTS）
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
 }
 
 version = '1.0.1'
 
 javafx {
-    version = "19"
+    version = "21" // LTS
     modules = ['javafx.controls', 'javafx.fxml','javafx.web']
 }
 
@@ -18,55 +36,32 @@ application{
     mainClass.set("com.ririv.quickoutline.view.App")
 }
 
-//不用加模块名，我也不知道为什么，控制台显示，在模块"..."中寻找此类，加了反而重复
-//mainClassName = 'com.ririv.quickoutline.view.App'
-
-//compile 不要用了，已经废弃了
+// compile 不要用了，已经废弃了
+// 不能下载请配置gradle代理
 dependencies {
-    implementation 'com.jfoenix:jfoenix:9.0.10'
-    implementation 'com.itextpdf:itextpdf:5.5.13.2'
-    implementation 'com.itextpdf:kernel:7.1.17'
-    implementation 'com.itextpdf:io:7.1.17'
-    implementation 'com.itextpdf:layout:7.1.17'
+//    implementation 'com.jfoenix:jfoenix:9.0.10' //官方版本，不更新了
+    implementation 'org.rationalityfrontline.workaround:jfoenix:21.0.0'
+    implementation 'com.itextpdf:kernel:9.0.0'
+    implementation 'com.itextpdf:io:9.0.0'
+    implementation 'com.itextpdf:layout:9.0.0'
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 //    implementation 'io.github.palexdev:materialfx:11.12.0'  //考虑换一个UI库
-    //一定要与sl4j-api版本一致，在Libraries查找版本
-//    testImplementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.30'
-
 }
+
 repositories {
-    maven {
-        //使用https，http会报警告
-        url 'https://maven.aliyun.com/nexus/content/groups/public/'
-    }
+    //使用https，http会报警告
+//    maven { url 'https://maven.aliyun.com/repository/public/' }
+//    maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
+//    maven { url 'https://mirrors.cloud.tencent.com/gradle/'}
+    gradlePluginPortal()
+    mavenLocal()
     mavenCentral()
 }
 
-[compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-//    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" //TODO
-}
 
 
-//task copyResources(type: Copy) {
-//    from "${projectDir}/src/main/resources"
-//    into "${buildDir}/classes/java/main"
-//}
-//processResources.dependsOn copyResources
 
-
-static def isWindows() {
-    return System.getProperty("os.name").toLowerCase().contains("windows");
-}
-
-static def isMacOS() {
-    return System.getProperty("os.name").toLowerCase().contains("mac");
-}
-def isLinux() {
-    return System.getProperty("os.name").toLowerCase().contains("linux");
-}
 
 def args = [
         "--add-exports=javafx.controls/com.sun.javafx.scene.control=com.jfoenix",
@@ -88,9 +83,20 @@ def args = [
 
 
 
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+//    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" // 调试用
+}
+
+
 run {
     jvmArgs = args
 }
+
+
+
+
+def os = org.gradle.internal.os.OperatingSystem.current()
 
 //https://badass-jlink-plugin.beryx.org/releases/latest/
 jlink {
@@ -102,26 +108,28 @@ jlink {
 //    https://walczak.it/blog/distributing-javafx-desktop-applications-without-requiring-jvm-using-jlink-and-jpackage
     jpackage {
 //        skipInstaller = true
-
-        installerOptions = [
+        def installerOptionsParams = [
                 '--vendor', 'riri Personal', //必须加，否则报错
                 '--app-version', version,
         ]
 
-        if (isWindows()){
+        println('Current OS: '+os)
+
+        if (os.isWindows()){
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.ico'
+//            installerType = 'msi' //或exe
+            installerOptions = [
+                    '--win-shortcut',    // TODO 这两行没生效
+                    '--win-dir-chooser',
+            ]+installerOptionsParams
+
         }
-        if (isMacOS())
+        if (os.isMacOsX())
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
+            installerOptions = installerOptionsParams
     }
 
 }
-
-//jpackage {
-//    doFirst {
-//        project.getProperty('installerType') // throws exception if its missing
-//    }
-//}
 
 
 

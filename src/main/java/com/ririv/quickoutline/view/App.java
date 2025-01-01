@@ -8,7 +8,9 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 
@@ -37,7 +39,14 @@ public class App extends Application {
 
 
     public static void main(String[] args) {
-        launch(args);
+        try {
+            System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+            launch(args);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1); // 确保以非零退出时给出明确错误信息
+        }
+
     }
 
 }

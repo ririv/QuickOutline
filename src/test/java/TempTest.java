@@ -1,11 +1,9 @@
 import com.itextpdf.kernel.pdf.*;
-//import com.itextpdf.text.pdf.PdfDestination;
-//import com.itextpdf.text.pdf.SimpleBookmark;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
 
 public class TempTest {
 
@@ -23,7 +21,7 @@ public class TempTest {
             String a = rootOutline.getTitle();
 //            System.out.println(a+doc.getPageNumber(rootOutline.getContent()));
             List<PdfOutline> outlines = rootOutline.getAllChildren();
-            Map<String, PdfObject> names = doc.getCatalog().getNameTree(PdfName.Dests).getNames();
+            var nameTree = doc.getCatalog().getNameTree(PdfName.Dests);
 //            List<Bookmark> bookmarks = new ArrayList<>();
             System.out.println(a);
 
@@ -33,7 +31,7 @@ public class TempTest {
 //             Note: 这里返回类型为PdfObject，但调用PdfObject.getType()发现返回为3，查看源码发现3对应Dictionary，因此可以放心将其强制转换为PdfDictionary
 //             names参数是负责解决指定目的地的参数，是正确获取页码所必需的，因为PDF可能包含明确的和命名的目的地，要获取参照上面
                     String title = child.getTitle();
-                    int pageNum = doc.getPageNumber((PdfDictionary) child.getDestination().getDestinationPage(names));
+                    int pageNum = doc.getPageNumber((PdfDictionary) child.getDestination().getDestinationPage(nameTree));
 //                    int pageNum = doc.getPageNumber(child.getContent());
 
                     System.out.println(title + "  " + pageNum);

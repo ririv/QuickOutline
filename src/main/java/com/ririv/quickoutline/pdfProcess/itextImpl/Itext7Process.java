@@ -3,12 +3,11 @@ package com.ririv.quickoutline.pdfProcess.itextImpl;//package com.ririv.contents
 
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
-import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
+import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.pdfProcess.PdfProcess;
 
 import java.io.IOException;
-import java.util.Map;
 
 import static com.ririv.quickoutline.entity.Bookmark.buildLine;
 
@@ -140,8 +139,8 @@ public class Itext7Process implements PdfProcess {
 
         PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile));
         PdfOutline rootOutline = srcDoc.getOutlines(false);
-        Map<String, PdfObject> names = srcDoc.getCatalog().getNameTree(PdfName.Dests).getNames();
-//        names.forEach((p, q) -> System.out.println(p + "  " + q + "\n"));
+        PdfNameTree nameTree = srcDoc.getCatalog().getNameTree(PdfName.Dests);
+//        nameTree.getNames().forEach((p, q) -> System.out.println(p + "  " + q + "\n"));
         StringBuilder text = new StringBuilder();
 
 //         if (rootOutline.getDestination() != null) {
@@ -150,7 +149,7 @@ public class Itext7Process implements PdfProcess {
             System.out.println("The doc has no outline");
             return "";
         }
-        else outlines2Text(rootOutline, text, offset, 0, names, srcDoc);
+        else outlines2Text(rootOutline, text, offset, 0, nameTree, srcDoc);
 
 //        }
         srcDoc.close(); //记得关闭
@@ -159,19 +158,18 @@ public class Itext7Process implements PdfProcess {
     }
 
 
-    private void outlines2Text(PdfOutline outlines, StringBuilder text, int offset, int level, Map<
-            String, PdfObject> names, PdfDocument srcDoc) {
+    private void outlines2Text(PdfOutline outlines, StringBuilder text, int offset, int level, PdfNameTree nameTree, PdfDocument srcDoc) {
 
         if (outlines.getAllChildren() != null) {
             for (PdfOutline child : outlines.getAllChildren()) {
                 /*
                  */
-                int pageNum = srcDoc.getPageNumber((PdfDictionary) child.getDestination().getDestinationPage(names));
+                int pageNum = srcDoc.getPageNumber((PdfDictionary) child.getDestination().getDestinationPage(nameTree));
                 pageNum = pageNum - offset; //原始页码
 
                 buildLine(text, level, child.getTitle(), Integer.toString(pageNum));
 
-                outlines2Text(child, text, offset, level + 1, names, srcDoc);
+                outlines2Text(child, text, offset, level + 1, nameTree, srcDoc);
             }
         }
     }
