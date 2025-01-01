@@ -57,7 +57,7 @@ public abstract class Form {
         int i = 1;
         for (String line : preprocessedText) {
             var current = line2BookmarkWithLevel(offset, line, i++);
-            linearBookmarkLevelMap.put(current.getX(),current.getY());
+            linearBookmarkLevelMap.put(current.x(),current.y());
         }
 //        postProcess(linearBookmarkLevelMap);
         return linearBookmarkLevelMap;

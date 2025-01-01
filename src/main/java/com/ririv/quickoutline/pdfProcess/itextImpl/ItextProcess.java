@@ -12,7 +12,7 @@ import java.io.IOException;
 import static com.ririv.quickoutline.entity.Bookmark.buildLine;
 
 
-public class Itext7Process implements PdfProcess {
+public class ItextProcess implements PdfProcess {
 
     @Override
     public void setContents(Bookmark rootBookmark, String srcFile, String destFile) throws IOException {
@@ -133,7 +133,7 @@ public class Itext7Process implements PdfProcess {
         }
     }
 
-
+    //https://kb.itextpdf.com/itext/how-to-create-hierarchical-bookmarks
     @Override
     public String getContents(String srcFile, int offset) throws IOException {
 

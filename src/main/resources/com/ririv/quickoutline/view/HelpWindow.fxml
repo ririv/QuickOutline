@@ -1,4 +1,4 @@
-<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 <AnchorPane
@@ -25,7 +25,7 @@
             <Text>本软件</Text>
             <Hyperlink onMouseClicked="#browseRemoteRepo">开放源代码</Hyperlink>
         </FlowPane>
-        <Text>Version: 1.0.1</Text>
+        <Label fx:id="versionLabel" />
         <Text>开源软件使用: iText7, JFoenix...</Text>
         <Text fill="#fd5656">使用时请注意遵循 iText7 Licence (AGPL)</Text>
         <Text fill="#fd5656">否则造成的后果由使用者承担一切责任</Text>

@@ -36,14 +36,19 @@ application{
     mainClass.set("com.ririv.quickoutline.view.App")
 }
 
+
+def itextVersion = '9.0.0'
+
 // compile 不要用了，已经废弃了
 // 不能下载请配置gradle代理
 dependencies {
 //    implementation 'com.jfoenix:jfoenix:9.0.10' //官方版本，不更新了
     implementation 'org.rationalityfrontline.workaround:jfoenix:21.0.0'
-    implementation 'com.itextpdf:kernel:9.0.0'
-    implementation 'com.itextpdf:io:9.0.0'
-    implementation 'com.itextpdf:layout:9.0.0'
+    implementation "com.itextpdf:itext-core:${itextVersion}"
+    implementation "com.itextpdf:bouncy-castle-adapter:${itextVersion}"
+    implementation "com.itextpdf:kernel:${itextVersion}"
+    implementation "com.itextpdf:io:${itextVersion}"
+    implementation "com.itextpdf:layout:${itextVersion}"
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 //    implementation 'io.github.palexdev:materialfx:11.12.0'  //考虑换一个UI库
@@ -58,10 +63,6 @@ repositories {
     mavenLocal()
     mavenCentral()
 }
-
-
-
-
 
 def args = [
         "--add-exports=javafx.controls/com.sun.javafx.scene.control=com.jfoenix",
@@ -81,7 +82,8 @@ def args = [
         "--add-opens=java.base/java.lang.reflect=com.jfoenix"
 ]
 
-
+//传递版本号给Java程序，将在System.System.getProperty("app.version")获取
+args += ['-Dapp.version=' + project.version]
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -89,21 +91,30 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 
+//tasks.register('generateVersionProperties') {
+//    doFirst {
+//        def propertiesFile = new File(project.layout.buildDirectory.asFile.get(), "resources${File.separator}version.properties")
+//        propertiesFile.text = "version=${version}"
+//    }
+//}
+//
+//processResources.dependsOn(generateVersionProperties)  // 确保在资源处理之前生成version.properties
+//
+
+// 仅对application中的run任务有效，对build中任务无效
 run {
     jvmArgs = args
 }
 
 
-
-
 def os = org.gradle.internal.os.OperatingSystem.current()
 
 //https://badass-jlink-plugin.beryx.org/releases/latest/
+// 仅对build中任务有效，对application中的run任务无效，
 jlink {
     launcher {
         name = 'QuickOutline'
         jvmArgs = args
-
     }
 //    https://walczak.it/blog/distributing-javafx-desktop-applications-without-requiring-jvm-using-jlink-and-jpackage
     jpackage {

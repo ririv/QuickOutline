@@ -1,10 +1,10 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.enums.Method;
+import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.service.PdfService;
-import com.ririv.quickoutline.utils.OsTypeUtil;
+import com.ririv.quickoutline.utils.InfoUtil;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -228,12 +228,18 @@ public class MainController {
                 try {
 //                    Desktop.getDesktop().browse(new File(filepathText.getText()).toURI()); //打开文件
                     //打开文件所在文件夹并选择文件
-                    String command = "";
-                    if (OsTypeUtil.isWindows()) command = "explorer.exe /select, \"" + destFilePath.replaceAll("/", "\\\\" + "\""); //windows
-                    else if (OsTypeUtil.isMacOS()) command = "open -R \"" + destFilePath + "\""; //macos
-                    else if (OsTypeUtil.isLinux()) command = "nautilus \"" + destFilePath + "\""; // 打开文件可以使用 xdg-open
+                    String[] command;
+                    if (InfoUtil.isWindows()) {
+                        command = new String[]{"explorer.exe", "/select", destFilePath.replaceAll("/", "\\\\")};
+                    }
+                    else if (InfoUtil.isMacOS()) {
+                        command = new String[]{"open", "-R", destFilePath}; //macos
+                    }
+                    else {
+                        command = new String[]{"nautilus", destFilePath}; // 打开文件可以使用 xdg-open
+                    }
                     Process p = Runtime.getRuntime().exec(command);
-                    System.out.println("exec command: "+ command);
+                    System.out.println("Executing command: " + String.join(" ", command));
                     InputStream is = p.getInputStream();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                     String s;
