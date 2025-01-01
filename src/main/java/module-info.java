@@ -1,7 +1,6 @@
 module quickoutline {
     requires javafx.controls;
     requires javafx.fxml;
-    requires itextpdf;
     requires kernel;
     requires java.desktop;
     requires javafx.web;

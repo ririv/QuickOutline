@@ -34,6 +34,7 @@ public class VscodeImpl implements ExternalEditor {
 
         System.out.println(command);
         try {
+            // 弃用 TODO
             p = Runtime.getRuntime().exec(command);
         }
         catch (IOException e){

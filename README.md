@@ -1,7 +1,5 @@
 # Quick Outline
 
-注：本人学业+实习繁忙，所有issues将于2024年统一处理。在此之前，如有pr可直接提交，没问题我会merge
-
 ## 界面
 
 ![interface](image/screenshot.png)
@@ -116,4 +114,48 @@ Windows: 解压后直接运行.exe文件
 Mac: 提供安装包，目前打开所生成的PDF文件所在位置功能有点小问题，不可用
 
 [下载地址](https://github.com/ririv/QuickOutline/releases)
+
+
+## 构建、运行、打包（非开发人员掠过）
+
+### 版本一致性
+为确保兼容，请保证版本一致性，目前项目采用：
+Java 21 (LTS)
+Javafx 21 (LTS)
+Gradle 8.12
+
+由于项目使用了jlink打包需要模块化项目，却引用了非模块化项目（IText），因意需要注意在gradle中处理模块化问题
+```
+plugins {
+    ...
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+    // 参考 https://github.com/openjfx/javafx-gradle-plugin#extra-plugins
+    // 不加入此会出现找不到模块错误
+    id 'org.javamodularity.moduleplugin' version '1.8.15'
+    
+    // 请使用高版本，’2.26.0‘实测出现 "Unsupported class file major version 65"错误
+    jlink 3.1.1  
+}
+```
+
+### 运行问题
+请使用 Gradle 下的 Run 任务，不要使用IDEA自带的Main入口处运行（App）
+
+### 打包问题
+使用jpackageImage可以直接成功打包成应用镜像（可执行文件）
+
+但使用jpackage打包成安装包文件，在生成安装包时，需要操作系统相关的工具，例如：
+- Windows：需要安装 WiX Toolset。
+- macOS：需要 Xcode 和开发者签名。
+- Linux：需要 dpkg 或 rpm。
+
+> **Note:** jpackage依赖于旧版本的 WiX，提示"找不到 WiX 工具 (light.exe, candle.exe)"
+> 
+> 因此请使用 WiX 3，并确保它添加到环境变量
+
+
+## Windows下中文乱码问题 TODO
+打包时可能会出现日志乱码问题，设置UTF-8无果，临时解决方案（这是GBK编码）：
+
+Gradle运行配置（jpackage）-虚拟机选项（VM options）-添加`-Dfile.encoding=GBK`
 
