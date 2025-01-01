@@ -1,12 +1,14 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.utils.InfoUtil;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
-
-import java.awt.Desktop;
 import java.net.URISyntaxException;
 
 public class HelpController {
@@ -14,8 +16,10 @@ public class HelpController {
 
     public AnchorPane helpPane;
     public FlowPane innerPane;
+    public Label versionLabel;
 
-    public void initialize(){
+    public void initialize() throws IOException {
+        versionLabel.textProperty().bind(new SimpleStringProperty("Version: " +InfoUtil.getVersion()));
     }
 
     public void browse(String url){

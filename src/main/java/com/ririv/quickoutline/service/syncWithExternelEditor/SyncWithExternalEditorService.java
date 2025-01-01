@@ -7,7 +7,8 @@ import com.ririv.quickoutline.service.syncWithExternelEditor.watchFile.FileModif
 import com.ririv.quickoutline.service.syncWithExternelEditor.watchFile.FileWatcher;
 import com.ririv.quickoutline.utils.Pair;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.function.Consumer;
 
@@ -49,7 +50,7 @@ public class SyncWithExternalEditorService {
             before.run();
 
             fileWatcher.start();
-            ExternalEditor externalEditor = new VscodeImpl(temp, pos.getX(), pos.getY());
+            ExternalEditor externalEditor = new VscodeImpl(temp, pos.x(), pos.y());
 
             externalEditor.launch(sync);
 

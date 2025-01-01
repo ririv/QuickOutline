@@ -3,18 +3,18 @@ package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.enums.Method;
-import com.ririv.quickoutline.textProcess.form.seq.CnSeqForm;
+import com.ririv.quickoutline.pdfProcess.PdfProcess;
+import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcess;
 import com.ririv.quickoutline.textProcess.form.Form;
 import com.ririv.quickoutline.textProcess.form.IndentForm;
-import com.ririv.quickoutline.pdfProcess.PdfProcess;
-import com.ririv.quickoutline.pdfProcess.itextImpl.Itext7Process;
+import com.ririv.quickoutline.textProcess.form.seq.CnSeqForm;
 
 import java.io.IOException;
 
 
 public class PdfService {
 
-    private static final PdfProcess pdfProcess = new Itext7Process();
+    private static final PdfProcess pdfProcess = new ItextProcess();
 //    private static final PdfProcess pdf_process = new Itext5Process();
 
     //下面两个方法本质相同

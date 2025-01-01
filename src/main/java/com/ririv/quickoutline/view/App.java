@@ -42,6 +42,7 @@ public class App extends Application {
         try {
             System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
             launch(args);
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1); // 确保以非零退出时给出明确错误信息

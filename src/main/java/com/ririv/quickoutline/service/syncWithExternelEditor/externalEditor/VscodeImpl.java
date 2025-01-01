@@ -1,9 +1,12 @@
 package com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
 
 import com.ririv.quickoutline.exception.LaunchExternalEditorException;
-import com.ririv.quickoutline.utils.OsTypeUtil;
+import com.ririv.quickoutline.utils.InfoUtil;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.function.Consumer;
 
 import static com.ririv.quickoutline.utils.FileUtil.readFile;
@@ -11,56 +14,59 @@ import static com.ririv.quickoutline.utils.FileUtil.readFile;
 public class VscodeImpl implements ExternalEditor {
 
     final File file;
-    final int x;
-    final int y;
+
+//    position
+    final int line;
+    final int character;
 
 
-    public VscodeImpl(File file, int x, int y) {
+    public VscodeImpl(File file, int line, int character) {
         this.file = file;
-        this.x = x;
-        this.y = y;
+        this.line = line;
+        this.character = character;
     }
 
     private void execCmdAndWaitReturn() {
 
-        Process p;
-
-        String command;
-        if (OsTypeUtil.isWindows()) command = "code.cmd -n -w -g %s:%d:%d ";
-        else if (OsTypeUtil.isMacOS()) command = "open -a \"Visual Studio Code.app\"";
-        else command = "code -n -w -g %s:%d:%d ";
-
-        command = String.format(command, file.getAbsolutePath(), x, y);
-
-        System.out.println(command);
-        try {
-            // 弃用 TODO
-            p = Runtime.getRuntime().exec(command);
+        String[] command;
+        String gotoArg = "%s:%d:%d".formatted(file.getAbsolutePath(), line, character);
+        if (InfoUtil.isWindows()) {
+            command = new String[]{"code.cmd", "-n", "-w", "-g", gotoArg};
         }
-        catch (IOException e){
-            throw new LaunchExternalEditorException();
+//        else if (OsTypeUtil.isMacOS()) {
+//            command = new String[]{"open", "-a", "Visual Studio Code.app"};
+//        }
+        else {
+            command = new String[]{"code", "-n", "-w", "-g", gotoArg};
         }
 
-        //读取命令的输出信息
-        InputStream is = p.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        System.out.println("Executing command: "+String.join(" ", command));
+
         try {
+            // 使用 exec(String[] cmdarray) 来执行命令
+            Process p = Runtime.getRuntime().exec(command);
+
+            // 读取命令的输出
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
             int exitValue = p.waitFor();
-            System.out.println(Thread.currentThread().getName() + ": External editor has returned");
+
+            System.out.println(Thread.currentThread().getName() + ": 外部编辑器已返回");
             if (exitValue != 0) {
                 System.out.println(exitValue);
-                //说明命令执行失败
-                //可以进入到错误处理步骤中
+                // 命令执行失败，可以在这里处理错误
             }
-            //打印输出信息
+
+            // 打印输出信息
             String s;
             while ((s = reader.readLine()) != null) {
                 System.out.println(s);
             }
-        } catch (InterruptedException | IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
+            throw new LaunchExternalEditorException(); // 可以抛出自定义异常
         }
     }
+
 
     @Override
     public void launch(Consumer<String> operateAfterReturn) {
