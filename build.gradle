@@ -131,16 +131,18 @@ jlink {
 
         if (os.isWindows()){
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.ico'
-//            installerType = 'msi' //或exe
+            installerType = 'msi' //或exe
             installerOptions = [
-                    '--win-shortcut',    // TODO 这两行没生效
+                    '--win-shortcut',
                     '--win-dir-chooser',
+                    '--win-menu'
             ]+installerOptionsParams
-
         }
-        if (os.isMacOsX())
+        else if (os.isMacOsX()) {
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
+            installerType = 'dmg' //或pkg
             installerOptions = installerOptionsParams
+        }
     }
 
 }
