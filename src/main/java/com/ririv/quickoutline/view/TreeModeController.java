@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.entity.Bookmark;
+import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -67,7 +67,7 @@ public class TreeModeController {
             sb.append(line).append("\n");
         }
         System.out.println(sb);
-        rootBookmark = pdfService.textToBookmarkByMethod(sb.toString(), 0, Method.INDENT
+        rootBookmark = pdfService.convertTextToBookmarkTreeByMethod(sb.toString(), 0, Method.INDENT
 //                ,true
         );
 

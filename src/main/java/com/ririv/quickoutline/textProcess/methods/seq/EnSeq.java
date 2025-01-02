@@ -1,11 +1,14 @@
 package com.ririv.quickoutline.textProcess.methods.seq;
+import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.textProcess.methods.LineProcessor;
+
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 
 // From ChatGPT
-public class EnSeq {
+public class EnSeq implements LineProcessor,Seq {
 
     // 定义可以作为章节前缀的关键字
     private final List<String> keywords = Arrays.asList("Chapter", "Section", "Part", "Appendix", "Label");
@@ -19,7 +22,7 @@ public class EnSeq {
     public List<Map<String, String>> parseTableOfContents(List<String> lines) {
         List<Map<String, String>> result = new ArrayList<>();
         for (String line : lines) {
-            Map<String, String> parsedLine = parseSingleLine(line);
+            var parsedLine = parseSingleLine(line);
             if (parsedLine != null) {
                 result.add(parsedLine);
             }
@@ -43,14 +46,19 @@ public class EnSeq {
             String indentation = getIndentation(line);
             String[] chapterInfo = extractChapterInfo(contentPart);
 
+
+            Map<String, String> parsedLine = new LinkedHashMap<>();
+            parsedLine.put("indent", indentation);
+            parsedLine.put("pageNum", pageNumber);
+            parsedLine.put("title", contentPart);
             if (chapterInfo != null) {
-                Map<String, String> parsedLine = new HashMap<>();
-                parsedLine.put("indentation", indentation);
-                parsedLine.put("chapterNumber", chapterInfo[0]);
-                parsedLine.put("chapterTitle", chapterInfo[1]);
-                parsedLine.put("pageNumber", pageNumber);
-                return parsedLine;
+                parsedLine.put("seq", chapterInfo[0]);
+                parsedLine.put("titleWO", chapterInfo[1]);
+            } else {
+                parsedLine.put("seq", "");
+                parsedLine.put("titleWO", contentPart);
             }
+            return parsedLine;
         }
         return null; // 无法解析
     }
@@ -133,7 +141,33 @@ public class EnSeq {
 
             // 打印解析结果
         for (Map<String, String> line : parsedLines) {
-            System.out.println("缩进: [" + line.get("indentation") + "], 章节序号: [" + line.get("chapterNumber") + "], 章节标题: [" + line.get("chapterTitle") + "], 页码: [" + line.get("pageNumber") + "]");
+            System.out.println("缩进: [" + line.get("indent") + "], 章节序号: [" + line.get("seq") + "], 章节标题: [" + line.get("titleWO") + "], 页码: [" + line.get("pageNum") + "]");
         }
     }
+
+    @Override
+    public Bookmark processLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+        Map<String, String> res = parseSingleLine(line);
+        if (res != null) {
+            String title = res.get("title");
+            String pageNum =  res.get("pageNum");
+            String seq = res.get("seq");
+            int level;
+            if (seq == null || seq.isEmpty()) { // 没有seq，采用上一个bookmark的level
+                if (linearBookmarkList.isEmpty()){ //没有上一个，即为第一个，也为顶层，level为1
+                    level = 1;
+                }
+                else {
+                    level = linearBookmarkList.getLast().getLevel();
+                }
+            }
+            else{
+                level = getLevelByStandardSeq(seq);
+            }
+
+            return new Bookmark(title, Integer.parseInt(pageNum)+offset,level);
+        }
+        return null; // 无法解析
+    }
+
 }

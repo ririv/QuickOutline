@@ -1,13 +1,11 @@
 package com.ririv.quickoutline.service;
 
 
-import com.ririv.quickoutline.entity.Bookmark;
+import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PdfProcess;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcess;
-import com.ririv.quickoutline.textProcess.methods.Form;
-import com.ririv.quickoutline.textProcess.methods.Indent;
+import com.ririv.quickoutline.textProcess.TextProcessor;
 import com.ririv.quickoutline.textProcess.methods.Method;
-import com.ririv.quickoutline.textProcess.methods.seq.CnSeq;
 
 import java.io.IOException;
 
@@ -20,7 +18,7 @@ public class PdfService {
     public void addContents(String text, String srcFile, String destFile, int offset, Method method) {
         if (srcFile.isEmpty()) throw new RuntimeException("PDF路径为空");
 //        Bookmark rootBookmark = textToBookmarkByMethod(text, offset, method,true);
-        Bookmark rootBookmark = textToBookmarkByMethod(text, offset, method);
+        Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);
 
         try {
             pdfProcess.setContents(rootBookmark, srcFile, destFile);
@@ -33,20 +31,13 @@ public class PdfService {
     //先经过text生成bookmark，在将bookmark转化为text
     public String autoFormatBySeq(String text) {
 //        Bookmark rootBookmark = textToBookmarkByMethod(text, 0, Method.SEQ,false);
-        Bookmark rootBookmark = textToBookmarkByMethod(text, 0, Method.SEQ);
-        return rootBookmark.toText();
+        Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, 0, Method.SEQ);
+        return rootBookmark.toTreeText();
     }
 
-    public Bookmark textToBookmarkByMethod(String text, int offset, Method method) {
-//    public static Bookmark textToBookmarkByMethod(String text, int offset, Method method,boolean isSkipEmptyLine) {
-        Form form;
-        if (method == Method.SEQ) {
-            form = new CnSeq();
-        } else {
-            form = new Indent();
-        }
-
-        return form.generateBookmarkTree(text, offset);
+    public Bookmark convertTextToBookmarkTreeByMethod(String text, int offset, Method method) {
+        TextProcessor textProcessor = new TextProcessor();
+        return textProcessor.process(text, offset, method);
     }
 
 

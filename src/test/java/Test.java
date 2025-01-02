@@ -1,4 +1,4 @@
-import com.ririv.quickoutline.entity.Bookmark;
+import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PdfProcess;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcess;
 import com.ririv.quickoutline.service.PdfService;
@@ -43,7 +43,7 @@ Part I  监督学习  25
     final Method method = Method.SEQ;
 
     PdfService pdfService = new PdfService();
-    final Bookmark rootBookmark = pdfService.textToBookmarkByMethod(text, 2, method);
+    final Bookmark rootBookmark = pdfService.convertTextToBookmarkTreeByMethod(text, 2, method);
 
     @org.junit.jupiter.api.Test
     void test1() throws IOException {
