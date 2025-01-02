@@ -1,9 +1,9 @@
 package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.entity.Bookmark;
-import com.ririv.quickoutline.enums.Method;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.service.PdfService;
+import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.InfoUtil;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
