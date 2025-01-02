@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.textProcess.form;
+package com.ririv.quickoutline.textProcess.methods;
 
 
 import com.ririv.quickoutline.entity.Bookmark;
@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 
 //中英文通用
-public class IndentForm extends Form {
+public class Indent extends Form {
 
     /*    每级缩进占用的空格，一个doc的每级缩进都是一样的
         由于会出现用户输入的文本缩进空格数不同的情况，如有时为是2个，有时为4个。所以不指定，而是用于检测得到*/
@@ -26,7 +26,7 @@ public class IndentForm extends Form {
                     +  "\\s*$");
 
 
-    public Pair<Bookmark,Integer> line2BookmarkWithLevel(int offset, String line, int index) {
+    public Pair<Bookmark,Integer> line2Bookmark(int offset, String line, int index) {
         Matcher matcher = indentPattern.matcher(line);
         if (matcher.find()) {
 

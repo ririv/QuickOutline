@@ -2,12 +2,12 @@ package com.ririv.quickoutline.service;
 
 
 import com.ririv.quickoutline.entity.Bookmark;
-import com.ririv.quickoutline.enums.Method;
 import com.ririv.quickoutline.pdfProcess.PdfProcess;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcess;
-import com.ririv.quickoutline.textProcess.form.Form;
-import com.ririv.quickoutline.textProcess.form.IndentForm;
-import com.ririv.quickoutline.textProcess.form.seq.CnSeqForm;
+import com.ririv.quickoutline.textProcess.methods.Form;
+import com.ririv.quickoutline.textProcess.methods.Indent;
+import com.ririv.quickoutline.textProcess.methods.Method;
+import com.ririv.quickoutline.textProcess.methods.seq.CnSeq;
 
 import java.io.IOException;
 
@@ -41,9 +41,9 @@ public class PdfService {
 //    public static Bookmark textToBookmarkByMethod(String text, int offset, Method method,boolean isSkipEmptyLine) {
         Form form;
         if (method == Method.SEQ) {
-            form = new CnSeqForm();
+            form = new CnSeq();
         } else {
-            form = new IndentForm();
+            form = new Indent();
         }
 
         return form.generateBookmarkTree(text, offset);

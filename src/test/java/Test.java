@@ -1,8 +1,8 @@
 import com.ririv.quickoutline.entity.Bookmark;
-import com.ririv.quickoutline.enums.Method;
 import com.ririv.quickoutline.pdfProcess.PdfProcess;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcess;
 import com.ririv.quickoutline.service.PdfService;
+import com.ririv.quickoutline.textProcess.methods.Method;
 
 import java.io.IOException;
 

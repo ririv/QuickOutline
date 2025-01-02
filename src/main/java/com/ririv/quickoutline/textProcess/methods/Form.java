@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.textProcess.form;
+package com.ririv.quickoutline.textProcess.methods;
 
 
 import com.ririv.quickoutline.entity.Bookmark;
@@ -48,7 +48,7 @@ public abstract class Form {
 
         int i = 1;
         for (String line : preprocessedText) {
-            var current = line2BookmarkWithLevel(offset, line, i++);
+            var current = line2Bookmark(offset, line, i++);
             linearBookmarkLevelMap.put(current.x(),current.y());
         }
 //        postProcess(linearBookmarkLevelMap);
@@ -73,6 +73,6 @@ public abstract class Form {
     }
 
     //返回一个 bookmark,level 键值对
-    public abstract Pair<Bookmark,Integer> line2BookmarkWithLevel(int offset, String line, int index);
+    public abstract Pair<Bookmark,Integer> line2Bookmark(int offset, String line, int index);
 
 }

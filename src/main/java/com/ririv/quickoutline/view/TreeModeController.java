@@ -1,8 +1,8 @@
 package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.entity.Bookmark;
-import com.ririv.quickoutline.enums.Method;
 import com.ririv.quickoutline.service.PdfService;
+import com.ririv.quickoutline.textProcess.methods.Method;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
