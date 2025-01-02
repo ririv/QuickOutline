@@ -1,7 +1,7 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
+import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.InfoUtil;
@@ -283,7 +283,7 @@ public class MainController {
     public void reconstructTree() {
         if (textModeController.contentsText.getText().isEmpty()) return;
 
-        Bookmark rootBookmark = pdfService.textToBookmarkByMethod(
+        Bookmark rootBookmark = pdfService.convertTextToBookmarkTreeByMethod(
                 textModeController.contentsText.getText(), 0,
                 (Method) methodGroup.getSelectedToggle().getUserData()
 //                ,true

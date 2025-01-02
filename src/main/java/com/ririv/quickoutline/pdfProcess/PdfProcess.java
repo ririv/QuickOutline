@@ -2,7 +2,7 @@ package com.ririv.quickoutline.pdfProcess;
 
 
 
-import com.ririv.quickoutline.entity.Bookmark;
+import com.ririv.quickoutline.model.Bookmark;
 
 import java.io.IOException;
 

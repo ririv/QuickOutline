@@ -1,28 +1,21 @@
-package com.ririv.quickoutline.entity;
+package com.ririv.quickoutline.model;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static com.ririv.quickoutline.textProcess.PreProcess.TwoBlank;
+import static com.ririv.quickoutline.textProcess.Constants.TwoBlank;
 
 //一个顶级目录为一个bookmark
 public class Bookmark{
 
-    //仅在格式为标准格式下使用，如”1.2.5“
-    /*
-     * TODO：有些书会有”Part Ⅱ“的顶级目录，此时将”1.2.5“向从第二级目录开始处理
-     *  一种方案是采用 ”Ⅱ.1.2.5“的形式
-     *  另一种方案是，是用postprocess
-     * */
-    private String seq;
     private String title;
     private Integer offsetPageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
     private final List<Bookmark> children = new ArrayList<>();
     private Bookmark parent;
-    private int index; //行号，非必要，仅用来记录其所在text中的位置信息
-    private int level; // 0为root，1为顶层目录（since v1.0.3，此前版本中-1为root，0为顶层）
+    private final int level; // 0为root，1为顶层目录（since v1.0.3，此前版本中-1为root，0为顶层）
+    private List<Bookmark> linearBookmarkList; // root节点下将记录原始的线性Bookmark
 
     public Bookmark(String title, Integer offsetPageNum, int level) {
         this.title = title;
@@ -36,13 +29,6 @@ public class Bookmark{
         return new Bookmark("root", null, 0);
     }
 
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
-    public int getIndex() {
-        return index;
-    }
 
     public void setOffsetPageNum(Integer offsetPageNum) {
         this.offsetPageNum = offsetPageNum;
@@ -50,24 +36,6 @@ public class Bookmark{
 
     public boolean isRoot(){
         return (this.parent == null) && (getLevel() == 0);
-    }
-
-    public void setSeq(String seq) {
-        if (seq == null) {
-            this.seq = null;
-        }
-
-        //匹配seq标准格式，如"12.3.10"
-        else if (seq.matches("^(\\d+\\.)+\\d+$")) {
-            this.seq = seq;
-        } else {
-            this.seq = null;
-        }
-    }
-
-
-    public String getSeq() {
-        return seq;
     }
 
     public Optional<Integer> getOffsetPageNum() {
@@ -84,7 +52,6 @@ public class Bookmark{
     }
 
     public int getLevel() {
-        checkLevel();
         return level;
     }
 
@@ -95,16 +62,15 @@ public class Bookmark{
             level++;
             parent = parent.getParent();
         }
+
+        // check
+        boolean res = level == this.level;
+        if (!res) {
+            throw new RuntimeException("level（%d）与实际结构层级（%d）不符合".formatted(this.level, level));
+        }
         return level;
     }
 
-    private void checkLevel() {
-        int structureLevel = getLevelByStructure();
-        boolean res = structureLevel == this.level;
-        if (!res) {
-            throw new RuntimeException("level（%d）与实际结构层级（%d）不符合".formatted(this.level, structureLevel));
-        }
-    }
 
 
     public void changePos(Bookmark parent) {
@@ -167,7 +133,7 @@ public class Bookmark{
 
 
     //包含子节点
-    public String toText() {
+    public String toTreeText() {
         StringBuilder text = new StringBuilder();
         traverse(e -> {
             String pageNumStr = e.getOffsetPageNum().map(String::valueOf).orElse("");
@@ -178,7 +144,7 @@ public class Bookmark{
         return text.toString();
     }
 
-    public void traverse(Consumer<Bookmark> operate) {
+    private void traverse(Consumer<Bookmark> operate) {
         recursiveTraverse(this, operate);
     }
 
@@ -204,4 +170,11 @@ public class Bookmark{
         text.append("\n");
     }
 
+    public List<Bookmark> getLinearBookmarkList() {
+        return linearBookmarkList;
+    }
+
+    public void setLinearBookmarkList(List<Bookmark> linearBookmarkList) {
+        this.linearBookmarkList = linearBookmarkList;
+    }
 }

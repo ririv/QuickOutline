@@ -12,8 +12,9 @@ module quickoutline {
 
 
     exports com.ririv.quickoutline.view;
-    exports com.ririv.quickoutline.entity;
+    exports com.ririv.quickoutline.model;
     exports com.ririv.quickoutline.utils;
     exports com.ririv.quickoutline.service;
     exports com.ririv.quickoutline.textProcess.methods;
+    exports com.ririv.quickoutline.textProcess;
 }

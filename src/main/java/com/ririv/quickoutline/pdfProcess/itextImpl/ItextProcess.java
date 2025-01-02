@@ -3,13 +3,13 @@ package com.ririv.quickoutline.pdfProcess.itextImpl;//package com.ririv.contents
 
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
-import com.ririv.quickoutline.entity.Bookmark;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
+import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PdfProcess;
 
 import java.io.IOException;
 
-import static com.ririv.quickoutline.entity.Bookmark.buildLine;
+import static com.ririv.quickoutline.model.Bookmark.buildLine;
 
 
 public class ItextProcess implements PdfProcess {
@@ -103,7 +103,7 @@ public class ItextProcess implements PdfProcess {
                     srcDoc.close();
                     return new BookmarkFormatException(String.format(
                             "添加页码错误\n\"%s\"无页码",
-                            title), rootBookmark.getIndex());
+                            title));
                     });
 
             if (pageNum > -1 && pageNum <= pageNumMax) {
@@ -120,7 +120,7 @@ public class ItextProcess implements PdfProcess {
                 srcDoc.close();
                 throw new BookmarkFormatException(String.format(
                         "添加页码错误\n\"%s  %d\" 偏移后的页码超过最大页数或为负数\n偏移后的页码范围应为: 0 ~ %d",
-                        title, pageNum, pageNumMax), rootBookmark.getIndex());
+                        title, pageNum, pageNumMax));
             }
         }
 
