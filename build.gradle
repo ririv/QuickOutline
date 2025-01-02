@@ -45,7 +45,8 @@ dependencies {
 //    implementation 'com.jfoenix:jfoenix:9.0.10' //官方版本，不更新了
     implementation 'org.rationalityfrontline.workaround:jfoenix:21.0.0'
     implementation "com.itextpdf:itext-core:${itextVersion}"
-    implementation "com.itextpdf:bouncy-castle-adapter:${itextVersion}"
+    // 使用该依赖打包会出现 错误: 当前不支持已签名模块化 JAR ..\QuickOutline\build\jlinkbase\jlinkjars\bcpkix-jdk18on-1.78.jar,
+//    implementation "com.itextpdf:bouncy-castle-adapter:${itextVersion}" //签名用
     implementation "com.itextpdf:kernel:${itextVersion}"
     implementation "com.itextpdf:io:${itextVersion}"
     implementation "com.itextpdf:layout:${itextVersion}"
