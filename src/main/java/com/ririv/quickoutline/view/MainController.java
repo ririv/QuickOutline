@@ -83,16 +83,6 @@ public class MainController {
             }
         });
 
-//        pageNumOffset.focusedProperty().addListener((observable, oldValue, newValue) -> {
-//
-//                if (!observable.getValue()) {
-//                String offset = pageNumOffset.getText();
-//                if (offset != null && offset.length() > 0 && !offset.matches("^[0-9]+$")) {
-//                    showAlert("错误", "页码偏移量格式错误", "页码偏移量只能为0或正整数", Alert.AlertType.ERROR);
-//                }
-//            }
-//        });
-
 
         filepathText.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
@@ -201,11 +191,6 @@ public class MainController {
                 return;
             }
 
-//            if (offsetText.getText().isEmpty()) {
-//                showAlert(Alert.AlertType.ERROR, "请输入页码偏移量，无偏移量则输入0", root.getScene().getWindow());
-//                offsetText.requestFocus();
-//                return;
-//            }
 
             try {
                 pdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodGroup.getSelectedToggle().getUserData());
