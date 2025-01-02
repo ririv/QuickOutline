@@ -149,7 +149,7 @@ public class ItextProcess implements PdfProcess {
             System.out.println("The doc has no outline");
             return "";
         }
-        else outlines2Text(rootOutline, text, offset, 0, nameTree, srcDoc);
+        else outlines2Text(rootOutline, text, offset, 1, nameTree, srcDoc);
 
 //        }
         srcDoc.close(); //记得关闭
