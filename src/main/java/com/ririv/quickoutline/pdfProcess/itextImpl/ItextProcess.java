@@ -24,7 +24,7 @@ public class ItextProcess implements PdfProcess {
         PdfOutline rootOutline = srcDoc.getOutlines(false);
         rootOutline.getAllChildren().clear();
 
-        bookMarkToOutlines(rootBookmark, rootOutline, srcDoc);
+        bookmarkToOutlines(rootBookmark, rootOutline, srcDoc);
 
         srcDoc.close();
 
@@ -87,10 +87,10 @@ public class ItextProcess implements PdfProcess {
 //    }
 
     //合并了上面两个函数
-    private void bookMarkToOutlines(Bookmark rootBookmark, PdfOutline rootOutline, PdfDocument srcDoc) {
+    private void bookmarkToOutlines(Bookmark rootBookmark, PdfOutline rootOutline, PdfDocument srcDoc) {
 
         //不为根结点时，进行添加操作
-        if (rootBookmark.getLevel() != -1) {
+        if (!rootBookmark.isRoot()) {
 
             String title = rootBookmark.getTitle();
 
@@ -126,7 +126,7 @@ public class ItextProcess implements PdfProcess {
 
         if (!rootBookmark.getChildren().isEmpty()) {
             for (Bookmark subBookmark : rootBookmark.getChildren()) {
-                bookMarkToOutlines(subBookmark, rootOutline, srcDoc);
+                bookmarkToOutlines(subBookmark, rootOutline, srcDoc);
 
             }
 

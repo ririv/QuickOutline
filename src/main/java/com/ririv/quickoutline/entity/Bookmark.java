@@ -22,16 +22,18 @@ public class Bookmark{
     private final List<Bookmark> children = new ArrayList<>();
     private Bookmark parent;
     private int index; //行号，非必要，仅用来记录其所在text中的位置信息
+    private int level; // 0为root，1为顶层目录（since v1.0.3，此前版本中-1为root，0为顶层）
 
-    public Bookmark(String title, Integer offsetPageNum) {
+    public Bookmark(String title, Integer offsetPageNum, int level) {
         this.title = title;
         this.offsetPageNum = offsetPageNum;
+        this.level = level;
     }
 
     //用来创造根结点，非顶级目录
     public static Bookmark createRoot() {
         //"root",原字符串应为"Outlines"
-        return new Bookmark("root", -1);
+        return new Bookmark("root", null, 0);
     }
 
     public void setIndex(int index) {
@@ -44,6 +46,10 @@ public class Bookmark{
 
     public void setOffsetPageNum(Integer offsetPageNum) {
         this.offsetPageNum = offsetPageNum;
+    }
+
+    public boolean isRoot(){
+        return (this.parent == null) && (getLevel() == 0);
     }
 
     public void setSeq(String seq) {
@@ -77,27 +83,27 @@ public class Bookmark{
         this.title = title;
     }
 
-
-    //0为顶级目录，-1为根结点root（隐藏的）
     public int getLevel() {
-        int level = -1;
-        Bookmark parent = this.getParent();
-        while (parent != null) {
-            level++;
-
-            parent = parent.getParent();
-        }
-        ;
-//        System.out.println(title+ " "+level);
+        checkLevel();
         return level;
     }
 
-    public boolean isRoot(){
-        return getLevel()==-1;
+    public int getLevelByStructure() {
+        int level = 0;
+        Bookmark parent = this.getParent();
+        while (parent != null) {
+            level++;
+            parent = parent.getParent();
+        }
+        return level;
     }
 
-    public boolean isTopLevel(){
-        return getLevel()==0;
+    private void checkLevel() {
+        int structureLevel = getLevelByStructure();
+        boolean res = structureLevel == this.level;
+        if (!res) {
+            throw new RuntimeException("level（%d）与实际结构层级（%d）不符合".formatted(this.level, structureLevel));
+        }
     }
 
 
@@ -150,11 +156,11 @@ public class Bookmark{
 
     @Override
     public String toString() {
-        if (getLevel() == -1) return "root";
+        if (level == 0) return "root";
         else {
             StringBuilder text = new StringBuilder();
             String offsetPageNumStr = getOffsetPageNum().map(String::valueOf).orElse("");
-            buildLine(text, getLevel(), getTitle(), offsetPageNumStr);
+            buildLine(text, level, getTitle(), offsetPageNumStr);
             return text.toString();
         }
     }
@@ -165,7 +171,7 @@ public class Bookmark{
         StringBuilder text = new StringBuilder();
         traverse(e -> {
             String pageNumStr = e.getOffsetPageNum().map(String::valueOf).orElse("");
-            buildLine(text, e.getLevel(),
+            buildLine(text, e.getLevelByStructure(),
                     e.getTitle(), pageNumStr);
         });
 
@@ -180,7 +186,7 @@ public class Bookmark{
             设为static，防止人为错误地修改代码，以致于无限调用 子bookmark 中的此递归方法
           */
     private static void recursiveTraverse(Bookmark bookmark, Consumer<Bookmark> operate) {
-        if (bookmark.getLevel() != -1) { //非根节点时
+        if (bookmark.getLevelByStructure() != 0) { //非根节点时
             operate.accept(bookmark);
         }
         if (bookmark.getChildren().size() != 0) { //不要使用isEmpty方法

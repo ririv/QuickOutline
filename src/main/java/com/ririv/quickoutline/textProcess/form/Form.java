@@ -23,31 +23,23 @@ public abstract class Form {
     /**
      * @return currentBookmark - 但应使用last接受返回值，因为add完current，last就得更新了，current变为新的last
      */
-    protected Bookmark addBookmarkByLevel(Bookmark current, Bookmark last, int level) {
+    protected Bookmark addBookmarkByLevel(Bookmark current, Bookmark last, int currentLevel) {
 
-        if (level == 0) {
-            rootBookmark.getChildren().add(current);
-            current.setParent(rootBookmark);
-        } else {
-            if (last.getLevel() == level) { //同级
-                last.getOwnerList().add(current);
-                current.setParent(last.getParent());
-
-            } else if (last.getLevel() < level) { //进入下一级，不会跳级
-                last.getChildren().add(current);
-                current.setParent(last);
-            } else { //回到上级，可能跳级
-                List<Bookmark> currentList = null;
-                Bookmark temp = last;
-                for (int dif = last.getLevel() - level; dif != 0; dif--) {
-                    currentList = temp.getParent().getOwnerList();
-                    temp = temp.getParent();
-                }
-                assert currentList != null;
-                currentList.add(current);
-                current.setParent(last.getParent().getParent());
+        if (last.getLevelByStructure() == currentLevel) { //同级
+            last.getOwnerList().add(current);
+            current.setParent(last.getParent());
+        } else if (last.getLevelByStructure() < currentLevel) { //进入下一级，不会跳级
+            last.getChildren().add(current);
+            current.setParent(last);
+        } else { //回到上级，可能跳级
+            Bookmark parent = last.getParent(); //目前last所属层级的parent
+            for (int dif = last.getLevelByStructure() - currentLevel; dif != 0; dif--) { //实际current应属于的parent
+                parent = parent.getParent();
             }
+            parent.getChildren().add(current);
+            current.setParent(parent);
         }
+
         return current;
     }
 
@@ -64,7 +56,7 @@ public abstract class Form {
     }
 
 
-    public Bookmark mapToTree(Map<Bookmark, Integer> linearBookmarkMap) {
+    public Bookmark convertMapToBookmarkTree(Map<Bookmark, Integer> linearBookmarkMap) {
         Bookmark last = rootBookmark;
         for (var current : linearBookmarkMap.keySet()) {
             last = addBookmarkByLevel(current,last,linearBookmarkMap.get(current));
@@ -77,7 +69,7 @@ public abstract class Form {
      */
     public Bookmark generateBookmarkTree(String text, int offset) {
         var linearBookmarkLevelMap = createLinearBookmarkMap(text,offset);
-        return mapToTree(linearBookmarkLevelMap);
+        return convertMapToBookmarkTree(linearBookmarkLevelMap);
     }
 
     //返回一个 bookmark,level 键值对

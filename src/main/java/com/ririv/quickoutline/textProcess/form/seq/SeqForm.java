@@ -2,7 +2,7 @@ package com.ririv.quickoutline.textProcess.form.seq;
 
 import com.ririv.quickoutline.entity.Bookmark;
 
-import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,9 +35,9 @@ public interface SeqForm {
     }
 
 
-    default int checkLevelBySeq(String seq) {
+    default int getLevelBySeq(String seq) {
 
-        int level = 0;
+        int level = 1;
         while (seq.contains(".")) {
             seq = seq.replaceFirst("\\.", "");
             level++;
