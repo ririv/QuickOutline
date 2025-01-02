@@ -1,7 +1,7 @@
 package com.ririv.quickoutline.textProcess.form.seq;
 
-import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.entity.Bookmark;
+import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.textProcess.form.Form;
 import com.ririv.quickoutline.utils.Pair;
 
@@ -27,7 +27,7 @@ public class CnSeqForm extends Form implements SeqForm {
         Matcher standard = standardPattern.matcher(line);
         Matcher matcher = cnPattern.matcher(line);
         if (matcher.find()) {
-            String lnIndent = matcher.group(1); //行缩进
+            String linePrefix = matcher.group(1); //行缩进前缀
             String rawSeq = matcher.group(2) != null ? matcher.group(2) : ""; //原seq字符串
             rawSeq = rawSeq.replaceAll(OneBlank, "");
             String seq = standardizeSeq(rawSeq); //检测到的seq
@@ -40,8 +40,8 @@ public class CnSeqForm extends Form implements SeqForm {
                 pageNum = null;
             }
 
-            int level = checkLevelBySeq(seq);
-            Bookmark current = new Bookmark(title, pageNum);
+            int level = getLevelBySeq(seq);
+            Bookmark current = new Bookmark(title, pageNum, level);
             current.setIndex(index);
             current.setSeq(seq);
 

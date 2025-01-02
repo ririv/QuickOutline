@@ -155,7 +155,7 @@ plugins {
 
 
 ## Windows下中文乱码问题 TODO
-打包时可能会出现日志乱码问题，设置UTF-8无果，临时解决方案（这是GBK编码）：
+打包时可能会出现日志乱码问题，设置UTF-8无果，临时解决方案（设置GBK编码）：
 
-Gradle运行配置（jpackage）-虚拟机选项（VM options）-添加`-Dfile.encoding=GBK`
+Gradle运行配置（jpackage等，你需要运行的任务）-虚拟机选项（VM options）-添加`-Dfile.encoding=GBK`
 
