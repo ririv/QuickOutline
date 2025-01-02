@@ -233,7 +233,13 @@ public class MainController {
                     //打开文件所在文件夹并选择文件
                     String[] command;
                     if (InfoUtil.isWindows()) {
-                        command = new String[]{"explorer.exe", "/select", destFilePath.replaceAll("/", "\\\\")};
+                        destFilePath = destFilePath.replaceAll("/", "\\\\");
+                        //实测该命令会在文件路径下因为检测到参数包含空格而未被引号包裹，于是主动加了双引号，形成的命令在powershell的确是有效的，但在cmd中无效
+                        //但默认是用cmd执行的,导致非预期结果
+                        //参考 ProcessImpl.java下 createCommandLine 和 needsEscaping 源码
+//                        command = new String[]{"explorer.exe", "/select,\"%s\"".formatted(destFilePath)};
+                        // 故采用如下方式执行
+                        command = new String[]{"cmd.exe", "/C", "explorer.exe /select,\"%s\"".formatted(destFilePath)};
                     }
                     else if (InfoUtil.isMacOS()) {
                         command = new String[]{"open", "-R", destFilePath}; //macos
