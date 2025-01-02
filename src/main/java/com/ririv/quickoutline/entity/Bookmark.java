@@ -197,7 +197,7 @@ public class Bookmark{
     }
 
     public static void buildLine(StringBuilder text, int level, String title, String pageNum) {
-        text.append("\t".repeat(level));
+        text.append("\t".repeat(level-1)); //顶层为1，不要缩进
         text.append(title);
         text.append(TwoBlank);
         text.append(pageNum);

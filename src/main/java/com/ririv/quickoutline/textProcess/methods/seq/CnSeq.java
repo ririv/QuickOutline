@@ -15,7 +15,7 @@ import static com.ririv.quickoutline.textProcess.PreProcess.TwoBlank;
 public class CnSeq extends Form implements Seq {
     final Pattern cnPattern = Pattern.compile(
                       "^(\\s*)?"  //缩进$1
-                    + "(\\S?\\s?[零一二三四五六七八九十百千0-9]+\\s?(篇|章|节|部分))?"  //序号$2   $3不用
+                    + "(\\S?\\s?[零一二三四五六七八九十百千0-9]+\\s?(篇|章|节|部分)|[0-9.]+)?"  //序号$2   $3不用
                     + "\\s*"
                     + "(.*?)" //标题$4
                     + "[\\s.]*"
