@@ -27,7 +27,7 @@ java {
 version = '1.0.3'
 
 javafx {
-    version = "21" // LTS
+    version = JavaVersion.VERSION_21 // LTS
     modules = ['javafx.controls', 'javafx.fxml','javafx.web']
 }
 
@@ -37,13 +37,23 @@ application{
 }
 
 
+// 不设置这个idea,没法下载文档
+// 注意更改系统
+configurations.configureEach {
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+        attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, 'windows')) // 根据您的操作系统调整
+        attribute(MachineArchitecture.ARCHITECTURE_ATTRIBUTE, objects.named(MachineArchitecture, 'x86-64')) // 根据您的架构调整
+    }
+}
+
+
+
 def itextVersion = '9.0.0'
 
 // compile 不要用了，已经废弃了
 // 不能下载请配置gradle代理
 dependencies {
-//    implementation 'com.jfoenix:jfoenix:9.0.10' //官方版本，不更新了
-    implementation 'org.rationalityfrontline.workaround:jfoenix:21.0.0'
     implementation "com.itextpdf:itext-core:${itextVersion}"
     // 使用该依赖打包会出现 错误: 当前不支持已签名模块化 JAR ..\QuickOutline\build\jlinkbase\jlinkjars\bcpkix-jdk18on-1.78.jar,
 //    implementation "com.itextpdf:bouncy-castle-adapter:${itextVersion}" //签名用
@@ -52,7 +62,7 @@ dependencies {
     implementation "com.itextpdf:layout:${itextVersion}"
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
-//    implementation 'io.github.palexdev:materialfx:11.12.0'  //考虑换一个UI库
+    implementation 'io.github.palexdev:materialfx:11.17.0'  //考虑换一个UI库
     implementation 'org.slf4j:slf4j-api:2.0.16' // Use the latest stable version
     implementation 'org.slf4j:slf4j-simple:2.0.16' // Or another implementation
 }
@@ -67,26 +77,8 @@ repositories {
     mavenCentral()
 }
 
-def args = [
-        "--add-exports=javafx.controls/com.sun.javafx.scene.control=com.jfoenix",
-        "--add-exports=javafx.base/com.sun.javafx.binding=com.jfoenix",
-        "--add-exports=javafx.controls/javafx.scene.control.skin=com.jfoenix",
-        "--add-exports=java.base/java.lang.reflect=ALL-UNNAMED",
-        "--add-exports=java.base/java.lang.reflect=com.jfoenix",
-        "--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED",
-        "--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=com.jfoenix",
-        "--add-exports=javafx.graphics/com.sun.javafx.stage=com.jfoenix",
-        "--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED",
-        "--add-exports=javafx.graphics/com.sun.javafx.scene=ALL-UNNAMED",
-        "--add-exports=javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED",
-        "--add-exports=javafx.base/com.sun.javafx.event=com.jfoenix",
-        "--add-opens=javafx.controls/javafx.scene.control.skin=com.jfoenix",
-        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang.reflect=com.jfoenix"
-]
-
 //传递版本号给Java程序，将在System.System.getProperty("app.version")获取
-args += ['-Dapp.version=' + project.version]
+def args = ['-Dapp.version=' + project.version]
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -124,7 +116,7 @@ jlink {
 //        skipInstaller = true
         def installerOptionsParams = [
                 '--vendor', 'riri Personal', //必须加，否则报错
-                '--app-version', version,
+                '--app-version', (String) version,
         ]
 
         println('Current OS: '+os)

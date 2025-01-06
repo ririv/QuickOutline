@@ -8,6 +8,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
@@ -15,6 +17,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.regex.Pattern;
 
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
@@ -25,11 +28,16 @@ public class TextModeController {
 
     private final SyncWithExternalEditorService syncWithExternalEditorService = new SyncWithExternalEditorService();
     public StackPane shade;
-    public Label label;
+    public Label mask;
+//    public ScalePane
 
     public static TextModeController textModelController;
     public HBox root;
     PdfService pdfService;
+
+    // 定义正则表达式表示一个缩进（默认一个制表符或4个空格）
+    private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\t|\\s{1,4})");
+
 
     public void setPdfService(PdfService pdfService) {
         this.pdfService = pdfService;
@@ -37,7 +45,7 @@ public class TextModeController {
 
     public void initialize() {
         textModelController = this;
-        label.setText("正在等待VSCode关闭文件\n期间可使用\"自动缩进\"功能");
+        mask.setText("正在等待VSCode关闭文件\n期间可使用\"自动缩进\"功能");
 
 /*
         \n没用，只好用\r了
@@ -58,6 +66,37 @@ public class TextModeController {
                 \t\t我是子子标题  3\r
                 (此方式如有序号将会视作标题，不会影响)\r
                 """);
+
+        // 设置处理键盘事件
+        // 按下SHIFT+TAB将自动去掉一格缩进（\t或者4个空格）
+        contentsText.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            // 检查是否是 Shift+Tab
+            if (event.getCode() == KeyCode.TAB && event.isShiftDown()) {
+                // 获取当前光标所在行
+                int caretPosition = contentsText.getCaretPosition();
+                int lineNumber = getLineNumber(contentsText, caretPosition);
+
+                // 获取光标所在行的文本
+                String lineText = contentsText.getText().split("\n")[lineNumber - 1];
+                // 如果该行没有缩进，则不需要处理，直接返回
+                if (INDENT_PATTERN.matcher(lineText).find()) {
+                    // 去除行首的缩进（制表符或4个空格）
+                    String trimmedLine = lineText.replaceFirst(INDENT_PATTERN.pattern(), "");
+                    // 替换当前行
+                    StringBuilder newText = new StringBuilder(contentsText.getText());
+                    newText.replace(contentsText.getText().indexOf(lineText), contentsText.getText().indexOf(lineText) + lineText.length(), trimmedLine);
+
+                    // 设置修改后的文本
+                    contentsText.setText(newText.toString());
+
+                    // 设置光标位置
+                    contentsText.positionCaret(caretPosition - 1);
+                }
+
+                event.consume(); // 消耗事件，防止默认行为
+            }
+        });
+
 
         autoFormat.setOnAction(event -> {
             contentsText.setText(pdfService.autoFormatBySeq(contentsText.getText()));
@@ -80,7 +119,8 @@ public class TextModeController {
                                 contentsText.setDisable(true);
                                 externalEditorBtn.setDisable(true);
                                 externalEditorBtn.setText("已连接...");
-                                label.setVisible(true);
+//                                externalEditorBtn.setGraphic();
+                                mask.setVisible(true);
                             });
                         },
 
@@ -88,7 +128,7 @@ public class TextModeController {
                             contentsText.setDisable(false);
                             externalEditorBtn.setDisable(false);
                             externalEditorBtn.setText("VSCode");
-                            label.setVisible(false);
+                            mask.setVisible(false);
 
                         }),
                         () -> Platform.runLater(() -> {
@@ -113,37 +153,26 @@ public class TextModeController {
     }
 
 
-    private Pair<Integer,Integer> getCoordinate() {
-
-        int x = 0;
-        int y = 0;
-        int pos = contentsText.getCaretPosition() + 1;
-//        System.out.println("The caret post is"+pos);
-
-        for (String line : contentsText.getText().split("\n")) {
-            x++;
-            y = 0;
-
-            for (int l = line.length(); l >= 0 && pos > 0; pos--, l--) {
-                y++;
-            }
-            if (pos == 0) break;
-        }
-
-        return new Pair<Integer,Integer> (x, y);
+    // 行号计算
+    // 使用 String.chars() 方法统计光标之前文本中 \n 的数量。因为换行符的数量等于行号减一，因此需要加 1。
+    private int getLineNumber(TextArea textArea, int caretPosition) {
+        String textBeforeCaret = textArea.getText(0, caretPosition);
+        return (int) textBeforeCaret.chars().filter(ch -> ch == '\n').count() + 1;
     }
 
-    //暂时有bug
-    public int getPosition(int x,int y) {
-        y += 1;
-        int pos = 0;
+    // 列号计算
+    // 查找光标之前最近一次出现 \n 的位置，计算从该位置到光标的字符数即可。
+    private int getColumnNumber(TextArea textArea, int caretPosition) {
+        String textBeforeCaret = textArea.getText(0, caretPosition);
+        int lastNewLineIndex = textBeforeCaret.lastIndexOf('\n');
+        return caretPosition - (lastNewLineIndex + 1) + 1;
+    }
 
-        for (String line : contentsText.getText().split("\n")) {
-            y--;
-            pos += line.length();
-            if (y <= 0) break;
-        }
-        return pos;
+    private Pair<Integer,Integer> getCoordinate() {
+        int pos = contentsText.getCaretPosition();
+        int x = getLineNumber(contentsText, pos);
+        int y = getColumnNumber(contentsText, pos);
+        return new Pair<> (x,y);
     }
 
 }

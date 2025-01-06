@@ -8,13 +8,15 @@ import com.ririv.quickoutline.utils.InfoUtil;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -39,11 +41,11 @@ public class MainController {
     public RadioButton indentRBtn;
     public ToggleGroup methodGroup;
 
-    public AnchorPane root;
+    public BorderPane root;
 
-    public Tab treeTab;
 
-    //fx:id="textMode"必须映射到textModeController，否则会报错
+    //必须映射到textModeController，否则会无法报错
+    //与下面的textMode区分，其映射的是<fx:include>绑定的控件
     @FXML
     public TextModeController textModeController;
 
@@ -51,16 +53,45 @@ public class MainController {
     public TreeModeController treeModeController;
 //    public TreeWebVIewController treeModeController;
 
-    public AnchorPane shade;
     public Button helpBtn;
+    public HBox topPane;
+    public ToggleButton textModeBtn;
+    public ToggleButton treeModeBtn;
+    public ToggleButton tabGroup;
+
     PdfService pdfService = new PdfService();
 
+    @FXML
+    private Node textMode;  // <fx:include> 实际上对应的HBox类型
 
-//    public static MainController mainController;
+    @FXML
+    private Node treeMode;
+
+    public enum FnTab{
+        text, tree, setting
+    }
+
+    private FnTab currenTab;
+
+    private Stage helpStage;
+
+
+    public void switchMode(FnTab targetTab) {
+        if (targetTab == FnTab.text) {
+            textMode.setVisible(true);
+            treeMode.setVisible(false);
+
+        } else if (targetTab == FnTab.tree) {
+            treeMode.setVisible(true);
+            textMode.setVisible(false);
+            reconstructTree();
+        }
+        currenTab = targetTab;
+    }
+
 
 
     public void initialize() {
-//        mainController = this;
 
         textModeController.setPdfService(this.pdfService);
         treeModeController.setPdfService(this.pdfService);
@@ -70,6 +101,7 @@ public class MainController {
         seqRBtn.setUserData(Method.SEQ);
         indentRBtn.setUserData(Method.INDENT);
         seqRBtn.setSelected(true);
+
 
         offsetText.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty() && !newValue.matches("^-?[1-9]\\d*$|^0$|^-$")) {
@@ -96,7 +128,7 @@ public class MainController {
             String pdfFormatPattern = ".+\\.[pP][dD][fF]$";
             Dragboard dragboard = event.getDragboard();
             if (dragboard.hasFiles()) {
-                File file = dragboard.getFiles().get(0);
+                File file = dragboard.getFiles().getFirst();
                 if (file.getName().matches(pdfFormatPattern)) { //用来过滤拖入类型
                     event.acceptTransferModes(TransferMode.LINK);//用于接受文件和设定以何种方式接受，必须有，否则接受不了
                 }
@@ -106,7 +138,7 @@ public class MainController {
         //鼠标送开时，会执行且只执行一遍
         root.setOnDragDropped(e -> {
             Dragboard dragboard = e.getDragboard();
-            File file = dragboard.getFiles().get(0);
+            File file = dragboard.getFiles().getFirst();
 
             if (!textModeController.contentsText.getText().isEmpty() && !filepathText.getText().equals(file.getAbsolutePath())) {
 
@@ -135,14 +167,32 @@ public class MainController {
 
         browseFileBtn.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("pdf", "*.pdf"));
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF 文档", "*.pdf"));
             File file = fileChooser.showOpenDialog(null);
             if (file != null) {
                 filepathText.setText(file.getPath());
             }
         });
 
-        getCurrentContentsBtn.setOnAction(event -> {
+
+        methodGroup.selectedToggleProperty().addListener(event -> {
+            if (currenTab == FnTab.tree) reconstructTree();
+
+        });
+
+        textModeBtn.setOnAction(event -> {
+            switchMode(FnTab.text);
+        });
+
+        treeModeBtn.setOnAction(event -> {
+            switchMode(FnTab.tree);
+        });
+
+
+    }
+
+    @FXML
+    private void getCurrentContentsBtnAction(ActionEvent event) {
             if (!textModeController.contentsText.getText().isEmpty()) {
                 Optional<ButtonType> buttonType = showAlert(
                         Alert.AlertType.CONFIRMATION,
@@ -159,19 +209,12 @@ public class MainController {
             }
 
             getCurrentContents();
-            if (treeTab.isSelected()) reconstructTree();
+            if (currenTab == FnTab.tree) reconstructTree();
 
-        });
+    }
 
-        treeTab.setOnSelectionChanged(event -> {
-            if (treeTab.isSelected()) reconstructTree();
-        });
-        methodGroup.selectedToggleProperty().addListener(event -> {
-            if (treeTab.isSelected()) reconstructTree();
-
-        });
-
-        addContentsBtn.setOnAction(event -> {
+    @FXML
+    private void addContentsBtnAction(ActionEvent event) {
             String fp = filepathText.getText();
             if (fp.isEmpty()) {
                 showAlert(Alert.AlertType.ERROR, "请选择pdf文件", root.getScene().getWindow());
@@ -246,27 +289,21 @@ public class MainController {
                 }
             }
 
-        });
     }
 
-    private void getCurrentState(){
-    }
 
     //重置，并获得目录
     private void resetState(){
         offsetText.setText(null); //必须在前，否则缓存的offset会影响下面的函数
         getCurrentContents();
-        if (treeTab.isSelected()) reconstructTree();
+        if (currenTab == FnTab.tree) reconstructTree();
     }
 
 
     private void getCurrentContents() {
 //        这里传入offset是用来相减，以获得原始页码
         String contents = pdfService.getContents(filepathText.getText(), offset());
-
-
         textModeController.contentsText.setText(contents);
-
     }
 
     public int offset() {
@@ -288,29 +325,38 @@ public class MainController {
                 (Method) methodGroup.getSelectedToggle().getUserData()
 //                ,true
         );
-
         treeModeController.reconstructTree(rootBookmark);
     }
 
     @FXML
-    public void createHelpWindow(ActionEvent actionEvent) throws IOException {
-        final Stage helpStage = new Stage();
+    public void createHelpWindowAction(ActionEvent actionEvent) throws IOException {
+        if (helpStage == null) {
+            helpStage = new Stage();
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("HelpWindow.fxml"));
-        Parent helpWinRoot = loader.load();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("HelpWindow.fxml"));
+            Parent helpWinRoot = loader.load();
 
-        helpStage.setTitle("帮助");
-        helpStage.setScene(new Scene(helpWinRoot, 400, 300));
+            helpStage.setTitle("帮助");
+            helpStage.setScene(new Scene(helpWinRoot, 400, 300));
 
-        helpStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon/help_black.png"))));
-        helpStage.setResizable(false); //不可调整大小，且使最大化不可用
-        helpStage.initOwner(root.getScene().getWindow());//可以使最小化不可用，配合上一条语句，可以使最小化最大化隐藏，只留下"×"
-        helpStage.show();
-        helpStage.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!observable.getValue()) {
-                helpStage.close();
-            }
-        });
+            helpStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon/help_black.png"))));
+            helpStage.setResizable(false); //不可调整大小，且使最大化不可用
+            helpStage.initOwner(root.getScene().getWindow());//可以使最小化不可用，配合上一条语句，可以使最小化最大化隐藏，只留下"×"
+            helpStage.show();
+//            helpStage.focusedProperty().addListener((observable, oldValue, newValue) -> {
+//                if (!observable.getValue()) {
+//                    helpStage.hide();
+//                    ((Stage) root.getScene().getWindow()).toFront();
+//                }
+//            });
+        }
+        else {
+            // 如果窗口已经创建但被隐藏，重新显示
+            // 如果窗口已存在，将其聚焦到前台
+            helpStage.show();
+//            helpStage.toFront();
+            helpStage.requestFocus();
+        }
     }
 
 }

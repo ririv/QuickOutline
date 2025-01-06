@@ -14,7 +14,7 @@ public class InfoUtil {
         return System.getProperty("os.name").toLowerCase().contains("linux");
     }
 
-    public static String getVersion() {
+    public static String getAppVersion() {
         return System.getProperty("app.version", "Unknown Version");
     }
 }

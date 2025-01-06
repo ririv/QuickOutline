@@ -8,9 +8,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 
@@ -34,13 +32,12 @@ public class App extends Application {
             stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon/icon.png"))));
             stage.setScene(scene);
             stage.show();
-
         }
 
 
     public static void main(String[] args) {
         try {
-            System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+//            System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
             launch(args);
 
         } catch (Exception e) {

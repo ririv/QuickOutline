@@ -1,96 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.jfoenix.controls.*?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.ToggleGroup?>
+<?import com.ririv.quickoutline.view.controls.GraphButtonWrapper?>
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane fx:id="root" prefHeight="600.0" prefWidth="800.0" stylesheets="@MainView.css,@jfx-custom.css "
-            xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:id="root" prefHeight="600.0" prefWidth="800.0"
+            stylesheets="@MainView.css,@BasicControls.css,@svg.css,@CustomControls.css "
+            xmlns="http://javafx.com/javafx"
             fx:controller="com.ririv.quickoutline.view.MainController">
 
-    <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-          AnchorPane.topAnchor="0.0">
-        <HBox id="topPane" minHeight="30.0" prefHeight="30.0">
-            <JFXTextField fx:id="filepathText"  disable="true" prefHeight="Infinity" promptText="请选择PDF文件或者拖拽PDF文件到窗口"
-                          HBox.hgrow="ALWAYS"/>
-            <JFXButton fx:id="browseFileBtn" mnemonicParsing="false" prefWidth="135.0" text="浏览文件"/>
-        </HBox>
-        <AnchorPane fx:id="shade" VBox.vgrow="ALWAYS">
-            <JFXTabPane tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-                        AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                <Tab text="文本模式" >
-                    <!--                       导入其他fxml -->
-                    <fx:include fx:id="textMode" source="TextMode.fxml"/>
+    <top>
+        <VBox>
+            <HBox fx:id="topPane" prefHeight="30.0">
+                <TextField fx:id="filepathText" disable="true" prefHeight="30"
+                           promptText="请选择或者拖拽PDF文件到窗口"
+                           HBox.hgrow="ALWAYS"/>
+                <GraphButtonWrapper>
+                    <Button fx:id="browseFileBtn" styleClass="graph-button">
+                        <!--                按钮与图标的内边距-->
+                        <padding>
+                            <Insets topRightBottomLeft="3.0"/>
+                        </padding>
+                        <tooltip>
+                            <Tooltip text="打开..."/>
+                        </tooltip>
+                        <graphic>
+                            <Region styleClass="openIcon" prefHeight="15" prefWidth="15"/>
+                        </graphic>
+                    </Button>
+                </GraphButtonWrapper>
+            </HBox>
+            <Region styleClass="dividing-line-h"/>
+        </VBox>
+    </top>
+    <left>
+        <BorderPane id="leftPane" >
+            <top>
+                <VBox>
+                    <GraphButtonWrapper >
+                    <ToggleButton fx:id="textModeBtn" styleClass="graph-button" maxWidth="Infinity">
+                        <graphic>
+                            <Region styleClass="editIcon" />
+                        </graphic>
+                    </ToggleButton>
+                    </GraphButtonWrapper>
+                    <GraphButtonWrapper>
+                    <ToggleButton fx:id="treeModeBtn" styleClass="graph-button" maxWidth="Infinity">
+                        <graphic>
+                            <Region styleClass="treeDiagramIcon"  />
+                        </graphic>
+                    </ToggleButton>
+                    </GraphButtonWrapper>
+                </VBox>
+            </top>
+            <bottom>
+                <GraphButtonWrapper >
+                <Button fx:id="helpBtn"
+                        styleClass="graph-button"
+                        onAction="#createHelpWindowAction"
+                        maxWidth="Infinity">
+                    <padding>
+                        <Insets topRightBottomLeft="3.0" />
+                    </padding>
+                    <graphic>
+                        <Region styleClass="helpIcon" prefHeight="20" prefWidth="20"/>
+                        <!--                    <ImageView fitWidth="20" fitHeight="20">-->
+                        <!--&lt;!&ndash;                         记得加"@"  &ndash;&gt;-->
+                        <!--                        <Image url="@icon/help_red.png"  />-->
+                        <!--                    </ImageView>-->
+                    </graphic>
+                </Button>
+                </GraphButtonWrapper>
+            </bottom>
+        </BorderPane>
 
-                </Tab>
-                <Tab fx:id="treeTab" text="树状图(预览)">
-                    <fx:include fx:id="treeMode" source="TreeMode.fxml"/>
-<!--                    <fx:include fx:id="treeMode" source="TreeWebView.fxml"/>-->
-                </Tab>
-            </JFXTabPane>
-            <JFXButton fx:id="helpBtn"  onAction="#createHelpWindow" text="帮助" AnchorPane.rightAnchor="0">
-                <graphic>
-                    <Label fx:id="helpIcon"/>
-                    <!--                    <ImageView fitWidth="20" fitHeight="20">-->
-                    <!--&lt;!&ndash;                         记得加"@"  &ndash;&gt;-->
-                    <!--                        <Image url="@icon/help_red.png"  />-->
-                    <!--                    </ImageView>-->
-                </graphic>
+    </left>
+    <center>
+        <!-- 可切换视图区域 -->
+        <StackPane id="operationPane">
 
-            </JFXButton>
-        </AnchorPane>
-        <GridPane id="bottom-pane"  minHeight="60" alignment="CENTER"   styleClass="out-shadow">
-            <JFXButton fx:id="getCurrentContentsBtn" mnemonicParsing="false" prefWidth="120.0" text="获取当前PDF目录">
-                <GridPane.margin>
-                    <Insets left="20.0"/>
-                </GridPane.margin>
-            </JFXButton>
-            <JFXButton fx:id="addContentsBtn" mnemonicParsing="false" prefWidth="120.0" text="添加目录"
-                       GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
-            <JFXTextField fx:id="offsetText" maxWidth="200" promptText="页码偏移量" GridPane.columnIndex="3"
-                          GridPane.halignment="CENTER">
-                <GridPane.margin>
-                    <Insets left="20.0" right="20.0"/>
-                </GridPane.margin>
-            </JFXTextField>
-            <GridPane id="method-grid" alignment="CENTER_RIGHT" prefWidth="90.0" GridPane.columnIndex="4">
+<!--                            导入其他fxml &ndash;&gt;-->
+            <fx:include fx:id="treeMode" source="TreeMode.fxml"/>
+            <fx:include fx:id="textMode" source="TextMode.fxml"/>
 
-                <fx:define>
-                    <ToggleGroup fx:id="methodGroup"/>
-                </fx:define>
-                <JFXRadioButton fx:id="seqRBtn" mnemonicParsing="false" text="按序号" GridPane.halignment="RIGHT"
-                                GridPane.rowIndex="0"/>
-                <JFXRadioButton fx:id="indentRBtn"  mnemonicParsing="false" text="按缩进" GridPane.halignment="RIGHT"
-                                GridPane.rowIndex="1">
-                </JFXRadioButton>
+        </StackPane>
+    </center>
+    <bottom>
+        <VBox>
+            <Region styleClass="dividing-line-h"/>
+            <GridPane id="bottomPane" minHeight="60" alignment="CENTER">
+                <MFXButton fx:id="getCurrentContentsBtn" styleClass="primary-button"
+                           onAction="#getCurrentContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
+                           text="获取当前目录">
+                    <GridPane.margin>
+                        <Insets left="20.0"/>
+                    </GridPane.margin>
+                </MFXButton>
+                <MFXButton fx:id="addContentsBtn" styleClass="primary-button" onAction="#addContentsBtnAction"
+                           mnemonicParsing="false" prefWidth="120.0" text="添加目录"
+                           GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
+                <TextField fx:id="offsetText" maxWidth="200" promptText="页码偏移量" GridPane.columnIndex="3"
+                           GridPane.halignment="CENTER">
 
-                <rowConstraints>
-                    <RowConstraints minHeight="10.0" prefHeight="30.0"/>
-                    <RowConstraints minHeight="10.0" prefHeight="30.0"/>
-                </rowConstraints>
+                    <GridPane.margin>
+                        <Insets left="20.0" right="20.0"/>
+                    </GridPane.margin>
+                </TextField>
+                <GridPane id="method-grid" alignment="CENTER_RIGHT" prefWidth="90.0" GridPane.columnIndex="4">
+
+                    <fx:define>
+                        <ToggleGroup fx:id="methodGroup"/>
+                    </fx:define>
+                    <RadioButton fx:id="seqRBtn" mnemonicParsing="false" text="按序号" GridPane.halignment="RIGHT"
+                                 GridPane.rowIndex="0"/>
+                    <RadioButton fx:id="indentRBtn" mnemonicParsing="false" text="按缩进" GridPane.halignment="RIGHT"
+                                 GridPane.rowIndex="1"/>
+                    <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="30.0"/>
+                        <RowConstraints minHeight="10.0" prefHeight="30.0"/>
+                    </rowConstraints>
+                    <columnConstraints>
+                        <ColumnConstraints/>
+                    </columnConstraints>
+                    <GridPane.margin>
+                        <Insets right="50.0"/>
+                    </GridPane.margin>
+
+                </GridPane>
+
                 <columnConstraints>
-                    <ColumnConstraints/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
                 </columnConstraints>
-                <GridPane.margin>
-                    <Insets right="50.0"/>
-                </GridPane.margin>
+                <rowConstraints>
+                    <RowConstraints vgrow="SOMETIMES"/>
+                </rowConstraints>
 
             </GridPane>
 
-            <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-            </columnConstraints>
-            <rowConstraints>
-                <RowConstraints vgrow="SOMETIMES"/>
-            </rowConstraints>
+        </VBox>
+    </bottom>
 
-        </GridPane>
-    </VBox>
-
-</AnchorPane>
+</BorderPane>
