@@ -1,3 +1,4 @@
+<!--            Note: 这里和主stage不共享,所以要重新载入css-->
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
@@ -5,6 +6,7 @@
             xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1"
             fx:id="helpPane"
             style="-fx-background-color: white"
+            stylesheets="@svg.css"
             fx:controller="com.ririv.quickoutline.view.HelpController">
 
     <FlowPane fx:id="innerPane"
@@ -15,20 +17,25 @@
               AnchorPane.topAnchor="0"
               vgap="10"
     >
+        <Label fx:id="versionLabel" />
         <FlowPane>
             <Text>使用说明:</Text>
             <Hyperlink onMouseClicked="#browseHelpOnZhihu">@知乎</Hyperlink>
             <Hyperlink onMouseClicked="#browseHelpOnGithub">@Github</Hyperlink>
         </FlowPane>
+        <Text>使用本软件造成的一切结果由使用者承担责任</Text>
 
+
+
+        <Text>开源软件使用: iText (AGPL license)</Text>
         <FlowPane>
-            <Text>本软件</Text>
+            <Label styleClass="graph-button" >
+                <graphic>
+                    <Region styleClass="githubIcon" prefWidth="15" prefHeight="15"/>
+                </graphic>
+            </Label>
             <Hyperlink onMouseClicked="#browseRemoteRepo">开放源代码</Hyperlink>
         </FlowPane>
-        <Label fx:id="versionLabel" />
-        <Text>开源软件使用: iText7, JFoenix...</Text>
-        <Text fill="#fd5656">使用时请注意遵循 iText7 Licence (AGPL)</Text>
-        <Text fill="#fd5656">否则造成的后果由使用者承担一切责任</Text>
         <FlowPane>
             <Text>By </Text>
             <Hyperlink onMouseClicked="#browseHelpOnMyPage" >小红花</Hyperlink>

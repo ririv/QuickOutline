@@ -3,6 +3,7 @@ package com.ririv.quickoutline.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static com.ririv.quickoutline.textProcess.Constants.TwoBlank;
@@ -16,8 +17,10 @@ public class Bookmark{
     private Bookmark parent;
     private final int level; // 0为root，1为顶层目录（since v1.0.3，此前版本中-1为root，0为顶层）
     private List<Bookmark> linearBookmarkList; // root节点下将记录原始的线性Bookmark
+    private final String id;
 
     public Bookmark(String title, Integer offsetPageNum, int level) {
+        this.id = UUID.randomUUID().toString(); // 为每个 Bookmark 生成唯一的 ID
         this.title = title;
         this.offsetPageNum = offsetPageNum;
         this.level = level;
@@ -176,5 +179,9 @@ public class Bookmark{
 
     public void setLinearBookmarkList(List<Bookmark> linearBookmarkList) {
         this.linearBookmarkList = linearBookmarkList;
+    }
+
+    public String getId() {
+        return id;
     }
 }

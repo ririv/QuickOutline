@@ -103,9 +103,9 @@ VSCode 中的内容会自动同步至软件窗口中（需在VSCode中保存文�
 
 2. 按下组合键 (Cmd+Shift+P)，输入 'shell command' 找到命令行: Install 'code' command in PATH command.
 
-## Licence
+## 开源软件使用
 
-请注意：本软件由于使用 iText7，使用时请遵循iText7的开源协议
+- iText (AGPL Licence)
 
 ## 下载
 
@@ -115,8 +115,9 @@ Mac: 提供安装包，目前打开所生成的PDF文件所在位置功能有点
 
 [下载地址](https://github.com/ririv/QuickOutline/releases)
 
+---
 
-## 构建、运行、打包（非开发人员掠过）
+## 构建、运行、打包（非开发人员略过）
 
 ### 版本一致性
 为确保兼容，请保证版本一致性，目前项目采用：
@@ -124,7 +125,7 @@ Java 21 (LTS)
 Javafx 21 (LTS)
 Gradle 8.12
 
-由于项目使用了jlink打包需要模块化项目，却引用了非模块化项目（IText），因意需要注意在gradle中处理模块化问题
+由于项目使用了 jlink 打包需要模块化项目，却引用了非模块化项目（iText），因此需要注意在 Gradle 中处理模块化问题
 ```
 plugins {
     ...
@@ -134,7 +135,7 @@ plugins {
     id 'org.javamodularity.moduleplugin' version '1.8.15'
     
     // 请使用高版本，’2.26.0‘实测出现 "Unsupported class file major version 65"错误
-    jlink 3.1.1  
+    id 'org.beryx.jlink' version '3.1.1'
 }
 ```
 
@@ -142,20 +143,22 @@ plugins {
 请使用 Gradle 下的 Run 任务，不要使用IDEA自带的Main入口处运行（App）
 
 ### 打包问题
-使用jpackageImage可以直接成功打包成应用镜像（可执行文件）
+运行 `Gradle - build - jpackageImage` 任务可以直接成功打包成应用镜像（可执行文件）
 
-但使用jpackage打包成安装包文件，在生成安装包时，需要操作系统相关的工具，例如：
+运行 `jpackage` 任务则打包成安装包文件，在生成安装包时，需要操作系统相关的工具，例如：
 - Windows：需要安装 WiX Toolset。
 - macOS：需要 Xcode 和开发者签名。
 - Linux：需要 dpkg 或 rpm。
 
-> **Note:** jpackage依赖于旧版本的 WiX，提示"找不到 WiX 工具 (light.exe, candle.exe)"
+> **Note:** jpackage 依赖于旧版本的 WiX，提示"找不到 WiX 工具 (light.exe, candle.exe)"
 > 
 > 因此请使用 WiX 3，并确保它添加到环境变量
 
-
 ## Windows下中文乱码问题 TODO
-打包时可能会出现日志乱码问题，设置UTF-8无果，临时解决方案（设置GBK编码）：
+打包时可能会出现日志乱码问题，设置UTF-8无果，临时解决方案（设置 GBK 编码）：
 
-Gradle运行配置（jpackage等，你需要运行的任务）-虚拟机选项（VM options）-添加`-Dfile.encoding=GBK`
+Gradle 运行配置（jpackage 等，你需要运行的任务）- 虚拟机选项（VM options）-添加
+```
+-Dfile.encoding=GBK
+```
 

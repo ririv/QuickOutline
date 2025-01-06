@@ -4,32 +4,29 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.scene.control.*;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableColumn;
+import javafx.scene.control.TreeTableRow;
+import javafx.scene.control.TreeTableView;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.paint.Paint;
+
+import java.util.HashMap;
+import java.util.Map;
 
 //import static com.ririv.contents.view.MainController.mainController;
 
 
 public class TreeModeController {
-    public TreeTableView<Bookmark> tree;
+    public TreeTableView<Bookmark> treeTableView;
 
     public TreeTableColumn<Bookmark, String> titleColumn;
     public TreeTableColumn<Bookmark, String> offsetPageColumn;
 
-    private static final DataFormat SERIALIZED_MIME_TYPE = new DataFormat("application/x-java-serialized-object");
-    public Button gradeBtn;
-    public Button degradeBtn;
+    private final Map<String, TreeItem<Bookmark>> itemCache = new HashMap<>();
 
-    TreeItem<Bookmark> dragItem;
-    TreeTableRow<Bookmark> lastDragRow;
+
 
     PdfService pdfService;
 
@@ -40,11 +37,19 @@ public class TreeModeController {
 
     //不要在此方法中访问mainController，因此此时还没有产生此实例，得到null
     public void initialize() {
-//        titleColumn.prefWidthProperty().bind(tree.widthProperty().multiply(.5));
-//        titleColumn.prefWidthProperty().bind(tree.widthProperty().multiply(.1));
 
 
-//        drag();
+
+
+        // 仅显示两列且撑满整个view
+        // 注意两个值的和需要为1
+        treeTableView.setColumnResizePolicy(TreeTableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        titleColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.9));
+        offsetPageColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.1));
+
+
+//        setupDragAndDrop(treeTableView);
+
 //        gradeBtn.setOnAction(event -> grade(true));
 //        degradeBtn.setOnAction(event -> grade(false));
 
@@ -53,8 +58,8 @@ public class TreeModeController {
 
     //TODO,没法自动展开
     public void grade(boolean isGrade) {
-        int i = tree.getSelectionModel().getFocusedIndex();
-        Bookmark rootBookmark = tree.getRoot().getValue();
+        int i = treeTableView.getSelectionModel().getFocusedIndex();
+        Bookmark rootBookmark = treeTableView.getRoot().getValue();
         String[] lines = rootBookmark.toString().split("\n");
         String focusedLine = lines[i];
         if (isGrade) {
@@ -73,111 +78,228 @@ public class TreeModeController {
 
         reconstructTree(rootBookmark);
 
-        tree.getTreeItem(i).setExpanded(true);
-        tree.getSelectionModel().select(tree.getSelectionModel().getModelItem(i));
-        tree.refresh();
+        treeTableView.getTreeItem(i).setExpanded(true);
+        treeTableView.getSelectionModel().select(treeTableView.getSelectionModel().getModelItem(i));
+        treeTableView.refresh();
     }
 
-
-    //TODO,拖拽排序功能，实现了一半，有点bug，太难了，不打算做了,哪个来大神实现下
-    void drag() {
-//        PauseTransition pt = new PauseTransition(Duration.millis(1000));
-//
-//        pt.setOnFinished((e) -> {
-//            if (!dragItem.isLeaf()) dragItem.setExpanded(false);
-//        });
-
-
-        tree.setRowFactory(tv -> {
-            //注意cell与row的区别，cell指某行某列的那一小个
+    private void setupDragAndDrop(TreeTableView<Bookmark> treeTableView) {
+        // 为行添加拖拽功能
+        treeTableView.setRowFactory(tv -> {
             TreeTableRow<Bookmark> row = new TreeTableRow<>();
 
+            // 检测拖拽操作
             row.setOnDragDetected(event -> {
                 if (!row.isEmpty()) {
                     Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
-                    db.setDragView(row.snapshot(null, null));
-                    ClipboardContent cc = new ClipboardContent();
-                    cc.put(SERIALIZED_MIME_TYPE, row.getTreeItem().getValue());
-                    db.setContent(cc);
 
-                    dragItem = row.getTreeItem();
-                    row.setOpacity(0.3);
+                    ClipboardContent content = new ClipboardContent();
+                    content.putString(row.getItem().getId()); // 使用唯一标识符
+                    db.setContent(content);
+
                     event.consume();
-
-
                 }
             });
-
-
+//
+//            // 处理拖拽进入目标节点
+//            row.setOnDragOver(event -> {
+//                Dragboard db = event.getDragboard();
+//
+//                // 检查是否是合法的拖拽行为
+//                if (event.getGestureSource() != row && db.hasString() && !row.isEmpty()) {
+//                    String draggedItemId = db.getString(); // 获取唯一标识符
+//                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), draggedItemId); // 根据 ID 查找
+//                    TreeItem<Bookmark> targetItem = row.getTreeItem();
+//
+//                    if (draggedItem != null && targetItem != null) {
+//                        // 检查目标节点是否是拖拽节点的子节点或自身节点
+//                        if (isChildOrSelf(draggedItem, targetItem)) {
+//                            event.acceptTransferModes(); // 禁止拖拽
+//                            event.consume();
+//                            return;
+//                        }
+//
+//                        // 如果合法，允许拖拽
+//                        event.acceptTransferModes(TransferMode.MOVE);
+//                    }
+//                }
+//
+//                event.consume();
+//            });
+//
+//
+//            // 处理拖拽释放到目标节点
+//            row.setOnDragDropped(event -> {
+//                Dragboard db = event.getDragboard();
+//
+//                if (db.hasString() && !row.isEmpty()) {
+//                    String draggedItemId = db.getString(); // 获取唯一标识符
+//                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), draggedItemId); // 根据 ID 查找
+//                    TreeItem<Bookmark> targetItem = row.getTreeItem();
+//
+//                    if (draggedItem != null && targetItem != null) {
+//
+//                        // 移动节点：从原父节点中删除
+//                        draggedItem.getParent().getChildren().remove(draggedItem);
+//
+//                        // 添加到目标节点
+//                        targetItem.getChildren().add(draggedItem);
+//
+//                        // 刷新视图（可选，确保视图更新）
+//                        treeTableView.refresh(); // 刷新整个视图
+//
+//                        // 设置选中项为拖拽的 TreeItem
+//                        treeTableView.getSelectionModel().select(draggedItem);
+//                    }
+//
+//                    event.setDropCompleted(true);
+//                } else {
+//                    event.setDropCompleted(false);
+//                }
+//
+//                event.consume();
+//            });
             row.setOnDragOver(event -> {
                 Dragboard db = event.getDragboard();
-                if (db.hasContent(SERIALIZED_MIME_TYPE)) { //一定要加，否则会与拖入pdf文件冲突
 
-                    int dragIndex = dragItem.getParent().getChildren().indexOf(dragItem); //拖拽中的行号
+                if (event.getGestureSource() != row && db.hasString() && !row.isEmpty()) {
+                    String draggedItemId = db.getString(); // 获取唯一标识符
+                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), draggedItemId); // 根据 ID 查找
+                    TreeItem<Bookmark> targetItem = row.getTreeItem();
 
-                    if (dragIndex != row.getIndex()) {
-
-                        event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-                    }
-
-                    if (lastDragRow != null) {
-                        lastDragRow.setBorder(null);
-
-                    }
-                    lastDragRow = row;
-
-
-//                    if(pt.getStatus() == Animation.Status.RUNNING) {
-//                        pt.stop();
-//                        if (!dragItem.isLeaf()) dragItem.setExpanded(false);
-//                    }
-
-
-                    //设置底边
-                    if (event.getY() > row.getHeight() - 10 && event.getY() <= row.getHeight()) {
-                        BorderStroke bs = new BorderStroke(
-                                null, null, Paint.valueOf("#71C671"), null,
-                                BorderStrokeStyle.SOLID, null, null, null, null,
-                                new BorderWidths(0, 0, 2, 0), null);
-                        Border border = new Border(bs);
-                        row.setBorder(border);
-                    }
-                }
-
-            });
-
-
-            row.setOnDragDropped(event -> {
-
-                Dragboard db = event.getDragboard();
-                int dropIndex; //新行号
-                if (db.hasContent(SERIALIZED_MIME_TYPE)) {
-                    if (event.getY() > row.getHeight() - 10 && event.getY() <= row.getHeight()) {
-
-
-                        int dragIndex = dragItem.getParent().getChildren().indexOf(dragItem); //拖拽中的行号
-//                    TreeItem<Bookmark> item = tree.getTreeItem(dragIndex);
-
-                        if (row.isEmpty()) {
-                            dropIndex = tree.getExpandedItemCount();
-                        } else {
-                            dropIndex = row.getIndex();
+                    if (draggedItem != null && targetItem != null) {
+                        // 检查目标节点是否是拖拽节点的子节点或自身节点
+                        if (isChildOrSelf(draggedItem, targetItem)) {
+                            event.acceptTransferModes(); // 禁止拖拽
+                            event.consume();
+                            return;
                         }
 
-                        int subIndex = row.getTreeItem().getParent().getChildren().indexOf(row.getTreeItem()) + 1;
+                        // 根据鼠标位置判断插入行为（上方/下方/作为子节点）
+                        double y = event.getY();
+                        double height = row.getHeight();
+                        if (y < height * 0.33) {
+                            // 鼠标在上三分之一处，表示插入到目标节点上方
+                            row.setStyle("-fx-border-color: blue; -fx-border-width: 2 0 0 0;"); // 高亮上边框
+                            row.getProperties().put("drag-insert-position", "above");
+                        } else if (y > height * 0.66) {
+                            // 鼠标在下三分之一处，表示插入到目标节点下方
+                            row.setStyle("-fx-border-color: blue; -fx-border-width: 0 0 2 0;"); // 高亮下边框
+                            row.getProperties().put("drag-insert-position", "below");
+                        } else {
+                            // 鼠标在中间区域，表示作为子节点
+                            row.setStyle("-fx-background-color: lightblue;"); // 高亮整个行
+                            row.getProperties().put("drag-insert-position", "child");
+                        }
 
-                        dragItem.getParent().getChildren().remove(dragItem);
-                        row.getTreeItem().getParent().getChildren().add(subIndex, dragItem);
-                        tree.getSelectionModel().select(dropIndex);
+                        event.acceptTransferModes(TransferMode.MOVE);
                     }
                 }
-                event.setDropCompleted(true);
+
                 event.consume();
-                tree.refresh(); //词方法会重置透明度
             });
-            dragItem = null;
+
+            row.setOnDragExited(event -> {
+                row.setStyle(""); // 清除所有样式
+                row.getProperties().remove("drag-insert-position"); // 移除插入位置标记
+            });
+
+            row.setOnDragDropped(event -> {
+                Dragboard db = event.getDragboard();
+
+                if (db.hasString() && !row.isEmpty()) {
+                    String draggedItemId = db.getString(); // 获取唯一标识符
+                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), draggedItemId); // 根据 ID 查找
+                    TreeItem<Bookmark> targetItem = row.getTreeItem();
+
+                    if (draggedItem != null && targetItem != null) {
+                        // 检查插入位置
+                        String position = (String) row.getProperties().get("drag-insert-position");
+
+                        if ("above".equals(position)) {
+                            // 插入到目标节点上方
+                            TreeItem<Bookmark> parent = targetItem.getParent();
+                            if (parent != null) {
+                                int index = parent.getChildren().indexOf(targetItem);
+                                parent.getChildren().remove(draggedItem);
+                                parent.getChildren().add(index, draggedItem);
+                            }
+                        } else if ("below".equals(position)) {
+                            // 插入到目标节点下方
+                            TreeItem<Bookmark> parent = targetItem.getParent();
+                            if (parent != null) {
+                                int index = parent.getChildren().indexOf(targetItem);
+                                parent.getChildren().remove(draggedItem);
+                                parent.getChildren().add(index + 1, draggedItem);
+                            }
+                        } else {
+                            // 作为目标节点的子节点
+                            draggedItem.getParent().getChildren().remove(draggedItem);
+                            targetItem.getChildren().add(draggedItem);
+                        }
+//                         刷新视图（可选，确保视图更新）
+                        treeTableView.refresh(); // 刷新整个视图
+                        // 设置选中项为拖拽的 TreeItem
+                        treeTableView.getSelectionModel().select(draggedItem);
+                    }
+
+                    event.setDropCompleted(true);
+                } else {
+                    event.setDropCompleted(false);
+                }
+
+                event.consume();
+            });
+
+
+
+
             return row;
         });
+
+    }
+
+    private TreeItem<Bookmark> findTreeItemById(TreeItem<Bookmark> root, String id) {
+        // 检查缓存
+        if (itemCache.containsKey(id)) {
+            return itemCache.get(id);
+        }
+
+        if (root.getValue().getId().equals(id)) {
+            itemCache.put(id, root); // 存入缓存
+            return root;
+        }
+
+        for (TreeItem<Bookmark> child : root.getChildren()) {
+            TreeItem<Bookmark> result = findTreeItemById(child, id);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 检查目标节点是否是拖拽节点的子节点或自身节点（迭代实现）
+     * 转化为问题:拖拽节点是否为目标节点的父节点来检查父节点链,以避免原问题会使用递归检查子节点链
+     *
+     * @param draggedItem 被拖拽的节点
+     * @param targetItem  目标节点
+     * @return true 如果目标节点是拖拽节点的子节点或自身节点
+     */
+    private boolean isChildOrSelf(TreeItem<Bookmark> draggedItem, TreeItem<Bookmark> targetItem) {
+        TreeItem<Bookmark> temp = targetItem;
+
+        // 使用循环逐级向上检查
+        while (temp != null) {
+            if (temp == draggedItem) {
+                return true;
+            }
+            temp = temp.getParent(); // 向上移动到父节点
+        }
+
+        return false;
     }
 
 
@@ -199,11 +321,13 @@ public class TreeModeController {
             pageNumStr = pageNum.map(integer -> Integer.toString(integer)).orElse("");
             return new ReadOnlyStringWrapper(pageNumStr);
         });
-        rootItem.setExpanded(true);
 
-        tree.setShowRoot(false);
-        tree.setRoot(rootItem);
-        tree.refresh();
+        expandAllNodes(rootItem);
+
+        treeTableView.setShowRoot(false);
+        treeTableView.setRoot(rootItem);
+        treeTableView.refresh();
+        itemCache.clear();
     }
 
     //实际应用中此功能没有需求场景
@@ -220,7 +344,7 @@ public class TreeModeController {
             }
             return new ReadOnlyStringWrapper(offsetCellValue);
         });
-        tree.refresh();
+        treeTableView.refresh();
     }
 
     private void convert(Bookmark bookmark, TreeItem<Bookmark> item) {
@@ -231,6 +355,13 @@ public class TreeModeController {
         }
     }
 
-    private void expandAllNodes() {
+    // 递归展开所有节点
+    private void expandAllNodes(TreeItem<?> item) {
+        if (item != null) {
+            item.setExpanded(true); // 展开当前节点
+            for (TreeItem<?> child : item.getChildren()) {
+                expandAllNodes(child); // 递归展开子节点
+            }
+        }
     }
 }

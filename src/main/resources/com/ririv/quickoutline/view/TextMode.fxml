@@ -1,38 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.jfoenix.controls.JFXButton?>
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <HBox style="-fx-background-color: white;"
-      xmlns="http://javafx.com/javafx/11.0.2"
-      xmlns:fx="http://javafx.com/fxml/1"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
       fx:id="root"
       fx:controller="com.ririv.quickoutline.view.TextModeController">
+
     <StackPane fx:id="shade" HBox.hgrow="ALWAYS">
-        <TextArea fx:id="contentsText" prefWidth="800" promptText="请输入目录文本">
+        <TextArea fx:id="contentsText"  promptText="请输入目录文本">
+<!--            这里去掉右边Pane的阴影效果了，改为分割线显示，所以不用了-->
          <StackPane.margin>
-<!--             设置右margin，防止右边sidebar的阴影效果挡住滚动条（能看到。但按不了）,并且消除了边框&ndash;&gt;-->
-            <Insets right="5.0" />
+<!--             设置右margin，防止右边sidebar的阴影效果挡住部分区域（比如右边挡住滚动条,能看到。但按不了）,并且消除了边框&ndash;&gt;-->
+            <Insets left="2.0" />
          </StackPane.margin>
         </TextArea>
 
-        <Label fx:id="label"  textFill="gray" visible="false">
-
+        <Label fx:id="mask" textFill="gray" visible="false">
         </Label>
     </StackPane>
-    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" styleClass="out-shadow" vgap="50">
-        <JFXButton fx:id="externalEditorBtn" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
+    <Region styleClass="dividing-line-v" />
+    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" vgap="50">
+        <MFXButton fx:id="externalEditorBtn" styleClass="primary-button" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
             <tooltip >
-                <Tooltip text="打开VSCode以使用高级编辑功能，编辑器内文本会自动同步至窗口"/>
+                <Tooltip text="使用VSCode编辑，文本会自动同步"/>
             </tooltip>
-        </JFXButton>
+        </MFXButton>
 
-        <JFXButton fx:id="autoFormat" mnemonicParsing="false" prefWidth="75.0" text="自动缩进">
+        <MFXButton fx:id="autoFormat" styleClass="primary-button" mnemonicParsing="false" prefWidth="75.0" text="自动缩进">
             <tooltip >
-                <Tooltip text="格式化文本，并按序号对文本内容自动缩进"/>
+                <Tooltip text="根据文本内容进行识别，自动格式化并缩进文本"/>
             </tooltip>
-        </JFXButton>
+        </MFXButton>
         <Label />
     </FlowPane>
 </HBox>

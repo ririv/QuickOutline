@@ -18,8 +18,8 @@ public class HelpController {
     public FlowPane innerPane;
     public Label versionLabel;
 
-    public void initialize() throws IOException {
-        versionLabel.textProperty().bind(new SimpleStringProperty("Version: " +InfoUtil.getVersion()));
+    public void initialize() {
+        versionLabel.textProperty().bind(new SimpleStringProperty("Version: " +InfoUtil.getAppVersion()));
     }
 
     public void browse(String url){
@@ -43,7 +43,7 @@ public class HelpController {
     }
 
     public void browseHelpOnMyPage(){
-        browse("https://www.zhihu.com/people/ririv");
+        browse("https://www.xiaohongshu.com/user/profile/5f988414000000000101ca29");
     }
 
 

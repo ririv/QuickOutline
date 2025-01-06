@@ -1,0 +1,120 @@
+/* 去除滚动条背景色，只保留滑块 */
+
+.scroll-bar {
+    -fx-background-color: transparent; /* 移除背景色 */
+}
+
+/* 去除滚动条的轨道背景色 */
+.scroll-bar .track {
+    -fx-background-color: transparent; /* 透明轨道 */
+    -fx-background-radius: 10px;    /* 圆角效果 */
+    -fx-border-radius: 10px;        /* 边框圆角 */
+}
+
+/* 设置滚动条滑块的颜色 */
+.scroll-bar .thumb {
+    -fx-background-color: #888888; /* 滑块的颜色 */
+    -fx-background-radius: 10px;    /* 圆角效果 */
+    -fx-border-radius: 10px;        /* 边框圆角 */
+}
+
+/* 当滑块悬停时，改变其颜色 */
+.scroll-bar .thumb:hover {
+    -fx-background-color: #555555; /* 悬停时的颜色 */
+}
+
+/* 设置水平滚动条 */
+.scroll-bar:horizontal {
+    -fx-pref-height: 10px; /* 设置水平滚动条的高度 */
+}
+
+/* 设置垂直滚动条 */
+.scroll-bar:vertical {
+    -fx-pref-width: 10px; /* 设置垂直滚动条的宽度 */
+}
+
+/* 去掉滚动条的增量和减量箭头按钮 */
+/* 箭头按钮的区域要设为0，否则占位*/
+.scroll-bar .increment-button, /* 增量箭头按钮（右、下） */
+.scroll-bar .decrement-button { /* 减量箭头按钮（左、上） */
+    -fx-background-color: transparent; /* 设置透明背景 */
+    -fx-background-insets: 0; /* 清空背景 */
+    -fx-background-radius: 0; /* 清空圆角 */
+    -fx-pref-width: 0; /* 宽度设置为 0 */
+    -fx-pref-height: 0; /* 高度设置为 0 */
+}
+
+
+/* 箭头图标设置不可见*/
+.scroll-bar,
+.scroll-bar .decrement-arrow,
+.scroll-bar .increment-arrow {
+    visibility: hidden;
+}
+
+
+.primary-button{
+    -fx-pref-height: 35;
+    -fx-font-size: 12;
+    -fx-background-color: #00BFFF;
+    /*snow 与 white 不是一个颜色，snow更红一点*/
+    -fx-text-fill:snow;
+    /*-fx-effect: dropshadow(three-pass-box, #9c9c9c, 10,0,0,0);*/
+}
+
+.button:disabled {
+    -fx-background-color: snow;
+    -fx-text-fill: black;
+    -fx-effect: dropshadow(gaussian, rgba(150, 150, 150, 0.5), 15, 0.5, 0, 0); /* 四周扩散阴影 */
+}
+
+
+
+/* 树表格列标题文字样式 */
+.tree-table-view .column-header {
+    -fx-background-color: white;  /* 去掉背景渐变 */
+    /*-fx-text-fill 设置无效,用下面这行*/
+    -fx-text-background-color: #888888; /* 设置文字颜色为灰色, */
+}
+
+/* 树表格列标题的鼠标悬停效果 */
+.tree-table-view .column-header:hover {
+    -fx-background-color: #f4f4f4;  /* 悬停时背景颜色 */
+}
+
+/* 分隔线颜色 */
+.tree-table-view .column-header {
+    -fx-border-color: #d1d1d1;  /* 设置分隔线颜色为浅灰色 */
+    -fx-border-width: 0 0 1px 0;  /* 只设置底部边框 */
+}
+
+
+.tree-table-view .cell {
+    -fx-border-width: 0;
+}
+
+.tree-table-view .cell:hover {
+    -fx-background-color: #f4f4f4;  /* 悬停时背景颜色 */
+    -fx-text-fill: black;  /* 设置选中时的文字颜色 */
+}
+
+/* 选择状态的样式 */
+/*https://stackoverflow.com/questions/21707178/javafx-how-to-set-selected-row-text-color-in-not-focused-tableview*/
+.tree-table-view .cell:selected {
+    -fx-background-color: #c6dafc;  /* 设置选中时的背景颜色 */
+    -fx-text-background-color: black;
+}
+
+/*有悬浮样式的时候没用 不知道为什么*/
+/*.tree-table-view .cell:selected:hover {*/
+/*    -fx-background-color: #c6dafc !important;  !* 保持选中时的背景颜色，不被悬浮样式覆盖 *!*/
+/*    -fx-text-background-color: black !important;  !* 保持选中时的文字颜色 *!*/
+/*}*/
+
+
+
+
+/*https://stackoverflow.com/questions/42892614/javafx-and-css-radiobutton-styling*/
+/*.radio-button > .radio > {*/
+/*    -fx-background-color: #0078D7; !* 鼠标悬停时的边框颜色 *!*/
+/*}*/
