@@ -1,4 +1,4 @@
-# Quick Outline
+# QuickOutline
 
 ## 界面
 
@@ -39,11 +39,10 @@
 
 
 ### Tips
-1. 页面偏移量是可双向使用的
+1. 页码偏移量
+添加目录时，会自动加上页码偏移量，支持负数，但相加后的结果不要超出实际页码范围
 
-即添加目录时，会自动加上页面偏移量
-
-在获取目录时，会自动减去页面偏移量
+注：1.0 版本在获取当前PDF目录时，会自动减去页码偏移量；2.0+版本此按钮改为重置目录，不会有此行为，即页码偏移量仅会在添加目录时作用（相加）
 
 2. 中文序号支持
 
@@ -62,7 +61,6 @@
 第一章 我是标题 21
 ```
 
-- 其他，不列举了
 
 注意，使用自动缩进得到的文本层次结构，与直接使用按序号的方式添加的目录层次结构是一样的
 
@@ -75,31 +73,31 @@
 
 如想使用，请使用软件中提供的 VSCode 按钮以启动
 
-VSCode 中的内容会自动同步至软件窗口中（需在VSCode中保存文件，可以打开自动保存功能）
+VSCode 中的内容会自动同步至软件窗口中（需在 VSCode 中保存文件，可以打开自动保存功能）
 
-注意此同步是单项同步，即 VSCode -> 本软件
+注意此同步是单项同步，即 VSCode → 本软件
 
 但在此期间，你可以使用软件中的自动缩进功能，此时软件中文本也会立即至 VSCode 中
 
 ### 配置
 
-请先下载[VSCode](https://code.visualstudio.com/)
+请先下载 [VSCode](https://code.visualstudio.com/)
 
 需要添加至环境变量，方法也很简单
 
 ### Windows
 
-参考[Visual Studio Code on Windows](https://code.visualstudio.com/docs/setup/windows)
+参考 [Visual Studio Code on Windows](https://code.visualstudio.com/docs/setup/windows)
 
-安装时勾选"添加到Path"（默认已勾选，用户无需进行任何操作），安装后需重启
+安装时勾选"添加到 Path"（默认已勾选，用户无需进行任何操作），安装后需重启
 
 > **Tip:** 若在下载时将其不慎取消勾选，可在找到安装目录下的 bin 文件夹，将其添加到系统环境变量中的 Path
 
 ### MacOS
 
-参考[Visual Studio Code on macOS](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)
+参考 [Visual Studio Code on macOS](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)
 
-1. 启动 VS Code.
+1. 启动 VSCode.
 
 2. 按下组合键 (Cmd+Shift+P)，输入 'shell command' 找到命令行: Install 'code' command in PATH command.
 
@@ -109,9 +107,9 @@ VSCode 中的内容会自动同步至软件窗口中（需在VSCode中保存文�
 
 ## 下载
 
-Windows: 解压后直接运行.exe文件
+Windows: 解压后直接运行 `.exe` 文件
 
-Mac: 提供安装包，目前打开所生成的PDF文件所在位置功能有点小问题，不可用
+Mac: 提供安装包，目前打开所生成的 PDF 文件所在位置功能有点小问题，不可用
 
 [下载地址](https://github.com/ririv/QuickOutline/releases)
 
@@ -121,9 +119,9 @@ Mac: 提供安装包，目前打开所生成的PDF文件所在位置功能有点
 
 ### 版本一致性
 为确保兼容，请保证版本一致性，目前项目采用：
-Java 21 (LTS)
-Javafx 21 (LTS)
-Gradle 8.12
+- Java 21 (LTS)
+- JavaFX 21 (LTS)
+- Gradle 8.12
 
 由于项目使用了 jlink 打包需要模块化项目，却引用了非模块化项目（iText），因此需要注意在 Gradle 中处理模块化问题
 ```
@@ -134,7 +132,7 @@ plugins {
     // 不加入此会出现找不到模块错误
     id 'org.javamodularity.moduleplugin' version '1.8.15'
     
-    // 请使用高版本，’2.26.0‘实测出现 "Unsupported class file major version 65"错误
+    // 请使用高版本，'2.26.0'实测出现 "Unsupported class file major version 65"错误
     id 'org.beryx.jlink' version '3.1.1'
 }
 ```
@@ -154,7 +152,7 @@ plugins {
 > 
 > 因此请使用 WiX 3，并确保它添加到环境变量
 
-## Windows下中文乱码问题 TODO
+### Windows下开发控制台输出中文乱码问题 TODO
 打包时可能会出现日志乱码问题，设置UTF-8无果，临时解决方案（设置 GBK 编码）：
 
 Gradle 运行配置（jpackage 等，你需要运行的任务）- 虚拟机选项（VM options）-添加

@@ -1,67 +1,41 @@
-
-
-
-/*#helpBtn{*/
-/*    -fx-background-color: transparent;*/
-/*    -fx-effect: none;*/
-/*    -fx-text-fill: red;*/
-/*}*/
-
-
-
-
-.tabBtn{
-    -fx-border-radius: 0;
-    -fx-background-color: transparent;
+*{
+    -my-color-divding-line: #dfdfdf;
 }
 
 
-#addContentsBtn{
-    -fx-background-color: #fd5656;
+
+
+.toggle-button:selected{
+    -fx-background-color: rgba(210, 210, 210, 0.9);
 }
 
-.text-area{
-    -fx-background-insets: 0;
-    -fx-background-color: transparent;
+.toggle-button:selected>.icon, .toggle-button:pressed>.icon, .button:pressed>.icon{
+    -fx-background-color: #4b4b4b;
 }
 
-.text-area:focused {
-    /*-fx-faint-focus-color: transparent;*/
-    -fx-background-color: transparent;
-}
-
-.text-area >.corner {
-    -fx-background-color: white;
-}
-
-/*阴影效果*/
-.out-shadow{
-    -fx-effect: dropshadow(three-pass-box, #9c9c9c, 10,0,0,0);
-    -fx-background-color: white;
-}
 
 .text-field{
     /*去除边框*/
     -fx-background-color: transparent;
     -fx-background-radius: 0;
-    -fx-prompt-text-fill: rgba(128, 128, 128, 0.9);
+    -fx-prompt-text-fill: rgba(150, 150, 150, 0.9);
 }
 
 .text-field:disabled{
     -fx-background-color: transparent;
-    -fx-opacity: 0.9; /* 使控件变灰 */
-    -fx-text-fill: rgba(128, 128, 128, 0.9);
+    -fx-opacity: 0.9; /* 默认有值，需修改使得没那么透明 */
+    -fx-text-fill: rgba(100, 100, 100);
 }
 
 /*下划线*/
-#offsetText{
+#offsetTextField{
     -fx-border-width: 0 0 1 0; /* 只在底部添加边框 */
     -fx-border-color: #909090; /* 下划线颜色 */
 
 }
 
 
-#offsetText:hover {
+#offsetTextField:hover {
     /*-fx-background-color:*/
     /*        #909090,*/
     /*        #FFFFFF;*/
@@ -70,7 +44,7 @@
 }
 
 /*聚焦，聚焦并悬浮*/
-#offsetText:focused, #offsetText:focused:hover {
+#offsetTextField:focused, #offsetTextField:focused:hover {
     /*-fx-background-color:*/
     /*        #0093EF,*/
     /*        #FFFFFF;*/
@@ -80,7 +54,7 @@
 
 #topPane{
     -fx-view-order: -1.0;
-    -fx-background-color: #eaeaea;
+    -fx-background-color: rgba(242, 242, 242);
 }
 
 
@@ -88,11 +62,12 @@
     -fx-view-order: 1.0;
     -fx-background-color: #f8f8f8;
     -fx-border-width: 0 1 0 0;
-    -fx-border-color: #dfdfdf;
+    -fx-border-color: -my-color-divding-line;
 }
 
 #operationPane{
     -fx-view-order: 2.0;
+    -fx-background-color: white;
 }
 
 #bottomPane{
@@ -102,10 +77,10 @@
 
 .dividing-line-h{
     -fx-pref-height: 1;
-    -fx-background-color: #dfdfdf;
+    -fx-background-color: -my-color-divding-line;
 }
 
 .dividing-line-v{
     -fx-pref-width: 1;
-    -fx-background-color: #dfdfdf;
+    -fx-background-color: -my-color-divding-line;
 }

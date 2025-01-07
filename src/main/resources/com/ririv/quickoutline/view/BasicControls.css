@@ -1,3 +1,35 @@
+/* 定义变量 */
+/* 不要以"--"开头，使用时也不需要var()包裹 */
+* {
+    -my-color-primary: #409eff;
+    -my-color-important: #f56c6c;
+}
+
+/*阴影效果*/
+/*去掉了，界面简洁点*/
+.out-shadow{
+    -fx-effect: dropshadow(three-pass-box, #9c9c9c, 10,0,0,0);
+    -fx-background-color: white;
+}
+
+
+.text-area{
+    -fx-background-insets: 0;
+    -fx-background-color: transparent;
+}
+
+.text-area:focused {
+    /*-fx-faint-focus-color: transparent;*/
+    -fx-background-color: transparent;
+}
+
+.text-area >.corner {
+    -fx-background-color: white;
+}
+
+
+
+
 /* 去除滚动条背景色，只保留滑块 */
 
 .scroll-bar {
@@ -53,14 +85,61 @@
 }
 
 
-.primary-button{
+.default-button{
     -fx-pref-height: 35;
     -fx-font-size: 12;
-    -fx-background-color: #00BFFF;
-    /*snow 与 white 不是一个颜色，snow更红一点*/
-    -fx-text-fill:snow;
+    -fx-border-radius: 4px;
+    -fx-font-weight: 500;
     /*-fx-effect: dropshadow(three-pass-box, #9c9c9c, 10,0,0,0);*/
 }
+
+.primary-button{
+    -fx-background-color: -my-color-primary;
+    /*snow 与 white 不是一个颜色，snow更红一点*/
+    -fx-text-fill:snow;
+}
+
+
+.primary-plain-button{
+    -fx-background-color: rgb(235.9, 245.3, 255);
+    -fx-text-fill: -my-color-primary;
+    -fx-border-color: rgb(159.5, 206.5, 255);
+}
+
+.primary-plain-button:hover{
+    -fx-text-fill: snow;
+    -fx-background-color: -my-color-primary;
+    -fx-border-color: -my-color-primary;
+}
+
+.primary-plain-button:pressed{
+    -my-color-primary-pressed: rgb(51.2, 126.4, 204);
+    -fx-text-fill: snow;
+    -fx-background-color: -my-color-primary-pressed;
+    -fx-border-color: -my-color-primary-pressed;
+}
+
+
+.important-plain-button{
+    -fx-background-color: rgb(254, 240.3, 240.3);
+    -fx-text-fill: -my-color-important;
+    -fx-border-color: rgb(250, 181.5, 181.5);
+}
+
+.important-plain-button:hover{
+    -fx-background-color: -my-color-important;
+    -fx-text-fill: snow;
+    -fx-border-color: -my-color-important;
+}
+
+.important-plain-button:pressed{
+    -my-color-important-pressed: rgb(196, 86.4, 86.4);
+    -fx-text-fill: snow;
+    -fx-background-color: -my-color-important-pressed;
+    -fx-border-color: -my-color-important-pressed;
+}
+
+
 
 .button:disabled {
     -fx-background-color: snow;
@@ -68,6 +147,13 @@
     -fx-effect: dropshadow(gaussian, rgba(150, 150, 150, 0.5), 15, 0.5, 0, 0); /* 四周扩散阴影 */
 }
 
+
+.tree-table-view {
+    /*-fx-text-fill 设置无效,用下面这行，注意该文字元素和下面标题栏的文字元素实际为label，所以选择label时可以改此颜色*/
+    -fx-text-background-color: #888888;
+    /*这里有个边框颜色，实际上时背景色*/
+    -fx-background-color: transparent;
+}
 
 
 /* 树表格列标题文字样式 */
@@ -118,3 +204,4 @@
 /*.radio-button > .radio > {*/
 /*    -fx-background-color: #0078D7; !* 鼠标悬停时的边框颜色 *!*/
 /*}*/
+

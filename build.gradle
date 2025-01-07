@@ -6,7 +6,7 @@ plugins {
     // 不加入此会出现找不到模块错误
     id 'org.javamodularity.moduleplugin' version '1.8.15'
 
-    // 请使用高版本，’2.26.0‘实测出现 "Unsupported class file major version 65"错误
+    // 请使用高版本，'2.26.0'实测出现 "Unsupported class file major version 65"错误
     id 'org.beryx.jlink' version '3.1.1'
 
     id 'idea'
@@ -28,7 +28,7 @@ version = '1.0.3'
 
 javafx {
     version = JavaVersion.VERSION_21 // LTS
-    modules = ['javafx.controls', 'javafx.fxml','javafx.web']
+    modules = ['javafx.controls', 'javafx.fxml']
 }
 
 application{
@@ -54,7 +54,7 @@ def itextVersion = '9.0.0'
 // compile 不要用了，已经废弃了
 // 不能下载请配置gradle代理
 dependencies {
-    implementation "com.itextpdf:itext-core:${itextVersion}"
+//    implementation "com.itextpdf:itext-core:${itextVersion}"
     // 使用该依赖打包会出现 错误: 当前不支持已签名模块化 JAR ..\QuickOutline\build\jlinkbase\jlinkjars\bcpkix-jdk18on-1.78.jar,
 //    implementation "com.itextpdf:bouncy-castle-adapter:${itextVersion}" //签名用
     implementation "com.itextpdf:kernel:${itextVersion}"
@@ -62,7 +62,7 @@ dependencies {
     implementation "com.itextpdf:layout:${itextVersion}"
     implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
-    implementation 'io.github.palexdev:materialfx:11.17.0'  //考虑换一个UI库
+//    implementation 'io.github.palexdev:materialfx:11.17.0'  //考虑换一个UI库
     implementation 'org.slf4j:slf4j-api:2.0.16' // Use the latest stable version
     implementation 'org.slf4j:slf4j-simple:2.0.16' // Or another implementation
 }
