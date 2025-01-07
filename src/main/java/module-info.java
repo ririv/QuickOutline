@@ -4,9 +4,9 @@ module quickoutline {
     requires kernel;
     requires java.desktop;
 //    requires javafx.web;
-    requires java.validation;
+//    requires java.validation;
     requires org.slf4j; //必须添加，否则会出现找不到 Exception java.lang.NoClassDefFoundError: org/slf4j/LoggerFactory
-    requires layout;
+//    requires layout;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics ; //由于FXML使用反射访问controller
 
