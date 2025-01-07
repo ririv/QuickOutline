@@ -11,7 +11,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 
 import java.awt.*;
 import java.io.IOException;
@@ -22,12 +21,11 @@ import java.util.regex.Pattern;
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
 public class TextModeController {
-    public TextArea contentsText;
+    public TextArea contentsTextArea;
     public Button externalEditorBtn;
-    public Button autoFormat;
+    public Button autoFormatBtn;
 
     private final SyncWithExternalEditorService syncWithExternalEditorService = new SyncWithExternalEditorService();
-    public StackPane shade;
     public Label mask;
 //    public ScalePane
 
@@ -51,7 +49,7 @@ public class TextModeController {
         \n没用，只好用\r了
         https://stackoverflow.com/questions/51698600/how-to-add-line-breaks-to-prompt-text-in-javafx
 */
-        contentsText.setPromptText("""
+        contentsTextArea.setPromptText("""
                 请输入目录文本，格式如下\r
                 \r
                 按序号：\r
@@ -69,28 +67,27 @@ public class TextModeController {
 
         // 设置处理键盘事件
         // 按下SHIFT+TAB将自动去掉一格缩进（\t或者4个空格）
-        contentsText.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+        contentsTextArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             // 检查是否是 Shift+Tab
             if (event.getCode() == KeyCode.TAB && event.isShiftDown()) {
                 // 获取当前光标所在行
-                int caretPosition = contentsText.getCaretPosition();
-                int lineNumber = getLineNumber(contentsText, caretPosition);
+                int caretPosition = contentsTextArea.getCaretPosition();
+                int lineNumber = getLineNumber(contentsTextArea, caretPosition);
 
                 // 获取光标所在行的文本
-                String lineText = contentsText.getText().split("\n")[lineNumber - 1];
+                String lineText = contentsTextArea.getText().split("\n")[lineNumber - 1];
                 // 如果该行没有缩进，则不需要处理，直接返回
                 if (INDENT_PATTERN.matcher(lineText).find()) {
                     // 去除行首的缩进（制表符或4个空格）
                     String trimmedLine = lineText.replaceFirst(INDENT_PATTERN.pattern(), "");
                     // 替换当前行
-                    StringBuilder newText = new StringBuilder(contentsText.getText());
-                    newText.replace(contentsText.getText().indexOf(lineText), contentsText.getText().indexOf(lineText) + lineText.length(), trimmedLine);
-
+                    StringBuilder newText = new StringBuilder(contentsTextArea.getText());
+                    newText.replace(contentsTextArea.getText().indexOf(lineText), contentsTextArea.getText().indexOf(lineText) + lineText.length(), trimmedLine);
                     // 设置修改后的文本
-                    contentsText.setText(newText.toString());
+                    contentsTextArea.setText(newText.toString());
 
                     // 设置光标位置
-                    contentsText.positionCaret(caretPosition - 1);
+                    contentsTextArea.positionCaret(caretPosition - 1);
                 }
 
                 event.consume(); // 消耗事件，防止默认行为
@@ -98,9 +95,9 @@ public class TextModeController {
         });
 
 
-        autoFormat.setOnAction(event -> {
-            contentsText.setText(pdfService.autoFormatBySeq(contentsText.getText()));
-            syncWithExternalEditorService.writeTemp(contentsText.getText());
+        autoFormatBtn.setOnAction(event -> {
+            contentsTextArea.setText(pdfService.autoFormatBySeq(contentsTextArea.getText()));
+            syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
             //自动格式化后，将方式切换为"indent",由于操作较为隐蔽，使用者不易发现变化，容易迷惑使用者，所以关闭
 //            methodGroup.selectToggle(indentRBtn);
         });
@@ -111,12 +108,12 @@ public class TextModeController {
 
                         getCoordinate(),
 
-                        fileText -> Platform.runLater(()-> contentsText.setText(fileText)),
+                        fileText -> Platform.runLater(()-> contentsTextArea.setText(fileText)),
 
                         () -> {
-                            syncWithExternalEditorService.writeTemp(contentsText.getText());
+                            syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
                             Platform.runLater(() -> {
-                                contentsText.setDisable(true);
+                                contentsTextArea.setDisable(true);
                                 externalEditorBtn.setDisable(true);
                                 externalEditorBtn.setText("已连接...");
 //                                externalEditorBtn.setGraphic();
@@ -125,7 +122,7 @@ public class TextModeController {
                         },
 
                         () -> Platform.runLater(() -> {
-                            contentsText.setDisable(false);
+                            contentsTextArea.setDisable(false);
                             externalEditorBtn.setDisable(false);
                             externalEditorBtn.setText("VSCode");
                             mask.setVisible(false);
@@ -169,9 +166,9 @@ public class TextModeController {
     }
 
     private Pair<Integer,Integer> getCoordinate() {
-        int pos = contentsText.getCaretPosition();
-        int x = getLineNumber(contentsText, pos);
-        int y = getColumnNumber(contentsText, pos);
+        int pos = contentsTextArea.getCaretPosition();
+        int x = getLineNumber(contentsTextArea, pos);
+        int y = getColumnNumber(contentsTextArea, pos);
         return new Pair<> (x,y);
     }
 

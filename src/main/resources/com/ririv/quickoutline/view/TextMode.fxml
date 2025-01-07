@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.palexdev.materialfx.controls.MFXButton?>
-<?import javafx.geometry.Insets?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <HBox style="-fx-background-color: white;"
@@ -10,13 +9,13 @@
       fx:id="root"
       fx:controller="com.ririv.quickoutline.view.TextModeController">
 
-    <StackPane fx:id="shade" HBox.hgrow="ALWAYS">
-        <TextArea fx:id="contentsText"  promptText="请输入目录文本">
+    <StackPane HBox.hgrow="ALWAYS">
+        <TextArea fx:id="contentsTextArea" promptText="请输入目录文本">
 <!--            这里去掉右边Pane的阴影效果了，改为分割线显示，所以不用了-->
-         <StackPane.margin>
+<!--         <StackPane.margin>-->
 <!--             设置右margin，防止右边sidebar的阴影效果挡住部分区域（比如右边挡住滚动条,能看到。但按不了）,并且消除了边框&ndash;&gt;-->
-            <Insets left="2.0" />
-         </StackPane.margin>
+<!--            <Insets left="2.0" />-->
+<!--         </StackPane.margin>-->
         </TextArea>
 
         <Label fx:id="mask" textFill="gray" visible="false">
@@ -24,17 +23,17 @@
     </StackPane>
     <Region styleClass="dividing-line-v" />
     <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" vgap="50">
-        <MFXButton fx:id="externalEditorBtn" styleClass="primary-button" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
+        <Button fx:id="externalEditorBtn" styleClass="default-button,primary-plain-button" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
             <tooltip >
                 <Tooltip text="使用VSCode编辑，文本会自动同步"/>
             </tooltip>
-        </MFXButton>
+        </Button>
 
-        <MFXButton fx:id="autoFormat" styleClass="primary-button" mnemonicParsing="false" prefWidth="75.0" text="自动缩进">
+        <Button fx:id="autoFormatBtn" styleClass="default-button,primary-plain-button" mnemonicParsing="false" prefWidth="75.0" text="自动缩进">
             <tooltip >
                 <Tooltip text="根据文本内容进行识别，自动格式化并缩进文本"/>
             </tooltip>
-        </MFXButton>
+        </Button>
         <Label />
     </FlowPane>
 </HBox>

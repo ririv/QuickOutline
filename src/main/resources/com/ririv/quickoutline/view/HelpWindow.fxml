@@ -31,7 +31,7 @@
         <FlowPane>
             <Label styleClass="graph-button" >
                 <graphic>
-                    <Region styleClass="githubIcon" prefWidth="15" prefHeight="15"/>
+                    <Region styleClass="icon,githubIcon" prefWidth="15" prefHeight="15"/>
                 </graphic>
             </Label>
             <Hyperlink onMouseClicked="#browseRemoteRepo">开放源代码</Hyperlink>

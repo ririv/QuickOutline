@@ -32,14 +32,14 @@ public class MainController {
     public Button browseFileBtn;
 
 
-    public Button getCurrentContentsBtn;
+    public Button resetContentsBtn;
 
     public Button addContentsBtn;
-    public TextField offsetText;
+    public TextField offsetTextField;
 
     public RadioButton seqRBtn;
     public RadioButton indentRBtn;
-    public ToggleGroup methodGroup;
+    public ToggleGroup methodToggleGroup;
 
     public BorderPane root;
 
@@ -57,7 +57,7 @@ public class MainController {
     public HBox topPane;
     public ToggleButton textModeBtn;
     public ToggleButton treeModeBtn;
-    public ToggleButton tabGroup;
+    public ToggleGroup tabToggleGroup;
 
     PdfService pdfService = new PdfService();
 
@@ -96,14 +96,15 @@ public class MainController {
         textModeController.setPdfService(this.pdfService);
         treeModeController.setPdfService(this.pdfService);
 
-        seqRBtn.setToggleGroup(methodGroup);
-        indentRBtn.setToggleGroup(methodGroup);
         seqRBtn.setUserData(Method.SEQ);
         indentRBtn.setUserData(Method.INDENT);
         seqRBtn.setSelected(true);
 
+        textModeBtn.setSelected(true);
+        currenTab = FnTab.text;
 
-        offsetText.textProperty().addListener((observable, oldValue, newValue) -> {
+
+        offsetTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty() && !newValue.matches("^-?[1-9]\\d*$|^0$|^-$")) {
                 if (newValue.charAt(0) == '-') {
                     newValue = newValue.substring(1);
@@ -111,7 +112,7 @@ public class MainController {
                     newValue = '-'+newValue;
                 }
                 else newValue = newValue.replaceAll("[^0-9]", "");
-                offsetText.setText(newValue);
+                offsetTextField.setText(newValue);
             }
         });
 
@@ -140,7 +141,7 @@ public class MainController {
             Dragboard dragboard = e.getDragboard();
             File file = dragboard.getFiles().getFirst();
 
-            if (!textModeController.contentsText.getText().isEmpty() && !filepathText.getText().equals(file.getAbsolutePath())) {
+            if (!textModeController.contentsTextArea.getText().isEmpty() && !filepathText.getText().equals(file.getAbsolutePath())) {
 
                 ButtonType keepContentsText = new ButtonType("保留", ButtonBar.ButtonData.OK_DONE);
                 ButtonType noKeepContentsText = new ButtonType("否", ButtonBar.ButtonData.OK_DONE);
@@ -153,11 +154,11 @@ public class MainController {
                     return;
                 }
                 else if (result.isPresent() && result.get() == keepContentsText) {
-                    String tempText = textModeController.contentsText.getText();
-                    Toggle tempToggle = methodGroup.getSelectedToggle();
+                    String tempText = textModeController.contentsTextArea.getText();
+                    Toggle tempToggle = methodToggleGroup.getSelectedToggle();
                     filepathText.setText(file.getPath());
-                    methodGroup.selectToggle(tempToggle);
-                    textModeController.contentsText.setText(tempText);
+                    methodToggleGroup.selectToggle(tempToggle);
+                    textModeController.contentsTextArea.setText(tempText);
                 }
             }
             filepathText.setText(file.getPath());
@@ -174,26 +175,28 @@ public class MainController {
             }
         });
 
+        tabToggleGroup.selectedToggleProperty().addListener(event -> {
+            if (textModeBtn.isSelected()) {
+                switchMode(FnTab.text);
+            } else if (treeModeBtn.isSelected()) {
+                switchMode(FnTab.tree);
+                reconstructTree();
+            }
+            return;
+        });
 
-        methodGroup.selectedToggleProperty().addListener(event -> {
+        methodToggleGroup.selectedToggleProperty().addListener(event -> {
             if (currenTab == FnTab.tree) reconstructTree();
 
         });
 
-        textModeBtn.setOnAction(event -> {
-            switchMode(FnTab.text);
-        });
-
-        treeModeBtn.setOnAction(event -> {
-            switchMode(FnTab.tree);
-        });
 
 
     }
 
     @FXML
-    private void getCurrentContentsBtnAction(ActionEvent event) {
-            if (!textModeController.contentsText.getText().isEmpty()) {
+    private void resetContentsBtnAction(ActionEvent event) {
+            if (!textModeController.contentsTextArea.getText().isEmpty()) {
                 Optional<ButtonType> buttonType = showAlert(
                         Alert.AlertType.CONFIRMATION,
                         "正在获取文件的目录文本，文本域中含有可能未保存的内容，是否确认?",
@@ -208,7 +211,7 @@ public class MainController {
                 return;
             }
 
-            getCurrentContents();
+            resetContents();
             if (currenTab == FnTab.tree) reconstructTree();
 
     }
@@ -227,7 +230,7 @@ public class MainController {
             String destFilePath = srcFilePath.substring(0, srcFilePath.lastIndexOf(srcFileName)) + srcFileName.substring(0, srcFileName.lastIndexOf(".")) + "_含目录" + ext;
 
 
-            String text = textModeController.contentsText.getText();
+            String text = textModeController.contentsTextArea.getText();
 
             if (text == null || text.isEmpty()) {
                 showAlert(Alert.AlertType.ERROR, "PDF目录内容不能为空", root.getScene().getWindow());
@@ -236,7 +239,7 @@ public class MainController {
 
 
             try {
-                pdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodGroup.getSelectedToggle().getUserData());
+                pdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodToggleGroup.getSelectedToggle().getUserData());
             } catch (BookmarkFormatException e) {
                 e.printStackTrace();
                 File file = new File(destFilePath);
@@ -294,23 +297,24 @@ public class MainController {
 
     //重置，并获得目录
     private void resetState(){
-        offsetText.setText(null); //必须在前，否则缓存的offset会影响下面的函数
-        getCurrentContents();
+        offsetTextField.setText(null); //必须在前，否则缓存的offset会影响下面的函数
+        resetContents();
         if (currenTab == FnTab.tree) reconstructTree();
     }
 
 
-    private void getCurrentContents() {
-//        这里传入offset是用来相减，以获得原始页码
-        String contents = pdfService.getContents(filepathText.getText(), offset());
-        textModeController.contentsText.setText(contents);
+    private void resetContents() {
+//        这里原本传入offset是用来相减，原本该功能未获取目录，而不是重置目录
+//        因为比较迷惑，现在不再支持，设为0
+        String contents = pdfService.getContents(filepathText.getText(), 0);
+        textModeController.contentsTextArea.setText(contents);
     }
 
     public int offset() {
-        String offsetText = this.offsetText.getText();
+        String offsetText = this.offsetTextField.getText();
 
         try {
-            return Integer.parseInt(offsetText != null && !offsetText.isEmpty() ? offsetText : "0");
+            return Integer.parseInt(offsetText != null && !offsetText.isEmpty() && !offsetText.equals("-") ? offsetText : "0");
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
@@ -318,11 +322,11 @@ public class MainController {
     }
 
     public void reconstructTree() {
-        if (textModeController.contentsText.getText().isEmpty()) return;
+        if (textModeController.contentsTextArea.getText().isEmpty()) return;
 
         Bookmark rootBookmark = pdfService.convertTextToBookmarkTreeByMethod(
-                textModeController.contentsText.getText(), 0,
-                (Method) methodGroup.getSelectedToggle().getUserData()
+                textModeController.contentsTextArea.getText(), 0,
+                (Method) methodToggleGroup.getSelectedToggle().getUserData()
 //                ,true
         );
         treeModeController.reconstructTree(rootBookmark);
