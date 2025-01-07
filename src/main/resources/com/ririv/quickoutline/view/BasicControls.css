@@ -141,9 +141,10 @@
 
 
 
-.button:disabled {
+.default-button:disabled {
     -fx-background-color: snow;
     -fx-text-fill: black;
+    -fx-border-color: transparent;
     -fx-effect: dropshadow(gaussian, rgba(150, 150, 150, 0.5), 15, 0.5, 0, 0); /* 四周扩散阴影 */
 }
 
@@ -199,9 +200,21 @@
 
 
 
+/*这段的样式参考javafx默认样式（modena.css）和官方文档 来修改*/
+.radio-button .radio {
+    -fx-border-color: #000;
+    /*必须设置*/
+    -fx-border-radius: 15px;
+    -fx-background-color: white;
+    -fx-padding: 0.333333em;
+}
 
-/*https://stackoverflow.com/questions/42892614/javafx-and-css-radiobutton-styling*/
-/*.radio-button > .radio > {*/
-/*    -fx-background-color: #0078D7; !* 鼠标悬停时的边框颜色 *!*/
-/*}*/
+.radio-button:hover .radio {
+    -fx-border-color: -my-color-primary;
+}
+
+/*dot的颜色是第二个，第一个会发生偏移*/
+.radio-button:selected:hover > .radio > .dot {
+    -fx-background-color: transparent, #003cff;
+}
 
