@@ -1,9 +1,4 @@
-/* 定义变量 */
-/* 不要以"--"开头，使用时也不需要var()包裹 */
-* {
-    -my-color-primary: #409eff;
-    -my-color-important: #f56c6c;
-}
+@import "colors.css";
 
 /*阴影效果*/
 /*去掉了，界面简洁点*/
@@ -101,9 +96,9 @@
 
 
 .primary-plain-button{
-    -fx-background-color: rgb(235.9, 245.3, 255);
+    -fx-background-color: -my-color-primary-light-bg;
     -fx-text-fill: -my-color-primary;
-    -fx-border-color: rgb(159.5, 206.5, 255);
+    -fx-border-color: -my-color-primary-light-border;
 }
 
 .primary-plain-button:hover{
@@ -113,7 +108,6 @@
 }
 
 .primary-plain-button:pressed{
-    -my-color-primary-pressed: rgb(51.2, 126.4, 204);
     -fx-text-fill: snow;
     -fx-background-color: -my-color-primary-pressed;
     -fx-border-color: -my-color-primary-pressed;
@@ -121,9 +115,9 @@
 
 
 .important-plain-button{
-    -fx-background-color: rgb(254, 240.3, 240.3);
+    -fx-background-color: -my-color-important-light-bg;
     -fx-text-fill: -my-color-important;
-    -fx-border-color: rgb(250, 181.5, 181.5);
+    -fx-border-color: -my-color-important-light-border;
 }
 
 .important-plain-button:hover{
@@ -133,7 +127,6 @@
 }
 
 .important-plain-button:pressed{
-    -my-color-important-pressed: rgb(196, 86.4, 86.4);
     -fx-text-fill: snow;
     -fx-background-color: -my-color-important-pressed;
     -fx-border-color: -my-color-important-pressed;
@@ -180,9 +173,13 @@
     -fx-border-width: 0;
 }
 
+
+.tree-table-view .cell {
+    -fx-text-fill: black;  /* 设置选中时的文字颜色 */
+}
+
 .tree-table-view .cell:hover {
     -fx-background-color: #f4f4f4;  /* 悬停时背景颜色 */
-    -fx-text-fill: black;  /* 设置选中时的文字颜色 */
 }
 
 /* 选择状态的样式 */
@@ -216,5 +213,6 @@
 /*dot的颜色是第二个，第一个会发生偏移*/
 .radio-button:selected:hover > .radio > .dot {
     -fx-background-color: transparent, #003cff;
+    /*-fx-background-insets: 1 0 -1 0, 0;*/
 }
 

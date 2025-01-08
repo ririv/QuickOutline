@@ -54,6 +54,11 @@ public class Bookmark{
         this.title = title;
     }
 
+
+    public String getId() {
+        return id;
+    }
+
     public int getLevel() {
         return level;
     }
@@ -181,7 +186,53 @@ public class Bookmark{
         this.linearBookmarkList = linearBookmarkList;
     }
 
-    public String getId() {
-        return id;
+
+    public void reconstructTreeByLevel(){
+        if (!this.isRoot()) throw new RuntimeException("该方法仅用于根节点");
+        else {
+            List<Bookmark> bookmarkList = this.getLinearBookmarkList();
+            Bookmark last = this;
+            for (var current : bookmarkList) {
+                last = addLinearlyToBookmarkTree(current, last);
+            }
+        }
     }
+
+
+    public static Bookmark convertListToBookmarkTree(List<Bookmark> bookmarkList) {
+        Bookmark rootBookmark = Bookmark.createRoot();
+        Bookmark last = rootBookmark;
+        for (var current : bookmarkList) {
+            last = addLinearlyToBookmarkTree(current,last);
+        }
+        rootBookmark.setLinearBookmarkList(bookmarkList);
+        return rootBookmark;
+    }
+
+
+    //一定要设置parent
+    /**
+     * @return currentBookmark - 但应使用last接受返回值，因为add完current，last就得更新了，current变为新的last
+     */
+    private static Bookmark addLinearlyToBookmarkTree(Bookmark current, Bookmark last) {
+        int currentLevel = current.getLevel();
+        if (last.getLevelByStructure() == currentLevel) { //同级
+            last.getOwnerList().add(current);
+            current.setParent(last.getParent());
+        } else if (last.getLevelByStructure() < currentLevel) { //进入下一级，不会跳级
+            last.getChildren().add(current);
+            current.setParent(last);
+        } else { //回到上级，可能跳级
+            Bookmark parent = last.getParent(); //目前last所属层级的parent
+            for (int dif = last.getLevelByStructure() - currentLevel; dif != 0; dif--) { //实际current应属于的parent
+                parent = parent.getParent();
+            }
+            parent.getChildren().add(current);
+            current.setParent(parent);
+        }
+
+        return current;
+    }
+
+
 }

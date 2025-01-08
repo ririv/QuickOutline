@@ -38,9 +38,6 @@ public class TreeModeController {
     //不要在此方法中访问mainController，因此此时还没有产生此实例，得到null
     public void initialize() {
 
-
-
-
         // 仅显示两列且撑满整个view
         // 注意两个值的和需要为1
         treeTableView.setColumnResizePolicy(TreeTableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
@@ -250,9 +247,6 @@ public class TreeModeController {
 
                 event.consume();
             });
-
-
-
 
             return row;
         });

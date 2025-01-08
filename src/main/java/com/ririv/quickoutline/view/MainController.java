@@ -11,6 +11,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.Dragboard;
@@ -20,6 +22,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.awt.*;
 import java.io.*;
 import java.util.Objects;
 import java.util.Optional;
@@ -58,6 +61,8 @@ public class MainController {
     public ToggleButton textModeBtn;
     public ToggleButton treeModeBtn;
     public ToggleGroup tabToggleGroup;
+    public ToggleButton tocBtn;
+    public Button deleteBtn;
 
     PdfService pdfService = new PdfService();
 
@@ -67,6 +72,8 @@ public class MainController {
     @FXML
     private Node treeMode;
 
+
+
     public enum FnTab{
         text, tree, setting
     }
@@ -74,6 +81,10 @@ public class MainController {
     private FnTab currenTab;
 
     private Stage helpStage;
+
+    private String srcFilePath;
+
+    private String destFilePath;
 
 
     public void switchMode(FnTab targetTab) {
@@ -121,6 +132,11 @@ public class MainController {
             if (!oldValue.equals(newValue)) {
                 resetState();
             }
+            srcFilePath = newValue.replaceAll("\\\\", "/");
+            String srcFileName = srcFilePath.substring(srcFilePath.lastIndexOf("/") + 1);
+            String ext = srcFileName.substring(srcFileName.lastIndexOf("."));
+            destFilePath = srcFilePath.substring(0, srcFilePath.lastIndexOf(srcFileName)) + srcFileName.substring(0, srcFileName.lastIndexOf(".")) + "_含目录" + ext;
+
         });
 
         //拖拽文件，必须下面两个方法配合完成
@@ -175,6 +191,7 @@ public class MainController {
             }
         });
 
+
         tabToggleGroup.selectedToggleProperty().addListener(event -> {
             if (textModeBtn.isSelected()) {
                 switchMode(FnTab.text);
@@ -207,7 +224,7 @@ public class MainController {
             }
 
             if (filepathText.getText().isEmpty()) {
-                showAlert(Alert.AlertType.ERROR, "请选择pdf文件", root.getScene().getWindow());
+                showAlert(Alert.AlertType.ERROR, "请选择PDF文件", root.getScene().getWindow());
                 return;
             }
 
@@ -218,25 +235,16 @@ public class MainController {
 
     @FXML
     private void addContentsBtnAction(ActionEvent event) {
-            String fp = filepathText.getText();
-            if (fp.isEmpty()) {
-                showAlert(Alert.AlertType.ERROR, "请选择pdf文件", root.getScene().getWindow());
+            if (filepathText.getText().isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "请选择PDF文件", root.getScene().getWindow());
                 return;
             }
-
-            String srcFilePath = fp.replaceAll("\\\\", "/");
-            String srcFileName = srcFilePath.substring(srcFilePath.lastIndexOf("/") + 1);
-            String ext = srcFileName.substring(srcFileName.lastIndexOf("."));
-            String destFilePath = srcFilePath.substring(0, srcFilePath.lastIndexOf(srcFileName)) + srcFileName.substring(0, srcFileName.lastIndexOf(".")) + "_含目录" + ext;
-
 
             String text = textModeController.contentsTextArea.getText();
 
             if (text == null || text.isEmpty()) {
-                showAlert(Alert.AlertType.ERROR, "PDF目录内容不能为空", root.getScene().getWindow());
                 return;
             }
-
 
             try {
                 pdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodToggleGroup.getSelectedToggle().getUserData());
@@ -254,46 +262,51 @@ public class MainController {
 //                }
                 return;
             }
-            ButtonType openButton = new ButtonType("打开文件所在位置", ButtonBar.ButtonData.OK_DONE);
-            var result = showAlert(Alert.AlertType.INFORMATION,
-                    "文件存储在\n" + destFilePath, root.getScene().getWindow(),
-                    openButton, new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
-            if (result.isPresent() && result.get() == openButton) {
-                try {
-//                    Desktop.getDesktop().browse(new File(filepathText.getText()).toURI()); //打开文件
-                    //打开文件所在文件夹并选择文件
-                    String[] command;
-                    if (InfoUtil.isWindows()) {
-                        destFilePath = destFilePath.replaceAll("/", "\\\\");
-                        //实测该命令会在文件路径下因为检测到参数包含空格而未被引号包裹，于是主动加了双引号，形成的命令在powershell的确是有效的，但在cmd中无效
-                        //但默认是用cmd执行的,导致非预期结果
-                        //参考 ProcessImpl.java下 createCommandLine 和 needsEscaping 源码
-//                        command = new String[]{"explorer.exe", "/select,\"%s\"".formatted(destFilePath)};
-                        // 故采用如下方式执行
-                        command = new String[]{"cmd.exe", "/C", "explorer.exe /select,\"%s\"".formatted(destFilePath)};
-                    }
-                    else if (InfoUtil.isMacOS()) {
-                        command = new String[]{"open", "-R", destFilePath}; //macos
-                    }
-                    else {
-                        command = new String[]{"nautilus", destFilePath}; // 打开文件可以使用 xdg-open
-                    }
-                    Process p = Runtime.getRuntime().exec(command);
-                    System.out.println("Executing command: " + String.join(" ", command));
-                    InputStream is = p.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                    String s;
-                    while ((s = reader.readLine()) != null) {
-                        System.out.println(s);
-                    }
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
+        showSuccessWindow();
     }
 
+    private void showSuccessWindow() {
+        ButtonType openDirAndSelectFileButtonType = new ButtonType("打开文件所在位置", ButtonBar.ButtonData.OK_DONE);
+        ButtonType openFileButtonType = new ButtonType("打开文件", ButtonBar.ButtonData.OK_DONE);
+        var result = showAlert(Alert.AlertType.INFORMATION,
+                "文件存储在\n" + destFilePath, root.getScene().getWindow(),
+                openDirAndSelectFileButtonType, openFileButtonType, new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
+        try {
+            if (result.isPresent() && result.get() == openDirAndSelectFileButtonType) {
+
+                //打开文件所在文件夹并选择文件
+                String[] command;
+                if (InfoUtil.isWindows()) {
+                    destFilePath = destFilePath.replaceAll("/", "\\\\");
+                    //实测该命令会在文件路径下因为检测到参数包含空格而未被引号包裹，于是主动加了双引号，形成的命令在powershell的确是有效的，但在cmd中无效
+                    //但默认是用cmd执行的,导致非预期结果
+                    //参考 ProcessImpl.java下 createCommandLine 和 needsEscaping 源码
+//                        command = new String[]{"explorer.exe", "/select,\"%s\"".formatted(destFilePath)};
+                    // 故采用如下方式执行
+                    command = new String[]{"cmd.exe", "/C", "explorer.exe /select,\"%s\"".formatted(destFilePath)};
+                }
+                else if (InfoUtil.isMacOS()) {
+                    command = new String[]{"open", "-R", destFilePath}; //macos
+                }
+                else {
+                    command = new String[]{"nautilus", destFilePath}; // 打开文件可以使用 xdg-open
+                }
+                Process p = Runtime.getRuntime().exec(command);
+                System.out.println("Executing command: " + String.join(" ", command));
+                InputStream is = p.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                String s;
+                while ((s = reader.readLine()) != null) {
+                    System.out.println(s);
+                }
+            } else if (result.isPresent() && result.get().equals(openFileButtonType)) {
+                Desktop.getDesktop().browse(new File(destFilePath).toURI()); //打开文件
+            }
+        } catch (IOException e) {
+        e.printStackTrace();
+    }
+    }
 
     //重置，并获得目录
     private void resetState(){
@@ -322,14 +335,20 @@ public class MainController {
     }
 
     public void reconstructTree() {
-        if (textModeController.contentsTextArea.getText().isEmpty()) return;
-
         Bookmark rootBookmark = pdfService.convertTextToBookmarkTreeByMethod(
                 textModeController.contentsTextArea.getText(), 0,
                 (Method) methodToggleGroup.getSelectedToggle().getUserData()
-//                ,true
         );
         treeModeController.reconstructTree(rootBookmark);
+    }
+
+    public void deleteBtnAction(ActionEvent event) {
+        if (filepathText.getText().isEmpty()) {
+            showAlert(Alert.AlertType.ERROR, "请选择PDF文件", root.getScene().getWindow());
+            return;
+        }
+        pdfService.deleteContents(srcFilePath, destFilePath);
+        showSuccessWindow();
     }
 
     @FXML

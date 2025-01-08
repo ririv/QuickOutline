@@ -27,8 +27,8 @@ java {
 version = '1.0.3'
 
 javafx {
-    version = JavaVersion.VERSION_21 // LTS
-    modules = ['javafx.controls', 'javafx.fxml']
+    version = '21' // LTS
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.web']
 }
 
 application{
@@ -110,6 +110,8 @@ jlink {
         name = 'QuickOutline'
         jvmArgs = args
     }
+//    https://github.com/fvarrui/JavaPackager/issues/383
+    options = ['--strip-debug', '--compress', 'zip-6', '--no-header-files', '--no-man-pages']
 //    https://walczak.it/blog/distributing-javafx-desktop-applications-without-requiring-jvm-using-jlink-and-jpackage
     jpackage {
 //        skipInstaller = true

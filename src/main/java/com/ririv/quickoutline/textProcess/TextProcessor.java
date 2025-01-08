@@ -12,6 +12,8 @@ import com.ririv.quickoutline.textProcess.methods.seq.StdSeq;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.ririv.quickoutline.model.Bookmark.convertListToBookmarkTree;
+
 public class TextProcessor {
 
     private LineProcessor lineProcessor;
@@ -73,31 +75,6 @@ public class TextProcessor {
     }
 
 
-    //一定要设置parent
-
-    /**
-     * @return currentBookmark - 但应使用last接受返回值，因为add完current，last就得更新了，current变为新的last
-     */
-    private Bookmark addLinearlyToBookmarkTree(Bookmark current, Bookmark last) {
-        int currentLevel = current.getLevel();
-        if (last.getLevelByStructure() == currentLevel) { //同级
-            last.getOwnerList().add(current);
-            current.setParent(last.getParent());
-        } else if (last.getLevelByStructure() < currentLevel) { //进入下一级，不会跳级
-            last.getChildren().add(current);
-            current.setParent(last);
-        } else { //回到上级，可能跳级
-            Bookmark parent = last.getParent(); //目前last所属层级的parent
-            for (int dif = last.getLevelByStructure() - currentLevel; dif != 0; dif--) { //实际current应属于的parent
-                parent = parent.getParent();
-            }
-            parent.getChildren().add(current);
-            current.setParent(parent);
-        }
-
-        return current;
-    }
-
     private List<Bookmark> createLinearBookmarkList(String text, int offset) {
         List<String> preprocessedText = preprocess(text);
         List<Bookmark> linearBookmarkList = new ArrayList<>();
@@ -110,35 +87,21 @@ public class TextProcessor {
     }
 
 
-    private Bookmark convertListToBookmarkTree(List<Bookmark> bookmarkList) {
-        Bookmark rootBookmark = Bookmark.createRoot();
-        Bookmark last = rootBookmark;
-        for (var current : bookmarkList) {
-            last = addLinearlyToBookmarkTree(current,last);
-        }
-        return rootBookmark;
-    }
-
     public Bookmark process(String text, int offset, Method method) {
         if (method == Method.INDENT){
             lineProcessor = new Indent();
         } else {
             if (isAscii(text)) {
                 lineProcessor = new EnSeq();
-            }
-            else if (containsChinese(text)) {
+            } else if (containsChinese(text)) {
                 lineProcessor = new CnSeq();
             } else {
                 lineProcessor = new StdSeq();
             }
         }
 
-        var linearBookmarkList = createLinearBookmarkList(text,offset);
-        var root = convertListToBookmarkTree(linearBookmarkList);
-        root.setLinearBookmarkList(linearBookmarkList);
-        return root;
+        var linearBookmarkList = createLinearBookmarkList(text, offset);
+        return convertListToBookmarkTree(linearBookmarkList);
     }
-
-
 
 }
