@@ -17,7 +17,11 @@
               AnchorPane.topAnchor="0"
               vgap="10"
     >
-        <Label fx:id="versionLabel" />
+        <HBox>
+            <Label fx:id="versionLabel" />
+            <Label text="-preview"/>
+        </HBox>
+
         <FlowPane>
             <Text>使用说明:</Text>
             <Hyperlink onMouseClicked="#browseHelpOnZhihu">@知乎</Hyperlink>

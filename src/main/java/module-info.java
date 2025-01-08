@@ -3,7 +3,7 @@ module quickoutline {
     requires javafx.fxml;
     requires kernel;
     requires java.desktop;
-    requires javafx.web;
+//    requires javafx.web;
 //    requires java.validation;
     requires org.slf4j; //必须添加，否则会出现找不到 Exception java.lang.NoClassDefFoundError: org/slf4j/LoggerFactory
     requires layout;
