@@ -103,6 +103,7 @@ public class ItextProcess implements PdfProcess {
 
             int pageNumMax = srcDoc.getNumberOfPages();
 
+//            https://kb.itextpdf.com/itext/chapter-6-creating-actions-destinations-and-bookma
             if (rootBookmark.getOffsetPageNum().isPresent()) {
                 int pageNum = rootBookmark.getOffsetPageNum().get();
                 if (pageNum > -1 && pageNum <= pageNumMax) {
