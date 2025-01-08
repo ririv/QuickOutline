@@ -102,29 +102,26 @@ public class ItextProcess implements PdfProcess {
             rootOutline = rootOutline.addOutline(title);
 
             int pageNumMax = srcDoc.getNumberOfPages();
-            int pageNum = rootBookmark.getOffsetPageNum().orElseThrow(() ->{
+
+            if (rootBookmark.getOffsetPageNum().isPresent()) {
+                int pageNum = rootBookmark.getOffsetPageNum().get();
+                if (pageNum > -1 && pageNum <= pageNumMax) {
+                    PdfExplicitDestination destination = PdfExplicitDestination.createFitH(srcDoc.getPage(pageNum), srcDoc.getPage(pageNum).getPageSize().getTop());
+                    rootOutline.addDestination(destination);
+    /*
+                //未知的原因，下面的写法没有效果，调试时发现Destination值为null
+                outline.addAction(PdfAction.createGoTo(
+                        PdfExplicitDestination.createFitH(srcDoc.getPage(pageNum),
+                        srcDoc.getPage(pageNum).getPageSize().getTop())));
+    */
+                } else {
                     srcDoc.close();
-                    return new BookmarkFormatException(String.format(
-                            "添加页码错误\n\"%s\"无页码",
-                            title));
-                    });
-
-            if (pageNum > -1 && pageNum <= pageNumMax) {
-                PdfExplicitDestination destination = PdfExplicitDestination.createFitH(srcDoc.getPage(pageNum), srcDoc.getPage(pageNum).getPageSize().getTop());
-                rootOutline.addDestination(destination);
-
-/*
-            //未知的原因，下面的写法没有效果，调试时发现Destination值为null
-            outline.addAction(PdfAction.createGoTo(
-                    PdfExplicitDestination.createFitH(srcDoc.getPage(pageNum),
-                    srcDoc.getPage(pageNum).getPageSize().getTop())));
-*/
-            } else {
-                srcDoc.close();
-                throw new BookmarkFormatException(String.format(
-                        "添加页码错误\n\"%s  %d\" 偏移后的页码超过最大页数或为负数\n偏移后的页码范围应为: 0 ~ %d",
-                        title, pageNum, pageNumMax));
+                    throw new BookmarkFormatException(String.format(
+                            "添加页码错误\n\"%s  %d\" 偏移后的页码超过最大页数或为负数\n偏移后的页码范围应为: 0 ~ %d",
+                            title, pageNum, pageNumMax));
+                }
             }
+
         }
 
         if (!rootBookmark.getChildren().isEmpty()) {
@@ -175,10 +172,16 @@ public class ItextProcess implements PdfProcess {
             for (PdfOutline child : outlines.getAllChildren()) {
                 /*
                  */
-                int pageNum = srcDoc.getPageNumber((PdfDictionary) child.getDestination().getDestinationPage(nameTree));
-                pageNum = pageNum - offset; //原始页码
+                String pageNumStr;
+                if (child.getDestination() != null){
+                    int pageNum = srcDoc.getPageNumber((PdfDictionary) child.getDestination().getDestinationPage(nameTree));
+                    pageNum = pageNum - offset; //原始页码
+                    pageNumStr = Integer.toString(pageNum);
+                } else {
+                    pageNumStr = "";
+                }
 
-                buildLine(text, level, child.getTitle(), Integer.toString(pageNum));
+                buildLine(text, level, child.getTitle(), pageNumStr);
 
                 outlines2Text(child, text, offset, level + 1, nameTree, srcDoc);
             }
