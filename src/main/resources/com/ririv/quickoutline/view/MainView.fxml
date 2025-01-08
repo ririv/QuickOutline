@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.ririv.quickoutline.view.controls.GraphButtonWrapper?>
+<?import com.ririv.quickoutline.view.controls.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -17,7 +17,7 @@
                            HBox.hgrow="ALWAYS"/>
                 <GraphButtonWrapper wrapperPadding="3">
                     <HBox.margin>
-                        <Insets right="2" />
+                        <Insets right="3" />
                     </HBox.margin>
                     <Button fx:id="browseFileBtn" styleClass="graph-button">
                         <!--                按钮与图标的内边距-->
@@ -57,6 +57,13 @@
                         </graphic>
                     </ToggleButton>
                     </GraphButtonWrapper>
+                    <GraphButtonWrapper>
+                        <ToggleButton fx:id="tocBtn" visible="false" toggleGroup="$tabToggleGroup" styleClass="graph-button" maxWidth="Infinity">
+                            <graphic>
+                                <Region styleClass="icon,tocIcon"  />
+                            </graphic>
+                        </ToggleButton>
+                    </GraphButtonWrapper>
                 </VBox>
             </top>
             <bottom>
@@ -90,14 +97,27 @@
     <bottom>
         <VBox>
             <Region styleClass="dividing-line-h"/>
-            <GridPane id="bottomPane"  alignment="CENTER">
+
+            <GridPane id="bottomPane" >
+                <HBox alignment="CENTER">
+<!--                    <GridPane.margin>-->
+<!--                        <Insets left="20.0"/>-->
+<!--                    </GridPane.margin>-->
+                    <GraphButtonWrapper>
+                        <Button fx:id="deleteBtn" onAction="#deleteBtnAction" styleClass="graph-button" prefWidth="30">
+                            <graphic>
+                                <Region styleClass="icon, deleteIcon"  />
+                            </graphic>
+                        </Button>
+                    </GraphButtonWrapper>
                 <Button fx:id="resetContentsBtn" styleClass="default-button,primary-plain-button"
                            onAction="#resetContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
                            text="重置目录">
-                    <GridPane.margin>
-                        <Insets left="20.0"/>
-                    </GridPane.margin>
+
                 </Button>
+
+                </HBox>
+
                 <Button fx:id="addContentsBtn" styleClass="default-button,important-plain-button" onAction="#addContentsBtnAction"
                            mnemonicParsing="false" prefWidth="120.0" text="添加目录"
                            GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
@@ -111,7 +131,6 @@
                     </tooltip>
                 </TextField>
                 <GridPane id="method-grid" alignment="CENTER_RIGHT" prefWidth="90.0" GridPane.columnIndex="4">
-
                     <fx:define>
                         <ToggleGroup fx:id="methodToggleGroup"/>
                     </fx:define>

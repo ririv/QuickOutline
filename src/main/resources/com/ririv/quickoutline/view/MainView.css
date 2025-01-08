@@ -1,9 +1,24 @@
+@import "colors.css";
+
 *{
     -my-color-divding-line: #dfdfdf;
 }
 
 
 
+#deleteBtn:hover{
+    -fx-background-color: transparent;
+}
+
+
+#deleteBtn:hover > .icon{
+    -fx-background-color: -my-color-important;
+}
+
+
+#deleteBtn:pressed > .icon{
+    -fx-background-color: -my-color-important-pressed;
+}
 
 .toggle-button:selected{
     -fx-background-color: rgba(210, 210, 210, 0.9);

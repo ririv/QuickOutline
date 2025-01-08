@@ -15,13 +15,23 @@ public class PdfService {
     private final PdfProcess pdfProcess = new ItextProcess();
 
     //下面两个方法本质相同
-    public void addContents(String text, String srcFile, String destFile, int offset, Method method) {
-        if (srcFile.isEmpty()) throw new RuntimeException("PDF路径为空");
-//        Bookmark rootBookmark = textToBookmarkByMethod(text, offset, method,true);
+    public void addContents(String text, String srcFilePath, String destFilePath, int offset, Method method) {
+        if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
+
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);
 
         try {
-            pdfProcess.setContents(rootBookmark, srcFile, destFile);
+            pdfProcess.setContents(rootBookmark, srcFilePath, destFilePath);
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteContents(String srcFilePath, String destFilePath) {
+        if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
+        try {
+            pdfProcess.deleteContents(srcFilePath, destFilePath);
         }
         catch (IOException e){
             e.printStackTrace();
@@ -29,7 +39,7 @@ public class PdfService {
     }
 
     //先经过text生成bookmark，在将bookmark转化为text
-    public String autoFormatBySeq(String text) {
+    public String autoFormat(String text) {
 //        Bookmark rootBookmark = textToBookmarkByMethod(text, 0, Method.SEQ,false);
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, 0, Method.SEQ);
         return rootBookmark.toTreeText();

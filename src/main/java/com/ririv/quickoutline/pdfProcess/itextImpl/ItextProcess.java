@@ -14,15 +14,18 @@ import static com.ririv.quickoutline.model.Bookmark.buildLine;
 
 public class ItextProcess implements PdfProcess {
 
+//    如果rootBookmark没有Children，即之前的text为空（当然这种情况已在Controller中被排除）
+//    list.clear()没有起作用（不知道原因），最终目录没有影响，怀疑原因是没有写入操作。
     @Override
-    public void setContents(Bookmark rootBookmark, String srcFile, String destFile) throws IOException {
+    public void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath) throws IOException {
 
-        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile), new PdfWriter(destFile));
+        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
 
         /*
          */
         PdfOutline rootOutline = srcDoc.getOutlines(false);
         rootOutline.getAllChildren().clear();
+//        rootOutline.removeOutline();
 
         bookmarkToOutlines(rootBookmark, rootOutline, srcDoc);
 
@@ -135,9 +138,9 @@ public class ItextProcess implements PdfProcess {
 
     //https://kb.itextpdf.com/itext/how-to-create-hierarchical-bookmarks
     @Override
-    public String getContents(String srcFile, int offset) throws IOException {
+    public String getContents(String srcFilePath, int offset) throws IOException {
 
-        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile));
+        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFilePath));
         PdfOutline rootOutline = srcDoc.getOutlines(false);
         PdfNameTree nameTree = srcDoc.getCatalog().getNameTree(PdfName.Dests);
 //        nameTree.getNames().forEach((p, q) -> System.out.println(p + "  " + q + "\n"));
@@ -156,6 +159,14 @@ public class ItextProcess implements PdfProcess {
 
         return text.toString();
     }
+
+//    https://kb.itextpdf.com/itext/removing-items-from-a-pdf-s-outline-tree
+    public void deleteContents(String srcFile, String destFile) throws IOException{
+        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile), new PdfWriter(destFile));
+
+        srcDoc.getOutlines(true).removeOutline();
+        srcDoc.close();
+    };
 
 
     private void outlines2Text(PdfOutline outlines, StringBuilder text, int offset, int level, PdfNameTree nameTree, PdfDocument srcDoc) {

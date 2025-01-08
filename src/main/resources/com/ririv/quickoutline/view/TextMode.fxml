@@ -10,6 +10,7 @@
       fx:controller="com.ririv.quickoutline.view.TextModeController">
 
     <StackPane HBox.hgrow="ALWAYS">
+
         <TextArea fx:id="contentsTextArea" promptText="请输入目录文本">
 <!--            这里去掉右边Pane的阴影效果了，改为分割线显示，所以不用了-->
 <!--         <StackPane.margin>-->
