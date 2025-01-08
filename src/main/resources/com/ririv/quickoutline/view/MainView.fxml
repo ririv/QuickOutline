@@ -4,11 +4,14 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:id="root" prefHeight="600.0" prefWidth="800.0"
-            stylesheets="@MainView.css,@BasicControls.css,@svg.css,@CustomControls.css "
-            xmlns="http://javafx.com/javafx"
-            fx:controller="com.ririv.quickoutline.view.MainController">
-
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:id="root"
+           alignment="TOP_CENTER"
+           prefHeight="600.0" prefWidth="800.0"
+           stylesheets="@MainView.css,@BasicControls.css,@svg.css,@CustomControls.css "
+           xmlns="http://javafx.com/javafx"
+           fx:controller="com.ririv.quickoutline.view.MainController">
+    <BorderPane
+    >
     <top>
         <VBox>
             <HBox fx:id="topPane"  alignment="CENTER">
@@ -85,6 +88,7 @@
 
     </left>
     <center>
+
         <!-- 可切换视图区域 -->
         <StackPane id="operationPane">
 
@@ -93,6 +97,7 @@
             <fx:include fx:id="textMode" source="TextMode.fxml"/>
 
         </StackPane>
+
     </center>
     <bottom>
         <VBox>
@@ -166,5 +171,6 @@
 
         </VBox>
     </bottom>
-
-</BorderPane>
+    </BorderPane>
+    <MessageContainer fx:id="messageDialog"/>
+</StackPane>

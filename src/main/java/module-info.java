@@ -10,7 +10,7 @@ module quickoutline {
     requires io;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics ; //由于FXML使用反射访问controller
-
+    opens com.ririv.quickoutline.view.controls to javafx.fxml, javafx.graphics;
 
     exports com.ririv.quickoutline.view;
     exports com.ririv.quickoutline.model;
@@ -18,4 +18,5 @@ module quickoutline {
     exports com.ririv.quickoutline.service;
     exports com.ririv.quickoutline.textProcess.methods;
     exports com.ririv.quickoutline.view.controls;
+
 }

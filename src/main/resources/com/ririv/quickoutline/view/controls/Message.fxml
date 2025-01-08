@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+<fx:root type="javafx.scene.layout.StackPane" xmlns:fx="http://javafx.com/fxml">
+<StackPane>
+    <HBox>
+        <Label>
+            <graphic>
+                <Region id="message-icon" />
+            </graphic>
+        </Label>
+        <Label fx:id="messageText" >
+            <HBox.margin>
+                <Insets left="8" />
+            </HBox.margin>
+        </Label>
+    </HBox>
+</StackPane>
+</fx:root>

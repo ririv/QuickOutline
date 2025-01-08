@@ -1,7 +1,7 @@
 <!--            Note: 这里和主stage不共享,所以要重新载入css-->
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.scene.text.Text?>
 <AnchorPane
             xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1"
             fx:id="helpPane"
@@ -21,15 +21,11 @@
             <Label fx:id="versionLabel" />
             <Label text="-preview"/>
         </HBox>
-
         <FlowPane>
             <Text>使用说明:</Text>
             <Hyperlink onMouseClicked="#browseHelpOnZhihu">@知乎</Hyperlink>
             <Hyperlink onMouseClicked="#browseHelpOnGithub">@Github</Hyperlink>
         </FlowPane>
-        <Text>使用本软件造成的一切结果由使用者承担责任</Text>
-
-
 
         <Text>开源软件使用: iText (AGPL license)</Text>
         <FlowPane>

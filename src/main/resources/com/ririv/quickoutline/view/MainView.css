@@ -12,12 +12,12 @@
 
 
 #deleteBtn:hover > .icon{
-    -fx-background-color: -my-color-important;
+    -fx-background-color: -el-color-important;
 }
 
 
 #deleteBtn:pressed > .icon{
-    -fx-background-color: -my-color-important-pressed;
+    -fx-background-color: -el-color-important-pressed;
 }
 
 .toggle-button:selected{
