@@ -62,7 +62,7 @@ public class TableOfContents {
         createPdfWithOutlines(SRC, document, toc, bold);
 
         // Remove the main title from the table of contents list
-        toc.remove(0);
+        toc.removeFirst();
 
         // Create table of contents
         document.add(new AreaBreak());
