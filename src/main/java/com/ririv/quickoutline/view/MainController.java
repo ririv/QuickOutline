@@ -5,6 +5,8 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.InfoUtil;
+import com.ririv.quickoutline.view.controls.Message;
+import com.ririv.quickoutline.view.controls.MessageContainer;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,8 +19,8 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -44,7 +46,7 @@ public class MainController {
     public RadioButton indentRBtn;
     public ToggleGroup methodToggleGroup;
 
-    public BorderPane root;
+    public StackPane root;
 
 
     //必须映射到textModeController，否则会无法报错
@@ -63,6 +65,7 @@ public class MainController {
     public ToggleGroup tabToggleGroup;
     public ToggleButton tocBtn;
     public Button deleteBtn;
+    public MessageContainer messageDialog;
 
     PdfService pdfService = new PdfService();
 
@@ -224,7 +227,7 @@ public class MainController {
             }
 
             if (filepathText.getText().isEmpty()) {
-                showAlert(Alert.AlertType.ERROR, "请选择PDF文件", root.getScene().getWindow());
+                messageDialog.showMessage("请选择PDF文件", Message.MessageType.WARNING);
                 return;
             }
 
@@ -236,7 +239,7 @@ public class MainController {
     @FXML
     private void addContentsBtnAction(ActionEvent event) {
             if (filepathText.getText().isEmpty()) {
-                showAlert(Alert.AlertType.ERROR, "请选择PDF文件", root.getScene().getWindow());
+                messageDialog.showMessage("请选择PDF文件", Message.MessageType.WARNING);
                 return;
             }
 
@@ -254,6 +257,7 @@ public class MainController {
                 boolean deleteSuccess = file.delete();  //删除损坏的文件
                 System.out.println(deleteSuccess);
 //                ButtonType buttonType = new ButtonType("定位");
+//                messageDialog.showMessage(e.getMessage(), Message.MessageType.WARN);
                 var result = showAlert(Alert.AlertType.ERROR, e.getMessage(), root.getScene().getWindow());
 //                if(result.isPresent()&&result.get()==buttonType){
 //                    textModeController.contentsText.requestFocus(); //获得焦点
@@ -344,7 +348,7 @@ public class MainController {
 
     public void deleteBtnAction(ActionEvent event) {
         if (filepathText.getText().isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "请选择PDF文件", root.getScene().getWindow());
+            messageDialog.showMessage("请选择PDF文件", Message.MessageType.WARNING);
             return;
         }
         pdfService.deleteContents(srcFilePath, destFilePath);

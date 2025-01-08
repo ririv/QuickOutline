@@ -89,47 +89,47 @@
 }
 
 .primary-button{
-    -fx-background-color: -my-color-primary;
+    -fx-background-color: -el-color-primary;
     /*snow 与 white 不是一个颜色，snow更红一点*/
     -fx-text-fill:snow;
 }
 
 
 .primary-plain-button{
-    -fx-background-color: -my-color-primary-light-bg;
-    -fx-text-fill: -my-color-primary;
-    -fx-border-color: -my-color-primary-light-border;
+    -fx-background-color: -el-color-primary-light-bg;
+    -fx-text-fill: -el-color-primary;
+    -fx-border-color: -el-color-primary-light-border;
 }
 
 .primary-plain-button:hover{
     -fx-text-fill: snow;
-    -fx-background-color: -my-color-primary;
-    -fx-border-color: -my-color-primary;
+    -fx-background-color: -el-color-primary;
+    -fx-border-color: -el-color-primary;
 }
 
 .primary-plain-button:pressed{
     -fx-text-fill: snow;
-    -fx-background-color: -my-color-primary-pressed;
-    -fx-border-color: -my-color-primary-pressed;
+    -fx-background-color: -el-color-primary-pressed;
+    -fx-border-color: -el-color-primary-pressed;
 }
 
 
 .important-plain-button{
-    -fx-background-color: -my-color-important-light-bg;
-    -fx-text-fill: -my-color-important;
-    -fx-border-color: -my-color-important-light-border;
+    -fx-background-color: -el-color-important-light-bg;
+    -fx-text-fill: -el-color-important;
+    -fx-border-color: -el-color-important-light-border;
 }
 
 .important-plain-button:hover{
-    -fx-background-color: -my-color-important;
+    -fx-background-color: -el-color-important;
     -fx-text-fill: snow;
-    -fx-border-color: -my-color-important;
+    -fx-border-color: -el-color-important;
 }
 
 .important-plain-button:pressed{
     -fx-text-fill: snow;
-    -fx-background-color: -my-color-important-pressed;
-    -fx-border-color: -my-color-important-pressed;
+    -fx-background-color: -el-color-important-pressed;
+    -fx-border-color: -el-color-important-pressed;
 }
 
 
@@ -207,7 +207,7 @@
 }
 
 .radio-button:hover .radio {
-    -fx-border-color: -my-color-primary;
+    -fx-border-color: -el-color-primary;
 }
 
 /*dot的颜色是第二个，第一个会发生偏移*/
