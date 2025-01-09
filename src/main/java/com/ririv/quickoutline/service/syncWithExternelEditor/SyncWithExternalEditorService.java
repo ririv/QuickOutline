@@ -6,6 +6,7 @@ import com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.Vsco
 import com.ririv.quickoutline.service.syncWithExternelEditor.watchFile.FileModifiedWatcherImpl;
 import com.ririv.quickoutline.service.syncWithExternelEditor.watchFile.FileWatcher;
 import com.ririv.quickoutline.utils.Pair;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +20,8 @@ import static com.ririv.quickoutline.utils.FileUtil.writeFile;
 public class SyncWithExternalEditorService {
     File temp;
 
+    private Logger logger = org.slf4j.LoggerFactory.getLogger(SyncWithExternalEditorService.class);
+
 
     public SyncWithExternalEditorService() {
         try {
@@ -31,7 +34,7 @@ public class SyncWithExternalEditorService {
             tempParentDir.deleteOnExit();
             temp.deleteOnExit();
 
-            System.out.println("临时文件已创建: " + temp.getName());
+            logger.info("临时文件已创建: {}", temp.getName());
 
         } catch (IOException e) {
             e.printStackTrace();

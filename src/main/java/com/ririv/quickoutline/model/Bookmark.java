@@ -1,5 +1,8 @@
 package com.ririv.quickoutline.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +13,8 @@ import static com.ririv.quickoutline.textProcess.Constants.TwoBlank;
 
 //一个顶级目录为一个bookmark
 public class Bookmark{
+    private static final Logger logger = LoggerFactory.getLogger(Bookmark.class);
+
 
     private String title;
     private Integer offsetPageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
@@ -74,7 +79,7 @@ public class Bookmark{
 //         check
         boolean res = level == this.level;
         if (!res) {
-            System.out.printf("level（%d）与实际结构层级（%d）不符合%n", this.level, level);
+            logger.warn("{}, level（{}）与实际结构层级（{}）不符合",this, this.level, level);
         }
         return level;
     }

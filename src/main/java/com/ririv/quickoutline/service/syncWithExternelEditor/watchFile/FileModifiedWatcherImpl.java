@@ -1,5 +1,7 @@
 package com.ririv.quickoutline.service.syncWithExternelEditor.watchFile;
 
+import org.slf4j.Logger;
+
 import java.io.File;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -9,6 +11,8 @@ import java.util.function.Consumer;
 import static com.ririv.quickoutline.utils.FileUtil.readFile;
 
 public class FileModifiedWatcherImpl implements FileWatcher {
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(FileModifiedWatcherImpl.class);
+
     Long oldLastModified;
     Long newLastModified;
     final Consumer<String> sync;
@@ -33,8 +37,8 @@ public class FileModifiedWatcherImpl implements FileWatcher {
                 oldLastModified = newLastModified;
                 sync.accept(readFile(temp));
             }
-            System.out.println(Thread.currentThread().getName()+": is watching file");
 
+            logger.info("{}: is watching file", Thread.currentThread().getName());
         };
 
         service = Executors

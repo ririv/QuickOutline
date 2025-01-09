@@ -23,6 +23,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
 
 import java.awt.*;
 import java.io.*;
@@ -32,6 +33,8 @@ import java.util.Optional;
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
 public class MainController {
+
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(MainController.class);
 
     public TextField filepathText;
     public Button browseFileBtn;
@@ -254,7 +257,7 @@ public class MainController {
                 e.printStackTrace();
                 File file = new File(destFilePath);
                 boolean deleteSuccess = file.delete();  //删除损坏的文件
-                System.out.println(deleteSuccess);
+                logger.info("删除文件成功: {}", deleteSuccess);
 //                ButtonType buttonType = new ButtonType("定位");
 //                messageDialog.showMessage(e.getMessage(), Message.MessageType.WARN);
                 var result = showAlert(Alert.AlertType.ERROR, e.getMessage(), root.getScene().getWindow());
@@ -296,12 +299,14 @@ public class MainController {
                     command = new String[]{"nautilus", destFilePath}; // 打开文件可以使用 xdg-open
                 }
                 Process p = Runtime.getRuntime().exec(command);
-                System.out.println("Executing command: " + String.join(" ", command));
+
+                logger.info("Executing command: {}", String.join(" ", command));
+
                 InputStream is = p.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                 String s;
                 while ((s = reader.readLine()) != null) {
-                    System.out.println(s);
+                    logger.info("执行命令外部输出: {}", s);
                 }
             } else if (result.isPresent() && result.get().equals(openFileButtonType)) {
                 Desktop.getDesktop().browse(new File(destFilePath).toURI()); //打开文件
