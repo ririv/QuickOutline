@@ -200,7 +200,6 @@ public class MainController {
                 switchMode(FnTab.text);
             } else if (treeModeBtn.isSelected()) {
                 switchMode(FnTab.tree);
-                reconstructTree();
             }
             return;
         });
