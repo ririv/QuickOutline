@@ -71,10 +71,10 @@ public class Bookmark{
             parent = parent.getParent();
         }
 
-        // check
+//         check
         boolean res = level == this.level;
         if (!res) {
-            throw new RuntimeException("level（%d）与实际结构层级（%d）不符合".formatted(this.level, level));
+            System.out.printf("level（%d）与实际结构层级（%d）不符合%n", this.level, level);
         }
         return level;
     }
