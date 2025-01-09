@@ -15,16 +15,34 @@ import java.util.regex.Pattern;
 
 //先找目录/contents，找到后，第一行文字（如“第一章...”）记录下来，随后一直找到第二次出现这个文字前的页面，都是目录。
 public class TOCExtractor {
-    private static final Pattern TOCPattern = Pattern.compile(".*?\\s+(\\.|\\. ){3,}\\s?\\d+");
+    private static final Pattern TOCPattern = Pattern.compile("^.*?\\s+(\\.|\\. ){3,}\\s?\\d+$|^\\d+\\.+\\d+\\s+.*?\\d+$");
     private static final Pattern ContentsPattern = Pattern.compile("^contents|目录$"); // 注意转化为小写再匹配
-    public static void main(String[] args) throws IOException {
+
+    private final PdfDocument pdfDoc;
+
+
+    public TOCExtractor(String pdfPath) throws IOException {
+        this.pdfDoc = new PdfDocument(new PdfReader(pdfPath));
+    }
+
+    public List<String> extract() {
+        return recognize();
+    }
+
+
+    public List<String> extract(int startPageNum, int endPageNum) {
+        List<String> tocPages = new ArrayList<>();
+        for (int i = startPageNum; i <= endPageNum; i++) {
+            String pageContent = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(i));
+            tocPages.add(pageContent);
+        }
+
+        return tocPages;
+    }
+
+    public List<String> recognize() {
         boolean startTOC = false;
         boolean afterFirstTOC = false;
-//        String pdfPath = "D:\\a b\\Probabilistic Graphical Models_ Principles and Applications_含目录_含目录_含目录.pdf";
-//        String pdfPath = "D:\\a b\\pumpkin_book.pdf";
-        String pdfPath = "D:\\a b\\Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf";
-        // 打开 PDF 文档
-        PdfDocument pdfDoc = new PdfDocument(new PdfReader(pdfPath));
 
         // 存储所有可能的 TOC 文本
         List<String> tocPages = new ArrayList<>();
@@ -47,10 +65,10 @@ public class TOCExtractor {
                         startTOC = true;
                         System.out.println("startTOC");
                         int j = pageContent.lastIndexOf(contentsStr) + contentsStr.length();
-                        if (s.equals("")){
+                        if (s.equals("")) {
                             continue;
                         } else {
-                            firstTOCStr = pageContent.substring(j+1).strip().split("\n")[0].replaceFirst("\\d+$","").strip().replaceAll("\\s","");
+                            firstTOCStr = pageContent.substring(j + 1).strip().split("\n")[0].replaceFirst("\\d+$", "").strip().replaceAll("\\s", "");
                         }
                         System.out.println(firstTOCStr);
                         tocPages.add(pageContent);
@@ -62,7 +80,7 @@ public class TOCExtractor {
             }
 
             // 寻找正文
-            if(afterFirstTOC && firstTOCStr != null && pageContent.replaceAll("\\s","").contains(firstTOCStr)){
+            if (afterFirstTOC && firstTOCStr != null && pageContent.replaceAll("\\s", "").contains(firstTOCStr)) {
                 startTOC = false;
             }
             if (startTOC) {
@@ -70,7 +88,7 @@ public class TOCExtractor {
                     tocPages.add(pageContent);
                 }
             }
-            if (!startTOC && afterFirstTOC){ // 找到正文，不再继续
+            if (!startTOC && afterFirstTOC) { // 找到正文，不再继续
                 break;
             }
         }
@@ -82,15 +100,22 @@ public class TOCExtractor {
         for (String page : tocPages) {
             System.out.println(page);
         }
+
+        return tocPages;
     }
 
     // 判断页面是否可能是 TOC
-    private static boolean isPotentialTOC(String content) {
+    private boolean isPotentialTOC(String content) {
         // 简单规则：包含章节编号或点线
-        return TOCPattern.matcher(content).find();
+        for (String line : content.split("\n")) {
+            if (TOCPattern.matcher(line).find()) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private static void extractAndHandleLinks(PdfDocument pdfDoc, int pageNumber) {
+    private void extractAndHandleLinks(int pageNumber) {
         // 获取当前页的所有注释
         List<PdfAnnotation> annotations = pdfDoc.getPage(pageNumber).getAnnotations();
 
@@ -109,8 +134,8 @@ public class TOCExtractor {
                         int targetPageNum = pdfDoc.getPageNumber(destinationPage) + 1;
                         // 内部跳转链接
                         System.out.println("Internal Link to Page " + targetPageNum);
-                        handleInternalLink(targetPageNum, pdfDoc);
-                }
+                        handleInternalLink(targetPageNum);
+                    }
                 } else if (link.getAction() != null && link.getAction().getAsString(PdfName.URI) != null) {
                     // 外部 URL
                     System.out.println("External Link to URL: " + link.getAction().getAsString(PdfName.URI));
@@ -119,7 +144,7 @@ public class TOCExtractor {
         }
     }
 
-    private static void handleInternalLink(int targetPage, PdfDocument pdfDoc) {
+    private void handleInternalLink(int targetPage) {
         if (targetPage > 0 && targetPage <= pdfDoc.getNumberOfPages()) {
             System.out.println("Jumping to Page " + targetPage);
             // 读取并打印目标页面内容
