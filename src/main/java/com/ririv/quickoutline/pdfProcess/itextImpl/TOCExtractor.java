@@ -5,6 +5,8 @@ import com.itextpdf.kernel.pdf.annot.PdfAnnotation;
 import com.itextpdf.kernel.pdf.annot.PdfLinkAnnotation;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 import com.itextpdf.kernel.pdf.navigation.PdfDestination;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.regex.Pattern;
 public class TOCExtractor {
     private static final Pattern TOCPattern = Pattern.compile("^.*?\\s+(\\.|\\. ){3,}\\s?\\d+$|^\\d+\\.+\\d+\\s+.*?\\d+$");
     private static final Pattern ContentsPattern = Pattern.compile("^contents|目录$"); // 注意转化为小写再匹配
+    private static final Logger log = LoggerFactory.getLogger(TOCExtractor.class);
 
     private final PdfDocument pdfDoc;
 
@@ -63,7 +66,7 @@ public class TOCExtractor {
                     if (matcher.find()) {
                         contentsStr = matcher.group(0);
                         startTOC = true;
-                        System.out.println("startTOC");
+                        log.info("检测到字段（contents/目录），TOC开始");
                         int j = pageContent.lastIndexOf(contentsStr) + contentsStr.length();
                         if (s.equals("")) {
                             continue;

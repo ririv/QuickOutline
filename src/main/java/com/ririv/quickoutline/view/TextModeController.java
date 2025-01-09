@@ -113,7 +113,8 @@ public class TextModeController {
                     // 获取当前光标所在行
                     int caretPosition = contentsTextArea.getCaretPosition();
                     int currentLineNumber = getLineNumber(contentsTextArea, caretPosition);
-                    System.out.println("currentLineNumber: " + currentLineNumber);
+
+//                    System.out.println("currentLineNumber: " + currentLineNumber);
 
                     //最后一个字符为换行符时会发生这种情况，此时不处理
                     if (contentsTextArea.getText().split("\n").length < currentLineNumber) {
@@ -121,7 +122,7 @@ public class TextModeController {
                     }
                     // 获取光标所在行的文本
                     String currentLine = contentsTextArea.getText().split("\n")[currentLineNumber - 1];
-                    System.out.println("currentLine: " + currentLine);
+//                    System.out.println("currentLine: " + currentLine);
                     // 如果该行没有缩进，则不需要处理，直接返回
                     if (INDENT_PATTERN.matcher(currentLine).find()) {
                         // 去除行首的缩进（制表符或4个空格）

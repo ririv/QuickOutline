@@ -6,6 +6,8 @@ import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PdfProcess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -14,7 +16,9 @@ import static com.ririv.quickoutline.model.Bookmark.buildLine;
 
 public class ItextProcess implements PdfProcess {
 
-//    如果rootBookmark没有Children，即之前的text为空（当然这种情况已在Controller中被排除）
+    private static final Logger log = LoggerFactory.getLogger(ItextProcess.class);
+
+    //    如果rootBookmark没有Children，即之前的text为空（当然这种情况已在Controller中被排除）
 //    list.clear()没有起作用（不知道原因），最终目录没有影响，怀疑原因是没有写入操作。
     @Override
     public void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath) throws IOException {
@@ -33,61 +37,6 @@ public class ItextProcess implements PdfProcess {
 
     }
 
-    /*
-     */
-//    public PdfOutline addOutline(PdfOutline outline, String title, int pageNum, PdfDocument srcDoc) {
-//        PdfOutline current = outline.addOutline(title);
-//
-//        int pageNumMax = srcDoc.getNumberOfPages();
-//
-//        if (pageNum > -1 && pageNum <= pageNumMax) {
-//            PdfExplicitDestination destination = PdfExplicitDestination.createFitH(srcDoc.getPage(pageNum), srcDoc.getPage(pageNum).getPageSize().getTop());
-//            current.addDestination(destination);
-//
-///*
-//            //未知的原因，下面的写法没有效果，调试时发现Destination值为null
-//            outline.addAction(PdfAction.createGoTo(
-//                    PdfExplicitDestination.createFitH(srcDoc.getPage(pageNum),
-//                    srcDoc.getPage(pageNum).getPageSize().getTop())));
-//*/
-//
-//            System.out.println(title + "  " + pageNum);
-//            return current;
-//        } else {
-//            srcDoc.close();
-//            throw new BookmarkFormatException(String.format(
-//                    "添加页码错误\n\"%s  %d\"的页码超过最大页数或为负数\n页码应为: 0 ~ %d",
-//                    title, pageNum, pageNumMax));
-//        }
-//    }
-//
-//    private void bookMarkToOutlines(Bookmark rootBookmark, PdfOutline rootOutline, PdfDocument srcDoc) {
-//        //不为根结点时且有效时，进行添加操作
-//        if (rootBookmark.getLevel() != -1 && !rootBookmark.isInvalid()) {
-//            try {
-//                rootOutline = addOutline(rootOutline,
-//                        rootBookmark.getTitle(),
-//                        rootBookmark.getPageNum().orElseThrow(()->
-//                                new BookmarkFormatException(String.format(
-//                                        "添加页码错误\n\"%s\"无页码",
-//                                        rootBookmark.getTitle()),rootBookmark.getIndex())
-//                        ),
-//                        srcDoc);
-//            }
-//            catch (BookmarkFormatException e){
-//                throw new BookmarkFormatException(e.getMessage(),rootBookmark.getIndex());
-//            }
-//
-//        }
-//
-//        if (!rootBookmark.getChildren().isEmpty()) {
-//            for (Bookmark subBookmark : rootBookmark.getChildren()) {
-//                bookMarkToOutlines(subBookmark, rootOutline, srcDoc);
-//
-//            }
-//
-//        }
-//    }
 
     //合并了上面两个函数
     private void bookmarkToOutlines(Bookmark rootBookmark, PdfOutline rootOutline, PdfDocument srcDoc) {
@@ -147,7 +96,7 @@ public class ItextProcess implements PdfProcess {
 //         if (rootOutline.getDestination() != null) {
 
         if (rootOutline == null) {
-            System.out.println("The doc has no outline");
+            log.info("The doc has no outline");
             return "";
         }
         else outlines2Text(rootOutline, text, offset, 1, nameTree, srcDoc);
@@ -171,8 +120,8 @@ public class ItextProcess implements PdfProcess {
 
         if (outlines.getAllChildren() != null) {
             for (PdfOutline child : outlines.getAllChildren()) {
-                /*
-                 */
+//             Note: 这里返回类型为PdfObject，但调用PdfObject.getType()发现返回为3，查看源码发现3对应Dictionary，因此可以放心将其强制转换为PdfDictionary
+//             names参数是负责解决指定目的地的参数，是正确获取页码所必需的，因为PDF可能包含明确的和命名的目的地，要获取参照上面
                 String pageNumStr;
                 if (child.getDestination() != null){
                     int pageNum = srcDoc.getPageNumber((PdfDictionary) child.getDestination().getDestinationPage(nameTree));

@@ -3,6 +3,7 @@ package com.ririv.quickoutline.textProcess.methods;
 
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.model.Bookmark;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -11,6 +12,8 @@ import java.util.regex.Pattern;
 
 //中英文通用
 public class Indent implements LineProcessor {
+
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(Indent.class);
 
     /*    每级缩进占用的空格，一个doc的每级缩进都是一样的
         由于会出现用户输入的文本缩进空格数不同的情况，如有时为是2个，有时为4个。所以不指定，而是用于检测得到*/
@@ -65,15 +68,15 @@ public class Indent implements LineProcessor {
 
     public int getLevelByLinePrefix(String linePrefix) {
         int level = 1;
-        String indentInfo = "level: %d, String: \"" + linePrefix + "\"";
 
         while (!recognizedSingleIndent.isEmpty() && linePrefix.startsWith(recognizedSingleIndent)) {
             linePrefix = linePrefix.replaceFirst(recognizedSingleIndent, "");
             level++;
         }
 
-        indentInfo = indentInfo.formatted(level);
-        System.out.println(indentInfo);
+
+        logger.info("level: {}, String: \"{}\"", level, linePrefix);
+
 
         return level;
     }

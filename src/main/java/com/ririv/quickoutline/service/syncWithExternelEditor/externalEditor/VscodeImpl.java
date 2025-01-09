@@ -2,6 +2,7 @@ package com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
 
 import com.ririv.quickoutline.exception.LaunchExternalEditorException;
 import com.ririv.quickoutline.utils.InfoUtil;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,6 +13,8 @@ import java.util.function.Consumer;
 import static com.ririv.quickoutline.utils.FileUtil.readFile;
 
 public class VscodeImpl implements ExternalEditor {
+
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(VscodeImpl.class);
 
     final File file;
 
@@ -40,7 +43,8 @@ public class VscodeImpl implements ExternalEditor {
             command = new String[]{"code", "-n", "-w", "-g", gotoArg};
         }
 
-        System.out.println("Executing command: "+String.join(" ", command));
+
+        logger.info("Executing command: {}", String.join(" ", command));
 
         try {
             // 使用 exec(String[] cmdarray) 来执行命令
@@ -50,16 +54,16 @@ public class VscodeImpl implements ExternalEditor {
             BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
             int exitValue = p.waitFor();
 
-            System.out.println(Thread.currentThread().getName() + ": 外部编辑器已返回");
+            logger.info("{}: 外部编辑器已返回", Thread.currentThread().getName());
+
             if (exitValue != 0) {
-                System.out.println(exitValue);
-                // 命令执行失败，可以在这里处理错误
+                logger.error("外部编辑器命令执行失败，exitValue: {}", exitValue);
             }
 
             // 打印输出信息
             String s;
             while ((s = reader.readLine()) != null) {
-                System.out.println(s);
+                logger.info("VSCode log: {}", s);
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
