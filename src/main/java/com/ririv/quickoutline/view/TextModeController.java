@@ -4,6 +4,7 @@ import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.utils.Pair;
 import javafx.application.Platform;
+import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -16,6 +17,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
@@ -70,85 +72,179 @@ public class TextModeController {
         contentsTextArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             // 检查是否是 Shift+Tab
             if (event.getCode() == KeyCode.TAB && event.isShiftDown()) {
-                // 获取当前光标所在行
-                int caretPosition = contentsTextArea.getCaretPosition();
-                int lineNumber = getLineNumber(contentsTextArea, caretPosition);
-
-                // 获取光标所在行的文本
-                String lineText = contentsTextArea.getText().split("\n")[lineNumber - 1];
-                // 如果该行没有缩进，则不需要处理，直接返回
-                if (INDENT_PATTERN.matcher(lineText).find()) {
-                    // 去除行首的缩进（制表符或4个空格）
-                    String trimmedLine = lineText.replaceFirst(INDENT_PATTERN.pattern(), "");
-                    // 替换当前行
-                    StringBuilder newText = new StringBuilder(contentsTextArea.getText());
-                    newText.replace(contentsTextArea.getText().indexOf(lineText), contentsTextArea.getText().indexOf(lineText) + lineText.length(), trimmedLine);
-                    // 设置修改后的文本
-                    contentsTextArea.setText(newText.toString());
-
-                    // 设置光标位置
-                    contentsTextArea.positionCaret(caretPosition - 1);
-                }
-
                 event.consume(); // 消耗事件，防止默认行为
+
+                if (isMultipleLinesSelected(contentsTextArea)) { // 选中多行
+                    // 获取选中的文本范围
+                    int start = contentsTextArea.getSelection().getStart();
+                    int end = contentsTextArea.getSelection().getEnd();
+
+                    int startLineNumber = getLineNumber(contentsTextArea, start);
+
+                    int startLineStartPos = getLineStartPos(contentsTextArea, startLineNumber-1);
+
+                    // 获取选中的文本
+                    String selectedLinesText = contentsTextArea.getText().substring(startLineStartPos, end);
+                    String[] selectedLines = selectedLinesText.split("\n");  // 按行分割选中的文本
+                    System.out.println("selectedLinesText: " + selectedLinesText);
+
+                    int deletedIndent = 0;
+                    for (int i = 0; i < selectedLines.length; i++) {
+                        String currentLine = selectedLines[i];
+                        // 检查该行是否有缩进，如果没有缩进，跳过此行
+                        if (!INDENT_PATTERN.matcher(currentLine).find()) {
+                            continue;
+                        }
+
+                        Matcher matcher = INDENT_PATTERN.matcher(currentLine);
+                        // 去除行首的缩进
+                        if (matcher.find()){
+                            deletedIndent+=matcher.group(0).length();
+                        }
+                        String trimmedLine = currentLine.replaceFirst(INDENT_PATTERN.pattern(), "");
+                        selectedLines[i] = trimmedLine;
+                    }
+                    // 替换文本
+                    contentsTextArea.replaceText(startLineStartPos, end, String.join("\n", selectedLines));
+                    // 调整光标位置
+                    contentsTextArea.selectRange(start, end - deletedIndent);
+                }
+                else { // 单行或未选中文字
+                    // 获取当前光标所在行
+                    int caretPosition = contentsTextArea.getCaretPosition();
+                    int currentLineNumber = getLineNumber(contentsTextArea, caretPosition);
+                    System.out.println("currentLineNumber: " + currentLineNumber);
+
+                    //最后一个字符为换行符时会发生这种情况，此时不处理
+                    if (contentsTextArea.getText().split("\n").length < currentLineNumber) {
+                        return;
+                    }
+                    // 获取光标所在行的文本
+                    String currentLine = contentsTextArea.getText().split("\n")[currentLineNumber - 1];
+                    System.out.println("currentLine: " + currentLine);
+                    // 如果该行没有缩进，则不需要处理，直接返回
+                    if (INDENT_PATTERN.matcher(currentLine).find()) {
+                        // 去除行首的缩进（制表符或4个空格）
+                        String trimmedLine = currentLine.replaceFirst(INDENT_PATTERN.pattern(), "");
+
+                        // 替换当前行
+                        // 不要重新设置整个文本，否则会导致视图位置丢失
+                        int start = getLineStartPos(contentsTextArea, currentLineNumber - 1);
+                        int end = start + currentLine.length();
+                        System.out.println(start + " " + end);
+                        contentsTextArea.replaceText(start, end, trimmedLine);
+
+                        // 设置光标位置
+                        contentsTextArea.positionCaret(caretPosition - 1);
+                    }
+                }
             }
         });
+    }
 
 
+    // 判断是否选中了多行
+    private boolean isMultipleLinesSelected(TextArea textArea) {
+        // 获取选中的文本的开始和结束位置
+        int selectionStart = textArea.getSelection().getStart();
+        int selectionEnd = textArea.getSelection().getEnd();
+
+        // 如果选中的区域起始和结束位置在不同的行，则表示选中了多行
+        String text = textArea.getText();
+        String selectedText = text.substring(selectionStart, selectionEnd);
+        String[] selectedLines = selectedText.split("\n");
+
+        return selectedLines.length > 1;
+    }
+
+    @FXML
+    private void externalEditorBtnAction() {
+        externalEditorBtn.setOnAction(event ->
+            syncWithExternalEditorService.exec(
+                getCoordinate(),
+
+                fileText -> Platform.runLater(() -> contentsTextArea.setText(fileText)),
+
+                () -> {
+                    syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
+                    Platform.runLater(() -> {
+                        contentsTextArea.setDisable(true);
+                        externalEditorBtn.setDisable(true);
+                        externalEditorBtn.setText("已连接...");
+//                                externalEditorBtn.setGraphic();
+                        mask.setVisible(true);
+                    });
+                },
+
+                () -> Platform.runLater(() -> {
+                    contentsTextArea.setDisable(false);
+                    externalEditorBtn.setDisable(false);
+                    externalEditorBtn.setText("VSCode");
+                    mask.setVisible(false);
+
+                }),
+                () -> Platform.runLater(() -> {
+                    ButtonType gotoButton = new ButtonType("前往官网下载", ButtonBar.ButtonData.OK_DONE);
+
+                    //必须加取消类型按钮，否则对话框右上角的"×"不起作用
+                    var result = showAlert(
+                            Alert.AlertType.WARNING, "未找到VSCode\n请确保安装并正确添加环境变量至PATH\n详情请查阅右上角帮助-使用说明", root.getScene().getWindow(),
+                            gotoButton, new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
+                    if (result.isPresent() && result.get() == gotoButton) {
+                        Desktop desktop = Desktop.getDesktop();
+                        try {
+                            URI uri = new URI("https://code.visualstudio.com/");
+                            desktop.browse(uri); //使用默认浏览器打开超链接
+                        } catch (IOException | URISyntaxException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+            )
+        );
+    }
+
+    @FXML
+    private void autoFormatBtnAction() {
         autoFormatBtn.setOnAction(event -> {
             contentsTextArea.setText(pdfService.autoFormat(contentsTextArea.getText()));
             syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
             //自动格式化后，将方式切换为"indent",由于操作较为隐蔽，使用者不易发现变化，容易迷惑使用者，所以关闭
 //            methodGroup.selectToggle(indentRBtn);
         });
-
-
-        externalEditorBtn.setOnAction(event ->
-                syncWithExternalEditorService.exec(
-
-                        getCoordinate(),
-
-                        fileText -> Platform.runLater(()-> contentsTextArea.setText(fileText)),
-
-                        () -> {
-                            syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
-                            Platform.runLater(() -> {
-                                contentsTextArea.setDisable(true);
-                                externalEditorBtn.setDisable(true);
-                                externalEditorBtn.setText("已连接...");
-//                                externalEditorBtn.setGraphic();
-                                mask.setVisible(true);
-                            });
-                        },
-
-                        () -> Platform.runLater(() -> {
-                            contentsTextArea.setDisable(false);
-                            externalEditorBtn.setDisable(false);
-                            externalEditorBtn.setText("VSCode");
-                            mask.setVisible(false);
-
-                        }),
-                        () -> Platform.runLater(() -> {
-                            ButtonType gotoButton = new ButtonType("前往官网下载", ButtonBar.ButtonData.OK_DONE);
-
-                            //必须加取消类型按钮，否则对话框右上角的"×"不起作用
-                            var result = showAlert(
-                                    Alert.AlertType.WARNING, "未找到VSCode\n请确保安装并正确添加环境变量至PATH\n详情请查阅右上角帮助-使用说明", root.getScene().getWindow(),
-                                    gotoButton, new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
-                            if (result.isPresent() && result.get() == gotoButton) {
-                                Desktop desktop = Desktop.getDesktop();
-                                try {
-                                    URI uri = new URI("https://code.visualstudio.com/");
-                                    desktop.browse(uri); //使用默认浏览器打开超链接
-                                } catch (IOException | URISyntaxException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        })
-                )
-        );
     }
 
+
+    private int getLineStartPos(TextArea textArea, int lineNumber) {
+        String text = textArea.getText();
+        String[] lines = text.split("\n");
+        int startPosition = 0;
+
+        // 计算前面所有行的字符数总和
+        for (int i = 0; i < lineNumber; i++) {
+            startPosition += lines[i].length() + 1;  // +1 是为了包括换行符
+        }
+
+        return startPosition;
+    }
+
+    // 获取光标所在行的起始字符位置
+    private int getLineStartPosFromPos(TextArea textArea, int pos) {
+        String text = textArea.getText();
+
+        // 查找光标位置之前的换行符
+        int lineStartPosition = text.lastIndexOf("\n", pos - 1);
+
+        // 如果光标在第一行，lineStartPosition 会返回 -1，因此需要调整为 0
+        if (lineStartPosition == -1) {
+            lineStartPosition = 0;
+        } else {
+            // 跳过换行符的长度，得到实际行的起始位置
+            lineStartPosition += 1;
+        }
+
+        return lineStartPosition;
+    }
 
     // 行号计算
     // 使用 String.chars() 方法统计光标之前文本中 \n 的数量。因为换行符的数量等于行号减一，因此需要加 1。
@@ -165,11 +261,11 @@ public class TextModeController {
         return caretPosition - (lastNewLineIndex + 1) + 1;
     }
 
-    private Pair<Integer,Integer> getCoordinate() {
+    private Pair<Integer, Integer> getCoordinate() {
         int pos = contentsTextArea.getCaretPosition();
         int x = getLineNumber(contentsTextArea, pos);
         int y = getColumnNumber(contentsTextArea, pos);
-        return new Pair<> (x,y);
+        return new Pair<>(x, y);
     }
 
 }
