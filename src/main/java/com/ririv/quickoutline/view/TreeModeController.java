@@ -4,10 +4,8 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableRow;
-import javafx.scene.control.TreeTableView;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
@@ -37,6 +35,7 @@ public class TreeModeController {
 
     //不要在此方法中访问mainController，因此此时还没有产生此实例，得到null
     public void initialize() {
+        treeTableView.setEditable(true); // 设置 TreeTableView 可编辑
 
         // 仅显示两列且撑满整个view
         // 注意两个值的和需要为1
@@ -305,16 +304,23 @@ public class TreeModeController {
         convert(rootBookmark, rootItem);
 
 
-        titleColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<Bookmark, String> p) ->
-                new ReadOnlyStringWrapper(p.getValue().getValue().getTitle()));
+        titleColumn.setCellValueFactory(( param) ->
+                new SimpleStringProperty(param.getValue().getValue().getTitle()));
 
 
-        offsetPageColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<Bookmark, String> p) -> {
-            var pageNum = p.getValue().getValue().getOffsetPageNum();
+        offsetPageColumn.setCellValueFactory((param) -> {
+            var pageNum = param.getValue().getValue().getOffsetPageNum();
             String pageNumStr;
             pageNumStr = pageNum.map(integer -> Integer.toString(integer)).orElse("");
             return new ReadOnlyStringWrapper(pageNumStr);
         });
+
+//        titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+
+        titleColumn.setCellFactory(param -> new EditableTreeTableCell());
+
+
+
 
         expandAllNodes(rootItem);
 
@@ -355,6 +361,58 @@ public class TreeModeController {
             item.setExpanded(true); // 展开当前节点
             for (TreeItem<?> child : item.getChildren()) {
                 expandAllNodes(child); // 递归展开子节点
+            }
+        }
+    }
+    // 自定义 TreeTableCell，使其可编辑
+    private static class EditableTreeTableCell<S, T> extends javafx.scene.control.TreeTableCell<S, T> {
+        @Override
+        public void startEdit() {
+            super.startEdit();
+
+            if (getTableColumn().getText().equals("标题")) {
+                TextField textField = new TextField(getItem() != null ? getItem().toString() : "");
+                textField.setOnAction(event -> commitEdit((T) textField.getText())); // 提交编辑的文本
+                setGraphic(textField);
+                textField.selectAll();
+            } else if (getTableColumn().getText().equals("Age")) {
+                TextField textField = new TextField(getItem() != null ? getItem().toString() : "");
+                textField.setOnAction(event -> {
+                    try {
+                        commitEdit((T) Integer.valueOf(textField.getText())); // 提交编辑的整数值
+                    } catch (NumberFormatException e) {
+                        // 如果输入无效，提示用户并不进行提交
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setHeaderText("Invalid input");
+                        alert.setContentText("Please enter a valid number for Age.");
+                        alert.showAndWait();
+                    }
+                });
+                setGraphic(textField);
+                textField.selectAll();
+            }
+        }
+
+        @Override
+        public void cancelEdit() {
+            super.cancelEdit();
+            setText(getItem().toString());
+            setGraphic(null);
+        }
+
+        @Override
+        public void updateItem(T item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty) {
+                setText(null);
+                setGraphic(null);
+            } else {
+                if (isEditing()) {
+                    setText(null);
+                } else {
+                    setText(item != null ? item.toString() : "");
+                }
             }
         }
     }

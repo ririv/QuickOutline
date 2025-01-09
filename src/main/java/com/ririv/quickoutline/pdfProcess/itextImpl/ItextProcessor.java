@@ -5,7 +5,7 @@ import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.pdfProcess.PdfProcess;
+import com.ririv.quickoutline.pdfProcess.PdfProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,9 +14,9 @@ import java.io.IOException;
 import static com.ririv.quickoutline.model.Bookmark.buildLine;
 
 
-public class ItextProcess implements PdfProcess {
+public class ItextProcessor implements PdfProcessor {
 
-    private static final Logger log = LoggerFactory.getLogger(ItextProcess.class);
+    private static final Logger log = LoggerFactory.getLogger(ItextProcessor.class);
 
     //    如果rootBookmark没有Children，即之前的text为空（当然这种情况已在Controller中被排除）
 //    list.clear()没有起作用（不知道原因），最终目录没有影响，怀疑原因是没有写入操作。

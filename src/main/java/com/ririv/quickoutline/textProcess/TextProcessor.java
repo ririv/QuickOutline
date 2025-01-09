@@ -3,8 +3,8 @@ package com.ririv.quickoutline.textProcess;
 
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.textProcess.methods.Indent;
-import com.ririv.quickoutline.textProcess.methods.LineProcessor;
 import com.ririv.quickoutline.textProcess.methods.Method;
+import com.ririv.quickoutline.textProcess.methods.parser;
 import com.ririv.quickoutline.textProcess.methods.seq.CnSeq;
 import com.ririv.quickoutline.textProcess.methods.seq.EnSeq;
 import com.ririv.quickoutline.textProcess.methods.seq.StdSeq;
@@ -16,7 +16,7 @@ import static com.ririv.quickoutline.model.Bookmark.convertListToBookmarkTree;
 
 public class TextProcessor {
 
-    private LineProcessor lineProcessor;
+    private parser parser;
 
 
 /*预处理应实在用正则表达式匹配前，为了更好地匹配进行地处理
@@ -67,7 +67,7 @@ public class TextProcessor {
     //注意顺序
     private static String normalize(String line) {
         line = line
-                .replaceAll(Constants.OneSpaceRegex, Constants.OneBlank) //; //规范空格，将所有单个空白统一，换成单个空格
+                .replaceAll(Constants.OneSpaceRegex, Constants.OneNormSpace) //; //规范空格，将所有单个空白统一，换成单个空格
                 .replaceAll(" ?\\. ?| ?． ?", ".")//规范"."
                 .replaceAll("�","") //去掉奇怪的字符
                 .stripTrailing(); //去尾部空格。虽然不去也没关系，因为匹配中我也考虑了
@@ -77,26 +77,20 @@ public class TextProcessor {
 
     private List<Bookmark> createLinearBookmarkList(String text, int offset) {
         List<String> preprocessedText = preprocess(text);
-        List<Bookmark> linearBookmarkList = new ArrayList<>();
-
-        for (String line : preprocessedText) {
-            var current = lineProcessor.processLine(offset, line, linearBookmarkList);
-            linearBookmarkList.add(current);
-        }
-        return linearBookmarkList;
+        return parser.parse(preprocessedText, offset);
     }
 
 
     public Bookmark process(String text, int offset, Method method) {
         if (method == Method.INDENT){
-            lineProcessor = new Indent();
+            parser = new Indent();
         } else {
             if (isAscii(text)) {
-                lineProcessor = new EnSeq();
+                parser = new EnSeq();
             } else if (containsChinese(text)) {
-                lineProcessor = new CnSeq();
+                parser = new CnSeq();
             } else {
-                lineProcessor = new StdSeq();
+                parser = new StdSeq();
             }
         }
 

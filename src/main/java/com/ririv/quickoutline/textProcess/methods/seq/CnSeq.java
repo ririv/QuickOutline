@@ -2,14 +2,14 @@ package com.ririv.quickoutline.textProcess.methods.seq;
 
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.textProcess.methods.LineProcessor;
+import com.ririv.quickoutline.textProcess.methods.parser;
 
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.ririv.quickoutline.textProcess.Constants.OneBlank;
-import static com.ririv.quickoutline.textProcess.Constants.TwoBlank;
+import static com.ririv.quickoutline.textProcess.Constants.OneNormSpace;
+import static com.ririv.quickoutline.textProcess.Constants.TwoNormSpace;
 
 
 
@@ -21,7 +21,7 @@ import static com.ririv.quickoutline.textProcess.Constants.TwoBlank;
      2. 采用类似 Chrome 插件 Google Scholar PDF Reader 的方法自己整理出大纲替换目录
      */
 
-public class CnSeq implements LineProcessor,Seq {
+public class CnSeq implements parser,Seq {
     final Pattern cnPattern = Pattern.compile(
                       "^(\\s*)?"  //缩进$1
                     + "(\\S?\\s?[零一二三四五六七八九十百千0-9]+\\s?(篇|章|节|部分)|[0-9.]+)?"  //序号$2   $3不用
@@ -32,13 +32,13 @@ public class CnSeq implements LineProcessor,Seq {
                     + "\\s*$");
 
 
-    public Bookmark processLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+    public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
         Matcher matcher = cnPattern.matcher(line);
         if (matcher.find()) {
             String rawSeq = matcher.group(2) != null ? matcher.group(2) : ""; //原seq字符串
-            rawSeq = rawSeq.replaceAll(OneBlank, "");
+            rawSeq = rawSeq.replaceAll(OneNormSpace, "");
             String seq = standardizeSeq(rawSeq); //检测到的seq
-            String title = (rawSeq + TwoBlank + matcher.group(4)).trim();
+            String titleWithSeq = (rawSeq + TwoNormSpace + matcher.group(4)).trim();
             Integer pageNum;
 
             if (matcher.group(5) != null) { //页码
@@ -49,7 +49,7 @@ public class CnSeq implements LineProcessor,Seq {
 
             int level = getLevelByStandardSeq(seq);
 
-            return new Bookmark(title, pageNum, level);
+            return new Bookmark(titleWithSeq, pageNum, level);
 
         } else {
             throw new BookmarkFormatException(String.format(

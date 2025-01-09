@@ -9,14 +9,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static com.ririv.quickoutline.textProcess.Constants.TwoBlank;
+import static com.ririv.quickoutline.textProcess.Constants.TwoNormSpace;
 
 //一个顶级目录为一个bookmark
 public class Bookmark{
     private static final Logger logger = LoggerFactory.getLogger(Bookmark.class);
 
 
-    private String title;
+    private String title; // 一般情况下 title with seq
     private Integer offsetPageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
     private final List<Bookmark> children = new ArrayList<>();
     private Bookmark parent;
@@ -178,7 +178,7 @@ public class Bookmark{
     public static void buildLine(StringBuilder text, int level, String title, String pageNum) {
         text.append("\t".repeat(level-1)); //顶层为1，不要缩进
         text.append(title);
-        text.append(TwoBlank);
+        text.append(TwoNormSpace);
         text.append(pageNum);
         text.append("\n");
     }
