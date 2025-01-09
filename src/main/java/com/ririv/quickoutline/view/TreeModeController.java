@@ -312,12 +312,12 @@ public class TreeModeController {
             var pageNum = param.getValue().getValue().getOffsetPageNum();
             String pageNumStr;
             pageNumStr = pageNum.map(integer -> Integer.toString(integer)).orElse("");
-            return new ReadOnlyStringWrapper(pageNumStr);
+            return new SimpleStringProperty(pageNumStr);
         });
 
 //        titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
 
-        titleColumn.setCellFactory(param -> new EditableTreeTableCell());
+//        titleColumn.setCellFactory(param -> new EditableTreeTableCell());
 
 
 
@@ -364,7 +364,10 @@ public class TreeModeController {
             }
         }
     }
+
+
     // 自定义 TreeTableCell，使其可编辑
+    @SuppressWarnings("unchecked")
     private static class EditableTreeTableCell<S, T> extends javafx.scene.control.TreeTableCell<S, T> {
         @Override
         public void startEdit() {
