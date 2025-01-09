@@ -2,13 +2,13 @@ package com.ririv.quickoutline.textProcess.methods.seq;
 
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.textProcess.methods.LineProcessor;
+import com.ririv.quickoutline.textProcess.methods.parser;
 
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.ririv.quickoutline.textProcess.Constants.TwoBlank;
+import static com.ririv.quickoutline.textProcess.Constants.TwoNormSpace;
 
 
 /*
@@ -19,17 +19,17 @@ import static com.ririv.quickoutline.textProcess.Constants.TwoBlank;
 
 
 
-public class StdSeq implements LineProcessor,Seq {
+public class StdSeq implements parser,Seq {
 
     final Pattern stdPattern = Pattern.compile(
             "^(\\s*)?([0-9.]+)?\\s*(.*?)[\\s.]*(-?[0-9]+)?\\s*$");
 
     @Override
-    public Bookmark processLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+    public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
         Matcher matcher = stdPattern.matcher(line);
         if (matcher.find()) {
             String seq = matcher.group(2) != null ? matcher.group(2) : "";
-            String title = (seq + TwoBlank + matcher.group(4)).trim();
+            String titleWithSeq = (seq + TwoNormSpace + matcher.group(4)).trim();
             Integer pageNum;
 
             if (matcher.group(5) != null) { //页码
@@ -40,7 +40,7 @@ public class StdSeq implements LineProcessor,Seq {
 
             int level = getLevelByStandardSeq(seq);
 
-            return new Bookmark(title, pageNum, level);
+            return new Bookmark(titleWithSeq, pageNum, level);
 
         } else {
             throw new BookmarkFormatException(String.format(

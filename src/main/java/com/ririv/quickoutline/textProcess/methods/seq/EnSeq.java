@@ -1,71 +1,27 @@
 package com.ririv.quickoutline.textProcess.methods.seq;
-import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.textProcess.methods.LineProcessor;
 
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.textProcess.methods.parser;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 // From ChatGPT
-public class EnSeq implements LineProcessor,Seq {
+public class EnSeq implements parser,Seq {
 
     // 定义可以作为章节前缀的关键字
     private final List<String> keywords = Arrays.asList("Chapter", "Section", "Part", "Appendix", "Label");
 
-    /**
-     * 解析目录行列表
-     *
-     * @param lines 输入的目录行列表
-     * @return 解析结果列表，每项为一个包含缩进、章节序号、章节标题和页码的 Map
-     */
-    public List<Map<String, String>> parseTableOfContents(List<String> lines) {
-        List<Map<String, String>> result = new ArrayList<>();
-        for (String line : lines) {
-            var parsedLine = parseSingleLine(line);
-            if (parsedLine != null) {
-                result.add(parsedLine);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * 解析单行目录
-     *
-     * @param line 单行目录
-     * @return 解析结果 Map，包括缩进、章节序号、章节标题和页码，如果无法解析则返回 null
-     */
-    private Map<String, String> parseSingleLine(String line) {
-        String trimmedLine = line.trim(); // 去掉行首尾的空白字符
-        int pageNumberIndex = findPageNumberIndex(trimmedLine);
-
-        if (pageNumberIndex != -1) {
-            String contentPart = trimmedLine.substring(0, pageNumberIndex).trim(); // 去掉页码部分
-            String pageNumber = trimmedLine.substring(pageNumberIndex).trim(); // 页码部分
-            String indentation = getIndentation(line);
-            String[] chapterInfo = extractChapterInfo(contentPart);
-
-
-            Map<String, String> parsedLine = new LinkedHashMap<>();
-            parsedLine.put("indent", indentation);
-            parsedLine.put("pageNum", pageNumber);
-            parsedLine.put("title", contentPart);
-            if (chapterInfo != null) {
-                parsedLine.put("seq", chapterInfo[0]);
-                parsedLine.put("titleWO", chapterInfo[1]);
-            } else {
-                parsedLine.put("seq", "");
-                parsedLine.put("titleWO", contentPart);
-            }
-            return parsedLine;
-        }
-        return null; // 无法解析
-    }
 
     // 找到页码部分的起始位置（假设页码部分是以数字结尾）
     private int findPageNumberIndex(String line) {
+        if (!Character.isDigit(line.charAt(line.length() - 1))){
+            return -1; // 末尾是不是数字
+        }
+
         for (int i = line.length() - 1; i >= 0; i--) {
+
             if (!Character.isDigit(line.charAt(i))) {
                 return i + 1;
             }
@@ -74,17 +30,17 @@ public class EnSeq implements LineProcessor,Seq {
     }
 
     // 提取章节信息：章节编号和标题
-    private String[] extractChapterInfo(String content) {
+    private String[] divideTitle(String title) {
         for (String keyword : keywords) {
-            if (content.startsWith(keyword)) {
+            if (title.startsWith(keyword)) {
                 int keywordEndIndex = keyword.length();
-                String remaining = content.substring(keywordEndIndex).trim(); // 去掉关键词部分
+                String remaining = title.substring(keywordEndIndex).trim(); // 去掉关键词部分
 
                 int firstSpace = remaining.indexOf(' '); // 寻找编号和标题之间的空格
                 if (firstSpace != -1) {
-                    String chapterNumber = keyword + " " + remaining.substring(0, firstSpace); // 章节编号部分
-                    String chapterTitle = remaining.substring(firstSpace).trim(); // 章节标题部分
-                    return new String[]{chapterNumber, chapterTitle};
+                    String seq = keyword + " " + remaining.substring(0, firstSpace); // 章节编号部分
+                    String titleWithoutSeq = remaining.substring(firstSpace).trim(); // 章节标题部分
+                    return new String[]{seq, titleWithoutSeq};
                 } else {
                     return new String[]{keyword, remaining}; // 没有标题时，只返回编号
                 }
@@ -92,10 +48,10 @@ public class EnSeq implements LineProcessor,Seq {
         }
 
         // 处理没有明确关键词的情况，如 "16.4.2 Testing Bayesian Networks"
-        int firstSpace = content.indexOf(' ');
+        int firstSpace = title.indexOf(' ');
         if (firstSpace != -1) {
-            String chapterNumber = content.substring(0, firstSpace); // 假设数字编号在标题前
-            String chapterTitle = content.substring(firstSpace).trim(); // 剩余部分为标题
+            String chapterNumber = title.substring(0, firstSpace); // 假设数字编号在标题前
+            String chapterTitle = title.substring(firstSpace).trim(); // 剩余部分为标题
             return new String[]{chapterNumber, chapterTitle};
         }
 
@@ -111,63 +67,48 @@ public class EnSeq implements LineProcessor,Seq {
         return line.substring(0, i);
     }
 
-    public static void main(String[] args) {
-        EnSeq parser = new EnSeq();
-
-        // 示例目录行，可以根据需要添加更多行
-        List<String> lines = Arrays.asList(
-                "Foreword 7",
-                "Preface 9",
-                "Acknowledgements 14",
-                "Contents 16",
-                "    Chapter 1 Introduction 28",
-                "        Label 1.1 Uncertainty 28",
-                "            Label 1.1.1 Effects of Uncertainty 29",
-                "    Section 2 Advanced Topics 300",
-                "    Part IV Fundamentals 27",
-                "    Appendix A A Python Library for Inference and Learning 362",
-                "        A.1 Introduction 362",
-                "        16.4.2 Testing Bayesian Networks 350",
-                "    Appendix Glossary 364",
-                "        B.1 Terms 365"
-        );
-
-        // 调用解析方法
-        List<Map<String, String>> parsedLines = parser.parseTableOfContents(lines);
-
-//        try {
-        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
-
-
-            // 打印解析结果
-        for (Map<String, String> line : parsedLines) {
-            System.out.println("缩进: [" + line.get("indent") + "], 章节序号: [" + line.get("seq") + "], 章节标题: [" + line.get("titleWO") + "], 页码: [" + line.get("pageNum") + "]");
-        }
-    }
 
     @Override
-    public Bookmark processLine(int offset, String line, List<Bookmark> linearBookmarkList) {
-        Map<String, String> res = parseSingleLine(line);
-        if (res != null) {
-            String title = res.get("title");
-            String pageNum =  res.get("pageNum");
-            String seq = res.get("seq");
-            int level;
-            if (seq == null || seq.isEmpty()) { // 没有seq，采用上一个bookmark的level
-                if (linearBookmarkList.isEmpty()){ //没有上一个，即为第一个，也为顶层，level为1
-                    level = 1;
-                }
-                else {
-                    level = linearBookmarkList.getLast().getLevel();
-                }
-            }
-            else{
-                level = getLevelByStandardSeq(seq);
-            }
-
-            return new Bookmark(title, Integer.parseInt(pageNum)+offset,level);
+    public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+        String trimmedLine = line.trim(); // 去掉行首尾的空白字符
+        int pageNumIndex = findPageNumberIndex(trimmedLine);
+        String titleWithSeq;
+        String pageNum;
+        if (pageNumIndex != -1) {
+            titleWithSeq = trimmedLine.substring(0, pageNumIndex).trim(); // 去掉页码部分
+            pageNum = trimmedLine.substring(pageNumIndex).trim(); // 页码部分
+        } else {
+            titleWithSeq = trimmedLine;
+            pageNum = null; // 无页码时为空
         }
-        return null; // 无法解析
+        String indent = getIndentation(line);
+        String[] titleInfo = divideTitle(titleWithSeq);
+        String title;
+        String seq;
+
+        if (titleInfo != null) {
+            seq =  titleInfo[0];
+            title = titleInfo[1];
+        } else {
+            seq = "";
+            title = titleWithSeq;
+        }
+
+        int level;
+        if (seq == null || seq.isEmpty()) { // 没有seq，采用上一个bookmark的level
+            if (linearBookmarkList.isEmpty()){ //没有上一个，即为第一个，也为顶层，level为1
+                level = 1;
+            }
+            else {
+                level = linearBookmarkList.getLast().getLevel();
+            }
+        }
+        else{
+            level = getLevelByStandardSeq(seq);
+        }
+
+        return new Bookmark(title, pageNum == null? null: Integer.parseInt(pageNum)+offset,level);
+
     }
 
 }

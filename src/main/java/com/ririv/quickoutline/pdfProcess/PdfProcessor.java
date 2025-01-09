@@ -6,7 +6,7 @@ import com.ririv.quickoutline.model.Bookmark;
 
 import java.io.IOException;
 
-public interface PdfProcess {
+public interface PdfProcessor {
 
 /*   注意数据流动顺序为：
      text(由窗口中获得) -> linearBookmarkList -> rootBookmark(自定义的目录树) -> 1. outline(pdf库的目录树) -> text(生成的目录树，已排版)

@@ -2,8 +2,8 @@ package com.ririv.quickoutline.service;
 
 
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.pdfProcess.PdfProcess;
-import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcess;
+import com.ririv.quickoutline.pdfProcess.PdfProcessor;
+import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcessor;
 import com.ririv.quickoutline.textProcess.TextProcessor;
 import com.ririv.quickoutline.textProcess.methods.Method;
 
@@ -12,7 +12,7 @@ import java.io.IOException;
 
 public class PdfService {
 
-    private final PdfProcess pdfProcess = new ItextProcess();
+    private final PdfProcessor pdfProcessor = new ItextProcessor();
 
     //下面两个方法本质相同
     public void addContents(String text, String srcFilePath, String destFilePath, int offset, Method method) {
@@ -21,7 +21,7 @@ public class PdfService {
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);
 
         try {
-            pdfProcess.setContents(rootBookmark, srcFilePath, destFilePath);
+            pdfProcessor.setContents(rootBookmark, srcFilePath, destFilePath);
         }
         catch (IOException e){
             e.printStackTrace();
@@ -31,7 +31,7 @@ public class PdfService {
     public void deleteContents(String srcFilePath, String destFilePath) {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
         try {
-            pdfProcess.deleteContents(srcFilePath, destFilePath);
+            pdfProcessor.deleteContents(srcFilePath, destFilePath);
         }
         catch (IOException e){
             e.printStackTrace();
@@ -56,7 +56,7 @@ public class PdfService {
         if (srcFile.isEmpty()) throw new RuntimeException("PDF路径为空");
 
         try {
-            return pdfProcess.getContents(srcFile, offset);
+            return pdfProcessor.getContents(srcFile, offset);
         } catch (IOException e) {
             e.printStackTrace();
             return "";

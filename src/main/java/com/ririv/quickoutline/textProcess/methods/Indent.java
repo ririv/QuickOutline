@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 
 //中英文通用
-public class Indent implements LineProcessor {
+public class Indent implements parser {
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(Indent.class);
 
@@ -29,7 +29,7 @@ public class Indent implements LineProcessor {
                     +  "\\s*$");
 
 
-    public Bookmark processLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+    public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
         Matcher matcher = indentPattern.matcher(line);
         if (matcher.find()) {
 
