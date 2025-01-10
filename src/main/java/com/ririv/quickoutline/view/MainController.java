@@ -40,7 +40,7 @@ public class MainController {
     public Button browseFileBtn;
 
 
-    public Button resetContentsBtn;
+    public Button getContentsBtn;
 
     public Button addContentsBtn;
     public TextField offsetTextField;
@@ -217,7 +217,7 @@ public class MainController {
     }
 
     @FXML
-    private void resetContentsBtnAction(ActionEvent event) {
+    private void getContentsBtnAction(ActionEvent event) {
             if (!textModeController.contentsTextArea.getText().isEmpty()) {
                 Optional<ButtonType> buttonType = showAlert(
                         Alert.AlertType.CONFIRMATION,
@@ -233,7 +233,7 @@ public class MainController {
                 return;
             }
 
-            resetContents();
+            getContents();
             if (currenTab == FnTab.tree) reconstructTree();
 
     }
@@ -319,12 +319,12 @@ public class MainController {
     //重置，并获得目录
     private void resetState(){
         offsetTextField.setText(null); //必须在前，否则缓存的offset会影响下面的函数
-        resetContents();
+        getContents();
         if (currenTab == FnTab.tree) reconstructTree();
     }
 
 
-    private void resetContents() {
+    private void getContents() {
 //        这里原本传入offset是用来相减，原本该功能未获取目录，而不是重置目录
 //        因为比较迷惑，现在不再支持，设为0
         String contents = pdfService.getContents(filepathText.getText(), 0);

@@ -20,7 +20,7 @@ public class Bookmark{
     private Integer offsetPageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
     private final List<Bookmark> children = new ArrayList<>();
     private Bookmark parent;
-    private final int level; // 0为root，1为顶层目录（since v1.0.3，此前版本中-1为root，0为顶层）
+    private int level; // 0为root，1为顶层目录（since v1.0.3，此前版本中-1为root，0为顶层）
     private List<Bookmark> linearBookmarkList; // root节点下将记录原始的线性Bookmark
     private final String id;
 
@@ -161,8 +161,7 @@ public class Bookmark{
         recursiveTraverse(this, operate);
     }
 
-    /*    Note: 递归，此方法写在工具类中也是一样的，但为了更好地封装，写在了实体类
-            设为static，防止人为错误地修改代码，以致于无限调用 子bookmark 中的此递归方法
+    /*    Note: 递归遍历， 设为static，防止人为错误地修改代码，以致于无限调用 子bookmark 中的此递归方法
           */
     private static void recursiveTraverse(Bookmark bookmark, Consumer<Bookmark> operate) {
         if (bookmark.getLevelByStructure() != 0) { //非根节点时
@@ -201,6 +200,10 @@ public class Bookmark{
                 last = addLinearlyToBookmarkTree(current, last);
             }
         }
+    }
+
+    public void updateLevelByStructureLevel(){
+        this.traverse(e -> e.level = e.getLevelByStructure());
     }
 
 

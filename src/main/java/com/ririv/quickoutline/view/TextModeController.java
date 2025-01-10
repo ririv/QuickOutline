@@ -67,81 +67,153 @@ public class TextModeController {
                 (此方式如有序号将会视作标题，不会影响)\r
                 """);
 
+
         // 设置处理键盘事件
         // 按下SHIFT+TAB将自动去掉一格缩进（\t或者4个空格）
-        contentsTextArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            // 检查是否是 Shift+Tab
-            if (event.getCode() == KeyCode.TAB && event.isShiftDown()) {
-                event.consume(); // 消耗事件，防止默认行为
+        contentsTextArea.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabKeyPress);
+    }
 
-                if (isMultipleLinesSelected(contentsTextArea)) { // 选中多行
-                    // 获取选中的文本范围
-                    int start = contentsTextArea.getSelection().getStart();
-                    int end = contentsTextArea.getSelection().getEnd();
 
-                    int startLineNumber = getLineNumber(contentsTextArea, start);
+    private void handleTabKeyPress(KeyEvent event) {
+        TextArea textArea = (TextArea) event.getSource();
+       if (event.getCode() == KeyCode.TAB && event.isShiftDown()) {
+            // 按下Shift + Tab键减少缩进
+            removeIndent(textArea);
+            event.consume(); // 阻止默认行为
+        } else  if (event.getCode() == KeyCode.TAB) {
+            // 按下Tab键添加缩进
+            addIndent(textArea);
+            event.consume(); // 阻止默认的Tab键行为（比如焦点切换等）
+        }
+    }
 
-                    int startLineStartPos = getLineStartPos(contentsTextArea, startLineNumber-1);
+    private void addIndent(TextArea textArea){
+            if (isMultipleLinesSelected(textArea)) {
+                int start = textArea.getSelection().getStart();
+                int end = textArea.getSelection().getEnd();
 
-                    // 获取选中的文本
-                    String selectedLinesText = contentsTextArea.getText().substring(startLineStartPos, end);
-                    String[] selectedLines = selectedLinesText.split("\n");  // 按行分割选中的文本
-                    System.out.println("selectedLinesText: " + selectedLinesText);
 
-                    int deletedIndent = 0;
-                    for (int i = 0; i < selectedLines.length; i++) {
-                        String currentLine = selectedLines[i];
-                        // 检查该行是否有缩进，如果没有缩进，跳过此行
-                        if (!INDENT_PATTERN.matcher(currentLine).find()) {
-                            continue;
-                        }
-
-                        Matcher matcher = INDENT_PATTERN.matcher(currentLine);
-                        // 去除行首的缩进
-                        if (matcher.find()){
-                            deletedIndent+=matcher.group(0).length();
-                        }
-                        String trimmedLine = currentLine.replaceFirst(INDENT_PATTERN.pattern(), "");
-                        selectedLines[i] = trimmedLine;
-                    }
-                    // 替换文本
-                    contentsTextArea.replaceText(startLineStartPos, end, String.join("\n", selectedLines));
-                    // 调整光标位置
-                    contentsTextArea.selectRange(start, end - deletedIndent);
+                // 如果选中的文本第一个字符是换行符，则在上一行，需要回到下一行
+                if (textArea.getText(start, start+1).equals("\n")){
+                    start++;
                 }
-                else { // 单行或未选中文字
-                    // 获取当前光标所在行
-                    int caretPosition = contentsTextArea.getCaretPosition();
-                    int currentLineNumber = getLineNumber(contentsTextArea, caretPosition);
+
+                // 如果选中的文本最后一个字符是换行符，则已经在第二行，需要回到上一行
+                if (textArea.getText(end-1, end).equals("\n")){
+                    end--;
+                }
+
+
+
+                int startLineNumber = getLineNumber(textArea, start);
+
+                int startLineStartPos = getLineStartPos(textArea, startLineNumber - 1);
+
+                // 获取选中的文本
+                String selectedLinesText = textArea.getText().substring(startLineStartPos, end);
+                String[] selectedLines = selectedLinesText.split("\n");  // 按行分割选中的文本
+                System.out.println("selectedLinesText: \n" + selectedLinesText);
+
+                int firstLineIndent = 0;
+                int totalIndent = 0;
+                for (int i = 0; i < selectedLines.length; i++) {
+                    String currentLine = selectedLines[i];
+                    String defaultIndent = "\t";
+                    if (i == 0) firstLineIndent += defaultIndent.length();
+                    totalIndent += defaultIndent.length();
+                    String trimmedLine = defaultIndent + currentLine;
+                    selectedLines[i] = trimmedLine;
+                }
+                // 替换文本
+                textArea.replaceText(startLineStartPos, end, String.join("\n", selectedLines));
+                // 调整光标位置
+                textArea.selectRange(start + firstLineIndent, end + totalIndent);
+            }
+        }
+
+
+    private void removeIndent(TextArea textArea){
+
+            if (isMultipleLinesSelected(textArea)) { // 选中多行
+                // 获取选中的文本范围
+                int start = textArea.getSelection().getStart();
+                int end = textArea.getSelection().getEnd();
+
+                // 如果选中的文本第一个字符是换行符，则在上一行，需要回到下一行
+                if (textArea.getText(start, start+1).equals("\n")){
+                    start++;
+                }
+
+                // 如果选中的文本最后一个字符是换行符，则已经在第二行，需要回到上一行
+                if (textArea.getText(end-1, end).equals("\n")){
+                    end--;
+                }
+
+                int startLineNumber = getLineNumber(textArea, start);
+
+                int startLineStartPos = getLineStartPos(textArea, startLineNumber - 1);
+
+                // 获取选中的文本
+                String selectedLinesText = textArea.getText().substring(startLineStartPos, end);
+                String[] selectedLines = selectedLinesText.split("\n");  // 按行分割选中的文本
+                System.out.println("selectedLinesText: \n" + selectedLinesText);
+
+                int firstLineIndent = 0;
+                int totalIndent = 0;
+                for (int i = 0; i < selectedLines.length; i++) {
+                    String currentLine = selectedLines[i];
+                    // 检查该行是否有缩进，如果没有缩进，跳过此行
+                    if (!INDENT_PATTERN.matcher(currentLine).find()) {
+                        continue;
+                    }
+
+                    Matcher matcher = INDENT_PATTERN.matcher(currentLine);
+                    // 去除行首的缩进
+                    if (matcher.find()) {
+                        if (i == 0) {
+//                                if ()
+                            firstLineIndent += matcher.group(0).length();
+                        }
+                        totalIndent += matcher.group(0).length();
+                    }
+                    String trimmedLine = currentLine.replaceFirst(INDENT_PATTERN.pattern(), "");
+                    selectedLines[i] = trimmedLine;
+                }
+                // 替换文本
+                textArea.replaceText(startLineStartPos, end, String.join("\n", selectedLines));
+                // 调整光标位置
+                textArea.selectRange(start - firstLineIndent, end - totalIndent);
+            } else { // 单行或未选中文字
+                // 获取当前光标所在行
+                int caretPosition = textArea.getCaretPosition();
+                int currentLineNumber = getLineNumber(textArea, caretPosition);
 
 //                    System.out.println("currentLineNumber: " + currentLineNumber);
 
-                    //最后一个字符为换行符时会发生这种情况，此时不处理
-                    if (contentsTextArea.getText().split("\n").length < currentLineNumber) {
-                        return;
-                    }
-                    // 获取光标所在行的文本
-                    String currentLine = contentsTextArea.getText().split("\n")[currentLineNumber - 1];
+                //最后一个字符为换行符时会发生这种情况，此时不处理
+                if (textArea.getText().split("\n").length < currentLineNumber) {
+                    return;
+                }
+                // 获取光标所在行的文本
+                String currentLine = textArea.getText().split("\n")[currentLineNumber - 1];
 //                    System.out.println("currentLine: " + currentLine);
-                    // 如果该行没有缩进，则不需要处理，直接返回
-                    if (INDENT_PATTERN.matcher(currentLine).find()) {
-                        // 去除行首的缩进（制表符或4个空格）
-                        String trimmedLine = currentLine.replaceFirst(INDENT_PATTERN.pattern(), "");
+                // 如果该行没有缩进，则不需要处理，直接返回
+                if (INDENT_PATTERN.matcher(currentLine).find()) {
+                    // 去除行首的缩进（制表符或4个空格）
+                    String trimmedLine = currentLine.replaceFirst(INDENT_PATTERN.pattern(), "");
 
-                        // 替换当前行
-                        // 不要重新设置整个文本，否则会导致视图位置丢失
-                        int start = getLineStartPos(contentsTextArea, currentLineNumber - 1);
-                        int end = start + currentLine.length();
-                        System.out.println(start + " " + end);
-                        contentsTextArea.replaceText(start, end, trimmedLine);
+                    // 替换当前行
+                    // 不要重新设置整个文本，否则会导致视图位置丢失
+                    int start = getLineStartPos(textArea, currentLineNumber - 1);
+                    int end = start + currentLine.length();
+                    System.out.println(start + " " + end);
+                    textArea.replaceText(start, end, trimmedLine);
 
-                        // 设置光标位置
-                        contentsTextArea.positionCaret(caretPosition - 1);
-                    }
+                    // 设置光标位置
+                    textArea.positionCaret(caretPosition - 1);
                 }
             }
-        });
-    }
+        }
 
 
     // 判断是否选中了多行

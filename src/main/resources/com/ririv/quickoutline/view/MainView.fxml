@@ -12,165 +12,184 @@
            fx:controller="com.ririv.quickoutline.view.MainController">
     <BorderPane
     >
-    <top>
-        <VBox>
-            <HBox fx:id="topPane"  alignment="CENTER">
-                <TextField fx:id="filepathText" disable="true" prefHeight="25"
-                           promptText="请选择或者拖拽PDF文件到窗口"
-                           HBox.hgrow="ALWAYS"/>
-                <GraphButtonWrapper wrapperPadding="3">
-                    <HBox.margin>
-                        <Insets right="3" />
-                    </HBox.margin>
-                    <Button fx:id="browseFileBtn" styleClass="graph-button">
-                        <!--                按钮与图标的内边距-->
-                        <padding>
-                            <Insets topRightBottomLeft="2.0"/>
-                        </padding>
-                        <tooltip>
-                            <Tooltip text="打开..."/>
-                        </tooltip>
-                        <graphic>
-                            <Region styleClass="icon,openIcon" prefHeight="15" prefWidth="15"/>
-                        </graphic>
-                    </Button>
-                </GraphButtonWrapper>
-            </HBox>
-            <Region styleClass="dividing-line-h"/>
-        </VBox>
-    </top>
-    <left>
-        <BorderPane id="leftPane" >
-            <top>
-                <VBox>
-                    <fx:define>
-                        <ToggleGroup fx:id="tabToggleGroup"/>
-                    </fx:define>
-                    <GraphButtonWrapper >
-                    <ToggleButton fx:id="textModeBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button" maxWidth="Infinity">
-                        <graphic>
-                            <Region styleClass="icon,editIcon" />
-                        </graphic>
-                    </ToggleButton>
-                    </GraphButtonWrapper>
-                    <GraphButtonWrapper>
-                    <ToggleButton fx:id="treeModeBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button" maxWidth="Infinity">
-                        <graphic>
-                            <Region styleClass="icon,treeDiagramIcon"  />
-                        </graphic>
-                    </ToggleButton>
-                    </GraphButtonWrapper>
-                    <GraphButtonWrapper>
-                        <ToggleButton fx:id="tocBtn" visible="false" toggleGroup="$tabToggleGroup" styleClass="graph-button" maxWidth="Infinity">
+        <top>
+            <VBox>
+                <HBox fx:id="topPane" alignment="CENTER">
+                    <TextField fx:id="filepathText" disable="true" prefHeight="25"
+                               promptText="请选择或者拖拽PDF文件到窗口"
+                               HBox.hgrow="ALWAYS"/>
+                    <GraphButtonWrapper wrapperPadding="3">
+                        <HBox.margin>
+                            <Insets right="3"/>
+                        </HBox.margin>
+                        <Button fx:id="browseFileBtn" styleClass="graph-button">
+                            <!--                按钮与图标的内边距-->
+                            <padding>
+                                <Insets topRightBottomLeft="2.0"/>
+                            </padding>
+                            <tooltip>
+                                <Tooltip text="打开..."/>
+                            </tooltip>
                             <graphic>
-                                <Region styleClass="icon,tocIcon"  />
-                            </graphic>
-                        </ToggleButton>
-                    </GraphButtonWrapper>
-                </VBox>
-            </top>
-            <bottom>
-                <GraphButtonWrapper >
-                <Button fx:id="helpBtn"
-                        styleClass="graph-button"
-                        onAction="#createHelpWindowAction"
-                        maxWidth="Infinity">
-                    <padding>
-                        <Insets topRightBottomLeft="3.0" />
-                    </padding>
-                    <graphic>
-                        <Region styleClass="icon,helpIcon" prefHeight="20" prefWidth="20"/>
-                    </graphic>
-                </Button>
-                </GraphButtonWrapper>
-            </bottom>
-        </BorderPane>
-
-    </left>
-    <center>
-
-        <!-- 可切换视图区域 -->
-        <StackPane id="operationPane">
-
-<!--                            导入其他fxml &ndash;&gt;-->
-            <fx:include fx:id="treeMode" source="TreeMode.fxml"/>
-            <fx:include fx:id="textMode" source="TextMode.fxml"/>
-
-        </StackPane>
-
-    </center>
-    <bottom>
-        <VBox>
-            <Region styleClass="dividing-line-h"/>
-
-            <GridPane id="bottomPane" >
-                <HBox alignment="CENTER">
-<!--                    <GridPane.margin>-->
-<!--                        <Insets left="20.0"/>-->
-<!--                    </GridPane.margin>-->
-                    <GraphButtonWrapper>
-                        <Button fx:id="deleteBtn" onAction="#deleteBtnAction" styleClass="graph-button" prefWidth="30">
-                            <graphic>
-                                <Region styleClass="icon, deleteIcon"  />
+                                <Region styleClass="icon,openIcon" prefHeight="15" prefWidth="15"/>
                             </graphic>
                         </Button>
                     </GraphButtonWrapper>
-                <Button fx:id="resetContentsBtn" styleClass="default-button,primary-plain-button"
-                           onAction="#resetContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
-                           text="重置目录">
-
-                </Button>
-
                 </HBox>
+                <Region styleClass="dividing-line-h"/>
+            </VBox>
+        </top>
+        <left>
+            <BorderPane id="leftPane">
+                <fx:define>
+                    <ToggleGroup fx:id="tabToggleGroup"/>
+                </fx:define>
+                <top>
+                    <VBox>
+                        <GraphButtonWrapper>
+                            <ToggleButton fx:id="textModeBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
+                                          maxWidth="Infinity">
+                                <graphic>
+                                    <Region styleClass="icon,editIcon"/>
+                                </graphic>
+                            </ToggleButton>
+                        </GraphButtonWrapper>
+                        <GraphButtonWrapper>
+                            <ToggleButton fx:id="treeModeBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
+                                          maxWidth="Infinity">
+                                <graphic>
+                                    <Region styleClass="icon,treeDiagramIcon"/>
+                                </graphic>
+                            </ToggleButton>
+                        </GraphButtonWrapper>
+                        <GraphButtonWrapper>
+                            <ToggleButton fx:id="tocBtn" visible="false" toggleGroup="$tabToggleGroup"
+                                          styleClass="graph-button" maxWidth="Infinity">
+                                <graphic>
+                                    <Region styleClass="icon,tocIcon"/>
+                                </graphic>
+                            </ToggleButton>
+                        </GraphButtonWrapper>
+                    </VBox>
+                </top>
+                <bottom>
+                    <VBox >
+                    <GraphButtonWrapper>
+                        <ToggleButton fx:id="settingBtn" toggleGroup="$tabToggleGroup" visible="false"
+                                      styleClass="graph-button" maxWidth="Infinity">
+                            <padding>
+                                <Insets topRightBottomLeft="3.0"/>
+                            </padding>
+                            <graphic>
+                                <Region styleClass="icon, settingIcon" prefHeight="20" prefWidth="20"/>
+                            </graphic>
+                        </ToggleButton>
+                    </GraphButtonWrapper>
+                    <GraphButtonWrapper>
+                        <Button fx:id="helpBtn"
+                                styleClass="graph-button"
+                                onAction="#createHelpWindowAction"
+                                maxWidth="Infinity">
+                            <padding>
+                                <Insets topRightBottomLeft="3.0"/>
+                            </padding>
+                            <graphic>
+                                <Region styleClass="icon,helpIcon" prefHeight="20" prefWidth="20"/>
+                            </graphic>
+                        </Button>
+                    </GraphButtonWrapper>
+                    </VBox>
+                </bottom>
+            </BorderPane>
 
-                <Button fx:id="addContentsBtn" styleClass="default-button,important-plain-button" onAction="#addContentsBtnAction"
-                           mnemonicParsing="false" prefWidth="120.0" text="添加目录"
-                           GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
-                <TextField fx:id="offsetTextField" maxWidth="200" promptText="页码偏移量" GridPane.columnIndex="3"
-                           GridPane.halignment="CENTER">
-                    <GridPane.margin>
-                        <Insets left="20.0" right="20.0"/>
-                    </GridPane.margin>
-                    <tooltip>
-                        <Tooltip text="在添加目录时会加上偏移量，支持负数，相加的结果不要超出实际页码范围"/>
-                    </tooltip>
-                </TextField>
-                <GridPane id="method-grid" alignment="CENTER_RIGHT" prefWidth="90.0" GridPane.columnIndex="4">
-                    <fx:define>
-                        <ToggleGroup fx:id="methodToggleGroup"/>
-                    </fx:define>
-                    <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false" text="按序号" GridPane.halignment="RIGHT"
-                                 GridPane.rowIndex="0"/>
-                    <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false" text="按缩进" GridPane.halignment="RIGHT"
-                                 GridPane.rowIndex="1"/>
-                    <rowConstraints>
-                        <RowConstraints minHeight="10.0" prefHeight="30.0"/>
-                        <RowConstraints minHeight="10.0" prefHeight="30.0"/>
-                    </rowConstraints>
+        </left>
+        <center>
+
+            <!-- 可切换视图区域 -->
+            <StackPane id="operationPane">
+
+                <!--                            导入其他fxml &ndash;&gt;-->
+                <fx:include fx:id="treeMode" source="TreeMode.fxml"/>
+                <fx:include fx:id="textMode" source="TextMode.fxml"/>
+
+            </StackPane>
+
+        </center>
+        <bottom>
+            <VBox>
+                <Region styleClass="dividing-line-h"/>
+
+                <GridPane id="bottomPane">
+                    <HBox alignment="CENTER">
+                        <!--                    <GridPane.margin>-->
+                        <!--                        <Insets left="20.0"/>-->
+                        <!--                    </GridPane.margin>-->
+                        <GraphButtonWrapper>
+                            <Button fx:id="deleteBtn" onAction="#deleteBtnAction" styleClass="graph-button"
+                                    prefWidth="30">
+                                <graphic>
+                                    <Region styleClass="icon, deleteIcon"/>
+                                </graphic>
+                            </Button>
+                        </GraphButtonWrapper>
+                        <Button fx:id="getContentsBtn" styleClass="default-button,primary-plain-button"
+                                onAction="#getContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
+                                text="获取目录">
+                        </Button>
+
+                    </HBox>
+
+                    <Button fx:id="addContentsBtn" styleClass="default-button,important-plain-button"
+                            onAction="#addContentsBtnAction"
+                            mnemonicParsing="false" prefWidth="120.0" text="添加目录"
+                            GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
+                    <TextField fx:id="offsetTextField" maxWidth="200" promptText="页码偏移量" GridPane.columnIndex="3"
+                               GridPane.halignment="CENTER">
+                        <GridPane.margin>
+                            <Insets left="20.0" right="20.0"/>
+                        </GridPane.margin>
+                        <tooltip>
+                            <Tooltip text="在添加目录时会加上偏移量，支持负数，相加的结果不要超出实际页码范围"/>
+                        </tooltip>
+                    </TextField>
+                    <GridPane id="method-grid" alignment="CENTER_RIGHT" prefWidth="90.0" GridPane.columnIndex="4">
+                        <fx:define>
+                            <ToggleGroup fx:id="methodToggleGroup"/>
+                        </fx:define>
+                        <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                                     text="按序号" GridPane.halignment="RIGHT"
+                                     GridPane.rowIndex="0"/>
+                        <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                                     text="按缩进" GridPane.halignment="RIGHT"
+                                     GridPane.rowIndex="1"/>
+                        <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0"/>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0"/>
+                        </rowConstraints>
+                        <columnConstraints>
+                            <ColumnConstraints/>
+                        </columnConstraints>
+                        <GridPane.margin>
+                            <Insets right="50.0"/>
+                        </GridPane.margin>
+
+                    </GridPane>
+
                     <columnConstraints>
-                        <ColumnConstraints/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
                     </columnConstraints>
-                    <GridPane.margin>
-                        <Insets right="50.0"/>
-                    </GridPane.margin>
+                    <rowConstraints>
+                        <RowConstraints vgrow="SOMETIMES"/>
+                    </rowConstraints>
 
                 </GridPane>
 
-                <columnConstraints>
-                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                </columnConstraints>
-                <rowConstraints>
-                    <RowConstraints vgrow="SOMETIMES"/>
-                </rowConstraints>
-
-            </GridPane>
-
-        </VBox>
-    </bottom>
+            </VBox>
+        </bottom>
     </BorderPane>
     <MessageContainer fx:id="messageDialog"/>
 </StackPane>
