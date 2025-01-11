@@ -69,6 +69,9 @@ public class MainController {
     public ToggleButton tocBtn;
     public Button deleteBtn;
     public MessageContainer messageDialog;
+//    public ChoiceBox<String> scaleChoice;
+//    public ObservableList<String> scaleOptions = FXCollections.observableArrayList("适合宽度", "适合高度", "适合页面");
+
 
     PdfService pdfService = new PdfService();
 
@@ -109,6 +112,8 @@ public class MainController {
 
 
     public void initialize() {
+//        scaleChoice.setItems(scaleOptions);
+//        scaleChoice.setValue(scaleOptions.getFirst());
 
         textModeController.setPdfService(this.pdfService);
         treeModeController.setPdfService(this.pdfService);

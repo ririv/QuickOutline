@@ -1,5 +1,8 @@
 package com.ririv.quickoutline.service.syncWithExternelEditor.watchFile;
 
+import java.io.File;
+import java.util.function.Consumer;
+
 public interface FileWatcher {
 
     /*
@@ -12,7 +15,7 @@ public interface FileWatcher {
 
     3.使用org.apache.commons.io提供的监听器，成功
          */
-    void start();
+    void startWatching(File temp, Consumer<String> onModifyEvent);
 
-    void stop();
+    void stopWatching();
 }

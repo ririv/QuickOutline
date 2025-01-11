@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
+import org.slf4j.Logger;
 
 import java.awt.*;
 import java.io.IOException;
@@ -23,6 +24,9 @@ import java.util.regex.Pattern;
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
 public class TextModeController {
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TextModeController.class);
+
+
     public TextArea contentsTextArea;
     public Button externalEditorBtn;
     public Button autoFormatBtn;
@@ -171,7 +175,6 @@ public class TextModeController {
                     // 去除行首的缩进
                     if (matcher.find()) {
                         if (i == 0) {
-//                                if ()
                             firstLineIndent += matcher.group(0).length();
                         }
                         totalIndent += matcher.group(0).length();
@@ -195,6 +198,7 @@ public class TextModeController {
                     return;
                 }
                 // 获取光标所在行的文本
+
                 String currentLine = textArea.getText().split("\n")[currentLineNumber - 1];
 //                    System.out.println("currentLine: " + currentLine);
                 // 如果该行没有缩进，则不需要处理，直接返回
@@ -206,7 +210,6 @@ public class TextModeController {
                     // 不要重新设置整个文本，否则会导致视图位置丢失
                     int start = getLineStartPos(textArea, currentLineNumber - 1);
                     int end = start + currentLine.length();
-                    System.out.println(start + " " + end);
                     textArea.replaceText(start, end, trimmedLine);
 
                     // 设置光标位置

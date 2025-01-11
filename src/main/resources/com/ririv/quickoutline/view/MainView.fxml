@@ -73,7 +73,7 @@
                     </VBox>
                 </top>
                 <bottom>
-                    <VBox >
+                    <VBox>
                     <GraphButtonWrapper>
                         <ToggleButton fx:id="settingBtn" toggleGroup="$tabToggleGroup" visible="false"
                                       styleClass="graph-button" maxWidth="Infinity">
@@ -127,6 +127,9 @@
                         <GraphButtonWrapper>
                             <Button fx:id="deleteBtn" onAction="#deleteBtnAction" styleClass="graph-button"
                                     prefWidth="30">
+                                <tooltip>
+                                    <Tooltip text="删除PDF目录（不会修改源文件）"/>
+                                </tooltip>
                                 <graphic>
                                     <Region styleClass="icon, deleteIcon"/>
                                 </graphic>
@@ -136,7 +139,6 @@
                                 onAction="#getContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
                                 text="获取目录">
                         </Button>
-
                     </HBox>
 
                     <Button fx:id="addContentsBtn" styleClass="default-button,important-plain-button"
@@ -185,9 +187,7 @@
                     <rowConstraints>
                         <RowConstraints vgrow="SOMETIMES"/>
                     </rowConstraints>
-
                 </GridPane>
-
             </VBox>
         </bottom>
     </BorderPane>

@@ -10,32 +10,26 @@ import java.util.function.Consumer;
 
 import static com.ririv.quickoutline.utils.FileUtil.readFile;
 
-public class FileModifiedWatcherImpl implements FileWatcher {
-    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(FileModifiedWatcherImpl.class);
+// 自己实现了个文件监视器，可直接监视文件（没有使用该实现）
+public class CustomFileModifiedWatcherImpl implements FileWatcher {
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(CustomFileModifiedWatcherImpl.class);
 
     Long oldLastModified;
     Long newLastModified;
-    final Consumer<String> sync;
+
     ScheduledExecutorService service;
-
-    final File temp;
-    public FileModifiedWatcherImpl(File temp,Consumer<String> sync) {
-        this.temp = temp;
-        this.sync = sync;
-
-    }
 
 
     @Override
-    public void start() {
+    public void startWatching(File file, Consumer<String> onModifyEvent) {
 
-        oldLastModified = temp.lastModified();
+        oldLastModified = file.lastModified();
 
         Runnable r = () -> {
-            newLastModified = temp.lastModified();
+            newLastModified = file.lastModified();
             if (!oldLastModified.equals(newLastModified)){
                 oldLastModified = newLastModified;
-                sync.accept(readFile(temp));
+                onModifyEvent.accept(readFile(file));
             }
 
             logger.info("{}: is watching file", Thread.currentThread().getName());
@@ -48,7 +42,7 @@ public class FileModifiedWatcherImpl implements FileWatcher {
     }
 
     @Override
-    public void stop() {
+    public void stopWatching() {
         service.shutdown(); //需要关闭
     }
 
