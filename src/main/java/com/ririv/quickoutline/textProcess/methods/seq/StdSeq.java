@@ -22,7 +22,7 @@ import static com.ririv.quickoutline.textProcess.Constants.TwoNormSpace;
 public class StdSeq implements parser,Seq {
 
     final Pattern stdPattern = Pattern.compile(
-            "^(\\s*)?([0-9.]+)?\\s*(.*?)[\\s.]*(-?[0-9]+)?\\s*$");
+            "^(\\s*)?(\\d+(\\.\\d+)*\\.?)?\\s*(.*?)[\\s.]*(-?[0-9]+)?\\s*$");
 
     @Override
     public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
