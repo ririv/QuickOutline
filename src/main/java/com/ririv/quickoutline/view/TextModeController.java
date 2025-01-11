@@ -84,7 +84,7 @@ public class TextModeController {
             // 按下Shift + Tab键减少缩进
             removeIndent(textArea);
             event.consume(); // 阻止默认行为
-        } else  if (event.getCode() == KeyCode.TAB) {
+        } else  if (event.getCode() == KeyCode.TAB && isMultipleLinesSelected(textArea)) {
             // 按下Tab键添加缩进
             addIndent(textArea);
             event.consume(); // 阻止默认的Tab键行为（比如焦点切换等）
@@ -92,10 +92,9 @@ public class TextModeController {
     }
 
     private void addIndent(TextArea textArea){
-            if (isMultipleLinesSelected(textArea)) {
+
                 int start = textArea.getSelection().getStart();
                 int end = textArea.getSelection().getEnd();
-
 
                 // 如果选中的文本第一个字符是换行符，则在上一行，需要回到下一行
                 if (textArea.getText(start, start+1).equals("\n")){
@@ -106,8 +105,6 @@ public class TextModeController {
                 if (textArea.getText(end-1, end).equals("\n")){
                     end--;
                 }
-
-
 
                 int startLineNumber = getLineNumber(textArea, start);
 
@@ -132,12 +129,11 @@ public class TextModeController {
                 textArea.replaceText(startLineStartPos, end, String.join("\n", selectedLines));
                 // 调整光标位置
                 textArea.selectRange(start + firstLineIndent, end + totalIndent);
-            }
+
         }
 
 
     private void removeIndent(TextArea textArea){
-
             if (isMultipleLinesSelected(textArea)) { // 选中多行
                 // 获取选中的文本范围
                 int start = textArea.getSelection().getStart();
@@ -154,7 +150,6 @@ public class TextModeController {
                 }
 
                 int startLineNumber = getLineNumber(textArea, start);
-
                 int startLineStartPos = getLineStartPos(textArea, startLineNumber - 1);
 
                 // 获取选中的文本
@@ -189,8 +184,13 @@ public class TextModeController {
             } else { // 单行或未选中文字
                 // 获取当前光标所在行
                 int caretPosition = textArea.getCaretPosition();
-                int currentLineNumber = getLineNumber(textArea, caretPosition);
 
+                // 注意这里与多选的逻辑是反的
+                if (textArea.getText(caretPosition-1, caretPosition).equals("\n")){
+                    caretPosition++;
+                }
+
+                int currentLineNumber = getLineNumber(textArea, caretPosition);
 //                    System.out.println("currentLineNumber: " + currentLineNumber);
 
                 //最后一个字符为换行符时会发生这种情况，此时不处理
