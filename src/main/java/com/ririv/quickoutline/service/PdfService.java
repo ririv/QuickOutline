@@ -14,7 +14,6 @@ public class PdfService {
 
     private final PdfProcessor pdfProcessor = new ItextProcessor();
 
-    //下面两个方法本质相同
     public void addContents(String text, String srcFilePath, String destFilePath, int offset, Method method) {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
 
@@ -40,7 +39,6 @@ public class PdfService {
 
     //先经过text生成bookmark，在将bookmark转化为text
     public String autoFormat(String text) {
-//        Bookmark rootBookmark = textToBookmarkByMethod(text, 0, Method.SEQ,false);
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, 0, Method.SEQ);
         return rootBookmark.toTreeText();
     }
@@ -51,7 +49,7 @@ public class PdfService {
     }
 
 
-    //此offset用于减，即 偏移后的偏移量-offset = 原页码（作为返回给用户的页码）
+    //此offset用于减，即 偏移后的偏移量-offset = 原页码（v2.0+目前没有应用场景）
     public String getContents(String srcFile, int offset){
         if (srcFile.isEmpty()) throw new RuntimeException("PDF路径为空");
 
@@ -61,12 +59,6 @@ public class PdfService {
             e.printStackTrace();
             return "";
         }
-    }
-
-    /*    为避免错乱，不提供seq参数，请先使用setSeq()方法设置current的seq
-        无使用场景，搁置*/
-    public Bookmark addBookmarkBySeq(Bookmark root, Bookmark current) {
-        return null;
     }
 
 }

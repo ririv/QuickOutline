@@ -23,7 +23,11 @@
         </Label>
     </StackPane>
     <Region styleClass="dividing-line-v" />
-    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" vgap="50">
+    <AnchorPane>
+
+    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" vgap="50"
+    AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
+    >
         <Button fx:id="externalEditorBtn" onAction="#externalEditorBtnAction" styleClass="default-button,primary-plain-button" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
             <tooltip >
                 <Tooltip text="使用VSCode编辑，文本会自动同步"/>
@@ -37,4 +41,12 @@
         </Button>
         <Label />
     </FlowPane>
+        <VBox  alignment="TOP_CENTER" maxWidth="100"
+               AnchorPane.bottomAnchor="50" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
+        >
+            <Label style="-fx-text-fill: #969696" text="Tip: 多选后按下"/>
+            <Label style="-fx-text-fill: #969696" text="tab | shift+tab 键"/>
+            <Label style="-fx-text-fill: #969696" text="即可快速缩进"/>
+        </VBox>
+    </AnchorPane>
 </HBox>
