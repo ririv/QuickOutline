@@ -6,8 +6,9 @@ import com.ririv.quickoutline.textProcess.methods.Indent;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.textProcess.methods.parser;
 import com.ririv.quickoutline.textProcess.methods.seq.CnSeq;
-import com.ririv.quickoutline.textProcess.methods.seq.EnSeq;
 import com.ririv.quickoutline.textProcess.methods.seq.StdSeq;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import static com.ririv.quickoutline.model.Bookmark.convertListToBookmarkTree;
 
 public class TextProcessor {
 
+    private static final Logger log = LoggerFactory.getLogger(TextProcessor.class);
     private parser parser;
 
 
@@ -28,7 +30,17 @@ public class TextProcessor {
      * @return 如果仅包含标准 ASCII 字符返回 true，否则返回 false
      */
     public static boolean isAscii(String text) {
-        return text.chars().allMatch(c -> c >= 0 && c <= 127);
+//        "’"的Unicode码为U+2019，不在ASCII码范围内
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c > 127) {
+                log.info("非ASCII字符：{}", c);
+                return false;
+            }
+        }
+        return true;
+
+//        return text.chars().allMatch(c -> c >= 0 && c <= 127);
     }
 
     /**
@@ -85,9 +97,10 @@ public class TextProcessor {
         if (method == Method.INDENT){
             parser = new Indent();
         } else {
-            if (isAscii(text)) {
-                parser = new EnSeq();
-            } else if (containsChinese(text)) {
+//            if (isAscii(text)) {
+//                parser = new EnSeq(); //有bug
+//            } else
+            if (containsChinese(text)) {
                 parser = new CnSeq();
             } else {
                 parser = new StdSeq();
