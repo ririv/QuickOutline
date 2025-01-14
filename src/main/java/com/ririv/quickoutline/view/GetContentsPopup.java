@@ -11,6 +11,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
@@ -35,6 +37,8 @@ public class GetContentsPopup extends StackPane {
 
     @FXML
     private Button extractTocBtn;
+
+    private int backspaceCount = 0;
 
     private BooleanProperty autoRecognize = new SimpleBooleanProperty(true);
 
@@ -62,18 +66,34 @@ public class GetContentsPopup extends StackPane {
         pageNumRangeLayout.disableProperty().bind(autoRecognizeSwitch.valueProperty());
 
 
-        startTF.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null && !newValue.isEmpty() && !newValue.matches("^\\d+$")) {
-                newValue = newValue.replaceAll("[^0-9]", "");
-                startTF.setText(newValue);
+        startTF.addEventFilter(KeyEvent.KEY_TYPED, event -> {
+            if (!"0123456789".contains(event.getCharacter())) {
+                event.consume();
             }
         });
 
-        endTF.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null && !newValue.isEmpty() && !newValue.matches("^\\d+$")) {
-                newValue = newValue.replaceAll("[^0-9]", "");
-                endTF.setText(newValue);
+        endTF.addEventFilter(KeyEvent.KEY_TYPED, event -> {
+            if (!"0123456789".contains(event.getCharacter())) {
+                event.consume();
             }
+        });
+
+        // 启用tab键自动转到endTF
+        endTF.focusTraversableProperty().bind(startTF.focusedProperty());
+
+        endTF.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (endTF.getText().isEmpty()){
+                if (event.getCode() == KeyCode.BACK_SPACE) {
+                    backspaceCount++;
+                    if (backspaceCount == 2) {
+                        // 当退格键被按下两次时触发的事件
+                        startTF.requestFocus();
+                        // 重置计数器
+                        backspaceCount = 0;
+                    }
+                }
+            }
+
         });
 
         extractTocBtn.setOnAction(event -> {

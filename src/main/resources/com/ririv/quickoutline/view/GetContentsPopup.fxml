@@ -7,11 +7,11 @@
         <Label styleClass="title" text="TOC（preview）" />
         <HBox fx:id="pageNumRangeLayout" alignment="CENTER_LEFT">
             <Label text="TOC页码范围（未偏移）"/>
-            <TextField fx:id="startTF" prefWidth="30" prefHeight="20" />
+            <TextField fx:id="startTF" alignment="CENTER" focusTraversable="false" prefWidth="35" prefHeight="20" />
             <Label text=" - " />
-            <TextField fx:id="endTF" prefWidth="30" prefHeight="20" />
+            <TextField fx:id="endTF" alignment="CENTER" focusTraversable="false" prefWidth="35" prefHeight="20" />
         </HBox>
-        <HBox spacing="30">
+        <HBox spacing="40">
             <Switch fx:id="autoRecognizeSwitch" text="自动识别" />
             <Button fx:id="extractTocBtn" styleClass="my-button, default-button, popup-button" text="提取TOC"
                     prefWidth="80" prefHeight="25" />

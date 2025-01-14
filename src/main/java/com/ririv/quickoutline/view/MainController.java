@@ -225,7 +225,7 @@ public class MainController {
 
         popup.getContent().add(getContentsPopup);
         getContentsPopup.setPrefHeight(120);
-        getContentsPopup.setPrefWidth(230);
+        getContentsPopup.setPrefWidth(240);
         // 如果不设置宽高，第一出现popup是他们的值为0，导致出现位置错误
         popup.setWidth(getContentsPopup.getPrefWidth());
         popup.setHeight(getContentsPopup.getPrefHeight());
@@ -233,7 +233,6 @@ public class MainController {
 
         // Show popup when mouse enters the button
         getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
-
             Bounds buttonBounds = getContentsBtn.localToScreen(getContentsBtn.getBoundsInLocal());
 //            double x = buttonBounds.getMinX() + (buttonBounds.getWidth() - popup.getWidth()) / 2;
             double x = buttonBounds.getCenterX() - popup.getWidth()/2;
@@ -245,7 +244,15 @@ public class MainController {
 //            popup.show(getContentsBtn, event.getScreenX(), event.getScreenY() + 10);
         });
 
-//        // Hide popup when mouse exits the button
+        // 为 Popup 添加鼠标离开事件处理器
+//        getContentsPopup.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
+//            if(!popup.isFocused()) {
+//                // X 秒后隐藏 Popup
+//                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(1.5));
+//                delay.setOnFinished(event2 -> popup.hide());
+//                delay.play();
+//            }
+//        });
 
     }
 
