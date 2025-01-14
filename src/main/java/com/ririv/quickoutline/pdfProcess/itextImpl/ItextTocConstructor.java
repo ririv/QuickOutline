@@ -35,7 +35,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TOCConstructor {
+public class ItextTocConstructor {
     public static final String DEST = "./target/sandbox/bookmarks/table_of_contents.pdf";
 
     public static final String SRC = "./src/main/resources/txt/tree.txt";
@@ -44,7 +44,7 @@ public class TOCConstructor {
         File file = new File(DEST);
         file.getParentFile().mkdirs();
 
-        new TOCConstructor().manipulatePdf(DEST);
+        new ItextTocConstructor().manipulatePdf(DEST);
     }
 
     public void manipulatePdf(String dest) throws Exception {

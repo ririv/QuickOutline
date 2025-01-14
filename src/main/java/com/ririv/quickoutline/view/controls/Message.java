@@ -85,6 +85,7 @@ public class Message extends StackPane {
         translateIn.setFromY(-height);  // 从组件的上方开始
         translateIn.setToY(0);          // 移动到原始位置
 
+
         // 创建淡入动画
         FadeTransition fadeIn = new FadeTransition(Duration.seconds(0.5), this);
         fadeIn.setFromValue(0);  // 初始透明度为0

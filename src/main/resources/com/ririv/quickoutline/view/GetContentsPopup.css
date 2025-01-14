@@ -1,0 +1,25 @@
+@import "colors.css";
+@import "BasicControls.css";
+
+*{
+    /*-my-line-height: 25px;*/
+}
+
+.root{
+    -fx-background-color: white;
+    -fx-background-radius: 10px;
+    -fx-padding: 10;
+    -fx-border-radius: 5;
+    -fx-border-color: -el-color-primary-light-border;
+    -fx-border-width: 1px;
+}
+
+.title{
+    /*-fx-font-size: 12px;*/
+    -fx-font-weight: bold;
+    -fx-text-fill: #9198a1;
+}
+
+.popup-button{
+    -fx-pref-height: 30px;
+}

@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.controls;
+package com.ririv.quickoutline.view;
 
 
 import javafx.beans.property.ObjectProperty;

@@ -23,7 +23,6 @@ public class App extends Application {
             fxmlLoader.setLocation(url);
             Parent content = fxmlLoader.load();
 
-
             Scene scene = new Scene(content);
 
 

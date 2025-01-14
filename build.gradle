@@ -27,7 +27,7 @@ java {
 version = '2.0.0'
 
 javafx {
-    version = '21' // LTS
+    version = '23' // LTS
     modules = ['javafx.controls', 'javafx.fxml', 'javafx.web']
 }
 
