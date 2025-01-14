@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.ririv.quickoutline.view.controls.*?>
+<?import com.ririv.quickoutline.view.controls.MessageContainer?>
+<?import com.ririv.quickoutline.view.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <StackPane xmlns:fx="http://javafx.com/fxml" fx:id="root"
            alignment="TOP_CENTER"
            prefHeight="600.0" prefWidth="800.0"
-           stylesheets="@MainView.css,@BasicControls.css,@svg.css,@CustomControls.css "
+           stylesheets="@MainView.css,@BasicControls.css,@svg.css"
            xmlns="http://javafx.com/javafx"
            fx:controller="com.ririv.quickoutline.view.MainController">
     <BorderPane
@@ -135,13 +136,13 @@
                                 </graphic>
                             </Button>
                         </GraphButtonWrapper>
-                        <Button fx:id="getContentsBtn" styleClass="default-button,primary-plain-button"
+                        <Button fx:id="getContentsBtn" styleClass="my-button,primary-plain-button"
                                 onAction="#getContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
                                 text="获取目录">
                         </Button>
                     </HBox>
 
-                    <Button fx:id="addContentsBtn" styleClass="default-button,important-plain-button"
+                    <Button fx:id="addContentsBtn" styleClass="my-button,important-plain-button"
                             onAction="#addContentsBtnAction"
                             mnemonicParsing="false" prefWidth="120.0" text="添加目录"
                             GridPane.columnIndex="2" GridPane.halignment="CENTER"/>

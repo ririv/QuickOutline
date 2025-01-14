@@ -28,13 +28,13 @@
     <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" vgap="50"
     AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
     >
-        <Button fx:id="externalEditorBtn" onAction="#externalEditorBtnAction" styleClass="default-button,primary-plain-button" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
+        <Button fx:id="externalEditorBtn" onAction="#externalEditorBtnAction" styleClass="my-button,primary-plain-button" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
             <tooltip >
                 <Tooltip text="使用VSCode编辑，文本会自动同步"/>
             </tooltip>
         </Button>
 
-        <Button fx:id="autoFormatBtn" onAction="#autoFormatBtnAction" styleClass="default-button,primary-plain-button" mnemonicParsing="false" prefWidth="75.0" text="自动缩进">
+        <Button fx:id="autoFormatBtn" onAction="#autoFormatBtnAction" styleClass="my-button,primary-plain-button" mnemonicParsing="false" prefWidth="75.0" text="自动缩进">
             <tooltip >
                 <Tooltip text="根据文本内容进行识别，自动格式化并缩进文本"/>
             </tooltip>

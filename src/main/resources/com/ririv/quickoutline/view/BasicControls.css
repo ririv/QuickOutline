@@ -80,7 +80,7 @@
 }
 
 
-.default-button{
+.my-button{
     -fx-pref-height: 35;
     -fx-font-size: 12;
     -fx-border-radius: 4px;
@@ -92,6 +92,25 @@
     -fx-background-color: -el-color-primary;
     /*snow 与 white 不是一个颜色，snow更红一点*/
     -fx-text-fill:snow;
+}
+
+.default-button{
+    /*snow 与 white 不是一个颜色，snow更红一点*/
+    -fx-text-fill:-el-color-default-text;
+    -fx-border-color: -el-color-default-border;
+    -fx-background-color: white;
+}
+
+.default-button:hover{
+    -fx-background-color: -el-color-default-active-bg;
+    -fx-border-color: transparent;
+    -fx-text-fill: -el-color-default-active-text;
+}
+
+.default-button:pressed{
+    -fx-background-color: -el-color-default-active-bg;
+    -fx-border-color: -el-color-primary-light-border;
+    -fx-text-fill: -el-color-default-active-text;
 }
 
 
@@ -134,7 +153,7 @@
 
 
 
-.default-button:disabled {
+.my-button:disabled {
     -fx-background-color: snow;
     -fx-text-fill: black;
     -fx-border-color: transparent;

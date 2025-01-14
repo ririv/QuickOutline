@@ -4,12 +4,12 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-class TOCExtractorTest {
+class ItextTocExtractorTest {
 
     @Test
     void extract() throws IOException {
-        TOCExtractor tocExtractor = new TOCExtractor("src/test/resources/contents.pdf");
-        System.out.println(tocExtractor.extract());
+        ItextTocExtractor itextTocExtractor = new ItextTocExtractor("src/test/resources/contents.pdf");
+        System.out.println(itextTocExtractor.extract());
     }
 
     @Test

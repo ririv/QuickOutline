@@ -70,17 +70,18 @@ public class FileSystemsWatcherImpl implements FileWatcher {
 
                     // 重置 WatchKey 以继续接收事件
                     if (!key.reset()) {
-
-                        System.out.println("监听键失效，停止监听...");
+                        logger.warn("监听键失效，停止监听...");
                         stopWatching();
                         break;
                     }
                 }
             } catch (InterruptedException e) {
-                System.out.println("监听线程中断");
+                logger.info("监听线程中断");
                 Thread.currentThread().interrupt();
+            } catch (ClosedWatchServiceException e) {
+                logger.info("监听服务已关闭");
             } catch (Exception e) {
-                System.err.println("监听服务发生错误: " + e.getMessage());
+                logger.error("监听服务发生错误: {}", e.getMessage());
             }
         });
 
@@ -100,9 +101,9 @@ public class FileSystemsWatcherImpl implements FileWatcher {
             if (watchThread != null && watchThread.isAlive()) {
                 watchThread.interrupt();
             }
-            System.out.println("文件监听服务已关闭");
+            logger.info("文件监听服务已关闭");
         } catch (IOException e) {
-            System.err.println("关闭监听服务时发生错误: " + e.getMessage());
+            logger.error("关闭监听服务时发生错误: {}", e.getMessage());
         }
     }
 

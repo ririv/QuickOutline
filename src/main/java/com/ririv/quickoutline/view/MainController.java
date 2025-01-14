@@ -10,6 +10,7 @@ import com.ririv.quickoutline.view.controls.MessageContainer;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -18,10 +19,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 
@@ -54,12 +57,10 @@ public class MainController {
 
     //必须映射到textModeController，否则会无法报错
     //与下面的textMode区分，其映射的是<fx:include>绑定的控件
-    @FXML
     public TextModeController textModeController;
-
-    @FXML
     public TreeModeController treeModeController;
 //    public TreeWebVIewController treeModeController;
+
 
     public Button helpBtn;
     public HBox topPane;
@@ -209,7 +210,6 @@ public class MainController {
             } else if (treeModeBtn.isSelected()) {
                 switchMode(FnTab.tree);
             }
-            return;
         });
 
         methodToggleGroup.selectedToggleProperty().addListener(event -> {
@@ -217,7 +217,35 @@ public class MainController {
 
         });
 
+        // Create a Popup
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+        GetContentsPopup getContentsPopup = new GetContentsPopup(this);
+        getContentsPopup.filepathProperty().bind(filepathText.textProperty());
 
+        popup.getContent().add(getContentsPopup);
+        getContentsPopup.setPrefHeight(120);
+        getContentsPopup.setPrefWidth(230);
+        // 如果不设置宽高，第一出现popup是他们的值为0，导致出现位置错误
+        popup.setWidth(getContentsPopup.getPrefWidth());
+        popup.setHeight(getContentsPopup.getPrefHeight());
+
+
+        // Show popup when mouse enters the button
+        getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
+
+            Bounds buttonBounds = getContentsBtn.localToScreen(getContentsBtn.getBoundsInLocal());
+//            double x = buttonBounds.getMinX() + (buttonBounds.getWidth() - popup.getWidth()) / 2;
+            double x = buttonBounds.getCenterX() - popup.getWidth()/2;
+            double y = buttonBounds.getMinY() - popup.getHeight() - 10;
+            logger.debug("x: {}, y: {}", x, y);
+            logger.debug("buttonBounds: {}", buttonBounds);
+            logger.debug("popup: w:{} h:{}", popup.getWidth(), popup.getHeight());
+            popup.show(getContentsBtn, x, y);
+//            popup.show(getContentsBtn, event.getScreenX(), event.getScreenY() + 10);
+        });
+
+//        // Hide popup when mouse exits the button
 
     }
 
@@ -242,6 +270,9 @@ public class MainController {
             if (currenTab == FnTab.tree) reconstructTree();
 
     }
+
+
+
 
     @FXML
     private void addContentsBtnAction(ActionEvent event) {
