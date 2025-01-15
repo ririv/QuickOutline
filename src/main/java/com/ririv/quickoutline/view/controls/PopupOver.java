@@ -13,9 +13,10 @@ import org.slf4j.LoggerFactory;
 public class PopupOver extends Popup {
     private static final Logger logger = LoggerFactory.getLogger(PopupOver.class);
 
-    PauseTransition delay =  new javafx.animation.PauseTransition(Duration.seconds(2));;
+    PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(2));;
+    private boolean hideAfterDelayWhenEscaped = true;
 
-    public PopupOver(Node  node) {
+    public PopupOver(Node node) {
         this.getContent().add(node);
         this.setAutoHide(true);
 
@@ -23,13 +24,13 @@ public class PopupOver extends Popup {
         // 已改为监听宽高，修复错误
 //        this.setWidth(popupNode.getPrefWidth());
 //        this.setHeight(popupNode.getPrefHeight());
-
-        node.addEventHandler(MouseEvent.MOUSE_EXITED, this::hideEventHandler);
-        node.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> stopHide());
+        if (hideAfterDelayWhenEscaped) {
+            node.addEventHandler(MouseEvent.MOUSE_EXITED, event -> hideAfterDelay());
+            node.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> stopDelayHide());
+        }
     }
 
     public void showEventHandler(Event event) {
-        stopHide();
         Node ownerNode = (Node) event.getSource();
         Bounds buttonBounds = ownerNode.localToScreen( ownerNode.getBoundsInLocal());
         this.widthProperty().addListener((observable, oldValue, newValue) -> {
@@ -48,31 +49,35 @@ public class PopupOver extends Popup {
         this.show(ownerNode.getScene().getWindow());
     }
 
-    public void hideEventHandler(Event event) {
-;
-        Node ownerNode = (Node) event.getSource();
-        // X 秒后隐藏 Popup
-//        delay =
-
-
+    private void hideAfterDelay() {
         delay.setOnFinished(event2 -> {
             this.hide();
             logger.info("popup hide");
         });
         delay.play();
         logger.info("popup hide start");
-//        logger.info(String.valueOf(delay.getStatus()));
     }
 
-    public void setAutoHideDelay(Duration duration) {
-        delay = new PauseTransition(duration);
-    }
 
-    private void stopHide() {
+
+    private void stopDelayHide() {
         if (delay!= null && delay.getStatus() == javafx.animation.Animation.Status.RUNNING){
             delay.stop();
             logger.info("popup hide stop");
         }
+    }
+
+    public void setHideAfterDelayWhenEscaped(boolean value){
+        this.hideAfterDelayWhenEscaped = value;
+    }
+
+    public void setHideAfterDelayWhenEscaped(boolean value, Duration duration){
+        this.hideAfterDelayWhenEscaped = value;
+        setHideDelay(duration);
+    }
+
+    public void setHideDelay(Duration duration) {
+        delay = new PauseTransition(duration);
     }
 
 
