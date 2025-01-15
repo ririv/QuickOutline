@@ -1,6 +1,6 @@
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.pdfProcess.PdfProcessor;
-import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcessor;
+import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
+import com.ririv.quickoutline.pdfProcess.itextImpl.ItextOutlineProcessor;
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 
@@ -47,8 +47,8 @@ Part I  监督学习  25
 
     @org.junit.jupiter.api.Test
     void test1() throws IOException {
-        PdfProcessor pdfProcessor = new ItextProcessor();
-        pdfProcessor.setContents(rootBookmark,path2,"D:/gen.pdf");
+        OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
+        outlineProcessor.setContents(rootBookmark,path2,"D:/gen.pdf");
     }
 
 

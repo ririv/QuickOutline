@@ -18,7 +18,7 @@ import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
 
-public class GetContentsPopup extends StackPane {
+public class GetContentsPopupNode extends StackPane {
 
     private StringProperty filepath = new SimpleStringProperty();
 
@@ -42,7 +42,7 @@ public class GetContentsPopup extends StackPane {
 
     private BooleanProperty autoRecognize = new SimpleBooleanProperty(true);
 
-    public GetContentsPopup(MainController mainController) {
+    public GetContentsPopupNode(MainController mainController) {
         this.mainController = mainController;
 
         // 通过 FXMLLoader 加载 FXML

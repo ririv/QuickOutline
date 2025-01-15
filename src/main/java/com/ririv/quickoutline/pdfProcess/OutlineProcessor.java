@@ -6,7 +6,7 @@ import com.ririv.quickoutline.model.Bookmark;
 
 import java.io.IOException;
 
-public interface PdfProcessor {
+public interface OutlineProcessor {
 
 /*   注意数据流动顺序为：
      text(由窗口中获得) -> linearBookmarkList -> rootBookmark(自定义的目录树) -> 1. outline(pdf库的目录树) -> text(生成的目录树，已排版)
@@ -16,7 +16,7 @@ public interface PdfProcessor {
      当再次使用上次被打开的pdfDoc时，会报错head not found
      因此这里调用函数时打开doc，并在函数中即时关闭它
 */
-    void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath) throws IOException;
+    void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath, PdfViewScaleType scaleType) throws IOException;
 
     String getContents(String srcFilePath, int offset) throws IOException;
 

@@ -2,8 +2,9 @@ package com.ririv.quickoutline.service;
 
 
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.pdfProcess.PdfProcessor;
-import com.ririv.quickoutline.pdfProcess.itextImpl.ItextProcessor;
+import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
+import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
+import com.ririv.quickoutline.pdfProcess.itextImpl.ItextOutlineProcessor;
 import com.ririv.quickoutline.textProcess.TextProcessor;
 import com.ririv.quickoutline.textProcess.methods.Method;
 
@@ -12,15 +13,15 @@ import java.io.IOException;
 
 public class PdfService {
 
-    private final PdfProcessor pdfProcessor = new ItextProcessor();
+    private final OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
 
-    public void addContents(String text, String srcFilePath, String destFilePath, int offset, Method method) {
+    public void addContents(String text, String srcFilePath, String destFilePath, int offset, Method method, PdfViewScaleType scaleType) {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
 
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);
 
         try {
-            pdfProcessor.setContents(rootBookmark, srcFilePath, destFilePath);
+            outlineProcessor.setContents(rootBookmark, srcFilePath, destFilePath, scaleType);
         }
         catch (IOException e){
             e.printStackTrace();
@@ -30,7 +31,7 @@ public class PdfService {
     public void deleteContents(String srcFilePath, String destFilePath) {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
         try {
-            pdfProcessor.deleteContents(srcFilePath, destFilePath);
+            outlineProcessor.deleteContents(srcFilePath, destFilePath);
         }
         catch (IOException e){
             e.printStackTrace();
@@ -54,7 +55,7 @@ public class PdfService {
         if (srcFile.isEmpty()) throw new RuntimeException("PDF路径为空");
 
         try {
-            return pdfProcessor.getContents(srcFile, offset);
+            return outlineProcessor.getContents(srcFile, offset);
         } catch (IOException e) {
             e.printStackTrace();
             return "";
