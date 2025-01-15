@@ -2,15 +2,16 @@ package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.InfoUtil;
 import com.ririv.quickoutline.view.controls.Message;
 import com.ririv.quickoutline.view.controls.MessageContainer;
+import com.ririv.quickoutline.view.controls.PopupOver;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -24,7 +25,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Popup;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 
@@ -217,42 +217,19 @@ public class MainController {
 
         });
 
-        // Create a Popup
-        Popup popup = new Popup();
-        popup.setAutoHide(true);
-        GetContentsPopup getContentsPopup = new GetContentsPopup(this);
-        getContentsPopup.filepathProperty().bind(filepathText.textProperty());
 
-        popup.getContent().add(getContentsPopup);
-        getContentsPopup.setPrefHeight(120);
-        getContentsPopup.setPrefWidth(240);
-        // 如果不设置宽高，第一出现popup是他们的值为0，导致出现位置错误
-        popup.setWidth(getContentsPopup.getPrefWidth());
-        popup.setHeight(getContentsPopup.getPrefHeight());
+        GetContentsPopupNode getContentsPopupNode = new GetContentsPopupNode(this);
+        getContentsPopupNode.filepathProperty().bind(filepathText.textProperty());
+        getContentsPopupNode.setPrefHeight(120);
+        getContentsPopupNode.setPrefWidth(240);
 
 
-        // Show popup when mouse enters the button
-        getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
-            Bounds buttonBounds = getContentsBtn.localToScreen(getContentsBtn.getBoundsInLocal());
-//            double x = buttonBounds.getMinX() + (buttonBounds.getWidth() - popup.getWidth()) / 2;
-            double x = buttonBounds.getCenterX() - popup.getWidth()/2;
-            double y = buttonBounds.getMinY() - popup.getHeight() - 10;
-            logger.debug("x: {}, y: {}", x, y);
-            logger.debug("buttonBounds: {}", buttonBounds);
-            logger.debug("popup: w:{} h:{}", popup.getWidth(), popup.getHeight());
-            popup.show(getContentsBtn, x, y);
-//            popup.show(getContentsBtn, event.getScreenX(), event.getScreenY() + 10);
-        });
+        PopupOver popup = new PopupOver(getContentsPopupNode);
+
+        getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, popup::showEventHandler);
 
         // 为 Popup 添加鼠标离开事件处理器
-//        getContentsPopup.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
-//            if(!popup.isFocused()) {
-//                // X 秒后隐藏 Popup
-//                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(1.5));
-//                delay.setOnFinished(event2 -> popup.hide());
-//                delay.play();
-//            }
-//        });
+        getContentsPopupNode.addEventHandler(MouseEvent.MOUSE_EXITED, popup::hideEventHandler);
 
     }
 
@@ -295,7 +272,11 @@ public class MainController {
             }
 
             try {
-                pdfService.addContents(text, srcFilePath, destFilePath, offset(), (Method) methodToggleGroup.getSelectedToggle().getUserData());
+                PdfViewScaleType scaleType = PdfViewScaleType.FIT_TO_WIDTH;
+//                scaleType = PdfViewScaleType.valueOf(scaleChoice.getValue());
+                pdfService.addContents(text, srcFilePath, destFilePath, offset(),
+                        (Method) methodToggleGroup.getSelectedToggle().getUserData(),
+                        scaleType);
             } catch (BookmarkFormatException e) {
                 e.printStackTrace();
                 File file = new File(destFilePath);
