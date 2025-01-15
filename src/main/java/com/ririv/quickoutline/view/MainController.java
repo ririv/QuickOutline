@@ -228,8 +228,6 @@ public class MainController {
 
         getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, popup::showEventHandler);
 
-        // 为 Popup 添加鼠标离开事件处理器
-        getContentsPopupNode.addEventHandler(MouseEvent.MOUSE_EXITED, popup::hideEventHandler);
 
     }
 
