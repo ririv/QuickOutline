@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <fx:root type="javafx.scene.layout.StackPane" xmlns:fx="http://javafx.com/fxml">
 <StackPane>
-    <HBox>
+    <HBox alignment="CENTER">
         <Label>
             <graphic>
                 <Region id="message-icon" />

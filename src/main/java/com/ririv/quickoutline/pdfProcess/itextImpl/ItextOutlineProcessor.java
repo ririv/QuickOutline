@@ -73,7 +73,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
                             destination = PdfExplicitDestination.createFitH(page, top);
                         }
                         case FIT_TO_HEIGHT -> {
-                            destination = PdfExplicitDestination.createFitV(page, left);
+                            destination = PdfExplicitDestination.createFitV(page, 0);
                         }
 //                        case FIT_TO_BOX -> {
 //                            destination = PdfExplicitDestination.createFitR(page, 0, 0, page.getPageSize().getWidth(), top);

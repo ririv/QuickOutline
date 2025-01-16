@@ -8,7 +8,7 @@ import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.InfoUtil;
 import com.ririv.quickoutline.view.controls.Message;
 import com.ririv.quickoutline.view.controls.MessageContainer;
-import com.ririv.quickoutline.view.controls.PopupOver;
+import com.ririv.quickoutline.view.controls.PopupCard;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -45,7 +45,7 @@ public class MainController {
 
     public Button getContentsBtn;
 
-    public Button addContentsBtn;
+    public Button setContentsBtn;
     public TextField offsetTextField;
 
     public RadioButton seqRBtn;
@@ -53,6 +53,8 @@ public class MainController {
     public ToggleGroup methodToggleGroup;
 
     public StackPane root;
+
+    public PdfViewScaleType viewScaleType;
 
 
     //必须映射到textModeController，否则会无法报错
@@ -218,17 +220,18 @@ public class MainController {
         });
 
 
-        GetContentsPopupNode getContentsPopupNode = new GetContentsPopupNode(this);
-        getContentsPopupNode.filepathProperty().bind(filepathText.textProperty());
-        getContentsPopupNode.setPrefHeight(120);
-        getContentsPopupNode.setPrefWidth(240);
+        GetContentsPopupView getContentsPopupView = new GetContentsPopupView(this);
+        getContentsPopupView.filepathProperty().bind(filepathText.textProperty());
+        getContentsPopupView.setPrefHeight(120);
+        getContentsPopupView.setPrefWidth(240);
 
 
-        PopupOver popup = new PopupOver(getContentsPopupNode);
+        PopupCard popup1 = new PopupCard(getContentsPopupView);
+        getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, popup1::showEventHandler);
 
-        getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, popup::showEventHandler);
-
-
+        SetContentsPopupView setContentsPopupView = new SetContentsPopupView(this);
+        PopupCard popup2 = new PopupCard(setContentsPopupView);
+        setContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, popup2::showEventHandler);
     }
 
     @FXML
@@ -257,7 +260,7 @@ public class MainController {
 
 
     @FXML
-    private void addContentsBtnAction(ActionEvent event) {
+    private void setContentsBtnAction(ActionEvent event) {
             if (filepathText.getText().isEmpty()) {
                 messageDialog.showMessage("请选择PDF文件", Message.MessageType.WARNING);
                 return;
@@ -270,11 +273,10 @@ public class MainController {
             }
 
             try {
-                PdfViewScaleType scaleType = PdfViewScaleType.FIT_TO_WIDTH;
-//                scaleType = PdfViewScaleType.valueOf(scaleChoice.getValue());
-                pdfService.addContents(text, srcFilePath, destFilePath, offset(),
+
+                pdfService.setContents(text, srcFilePath, destFilePath, offset(),
                         (Method) methodToggleGroup.getSelectedToggle().getUserData(),
-                        scaleType);
+                        viewScaleType);
             } catch (BookmarkFormatException e) {
                 e.printStackTrace();
                 File file = new File(destFilePath);

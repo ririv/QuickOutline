@@ -4,20 +4,25 @@ import javafx.animation.PauseTransition;
 import javafx.event.Event;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Popup;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PopupOver extends Popup {
-    private static final Logger logger = LoggerFactory.getLogger(PopupOver.class);
+
+public class PopupCard extends Popup {
+    private static final Logger logger = LoggerFactory.getLogger(PopupCard.class);
 
     PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(2));;
     private boolean hideAfterDelayWhenEscaped = true;
 
-    public PopupOver(Node node) {
-        this.getContent().add(node);
+    public PopupCard(Parent parent) {
+
+        parent.getStylesheets().add(getClass().getResource("PopupCard.css").toExternalForm());
+        parent.getStyleClass().add("card");
+        this.getScene().setRoot(parent);
         this.setAutoHide(true);
 
         // 如果不设置宽高，第一出现popup是他们的值为0，导致出现位置错误
@@ -25,8 +30,8 @@ public class PopupOver extends Popup {
 //        this.setWidth(popupNode.getPrefWidth());
 //        this.setHeight(popupNode.getPrefHeight());
         if (hideAfterDelayWhenEscaped) {
-            node.addEventHandler(MouseEvent.MOUSE_EXITED, event -> hideAfterDelay());
-            node.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> stopDelayHide());
+            parent.addEventHandler(MouseEvent.MOUSE_EXITED, event -> hideAfterDelay());
+            parent.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> stopDelayHide());
         }
     }
 
@@ -39,7 +44,7 @@ public class PopupOver extends Popup {
             logger.info("x: {}", x);
         });
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
-            double y = buttonBounds.getMinY() - newValue.doubleValue() - 10;
+            double y = buttonBounds.getMinY() - newValue.doubleValue() - 5;
             this.setY(y);
             logger.info("y: {}", y);
         });

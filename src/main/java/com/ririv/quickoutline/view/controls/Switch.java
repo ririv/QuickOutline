@@ -17,7 +17,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
-// https://stackoverflow.com/questions/73036432/animate-custom-switch-button/73043801#73043801
+// 修改自 https://stackoverflow.com/questions/73036432/animate-custom-switch-button/73043801#73043801
 public class Switch extends HBox {
     private static final double TRACK_WIDTH = 40;
     private static final double TRACK_HEIGHT = 20; //一般高度为宽度的一半

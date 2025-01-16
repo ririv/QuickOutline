@@ -8,6 +8,7 @@
 }
 
 
+
 .text-area{
     -fx-background-insets: 0;
     -fx-background-color: transparent;
@@ -235,3 +236,25 @@
     /*-fx-background-insets: 1 0 -1 0, 0;*/
 }
 
+
+
+.graph-button{
+    -fx-alignment: CENTER;
+    -fx-background-color: transparent;
+    /*会影响图形大小,但同时也会影响tooltip文字大小*/
+    /*-fx-font-size: 12;*/
+    /*snow 与 white 不是一个颜色，snow更红一点*/
+}
+
+.graph-button:hover{
+    -fx-background-color: rgba(210, 210, 210, 0.9);
+}
+
+
+.graph-button:selected{
+    -fx-background-color: rgba(210, 210, 210, 0.9);
+}
+
+.graph-button:selected>.icon, .graph-button:pressed>.icon{
+    -fx-background-color: #4b4b4b;
+}

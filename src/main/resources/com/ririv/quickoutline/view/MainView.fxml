@@ -142,8 +142,8 @@
                         </Button>
                     </HBox>
 
-                    <Button fx:id="addContentsBtn" styleClass="my-button,important-plain-button"
-                            onAction="#addContentsBtnAction"
+                    <Button fx:id="setContentsBtn" styleClass="my-button,important-plain-button"
+                            onAction="#setContentsBtnAction"
                             mnemonicParsing="false" prefWidth="120.0" text="添加目录"
                             GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
                     <TextField fx:id="offsetTextField" maxWidth="200" promptText="页码偏移量" GridPane.columnIndex="3"

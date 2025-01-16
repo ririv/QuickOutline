@@ -77,7 +77,7 @@
 
 #message-icon{
     -fx-pref-height: 1em;
-    -fx-pref-width: 1em;
+    -fx-pref-width: 1.2em;
 }
 
 .message-success #message-icon{
