@@ -1,7 +1,12 @@
+@import "svg.css";
 @import "BasicControls.css";
 
+.toggle-button{
+    -fx-padding: 0;
+}
+
 .title{
-    /*-fx-font-size: 12px;*/
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-text-fill: #9198a1;
 }

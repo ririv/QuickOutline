@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.ririv.quickoutline.view.GraphButtonWrapper?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<fx:root type="javafx.scene.layout.StackPane"
+         xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         stylesheets="@SetContentsPopup.css"
+         prefWidth="100.0">
+
+    <VBox spacing="10">
+        <Label styleClass="title" text="缩放类型" />
+        <HBox spacing="5" alignment="CENTER">
+            <fx:define>
+                <ToggleGroup fx:id="viewScaleToggleGroup"/>
+            </fx:define>
+            <GraphButtonWrapper wrapperPadding="0">
+                <ToggleButton fx:id="fitToHeightBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
+                    <graphic>
+                        <Region styleClass="icon, fit_to_height_icon" prefHeight="20" prefWidth="20" />
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+            <GraphButtonWrapper wrapperPadding="0">
+                <ToggleButton fx:id="fitToWidthBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
+                    <graphic>
+                        <Region styleClass="icon, fit_to_width_icon" prefHeight="20" prefWidth="20"/>
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+            <GraphButtonWrapper wrapperPadding="0">
+                <ToggleButton fx:id="actualSizeBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
+                    <graphic>
+                        <Region styleClass="icon, actual_size_icon" prefHeight="20" prefWidth="20"/>
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+        </HBox>
+        <HBox alignment="CENTER"><Label  fx:id="label"/></HBox>
+
+    </VBox>
+
+</fx:root>

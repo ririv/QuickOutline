@@ -15,7 +15,7 @@ public class PdfService {
 
     private final OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
 
-    public void addContents(String text, String srcFilePath, String destFilePath, int offset, Method method, PdfViewScaleType scaleType) {
+    public void setContents(String text, String srcFilePath, String destFilePath, int offset, Method method, PdfViewScaleType scaleType) {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
 
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);

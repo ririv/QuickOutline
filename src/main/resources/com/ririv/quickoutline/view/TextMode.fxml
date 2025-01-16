@@ -44,7 +44,7 @@
         <VBox  alignment="TOP_CENTER" maxWidth="100"
                AnchorPane.bottomAnchor="50" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
         >
-            <Label style="-fx-text-fill: #969696" text="Tip: 选择后按下"/>
+            <Label style="-fx-text-fill: #969696" text="Tip: 选中后按下"/>
             <Label style="-fx-text-fill: #969696" text="tab | shift+tab 键"/>
             <Label style="-fx-text-fill: #969696" text="即可快速缩进"/>
         </VBox>
