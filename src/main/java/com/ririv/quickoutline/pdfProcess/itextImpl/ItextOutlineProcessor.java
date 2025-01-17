@@ -85,6 +85,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
                             throw new IllegalStateException("Unexpected value: " + scaleType);
                         }
                     }
+//                    PdfDestination.makeDestination(page);
                     rootOutline.addDestination(destination);
     /*
                 //未知的原因，下面的写法没有效果，调试时发现Destination值为null

@@ -80,6 +80,9 @@
     visibility: hidden;
 }
 
+.scroll-pane>.corner{
+    -fx-background-color: transparent;
+}
 
 .my-button{
     -fx-pref-height: 35;
