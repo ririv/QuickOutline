@@ -32,7 +32,7 @@
                                 <Tooltip text="打开..."/>
                             </tooltip>
                             <graphic>
-                                <Region styleClass="icon,openIcon" prefHeight="15" prefWidth="15"/>
+                                <Region styleClass="icon,openIcon" prefWidth="15" prefHeight="15"/>
                             </graphic>
                         </Button>
                     </GraphButtonWrapper>
@@ -48,24 +48,34 @@
                 <top>
                     <VBox>
                         <GraphButtonWrapper>
+
                             <ToggleButton fx:id="textModeBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
-                                          maxWidth="Infinity">
+                                          >
+                                <padding>
+                                    <Insets topRightBottomLeft="3.0"/>
+                                </padding>
                                 <graphic>
-                                    <Region styleClass="icon,editIcon"/>
+                                    <Region styleClass="icon,editIcon" prefWidth="20" prefHeight="20"/>
                                 </graphic>
                             </ToggleButton>
                         </GraphButtonWrapper>
                         <GraphButtonWrapper>
                             <ToggleButton fx:id="treeModeBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
-                                          maxWidth="Infinity">
+                                         >
+                                <padding>
+                                    <Insets topRightBottomLeft="3.0"/>
+                                </padding>
                                 <graphic>
-                                    <Region styleClass="icon,treeDiagramIcon"/>
+                                    <Region styleClass="icon,treeDiagramIcon" prefWidth="20" prefHeight="20"/>
                                 </graphic>
                             </ToggleButton>
                         </GraphButtonWrapper>
                         <GraphButtonWrapper>
                             <ToggleButton fx:id="tocBtn" visible="false" toggleGroup="$tabToggleGroup"
-                                          styleClass="graph-button" maxWidth="Infinity">
+                                          styleClass="graph-button" >
+                                <padding>
+                                    <Insets topRightBottomLeft="3.0"/>
+                                </padding>
                                 <graphic>
                                     <Region styleClass="icon,tocIcon"/>
                                 </graphic>
@@ -77,12 +87,12 @@
                     <VBox>
                     <GraphButtonWrapper>
                         <ToggleButton fx:id="settingBtn" toggleGroup="$tabToggleGroup" visible="false"
-                                      styleClass="graph-button" maxWidth="Infinity">
+                                      styleClass="graph-button"  >
                             <padding>
                                 <Insets topRightBottomLeft="3.0"/>
                             </padding>
                             <graphic>
-                                <Region styleClass="icon, settingIcon" prefHeight="20" prefWidth="20"/>
+                                <Region styleClass="icon, settingIcon" prefWidth="20" prefHeight="20"/>
                             </graphic>
                         </ToggleButton>
                     </GraphButtonWrapper>
@@ -90,12 +100,12 @@
                         <Button fx:id="helpBtn"
                                 styleClass="graph-button"
                                 onAction="#createHelpWindowAction"
-                                maxWidth="Infinity">
+                                >
                             <padding>
                                 <Insets topRightBottomLeft="3.0"/>
                             </padding>
                             <graphic>
-                                <Region styleClass="icon,helpIcon" prefHeight="20" prefWidth="20"/>
+                                <Region styleClass="icon,helpIcon" prefWidth="20" prefHeight="20"/>
                             </graphic>
                         </Button>
                     </GraphButtonWrapper>
