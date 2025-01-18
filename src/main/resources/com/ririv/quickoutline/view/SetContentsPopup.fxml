@@ -37,7 +37,7 @@
                 </ToggleButton>
             </GraphButtonWrapper>
         </HBox>
-        <HBox alignment="CENTER"><Label  fx:id="label"/></HBox>
+        <HBox alignment="CENTER"><Label  fx:id="label" text="无缩放"/></HBox>
 
     </VBox>
 

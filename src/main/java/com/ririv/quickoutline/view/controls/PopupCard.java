@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 public class PopupCard extends Popup {
     private static final Logger logger = LoggerFactory.getLogger(PopupCard.class);
 
-    PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(2));;
-    private boolean hideAfterDelayWhenEscaped = true;
+    PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(1.5));;
+    private boolean isHideAfterDelayWhenEscaped = true;
 
     public PopupCard(Parent parent) {
 
@@ -29,10 +29,7 @@ public class PopupCard extends Popup {
         // 已改为监听宽高，修复错误
 //        this.setWidth(popupNode.getPrefWidth());
 //        this.setHeight(popupNode.getPrefHeight());
-        if (hideAfterDelayWhenEscaped) {
-            parent.addEventHandler(MouseEvent.MOUSE_EXITED, event -> hideAfterDelay());
-            parent.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> stopDelayHide());
-        }
+        keepDelayWhenHover(parent);
     }
 
     public void showEventHandler(Event event) {
@@ -52,9 +49,19 @@ public class PopupCard extends Popup {
         logger.debug("buttonBounds: {}", buttonBounds);
         logger.debug("popup: w:{} h:{}", this.getWidth(), this.getHeight());
         this.show(ownerNode.getScene().getWindow());
+
+        keepDelayWhenHover(ownerNode);
+
     }
 
-    private void hideAfterDelay() {
+    private void keepDelayWhenHover(Node node){
+        if (isHideAfterDelayWhenEscaped) {
+            node.addEventHandler(MouseEvent.MOUSE_EXITED, this::hideAfterDelay);
+            node.addEventHandler(MouseEvent.MOUSE_ENTERED, this::stopDelayHide);
+        }
+    }
+
+    private void hideAfterDelay(Event event) {
         delay.setOnFinished(event2 -> {
             this.hide();
             logger.info("popup hide");
@@ -65,7 +72,7 @@ public class PopupCard extends Popup {
 
 
 
-    private void stopDelayHide() {
+    private void stopDelayHide(Event event) {
         if (delay!= null && delay.getStatus() == javafx.animation.Animation.Status.RUNNING){
             delay.stop();
             logger.info("popup hide stop");
@@ -73,11 +80,11 @@ public class PopupCard extends Popup {
     }
 
     public void setHideAfterDelayWhenEscaped(boolean value){
-        this.hideAfterDelayWhenEscaped = value;
+        this.isHideAfterDelayWhenEscaped = value;
     }
 
     public void setHideAfterDelayWhenEscaped(boolean value, Duration duration){
-        this.hideAfterDelayWhenEscaped = value;
+        this.isHideAfterDelayWhenEscaped = value;
         setHideDelay(duration);
     }
 

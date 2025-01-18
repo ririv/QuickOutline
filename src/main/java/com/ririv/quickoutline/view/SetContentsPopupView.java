@@ -45,7 +45,7 @@ public class SetContentsPopupView extends StackPane {
 
     public void initialize() {
         viewScaleToggleGroup.selectedToggleProperty().addListener( (event,oldValue, newValue) -> {
-            String labelText = "";
+            String labelText;
             if (newValue == fitToWidthBtn){
                 labelText = "适合宽度";
                 this.mainController.viewScaleType = PdfViewScaleType.FIT_TO_WIDTH;
@@ -55,10 +55,12 @@ public class SetContentsPopupView extends StackPane {
             } else if (newValue == actualSizeBtn){
                 labelText = "实际大小";
                 this.mainController.viewScaleType = PdfViewScaleType.ACTUAL_SIZE;
+            } else { // null
+                labelText = "无缩放";
+                this.mainController.viewScaleType = PdfViewScaleType.None;
             }
             label.setText(labelText);
             });
-        viewScaleToggleGroup.selectToggle(fitToHeightBtn);
     }
 
 }

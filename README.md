@@ -1,5 +1,20 @@
 # QuickOutline
 
+## 功能特性
+
+- 添加目录
+  - 按缩进添加目录
+  - 按序号添加目录
+  - 页码偏移（支持负数）
+  - 设置缩放模式
+- 文本编辑模式下
+    - 自动缩进
+    - Tab | Shift+Tab 快速缩进
+    - VSCode编辑器同步（可使用正则表达式替换）
+- TOC提取
+- 多平台 Windows，Mac。（源码本身支持编译为 Linux 端，需要的请自行编译打包）
+- 简洁的 UI
+
 ## 界面
 
 ![interface](image/screenshot.png)
@@ -30,7 +45,11 @@
 
 1. 各大书评、卖书等网站，均能找到相应书的目录，这里推荐，京东、豆瓣、淘宝
 
-2. PDF书籍中页面非图片（即文字可以选中）时，直接复制并粘贴到软件中 ★★★
+2. 文字类 PDF，使用软件中的 TOC 提取功能（或自己手动打开 PDF 复制 TOC 到本软件中）
+
+> **Note**: 本软件不支持 OCR，因此也不支持图片类PDF（如扫描件）的 TOC 提取，图片 PDF 可以先使用外部 OCR 提取
+>
+> 目前最新的 Mac 与 Windows 系统均自带 OCR 功能，Windows 也可使用微软官方出品的 PowerToys 里的文本提取器功能。
 
 演示
 
@@ -115,59 +134,15 @@ Mac: 提供安装包，目前打开所生成的 PDF 文件所在位置功能有�
 
 ---
 
-## 构建、运行、打包（非开发人员略过）
+## 开发
+想要为此项目做贡献继续开发的小伙伴们请参考此[文档](Dev_doc.md)
 
-### 版本一致性
-为确保兼容，请保证版本一致性，目前项目采用：
-- Java 21 (LTS)
-- JavaFX 21 (LTS)
-- Gradle 8.12
-
-由于项目使用了 jlink 打包需要模块化项目，却引用了非模块化项目（iText），因此需要注意在 Gradle 中处理模块化问题
-```
-plugins {
-    ...
-    id 'org.openjfx.javafxplugin' version '0.1.0'
-    // 参考 https://github.com/openjfx/javafx-gradle-plugin#extra-plugins
-    // 不加入此会出现找不到模块错误
-    id 'org.javamodularity.moduleplugin' version '1.8.15'
-    
-    // 请使用高版本，'2.26.0'实测出现 "Unsupported class file major version 65"错误
-    id 'org.beryx.jlink' version '3.1.1'
-}
-```
-
-### 运行问题
-请使用 Gradle 下的 Run 任务，不要使用IDEA自带的Main入口处运行（App）
-
-### 打包问题
-运行 `Gradle - build - jpackageImage` 任务可以直接成功打包成应用镜像（可执行文件）
-
-运行 `jpackage` 任务则打包成安装包文件，在生成安装包时，需要操作系统相关的工具，例如：
-- Windows：需要安装 WiX Toolset。
-- macOS：需要 Xcode 和开发者签名。
-- Linux：需要 dpkg 或 rpm。
-
-> **Note:** jpackage 依赖于旧版本的 WiX，提示"找不到 WiX 工具 (light.exe, candle.exe)"
-> 
-> 因此请使用 WiX 3，并确保它添加到环境变量
-
-### Windows下开发控制台输出中文乱码问题 TODO
-打包时可能会出现日志乱码问题，设置UTF-8无果，临时解决方案（设置 GBK 编码）：
-
-Gradle 运行配置（jpackage 等，你需要运行的任务）- 虚拟机选项（VM options）-添加
-```
--Dfile.encoding=GBK
-```
-
+---
 
 ## TODO
-- 树可编辑
-- 树可拖拽
-- 树可升降级
-- TOC读取和识别
+- 树视图操作
 - TOC插入
-- 设置缩放模式
+- Page Label
 - 自定义正则表达式
 - 页码罗马数字支持
-- 文档分析生成目录
+- 文档分析自动生成目录，类似 Chrome插件-谷歌学术PDF阅读器（不知如何实现，有想法的可以交流）

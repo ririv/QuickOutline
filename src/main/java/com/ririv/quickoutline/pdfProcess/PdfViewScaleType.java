@@ -5,5 +5,6 @@ public enum PdfViewScaleType {
     FIT_TO_HEIGHT,
     FIT_TO_PAGE,
     ACTUAL_SIZE,
-    CUSTOM_SCALE
+    CUSTOM_SCALE,
+    None
 }
