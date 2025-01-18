@@ -18,12 +18,13 @@ public class PopupCard extends Popup {
     PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(1.5));;
     private boolean isHideAfterDelayWhenEscaped = true;
 
+
     public PopupCard(Parent parent) {
 
         parent.getStylesheets().add(getClass().getResource("PopupCard.css").toExternalForm());
         parent.getStyleClass().add("card");
         this.getScene().setRoot(parent);
-        this.setAutoHide(true);
+//        this.setAutoHide(true); // 设置此会因为this获得焦点而导致点击按钮第一次无效（失去焦点）
 
         // 如果不设置宽高，第一出现popup是他们的值为0，导致出现位置错误
         // 已改为监听宽高，修复错误
@@ -32,6 +33,7 @@ public class PopupCard extends Popup {
         keepDelayWhenHover(parent);
     }
 
+    // 窗口移动时，PopupCard没有跟着移动
     public void showEventHandler(Event event) {
         Node ownerNode = (Node) event.getSource();
         Bounds buttonBounds = ownerNode.localToScreen( ownerNode.getBoundsInLocal());
