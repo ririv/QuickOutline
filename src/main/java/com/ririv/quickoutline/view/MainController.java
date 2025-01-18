@@ -54,7 +54,7 @@ public class MainController {
 
     public StackPane root;
 
-    public PdfViewScaleType viewScaleType;
+    public PdfViewScaleType viewScaleType = PdfViewScaleType.None;
 
 
     //必须映射到textModeController，否则会无法报错
@@ -99,7 +99,7 @@ public class MainController {
     private String destFilePath;
 
 
-    public void switchMode(FnTab targetTab) {
+    public void switchTab(FnTab targetTab) {
         if (targetTab == FnTab.text) {
             textMode.setVisible(true);
             treeMode.setVisible(false);
@@ -206,17 +206,23 @@ public class MainController {
         });
 
 
-        tabToggleGroup.selectedToggleProperty().addListener(event -> {
+        tabToggleGroup.selectedToggleProperty().addListener((event,oldValue,newValue) -> {
+            // 保持选中状态，防止取消选中
+            if (newValue == null){
+                switch (currenTab){
+                    case text -> tabToggleGroup.selectToggle(textModeBtn);
+                    case tree -> tabToggleGroup.selectToggle(treeModeBtn);
+                }
+            }
             if (textModeBtn.isSelected()) {
-                switchMode(FnTab.text);
+                switchTab(FnTab.text);
             } else if (treeModeBtn.isSelected()) {
-                switchMode(FnTab.tree);
+                switchTab(FnTab.tree);
             }
         });
 
         methodToggleGroup.selectedToggleProperty().addListener(event -> {
             if (currenTab == FnTab.tree) reconstructTree();
-
         });
 
 

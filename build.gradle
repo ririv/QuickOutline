@@ -55,8 +55,10 @@ def itextVersion = '9.0.0'
 // 不能下载请配置gradle代理
 dependencies {
 //    implementation "com.itextpdf:itext-core:${itextVersion}"
+
     // 使用该依赖打包会出现 错误: 当前不支持已签名模块化 JAR ..\QuickOutline\build\jlinkbase\jlinkjars\bcpkix-jdk18on-1.78.jar,
-//    implementation "com.itextpdf:bouncy-castle-adapter:${itextVersion}" //签名用
+//    https://stackoverflow.com/questions/50597926/signed-modular-jar-with-crypto-provider-cannot-be-linked-into-run-time-image
+    implementation "com.itextpdf:bouncy-castle-adapter:${itextVersion}" //签名用，加密的PDF必须添加
     implementation "com.itextpdf:kernel:${itextVersion}"
     implementation "com.itextpdf:io:${itextVersion}"
     implementation "com.itextpdf:layout:${itextVersion}"
@@ -111,8 +113,9 @@ jlink {
         name = 'QuickOutline'
         jvmArgs = args
     }
-//    https://github.com/fvarrui/JavaPackager/issues/383
-    options = ['--strip-debug', '--compress', 'zip-6', '--no-header-files', '--no-man-pages']
+//    压缩问题：https://github.com/fvarrui/JavaPackager/issues/383
+//     “警告: 当前不支持已签名模块化" 加入'--ignore-signing-information'选项
+    options = ['--strip-debug', '--compress', 'zip-6', '--no-header-files', '--no-man-pages', '--ignore-signing-information']
 //    https://walczak.it/blog/distributing-javafx-desktop-applications-without-requiring-jvm-using-jlink-and-jpackage
     jpackage {
 //        skipInstaller = true

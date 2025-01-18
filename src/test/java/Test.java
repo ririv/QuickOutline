@@ -1,5 +1,9 @@
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfOutline;
+import com.itextpdf.kernel.pdf.PdfReader;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
+import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextOutlineProcessor;
 import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.textProcess.methods.Method;
@@ -38,8 +42,8 @@ Part I  监督学习  25
 
             """;
 
-    String path1 = "D:/Probabilistic Graphical Models_ Principles and Applications.pdf";
-    final String path2 = "D:/test1.pdf";
+//    final String srcFilePath = "D:/a b/Probabilistic Graphical Models_ Principles and Applications.pdf";
+    final String srcFilePath = "D:/a b/Probabilistic Graphical Models_ Principles and Applications.pdf";
     final Method method = Method.SEQ;
 
     PdfService pdfService = new PdfService();
@@ -48,7 +52,14 @@ Part I  监督学习  25
     @org.junit.jupiter.api.Test
     void test1() throws IOException {
         OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
-        outlineProcessor.setContents(rootBookmark,path2,"D:/gen.pdf");
+        outlineProcessor.setContents(rootBookmark, srcFilePath,"D:/gen.pdf", PdfViewScaleType.ACTUAL_SIZE);
+    }
+
+    @org.junit.jupiter.api.Test
+    void test2() throws IOException {
+        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFilePath));
+
+        PdfOutline rootOutline = srcDoc.getOutlines(false);
     }
 
 
