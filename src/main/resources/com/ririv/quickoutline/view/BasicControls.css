@@ -24,8 +24,6 @@
 }
 
 
-
-
 /* 去除滚动条背景色，只保留滑块 */
 
 .scroll-bar {
@@ -92,7 +90,7 @@
     /*-fx-effect: dropshadow(three-pass-box, #9c9c9c, 10,0,0,0);*/
 }
 
-.primary-button{
+.button-primary{
     -fx-background-color: -el-color-primary;
     /*snow 与 white 不是一个颜色，snow更红一点*/
     -fx-text-fill:snow;
@@ -113,49 +111,89 @@
 
 .default-button:pressed{
     -fx-background-color: -el-color-default-active-bg;
-    -fx-border-color: -el-color-primary-light-border;
+    -fx-border-color: -el-color-plain-primary-border;
     -fx-text-fill: -el-color-default-active-text;
 }
 
 
-.primary-plain-button{
-    -fx-background-color: -el-color-primary-light-bg;
+.plain-button-primary{
+    -fx-background-color: -el-color-plain-primary-bg;
     -fx-text-fill: -el-color-primary;
-    -fx-border-color: -el-color-primary-light-border;
+    -fx-border-color: -el-color-plain-primary-border;
 }
 
-.primary-plain-button:hover{
+.plain-button-primary:hover{
     -fx-text-fill: snow;
     -fx-background-color: -el-color-primary;
     -fx-border-color: -el-color-primary;
 }
 
-.primary-plain-button:pressed{
+.plain-button-primary:pressed{
     -fx-text-fill: snow;
     -fx-background-color: -el-color-primary-pressed;
     -fx-border-color: -el-color-primary-pressed;
 }
 
 
-.important-plain-button{
-    -fx-background-color: -el-color-important-light-bg;
+.plain-button-important{
+    -fx-background-color: -el-color-plain-important-bg;
     -fx-text-fill: -el-color-important;
-    -fx-border-color: -el-color-important-light-border;
+    -fx-border-color: -el-color-plain-important-border;
 }
 
-.important-plain-button:hover{
+.plain-button-important:hover{
     -fx-background-color: -el-color-important;
     -fx-text-fill: snow;
     -fx-border-color: -el-color-important;
 }
 
-.important-plain-button:pressed{
+.plain-button-important:pressed{
     -fx-text-fill: snow;
     -fx-background-color: -el-color-important-pressed;
     -fx-border-color: -el-color-important-pressed;
 }
 
 
+
+
+.text-button{
+    -fx-background-color: transparent;
+    -fx-pref-height: 30px;
+}
+
+.text-button:hover{
+    -fx-background-color: -el-color-textbtn-hover-bg;
+}
+
+.text-button:pressed{
+    -fx-background-color: -el-color-textbtn-active-bg;
+}
+
+.text-button-lightbg{
+    -fx-background-color: -el-color-textbtn-lightbg-bg;
+    -fx-pref-height: 30px;
+}
+
+.text-button-lightbg:hover{
+    -fx-background-color: -el-color-textbtn-lightbg-hover-bg;
+}
+
+.text-button-lightbg:pressed{
+    -fx-background-color: -el-color-textbtn-lightbg-active-bg;
+}
+
+
+.text-button-primary{
+    -fx-text-fill: -el-color-primary;
+}
+
+.text-button-info{
+    -fx-text-fill: -el-color-info;
+}
+
+.text-button-default{
+    -fx-text-fill: -el-color-default-text;
+}
 
 .my-button:disabled {
     -fx-background-color: snow;

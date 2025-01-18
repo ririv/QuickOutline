@@ -146,13 +146,13 @@
                                 </graphic>
                             </Button>
                         </GraphButtonWrapper>
-                        <Button fx:id="getContentsBtn" styleClass="my-button,primary-plain-button"
+                        <Button fx:id="getContentsBtn" styleClass="my-button,plain-button-primary"
                                 onAction="#getContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
                                 text="获取目录">
                         </Button>
                     </HBox>
 
-                    <Button fx:id="setContentsBtn" styleClass="my-button,important-plain-button"
+                    <Button fx:id="setContentsBtn" styleClass="my-button,plain-button-important"
                             onAction="#setContentsBtnAction"
                             mnemonicParsing="false" prefWidth="120.0" text="添加目录"
                             GridPane.columnIndex="2" GridPane.halignment="CENTER"/>

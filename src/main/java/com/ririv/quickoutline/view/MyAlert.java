@@ -19,15 +19,25 @@ import java.util.Optional;
 public class MyAlert extends Alert {
 
 
-    public MyAlert(AlertType alertType) {
-        super(alertType);
-        this.setHeaderText(null);
-        configure();
-    }
 
     public MyAlert(AlertType alertType,String contentText,Window owner,ButtonType... buttons) {
+
         super(alertType,contentText,buttons);
         super.initOwner(owner);
+
+        // 获取 DialogPane
+        DialogPane dialogPane = this.getDialogPane();
+        dialogPane.getStylesheets().add(getClass().getResource("BasicControls.css").toExternalForm());
+        for (var button: buttons){
+            switch (button.getButtonData()){
+                case OK_DONE -> dialogPane.lookupButton(button).getStyleClass().addAll("my-button", "text-button-lightbg", "text-button-primary");
+                case CANCEL_CLOSE -> dialogPane.lookupButton(button).getStyleClass().addAll("my-button", "text-button-lightbg","text-button-default");
+            }
+
+        }
+
+
+
         this.setHeaderText(null);
         configure();
     }
