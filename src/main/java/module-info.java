@@ -24,5 +24,6 @@ module quickoutline {
     exports com.ririv.quickoutline.textProcess.methods;
     exports com.ririv.quickoutline.view.controls;
     exports com.ririv.quickoutline.pdfProcess;
+    exports com.ririv.quickoutline.exception;
 
 }

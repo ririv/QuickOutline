@@ -15,8 +15,8 @@
     >
         <top>
             <VBox>
-                <HBox fx:id="topPane" alignment="CENTER">
-                    <TextField fx:id="filepathText" disable="true" prefHeight="25"
+                <HBox id="topPane" alignment="CENTER">
+                    <TextField fx:id="filepathTF" disable="true" prefHeight="25"
                                promptText="请选择或者拖拽PDF文件到窗口"
                                HBox.hgrow="ALWAYS"/>
                     <GraphButtonWrapper wrapperPadding="3">
@@ -49,7 +49,7 @@
                     <VBox>
                         <GraphButtonWrapper>
 
-                            <ToggleButton fx:id="textModeBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
+                            <ToggleButton fx:id="textTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
                                           >
                                 <padding>
                                     <Insets topRightBottomLeft="3.0"/>
@@ -60,7 +60,7 @@
                             </ToggleButton>
                         </GraphButtonWrapper>
                         <GraphButtonWrapper>
-                            <ToggleButton fx:id="treeModeBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
+                            <ToggleButton fx:id="treeTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
                                          >
                                 <padding>
                                     <Insets topRightBottomLeft="3.0"/>
@@ -120,8 +120,8 @@
             <StackPane id="operationPane">
 
                 <!--                            导入其他fxml &ndash;&gt;-->
-                <fx:include fx:id="treeMode" source="TreeMode.fxml"/>
-                <fx:include fx:id="textMode" source="TextMode.fxml"/>
+                <fx:include fx:id="treeTabView" source="TreeMode.fxml"/>
+                <fx:include fx:id="textTabView" source="TextMode.fxml"/>
 
             </StackPane>
 
@@ -156,7 +156,7 @@
                             onAction="#setContentsBtnAction"
                             mnemonicParsing="false" prefWidth="120.0" text="添加目录"
                             GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
-                    <TextField fx:id="offsetTextField" maxWidth="200" promptText="页码偏移量" GridPane.columnIndex="3"
+                    <TextField fx:id="offsetTF" maxWidth="200" promptText="页码偏移量" GridPane.columnIndex="3"
                                GridPane.halignment="CENTER">
                         <GridPane.margin>
                             <Insets left="20.0" right="20.0"/>
@@ -202,5 +202,5 @@
             </VBox>
         </bottom>
     </BorderPane>
-    <MessageContainer fx:id="messageDialog"/>
+    <MessageContainer fx:id="messageManager"/>
 </StackPane>

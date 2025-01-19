@@ -48,7 +48,7 @@
     -fx-text-fill: -el-color-message-success-text;
 }
 
-.message-error  {
+.message-error {
     -fx-background-color: -el-color-message-error-bg;
     -fx-border-color: -el-color-message-error-border;
 }

@@ -1,6 +1,8 @@
 package com.ririv.quickoutline.service;
 
 
+import com.ririv.quickoutline.exception.EncryptedPdfException;
+import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
 import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
@@ -15,17 +17,11 @@ public class PdfService {
 
     private final OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
 
-    public void setContents(String text, String srcFilePath, String destFilePath, int offset, Method method, PdfViewScaleType scaleType) {
+    public void setContents(String text, String srcFilePath, String destFilePath, int offset, Method method, PdfViewScaleType scaleType) throws IOException {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
 
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);
-
-        try {
-            outlineProcessor.setContents(rootBookmark, srcFilePath, destFilePath, scaleType);
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
+        outlineProcessor.setContents(rootBookmark, srcFilePath, destFilePath, scaleType);
     }
 
     public void deleteContents(String srcFilePath, String destFilePath) {
@@ -49,13 +45,17 @@ public class PdfService {
         return textProcessor.process(text, offset, method);
     }
 
+    public void checkOpenFile(String srcFilepath) throws IOException {
+        if (srcFilepath.isEmpty()) throw new RuntimeException("PDF路径为空");
+        if (outlineProcessor.checkEncrypted(srcFilepath)) throw new EncryptedPdfException();
+    }
 
     //此offset用于减，即 偏移后的偏移量-offset = 原页码（v2.0+目前没有应用场景）
-    public String getContents(String srcFile, int offset){
-        if (srcFile.isEmpty()) throw new RuntimeException("PDF路径为空");
+    public String getContents(String srcFilepath, int offset) throws NoOutlineException {
+        if (srcFilepath.isEmpty()) throw new RuntimeException("PDF路径为空");
 
         try {
-            return outlineProcessor.getContents(srcFile, offset);
+            return outlineProcessor.getContents(srcFilepath, offset);
         } catch (IOException e) {
             e.printStackTrace();
             return "";

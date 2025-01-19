@@ -21,4 +21,6 @@ public interface OutlineProcessor {
     String getContents(String srcFilePath, int offset) throws IOException;
 
     void deleteContents(String srcFilePath, String destFilePath) throws IOException;
+
+    boolean checkEncrypted(String srcFilePath) throws IOException;
 }
