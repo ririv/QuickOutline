@@ -1,6 +1,8 @@
 package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.exception.BookmarkFormatException;
+import com.ririv.quickoutline.exception.EncryptedPdfException;
+import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
 import com.ririv.quickoutline.service.PdfService;
@@ -22,7 +24,6 @@ import javafx.scene.image.Image;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -39,14 +40,13 @@ public class MainController {
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(MainController.class);
 
-    public TextField filepathText;
+    public TextField filepathTF;
     public Button browseFileBtn;
 
-
     public Button getContentsBtn;
-
     public Button setContentsBtn;
-    public TextField offsetTextField;
+    public TextField offsetTF;
+    public Button deleteBtn;
 
     public RadioButton seqRBtn;
     public RadioButton indentRBtn;
@@ -59,31 +59,28 @@ public class MainController {
 
     //必须映射到textModeController，否则会无法报错
     //与下面的textMode区分，其映射的是<fx:include>绑定的控件
-    public TextModeController textModeController;
-    public TreeModeController treeModeController;
+    public TextModeController textTabViewController;
+    public TreeModeController treeTabViewController;
 //    public TreeWebVIewController treeModeController;
 
 
-    public Button helpBtn;
-    public HBox topPane;
-    public ToggleButton textModeBtn;
-    public ToggleButton treeModeBtn;
-    public ToggleGroup tabToggleGroup;
-    public ToggleButton tocBtn;
-    public Button deleteBtn;
-    public MessageContainer messageDialog;
-//    public ChoiceBox<String> scaleChoice;
-//    public ObservableList<String> scaleOptions = FXCollections.observableArrayList("适合宽度", "适合高度", "适合页面");
 
+    public ToggleButton textTabBtn;
+    public ToggleButton treeTabBtn;
+    public ToggleGroup tabToggleGroup;
+    public Button helpBtn;
+
+    public ToggleButton tocBtn;
+
+    public MessageContainer messageManager;
 
     PdfService pdfService = new PdfService();
 
     @FXML
-    private Node textMode;  // <fx:include> 实际上对应的HBox类型
+    private Node textTabView;  // <fx:include> 实际上对应的HBox类型
 
     @FXML
-    private Node treeMode;
-
+    private Node treeTabView;
 
 
     public enum FnTab{
@@ -94,19 +91,15 @@ public class MainController {
 
     private Stage helpStage;
 
-    private String srcFilePath;
-
-    private String destFilePath;
-
 
     public void switchTab(FnTab targetTab) {
         if (targetTab == FnTab.text) {
-            textMode.setVisible(true);
-            treeMode.setVisible(false);
+            textTabView.setVisible(true);
+            treeTabView.setVisible(false);
 
         } else if (targetTab == FnTab.tree) {
-            treeMode.setVisible(true);
-            textMode.setVisible(false);
+            treeTabView.setVisible(true);
+            textTabView.setVisible(false);
             reconstructTree();
         }
         currenTab = targetTab;
@@ -115,21 +108,19 @@ public class MainController {
 
 
     public void initialize() {
-//        scaleChoice.setItems(scaleOptions);
-//        scaleChoice.setValue(scaleOptions.getFirst());
 
-        textModeController.setPdfService(this.pdfService);
-        treeModeController.setPdfService(this.pdfService);
+        textTabViewController.setPdfService(this.pdfService);
+        treeTabViewController.setPdfService(this.pdfService);
 
         seqRBtn.setUserData(Method.SEQ);
         indentRBtn.setUserData(Method.INDENT);
         seqRBtn.setSelected(true);
 
-        textModeBtn.setSelected(true);
+        textTabBtn.setSelected(true);
         currenTab = FnTab.text;
 
 
-        offsetTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+        offsetTF.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty() && !newValue.matches("^-?[1-9]\\d*$|^0$|^-$")) {
                 if (newValue.charAt(0) == '-') {
                     newValue = newValue.substring(1);
@@ -137,24 +128,12 @@ public class MainController {
                     newValue = '-'+newValue;
                 }
                 else newValue = newValue.replaceAll("[^0-9]", "");
-                offsetTextField.setText(newValue);
+                offsetTF.setText(newValue);
             }
         });
 
-
-        filepathText.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!oldValue.equals(newValue)) {
-                resetState();
-            }
-            srcFilePath = newValue.replaceAll("\\\\", "/");
-            String srcFileName = srcFilePath.substring(srcFilePath.lastIndexOf("/") + 1);
-            String ext = srcFileName.substring(srcFileName.lastIndexOf("."));
-            destFilePath = srcFilePath.substring(0, srcFilePath.lastIndexOf(srcFileName)) + srcFileName.substring(0, srcFileName.lastIndexOf(".")) + "_含目录" + ext;
-
-        });
-
-        //拖拽文件，必须下面两个方法配合完成
-        //鼠标悬浮在结点时，会不停执行
+//        拖拽文件，必须下面两个方法配合完成
+//        鼠标悬浮在结点时，会不停执行
         root.setOnDragOver(event -> {
             String pdfFormatPattern = ".+\\.[pP][dD][fF]$";
             Dragboard dragboard = event.getDragboard();
@@ -170,29 +149,7 @@ public class MainController {
         root.setOnDragDropped(e -> {
             Dragboard dragboard = e.getDragboard();
             File file = dragboard.getFiles().getFirst();
-
-            if (!textModeController.contentsTextArea.getText().isEmpty() && !filepathText.getText().equals(file.getAbsolutePath())) {
-
-                ButtonType keepContentsText = new ButtonType("保留", ButtonBar.ButtonData.OK_DONE);
-                ButtonType noKeepContentsText = new ButtonType("否", ButtonBar.ButtonData.OK_DONE);
-                Optional<ButtonType> result = showAlert(
-                        Alert.AlertType.CONFIRMATION,
-                        "正在打开新文件，是否保留文本域中的内容?",
-                        root.getScene().getWindow(),
-                        keepContentsText,noKeepContentsText,new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE));
-                if (result.isPresent() && result.get().getButtonData().isCancelButton()) {
-                    return;
-                }
-                else if (result.isPresent() && result.get() == keepContentsText) {
-                    String tempText = textModeController.contentsTextArea.getText();
-                    Toggle tempToggle = methodToggleGroup.getSelectedToggle();
-                    filepathText.setText(file.getPath());
-                    methodToggleGroup.selectToggle(tempToggle);
-                    textModeController.contentsTextArea.setText(tempText);
-                }
-            }
-            filepathText.setText(file.getPath());
-
+            openFile(file);
         });
 
 
@@ -200,23 +157,20 @@ public class MainController {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF 文档", "*.pdf"));
             File file = fileChooser.showOpenDialog(null);
-            if (file != null) {
-                filepathText.setText(file.getPath());
-            }
+            openFile(file);
         });
-
 
         tabToggleGroup.selectedToggleProperty().addListener((event,oldValue,newValue) -> {
             // 保持选中状态，防止取消选中
             if (newValue == null){
                 switch (currenTab){
-                    case text -> tabToggleGroup.selectToggle(textModeBtn);
-                    case tree -> tabToggleGroup.selectToggle(treeModeBtn);
+                    case text -> tabToggleGroup.selectToggle(textTabBtn);
+                    case tree -> tabToggleGroup.selectToggle(treeTabBtn);
                 }
             }
-            if (textModeBtn.isSelected()) {
+            if (textTabBtn.isSelected()) {
                 switchTab(FnTab.text);
-            } else if (treeModeBtn.isSelected()) {
+            } else if (treeTabBtn.isSelected()) {
                 switchTab(FnTab.tree);
             }
         });
@@ -227,7 +181,7 @@ public class MainController {
 
 
         GetContentsPopupView getContentsPopupView = new GetContentsPopupView(this);
-        getContentsPopupView.filepathProperty().bind(filepathText.textProperty());
+        getContentsPopupView.filepathProperty().bind(filepathTF.textProperty());
         getContentsPopupView.setPrefHeight(120);
         getContentsPopupView.setPrefWidth(240);
 
@@ -242,7 +196,7 @@ public class MainController {
 
     @FXML
     private void getContentsBtnAction(ActionEvent event) {
-            if (!textModeController.contentsTextArea.getText().isEmpty()) {
+            if (!textTabViewController.contentsTextArea.getText().isEmpty()) {
                 Optional<ButtonType> buttonType = showAlert(
                         Alert.AlertType.CONFIRMATION,
                         "正在获取文件的目录文本，文本域中含有可能未保存的内容，是否确认?",
@@ -252,34 +206,86 @@ public class MainController {
                 }
             }
 
-            if (filepathText.getText().isEmpty()) {
-                messageDialog.showMessage("请选择PDF文件", Message.MessageType.WARNING);
+            if (filepathTF.getText().isEmpty()) {
+                messageManager.showMessage("请选择PDF文件", Message.MessageType.WARNING);
                 return;
             }
 
             getContents();
             if (currenTab == FnTab.tree) reconstructTree();
+    }
 
+    private String destFilePath(){
+        String srcFilePath = filepathTF.getText();
+        srcFilePath = srcFilePath.replaceAll("\\\\", "/");
+        String srcFileName = srcFilePath.substring(srcFilePath.lastIndexOf("/") + 1);
+        String ext = srcFileName.substring(srcFileName.lastIndexOf("."));
+        return srcFilePath.substring(0, srcFilePath.lastIndexOf(srcFileName)) + srcFileName.substring(0, srcFileName.lastIndexOf(".")) + "_含目录" + ext;
     }
 
 
 
+    private void openFile(File file){
+        if (file == null) return;
+
+        String newFilePath = file.getPath();
+        String oldFilePath = filepathTF.getText();
+        if (newFilePath.equals(oldFilePath)) return;
+
+        try {
+            pdfService.checkOpenFile(newFilePath);
+        } catch (IOException e) {
+            messageManager.showMessage("无法打开文档，IO错误", Message.MessageType.ERROR);
+            return;
+        } catch (EncryptedPdfException e) {
+            messageManager.showMessage("该文档已加密", Message.MessageType.WARNING);
+        } catch (com.itextpdf.io.exceptions.IOException e){
+            e.printStackTrace();
+            logger.info(String.valueOf(e));
+            messageManager.showMessage("文档可能已损坏", Message.MessageType.ERROR);
+            return;
+        }
+
+
+        if (!textTabViewController.contentsTextArea.getText().isEmpty()) {
+            ButtonType keepContentsTextBtnType = new ButtonType("保留", ButtonBar.ButtonData.OK_DONE);
+            ButtonType noKeepContentsTextBtnType = new ButtonType("否", ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelBtnType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+            Optional<ButtonType> result = showAlert(
+                    Alert.AlertType.CONFIRMATION,
+                    "正在打开新文件，是否保留文本域中的内容?",
+                    root.getScene().getWindow(),
+                    keepContentsTextBtnType,noKeepContentsTextBtnType,cancelBtnType);
+
+            if (result.isPresent() && result.get() == cancelBtnType) {
+                return;
+            } else {
+                filepathTF.setText(newFilePath);
+                resetState(result.isPresent() && result.get() == keepContentsTextBtnType);
+            }
+        } else {
+            filepathTF.setText(newFilePath);
+            resetState(false);
+        }
+
+    }
+
 
     @FXML
     private void setContentsBtnAction(ActionEvent event) {
-            if (filepathText.getText().isEmpty()) {
-                messageDialog.showMessage("请选择PDF文件", Message.MessageType.WARNING);
+            if (filepathTF.getText().isEmpty()) {
+                messageManager.showMessage("请选择PDF文件", Message.MessageType.WARNING);
                 return;
             }
 
-            String text = textModeController.contentsTextArea.getText();
+            String text = textTabViewController.contentsTextArea.getText();
 
             if (text == null || text.isEmpty()) {
                 return;
             }
-
+            String srcFilePath = filepathTF.getText();
+            String destFilePath = destFilePath();
             try {
-
                 pdfService.setContents(text, srcFilePath, destFilePath, offset(),
                         (Method) methodToggleGroup.getSelectedToggle().getUserData(),
                         viewScaleType);
@@ -288,27 +294,24 @@ public class MainController {
                 File file = new File(destFilePath);
                 boolean deleteSuccess = file.delete();  //删除损坏的文件
                 logger.info("删除文件成功: {}", deleteSuccess);
-//                ButtonType buttonType = new ButtonType("定位");
-//                messageDialog.showMessage(e.getMessage(), Message.MessageType.WARN);
-                var result = showAlert(Alert.AlertType.ERROR, e.getMessage(), root.getScene().getWindow());
-//                if(result.isPresent()&&result.get()==buttonType){
-//                    textModeController.contentsText.requestFocus(); //获得焦点
-//                    textModeController.contentsText.positionCaret(
-//                            textModeController.getPosition(0,e.getIndex()));
-//                }
+                return;
+            } catch (IOException e) {
+                e.printStackTrace();
+                messageManager.showMessage(e.getMessage(), Message.MessageType.ERROR);
                 return;
             }
 
-        showSuccessWindow();
+        showSuccessDialog();
     }
 
-    private void showSuccessWindow() {
+    private void showSuccessDialog() {
         ButtonType openDirAndSelectFileButtonType = new ButtonType("打开文件所在位置", ButtonBar.ButtonData.OK_DONE);
         ButtonType openFileButtonType = new ButtonType("打开文件", ButtonBar.ButtonData.OK_DONE);
         var result = showAlert(Alert.AlertType.INFORMATION,
-                "文件存储在\n" + destFilePath, root.getScene().getWindow(),
+                "文件存储在\n" + destFilePath(), root.getScene().getWindow(),
                 openDirAndSelectFileButtonType, openFileButtonType, new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
         try {
+            String destFilePath = destFilePath();
             if (result.isPresent() && result.get() == openDirAndSelectFileButtonType) {
 
                 //打开文件所在文件夹并选择文件
@@ -339,7 +342,7 @@ public class MainController {
                     logger.info("执行命令外部输出: {}", s);
                 }
             } else if (result.isPresent() && result.get().equals(openFileButtonType)) {
-                Desktop.getDesktop().browse(new File(destFilePath).toURI()); //打开文件
+                Desktop.getDesktop().browse(new File(destFilePath()).toURI()); //打开文件
             }
         } catch (IOException e) {
         e.printStackTrace();
@@ -347,26 +350,33 @@ public class MainController {
     }
 
     //重置，并获得目录
-    private void resetState(){
-        offsetTextField.setText(null); //必须在前，否则缓存的offset会影响下面的函数
-        getContents();
-        if (currenTab == FnTab.tree) reconstructTree();
+    private void resetState(boolean keepContents){
+        offsetTF.setText(null); //必须在前，否则缓存的offset会影响下面的函数
+        if (!keepContents){
+            getContents();
+            if (currenTab == FnTab.tree) reconstructTree();
+        }
     }
 
 
     private void getContents() {
 //        这里原本传入offset是用来相减，原本该功能未获取目录，而不是重置目录
 //        因为比较迷惑，现在不再支持，设为0
-        String contents = pdfService.getContents(filepathText.getText(), 0);
-        textModeController.contentsTextArea.setText(contents);
+        try {
+            String contents = pdfService.getContents(filepathTF.getText(), 0);
+            textTabViewController.contentsTextArea.setText(contents);
+        } catch (NoOutlineException e) {
+            e.printStackTrace();
+            messageManager.showMessage("该文档没有书签目录", Message.MessageType.WARNING);
+        }
     }
 
     public int offset() {
-        String offsetText = this.offsetTextField.getText();
+        String offsetText = this.offsetTF.getText();
 
         try {
             return Integer.parseInt(offsetText != null && !offsetText.isEmpty() && !offsetText.equals("-") ? offsetText : "0");
-        } catch (RuntimeException e) {
+        } catch (NumberFormatException e) {
             e.printStackTrace();
         }
         return 0;
@@ -374,19 +384,19 @@ public class MainController {
 
     public void reconstructTree() {
         Bookmark rootBookmark = pdfService.convertTextToBookmarkTreeByMethod(
-                textModeController.contentsTextArea.getText(), 0,
+                textTabViewController.contentsTextArea.getText(), 0,
                 (Method) methodToggleGroup.getSelectedToggle().getUserData()
         );
-        treeModeController.reconstructTree(rootBookmark);
+        treeTabViewController.reconstructTree(rootBookmark);
     }
 
     public void deleteBtnAction(ActionEvent event) {
-        if (filepathText.getText().isEmpty()) {
-            messageDialog.showMessage("请选择PDF文件", Message.MessageType.WARNING);
+        if (filepathTF.getText().isEmpty()) {
+            messageManager.showMessage("请选择PDF文件", Message.MessageType.WARNING);
             return;
         }
-        pdfService.deleteContents(srcFilePath, destFilePath);
-        showSuccessWindow();
+        pdfService.deleteContents(filepathTF.getText(), destFilePath());
+        showSuccessDialog();
     }
 
     @FXML

@@ -40,7 +40,7 @@ public class ItextTocExtractor implements TocProcessor {
             String pageContent = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(i));
             tocPages.add(pageContent);
         }
-
+        pdfDoc.close();
         return tocPages;
     }
 

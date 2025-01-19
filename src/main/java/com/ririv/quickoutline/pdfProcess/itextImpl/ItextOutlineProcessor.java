@@ -5,6 +5,8 @@ import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.navigation.PdfDestination;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
+import com.ririv.quickoutline.exception.EncryptedPdfException;
+import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
 import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
@@ -24,19 +26,17 @@ public class ItextOutlineProcessor implements OutlineProcessor {
 //    list.clear()没有起作用（不知道原因），最终目录没有影响，怀疑原因是没有写入操作。
     @Override
     public void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath, PdfViewScaleType scaleType) throws IOException {
+        if (checkEncrypted(srcFilePath)) throw new EncryptedPdfException();
 
-        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
+        PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
 
-        /*
-         */
-        PdfOutline rootOutline = srcDoc.getOutlines(false);
-        rootOutline.getAllChildren().clear();
-//        rootOutline.removeOutline();
+            PdfOutline rootOutline = pdfDoc.getOutlines(false);
+            rootOutline.getAllChildren().clear();
+//            rootOutline.removeOutline(); //如果使用了这个方法，后续将添加不了书签，不会报错，这是由于rootOutline失去了在Doc中的引用，
 
-        bookmarkToOutlines(rootBookmark, rootOutline, srcDoc, scaleType);
+            bookmarkToOutlines(rootBookmark, rootOutline, pdfDoc, scaleType);
 
-        srcDoc.close();
-
+            pdfDoc.close();
     }
 
 
@@ -129,9 +129,17 @@ public class ItextOutlineProcessor implements OutlineProcessor {
         }
     }
 
+    public boolean checkEncrypted(String srcFilePath) throws IOException {
+        PdfReader reader = new PdfReader(srcFilePath);
+        PdfDocument doc = new PdfDocument(reader);
+        boolean isEncrypted = reader.isEncrypted();
+        doc.close();
+        return isEncrypted;
+    }
+
     //https://kb.itextpdf.com/itext/how-to-create-hierarchical-bookmarks
     @Override
-    public String getContents(String srcFilePath, int offset) throws IOException {
+    public String getContents(String srcFilePath, int offset) throws IOException,NoOutlineException {
 
         PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFilePath));
         PdfOutline rootOutline = srcDoc.getOutlines(false);
@@ -142,8 +150,9 @@ public class ItextOutlineProcessor implements OutlineProcessor {
 //         if (rootOutline.getDestination() != null) {
 
         if (rootOutline == null) {
-            logger.info("The doc has no outline");
-            return "";
+            NoOutlineException e = new NoOutlineException();
+            logger.info(e.getMessage());
+            throw e;
         }
         else outlines2Text(rootOutline, text, offset, 1, nameTree, srcDoc);
 

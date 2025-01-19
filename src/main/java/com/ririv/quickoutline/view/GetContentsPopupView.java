@@ -24,7 +24,7 @@ public class GetContentsPopupView extends StackPane {
 
     public HBox pageNumRangeLayout;
 
-    private MainController mainController;
+    private final MainController mainController;
 
     @FXML
     private Switch autoRecognizeSwitch;
@@ -98,20 +98,20 @@ public class GetContentsPopupView extends StackPane {
 
         extractTocBtn.setOnAction(event -> {
             if (filepath.get() == null || filepath.get().isEmpty()) {
-                mainController.messageDialog.showMessage("请选择PDF文件", Message.MessageType.WARNING);
+                mainController.messageManager.showMessage("请选择PDF文件", Message.MessageType.WARNING);
                 return;
             }
 
-            String contents = "";
+            String contents;
             if (autoRecognize.get()) {
                 contents = tocService.extract(filepath.get());
             } else {
                 if (startTF.getText().isEmpty() || endTF.getText().isEmpty()) {
-                    mainController.messageDialog.showMessage("请输入起始页码和结束页码", Message.MessageType.WARNING);
+                    mainController.messageManager.showMessage("请输入起始页码和结束页码", Message.MessageType.WARNING);
                 }
                 contents = tocService.extract(filepath.get(), Integer.parseInt(startTF.getText()), Integer.parseInt(endTF.getText()));
             }
-            this.mainController.textModeController.contentsTextArea.setText(contents);
+            this.mainController.textTabViewController.contentsTextArea.setText(contents);
         });
     }
 

@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class PopupCard extends Popup {
     private static final Logger logger = LoggerFactory.getLogger(PopupCard.class);
 
-    PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(1.5));;
+    PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(1.5));
     private boolean isHideAfterDelayWhenEscaped = true;
 
 
@@ -40,12 +40,12 @@ public class PopupCard extends Popup {
         this.widthProperty().addListener((observable, oldValue, newValue) -> {
             double x = buttonBounds.getCenterX() - newValue.doubleValue()/2;
             this.setX(x);
-            logger.info("x: {}", x);
+            logger.debug("x: {}", x);
         });
         this.heightProperty().addListener((observable, oldValue, newValue) -> {
             double y = buttonBounds.getMinY() - newValue.doubleValue() - 5;
             this.setY(y);
-            logger.info("y: {}", y);
+            logger.debug("y: {}", y);
         });
 
         logger.debug("buttonBounds: {}", buttonBounds);
@@ -66,10 +66,10 @@ public class PopupCard extends Popup {
     private void hideAfterDelay(Event event) {
         delay.setOnFinished(event2 -> {
             this.hide();
-            logger.info("popup hide");
+            logger.debug("popup hide");
         });
         delay.play();
-        logger.info("popup hide start");
+        logger.debug("popup hide start");
     }
 
 
@@ -77,7 +77,7 @@ public class PopupCard extends Popup {
     private void stopDelayHide(Event event) {
         if (delay!= null && delay.getStatus() == javafx.animation.Animation.Status.RUNNING){
             delay.stop();
-            logger.info("popup hide stop");
+            logger.debug("popup hide stop");
         }
     }
 
