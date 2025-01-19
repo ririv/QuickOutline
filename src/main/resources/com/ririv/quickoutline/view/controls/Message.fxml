@@ -8,12 +8,12 @@
     <HBox alignment="CENTER">
         <Label>
             <graphic>
-                <Region id="message-icon" />
+                <Region id="message-icon" prefHeight="15" prefWidth="15" />
             </graphic>
         </Label>
         <Label fx:id="messageText" >
             <HBox.margin>
-                <Insets left="8" />
+                <Insets left="10" />
             </HBox.margin>
         </Label>
     </HBox>

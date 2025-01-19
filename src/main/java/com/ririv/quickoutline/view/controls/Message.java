@@ -16,9 +16,6 @@ public class Message extends StackPane {
     @FXML
     private Label messageText;
 
-    @FXML
-    private Label messageLabel;
-
     public ParallelTransition parallelOut;
     public MessageType type;
 
@@ -30,7 +27,7 @@ public class Message extends StackPane {
     public Message(String text, MessageType type) {
         this.type = type;
         // 通过 FXMLLoader 加载 FXML
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("message.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("Message.fxml"));
         fxmlLoader.setRoot(this); // 设置根节点为当前 Message 实例
         fxmlLoader.setController(this); // 设置控制器为当前 Message 实例
         try {
@@ -46,8 +43,10 @@ public class Message extends StackPane {
 
         setManaged(false);  // 初始时不参与布局，也不占用空间
         setVisible(false);   // 初始时不可见
-        this.setMaxWidth(200);
-        this.setMaxHeight(30);
+        this.setMaxWidth(320);
+//        this.setMaxHeight(30);
+        messageText.setWrapText(true);
+        messageText.setMaxWidth(260); // < MaxWidth - 15*2+15+10 (=55) 即 左右padding+图标宽度+leftInsets
 
         switch (type) {
             case SUCCESS -> this.getStyleClass().add("message-success");

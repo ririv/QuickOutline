@@ -235,14 +235,14 @@ public class MainController {
         try {
             pdfService.checkOpenFile(newFilePath);
         } catch (IOException e) {
-            messageManager.showMessage("无法打开文档，IO错误", Message.MessageType.ERROR);
+            messageManager.showMessage("无法打开文档\n"+e.getMessage(), Message.MessageType.ERROR);
             return;
         } catch (EncryptedPdfException e) {
             messageManager.showMessage("该文档已加密", Message.MessageType.WARNING);
         } catch (com.itextpdf.io.exceptions.IOException e){
             e.printStackTrace();
             logger.info(String.valueOf(e));
-            messageManager.showMessage("文档可能已损坏", Message.MessageType.ERROR);
+            messageManager.showMessage("文档可能已损坏\n"+e.getMessage(), Message.MessageType.ERROR);
             return;
         }
 
@@ -294,10 +294,14 @@ public class MainController {
                 File file = new File(destFilePath);
                 boolean deleteSuccess = file.delete();  //删除损坏的文件
                 logger.info("删除文件成功: {}", deleteSuccess);
+                messageManager.showMessage(e.getMessage(), Message.MessageType.ERROR);
                 return;
             } catch (IOException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
                 messageManager.showMessage(e.getMessage(), Message.MessageType.ERROR);
+                return;
+            } catch (EncryptedPdfException e) {
+                messageManager.showMessage("该文档已加密，请先解密", Message.MessageType.ERROR);
                 return;
             }
 
