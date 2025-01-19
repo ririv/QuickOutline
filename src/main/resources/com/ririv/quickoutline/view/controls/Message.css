@@ -28,7 +28,7 @@
 
 .message{
     -fx-border-radius: 6;
-    -fx-padding: 11px 15px;
+    -fx-padding: 10px 15px;
     -fx-border-width: 1px;
     -fx-alignment: center;
     -fx-background-radius: 6;
@@ -75,10 +75,6 @@
     -fx-text-fill: -el-color-message-warning-text;
 }
 
-#message-icon{
-    -fx-pref-height: 1em;
-    -fx-pref-width: 1.2em;
-}
 
 .message-success #message-icon{
     -fx-shape:-el-icon-path-message-success;
