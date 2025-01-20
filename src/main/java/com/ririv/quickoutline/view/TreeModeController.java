@@ -26,10 +26,14 @@ public class TreeModeController {
 
 
 
-    PdfService pdfService;
 
-    public void setPdfService(PdfService pdfService) {
-        this.pdfService = pdfService;
+    private PdfService pdfService;
+    private MainController mainController;
+
+
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
+        this.pdfService = mainController.pdfService;
     }
 
 

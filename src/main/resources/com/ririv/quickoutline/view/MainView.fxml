@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.ririv.quickoutline.view.controls.MessageContainer?>
+<?import com.ririv.quickoutline.view.controls.Remind?>
 <?import com.ririv.quickoutline.view.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
@@ -169,12 +170,27 @@
                         <fx:define>
                             <ToggleGroup fx:id="methodToggleGroup"/>
                         </fx:define>
-                        <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
-                                     text="按序号" GridPane.halignment="RIGHT"
-                                     GridPane.rowIndex="0"/>
-                        <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
-                                     text="按缩进" GridPane.halignment="RIGHT"
-                                     GridPane.rowIndex="1"/>
+                        <StackPane GridPane.rowIndex="0" GridPane.halignment="RIGHT">
+                            <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                                         text="按序号" >
+                                <StackPane.margin>
+                                    <Insets topRightBottomLeft="5" />
+                                </StackPane.margin>
+                            </RadioButton>
+                            <Remind fx:id="seqRBtnRemind" />
+                        </StackPane>
+                        <StackPane GridPane.rowIndex="1" GridPane.halignment="RIGHT">
+                            <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                                         text="按缩进">
+                                <StackPane.margin>
+                                    <Insets topRightBottomLeft="5" />
+                                </StackPane.margin>
+                            </RadioButton>
+                            <Remind fx:id="indentRBtnRemind" />
+                        </StackPane>
+<!--                        <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"-->
+<!--                                     text="按缩进" GridPane.halignment="RIGHT"-->
+<!--                                     GridPane.rowIndex="1"/>-->
                         <rowConstraints>
                             <RowConstraints minHeight="10.0" prefHeight="30.0"/>
                             <RowConstraints minHeight="10.0" prefHeight="30.0"/>

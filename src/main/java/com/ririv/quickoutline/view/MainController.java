@@ -11,6 +11,7 @@ import com.ririv.quickoutline.utils.InfoUtil;
 import com.ririv.quickoutline.view.controls.Message;
 import com.ririv.quickoutline.view.controls.MessageContainer;
 import com.ririv.quickoutline.view.controls.PopupCard;
+import com.ririv.quickoutline.view.controls.Remind;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -73,6 +74,8 @@ public class MainController {
     public ToggleButton tocBtn;
 
     public MessageContainer messageManager;
+    public Remind indentRBtnRemind;
+    public Remind seqRBtnRemind;
 
     PdfService pdfService = new PdfService();
 
@@ -109,8 +112,8 @@ public class MainController {
 
     public void initialize() {
 
-        textTabViewController.setPdfService(this.pdfService);
-        treeTabViewController.setPdfService(this.pdfService);
+        textTabViewController.setMainController(this);
+        treeTabViewController.setMainController(this);
 
         seqRBtn.setUserData(Method.SEQ);
         indentRBtn.setUserData(Method.INDENT);
@@ -178,7 +181,6 @@ public class MainController {
         methodToggleGroup.selectedToggleProperty().addListener(event -> {
             if (currenTab == FnTab.tree) reconstructTree();
         });
-
 
         GetContentsPopupView getContentsPopupView = new GetContentsPopupView(this);
         getContentsPopupView.filepathProperty().bind(filepathTF.textProperty());
