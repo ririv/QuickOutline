@@ -24,8 +24,8 @@ import java.util.regex.Pattern;
 
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
-public class TextModeController {
-    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TextModeController.class);
+public class TextTabController {
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TextTabController.class);
 
 
     public TextArea contentsTextArea;
@@ -36,7 +36,7 @@ public class TextModeController {
     public Label mask;
 //    public ScalePane
 
-    public static TextModeController textModelController;
+    public static TextTabController textModelController;
     public HBox root;
 
     // 定义正则表达式表示一个缩进（默认一个制表符或4个空格）

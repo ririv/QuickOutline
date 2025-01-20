@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.HBox?>
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.ririv.quickoutline.view.TreeModeController">
+      fx:controller="com.ririv.quickoutline.view.TreeTabController">
 
     <TreeTableView fx:id="treeTableView" HBox.hgrow="ALWAYS">
         <columns>

@@ -18,21 +18,21 @@
             <GraphButtonWrapper wrapperPadding="0">
                 <ToggleButton fx:id="fitToHeightBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
-                        <Region styleClass="icon, fit_to_height_icon" prefHeight="20" prefWidth="20" />
+                        <Region styleClass="icon, fit-to-height-icon" prefHeight="20" prefWidth="20" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper wrapperPadding="0">
                 <ToggleButton fx:id="fitToWidthBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
-                        <Region styleClass="icon, fit_to_width_icon" prefHeight="20" prefWidth="20"/>
+                        <Region styleClass="icon, fit-to-width-icon" prefHeight="20" prefWidth="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper wrapperPadding="0">
                 <ToggleButton fx:id="actualSizeBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
-                        <Region styleClass="icon, actual_size_icon" prefHeight="20" prefWidth="20"/>
+                        <Region styleClass="icon, actual-size-icon" prefHeight="20" prefWidth="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>

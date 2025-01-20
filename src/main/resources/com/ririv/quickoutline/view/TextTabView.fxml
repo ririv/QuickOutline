@@ -3,11 +3,11 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<HBox style="-fx-background-color: white;"
+<HBox
       xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:id="root"
-      fx:controller="com.ririv.quickoutline.view.TextModeController">
+      fx:controller="com.ririv.quickoutline.view.TextTabController">
 
     <StackPane HBox.hgrow="ALWAYS">
 

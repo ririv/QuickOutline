@@ -5,7 +5,7 @@ import com.itextpdf.kernel.pdf.annot.PdfAnnotation;
 import com.itextpdf.kernel.pdf.annot.PdfLinkAnnotation;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 import com.itextpdf.kernel.pdf.navigation.PdfDestination;
-import com.ririv.quickoutline.pdfProcess.TocProcessor;
+import com.ririv.quickoutline.pdfProcess.TocExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 
 //先找目录/contents，找到后，第一行文字（如“第一章...”）记录下来，随后一直找到第二次出现这个文字前的页面，都是目录。
-public class ItextTocExtractor implements TocProcessor {
+public class ItextTocExtractor implements TocExtractor {
     private static final Pattern TOCPattern = Pattern.compile("^.*?\\s+(\\.|\\. ){3,}\\s?\\d+$|^\\d+\\.+\\d+\\s+.*?\\d+$");
     private static final Pattern ContentsPattern = Pattern.compile("^contents|目录$"); // 注意转化为小写再匹配
     private static final Logger log = LoggerFactory.getLogger(ItextTocExtractor.class);

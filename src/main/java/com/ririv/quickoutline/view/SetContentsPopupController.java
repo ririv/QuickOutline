@@ -10,7 +10,7 @@ import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
 
-public class SetContentsPopupView extends StackPane {
+public class SetContentsPopupController extends StackPane {
 
     private MainController mainController;
 
@@ -29,7 +29,7 @@ public class SetContentsPopupView extends StackPane {
     @FXML
     private ToggleButton actualSizeBtn;
 
-    public SetContentsPopupView(MainController mainController) {
+    public SetContentsPopupController(MainController mainController) {
         this.mainController = mainController;
 
         // 通过 FXMLLoader 加载 FXML
