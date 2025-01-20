@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.StackPane?>
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController"
+            >
+        <ImageView fx:id="imageView" fitWidth="300" preserveRatio="true" />
+</StackPane>

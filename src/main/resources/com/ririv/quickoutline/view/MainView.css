@@ -93,3 +93,8 @@
     -fx-pref-width: 1;
     -fx-background-color: -my-color-divding-line;
 }
+
+.tab-icon{
+    -fx-pref-height: 20px;
+    -fx-pref-width: 20px;
+}

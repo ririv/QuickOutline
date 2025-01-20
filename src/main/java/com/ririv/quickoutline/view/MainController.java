@@ -60,8 +60,8 @@ public class MainController {
 
     //必须映射到textModeController，否则会无法报错
     //与下面的textMode区分，其映射的是<fx:include>绑定的控件
-    public TextModeController textTabViewController;
-    public TreeModeController treeTabViewController;
+    public TextTabController textTabViewController;
+    public TreeTabController treeTabViewController;
 //    public TreeWebVIewController treeModeController;
 
 
@@ -71,23 +71,25 @@ public class MainController {
     public ToggleGroup tabToggleGroup;
     public Button helpBtn;
 
-    public ToggleButton tocBtn;
+    public ToggleButton tocTabBtn;
 
     public MessageContainer messageManager;
     public Remind indentRBtnRemind;
     public Remind seqRBtnRemind;
 
+
     PdfService pdfService = new PdfService();
 
     @FXML
     private Node textTabView;  // <fx:include> 实际上对应的HBox类型
-
     @FXML
     private Node treeTabView;
+    @FXML
+    private Node tocGeneratorTabView;
 
 
     public enum FnTab{
-        text, tree, setting
+        text, tree, toc, setting
     }
 
     private FnTab currenTab;
@@ -99,11 +101,17 @@ public class MainController {
         if (targetTab == FnTab.text) {
             textTabView.setVisible(true);
             treeTabView.setVisible(false);
+            tocGeneratorTabView.setVisible(false);
 
         } else if (targetTab == FnTab.tree) {
             treeTabView.setVisible(true);
             textTabView.setVisible(false);
+            tocGeneratorTabView.setVisible(false);
             reconstructTree();
+        } else if (targetTab == FnTab.toc) {
+            tocGeneratorTabView.setVisible(true);
+            treeTabView.setVisible(false);
+            textTabView.setVisible(false);
         }
         currenTab = targetTab;
     }
@@ -175,6 +183,8 @@ public class MainController {
                 switchTab(FnTab.text);
             } else if (treeTabBtn.isSelected()) {
                 switchTab(FnTab.tree);
+            } else if (tocTabBtn.isSelected()) {
+                switchTab(FnTab.toc);
             }
         });
 
@@ -182,17 +192,17 @@ public class MainController {
             if (currenTab == FnTab.tree) reconstructTree();
         });
 
-        GetContentsPopupView getContentsPopupView = new GetContentsPopupView(this);
-        getContentsPopupView.filepathProperty().bind(filepathTF.textProperty());
-        getContentsPopupView.setPrefHeight(120);
-        getContentsPopupView.setPrefWidth(240);
+        GetContentsPopupController getContentsPopupController = new GetContentsPopupController(this);
+        getContentsPopupController.filepathProperty().bind(filepathTF.textProperty());
+        getContentsPopupController.setPrefHeight(120);
+        getContentsPopupController.setPrefWidth(240);
 
 
-        PopupCard popup1 = new PopupCard(getContentsPopupView);
+        PopupCard popup1 = new PopupCard(getContentsPopupController);
         getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, popup1::showEventHandler);
 
-        SetContentsPopupView setContentsPopupView = new SetContentsPopupView(this);
-        PopupCard popup2 = new PopupCard(setContentsPopupView);
+        SetContentsPopupController setContentsPopupController = new SetContentsPopupController(this);
+        PopupCard popup2 = new PopupCard(setContentsPopupController);
         setContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, popup2::showEventHandler);
     }
 

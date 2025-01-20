@@ -16,7 +16,7 @@ import java.util.Map;
 //import static com.ririv.contents.view.MainController.mainController;
 
 
-public class TreeModeController {
+public class TreeTabController {
     public TreeTableView<Bookmark> treeTableView;
 
     public TreeTableColumn<Bookmark, String> titleColumn;

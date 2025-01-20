@@ -7,8 +7,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <StackPane xmlns:fx="http://javafx.com/fxml" fx:id="root"
-           alignment="TOP_CENTER"
-           prefHeight="600.0" prefWidth="800.0"
            stylesheets="@MainView.css,@BasicControls.css,@svg.css"
            xmlns="http://javafx.com/javafx"
            fx:controller="com.ririv.quickoutline.view.MainController">
@@ -33,7 +31,7 @@
                                 <Tooltip text="打开..."/>
                             </tooltip>
                             <graphic>
-                                <Region styleClass="icon,openIcon" prefWidth="15" prefHeight="15"/>
+                                <Region styleClass="icon,open-icon" prefWidth="15" prefHeight="15"/>
                             </graphic>
                         </Button>
                     </GraphButtonWrapper>
@@ -56,7 +54,7 @@
                                     <Insets topRightBottomLeft="3.0"/>
                                 </padding>
                                 <graphic>
-                                    <Region styleClass="icon,editIcon" prefWidth="20" prefHeight="20"/>
+                                    <Region styleClass="icon, tab-icon, edit-icon" prefWidth="20" prefHeight="20"/>
                                 </graphic>
                             </ToggleButton>
                         </GraphButtonWrapper>
@@ -67,18 +65,18 @@
                                     <Insets topRightBottomLeft="3.0"/>
                                 </padding>
                                 <graphic>
-                                    <Region styleClass="icon,treeDiagramIcon" prefWidth="20" prefHeight="20"/>
+                                    <Region styleClass="icon, tab-icon, tree-diagram-icon"/>
                                 </graphic>
                             </ToggleButton>
                         </GraphButtonWrapper>
                         <GraphButtonWrapper>
-                            <ToggleButton fx:id="tocBtn" visible="false" toggleGroup="$tabToggleGroup"
+                            <ToggleButton fx:id="tocTabBtn" visible="false" toggleGroup="$tabToggleGroup"
                                           styleClass="graph-button" >
                                 <padding>
                                     <Insets topRightBottomLeft="3.0"/>
                                 </padding>
                                 <graphic>
-                                    <Region styleClass="icon,tocIcon"/>
+                                    <Region styleClass="icon, tab-icon, toc-icon" />
                                 </graphic>
                             </ToggleButton>
                         </GraphButtonWrapper>
@@ -93,7 +91,7 @@
                                 <Insets topRightBottomLeft="3.0"/>
                             </padding>
                             <graphic>
-                                <Region styleClass="icon, settingIcon" prefWidth="20" prefHeight="20"/>
+                                <Region styleClass="icon, tab-icon, setting-icon"/>
                             </graphic>
                         </ToggleButton>
                     </GraphButtonWrapper>
@@ -106,7 +104,7 @@
                                 <Insets topRightBottomLeft="3.0"/>
                             </padding>
                             <graphic>
-                                <Region styleClass="icon,helpIcon" prefWidth="20" prefHeight="20"/>
+                                <Region styleClass="icon, tab-icon, help-icon"/>
                             </graphic>
                         </Button>
                     </GraphButtonWrapper>
@@ -121,8 +119,9 @@
             <StackPane id="operationPane">
 
                 <!--                            导入其他fxml &ndash;&gt;-->
-                <fx:include fx:id="treeTabView" source="TreeMode.fxml"/>
-                <fx:include fx:id="textTabView" source="TextMode.fxml"/>
+                <fx:include fx:id="textTabView" source="TextTabView.fxml"/>
+                <fx:include fx:id="treeTabView" visible="false" source="TreeTabView.fxml"/>
+                <fx:include fx:id="tocGeneratorTabView" visible="false" source="TocGeneratorTabView.fxml"/>
 
             </StackPane>
 
@@ -143,7 +142,7 @@
                                     <Tooltip text="删除PDF目录（不会修改源文件）"/>
                                 </tooltip>
                                 <graphic>
-                                    <Region styleClass="icon, deleteIcon"/>
+                                    <Region styleClass="icon, delete-icon"/>
                                 </graphic>
                             </Button>
                         </GraphButtonWrapper>

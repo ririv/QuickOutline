@@ -1,4 +1,4 @@
 package com.ririv.quickoutline.view;
 
-public class SettingController {
+public class SettingTabController {
 }
