@@ -4,6 +4,7 @@ import com.ririv.quickoutline.service.PdfService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.utils.Pair;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -37,14 +38,17 @@ public class TextModeController {
 
     public static TextModeController textModelController;
     public HBox root;
-    PdfService pdfService;
 
     // 定义正则表达式表示一个缩进（默认一个制表符或4个空格）
     private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\t|\\s{1,4})");
 
 
-    public void setPdfService(PdfService pdfService) {
-        this.pdfService = pdfService;
+    private PdfService pdfService;
+    private MainController mainController;
+
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
+        this.pdfService = mainController.pdfService;
     }
 
     public void initialize() {
@@ -281,13 +285,15 @@ public class TextModeController {
     }
 
     @FXML
-    private void autoFormatBtnAction() {
-        autoFormatBtn.setOnAction(event -> {
-            contentsTextArea.setText(pdfService.autoFormat(contentsTextArea.getText()));
-            syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
-            //自动格式化后，将方式切换为"indent",由于操作较为隐蔽，使用者不易发现变化，容易迷惑使用者，所以关闭
-//            methodGroup.selectToggle(indentRBtn);
-        });
+    private void autoFormatBtnAction(ActionEvent event) {
+        contentsTextArea.setText(pdfService.autoFormat(contentsTextArea.getText()));
+        syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
+        //自动格式化后，将方式切换为"indent",由于操作较为隐蔽，使用者不易发现变化，容易迷惑使用者，所以关闭
+
+        if (mainController.methodToggleGroup.getSelectedToggle() != mainController.indentRBtn) {
+            mainController.methodToggleGroup.selectToggle(mainController.indentRBtn);
+            mainController.indentRBtnRemind.play();
+        }
     }
 
 
