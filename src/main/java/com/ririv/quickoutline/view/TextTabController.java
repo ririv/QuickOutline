@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.service.PdfService;
+import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.utils.Pair;
 import javafx.application.Platform;
@@ -43,12 +43,12 @@ public class TextTabController {
     private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\t|\\s{1,4})");
 
 
-    private PdfService pdfService;
+    private PdfOutlineService pdfOutlineService;
     private MainController mainController;
 
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
-        this.pdfService = mainController.pdfService;
+        this.pdfOutlineService = mainController.pdfOutlineService;
     }
 
     public void initialize() {
@@ -286,7 +286,7 @@ public class TextTabController {
 
     @FXML
     private void autoFormatBtnAction(ActionEvent event) {
-        contentsTextArea.setText(pdfService.autoFormat(contentsTextArea.getText()));
+        contentsTextArea.setText(pdfOutlineService.autoFormat(contentsTextArea.getText()));
         syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
         //自动格式化后，将方式切换为"indent",由于操作较为隐蔽，使用者不易发现变化，容易迷惑使用者，所以关闭
 

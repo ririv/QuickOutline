@@ -5,7 +5,7 @@ import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
-import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
+import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextOutlineProcessor;
 import com.ririv.quickoutline.textProcess.TextProcessor;
 import com.ririv.quickoutline.textProcess.methods.Method;
@@ -13,11 +13,11 @@ import com.ririv.quickoutline.textProcess.methods.Method;
 import java.io.IOException;
 
 
-public class PdfService {
+public class PdfOutlineService {
 
     private final OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
 
-    public void setContents(String text, String srcFilePath, String destFilePath, int offset, Method method, PdfViewScaleType scaleType) throws IOException {
+    public void setContents(String text, String srcFilePath, String destFilePath, int offset, Method method, ViewScaleType scaleType) throws IOException {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
 
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);

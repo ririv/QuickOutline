@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.ririv.quickoutline.view.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane id="leftPane"
+            xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.ririv.quickoutline.view.LeftPaneController">
+    <fx:define>
+        <ToggleGroup fx:id="tabToggleGroup"/>
+    </fx:define>
+    <top>
+        <VBox>
+            <GraphButtonWrapper>
+                <ToggleButton fx:id="textTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
+                >
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <Region styleClass="icon, icon-tab, edit-icon" prefWidth="20" prefHeight="20"/>
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+            <GraphButtonWrapper>
+                <ToggleButton fx:id="treeTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
+                >
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <Region styleClass="icon, icon-tab, tree-diagram-icon"/>
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+            <GraphButtonWrapper>
+                <ToggleButton fx:id="tocTabBtn" visible="false" toggleGroup="$tabToggleGroup"
+                              styleClass="graph-button" >
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <Region styleClass="icon, icon-tab, toc-icon" />
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+            <GraphButtonWrapper>
+                <ToggleButton fx:id="labelTabBtn" visible="false" toggleGroup="$tabToggleGroup"
+                              styleClass="graph-button" >
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <Region styleClass="icon, icon-tab, label-icon" />
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+        </VBox>
+    </top>
+    <bottom>
+        <VBox>
+            <GraphButtonWrapper>
+                <ToggleButton fx:id="settingBtn" toggleGroup="$tabToggleGroup" visible="false"
+                              styleClass="graph-button" >
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <Region styleClass="icon, icon-tab, setting-icon"/>
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+            <GraphButtonWrapper>
+                <Button fx:id="helpBtn"
+                        styleClass="graph-button"
+                        onAction="#createHelpWindowAction"
+                >
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <Region styleClass="icon, icon-tab, help-icon"/>
+                    </graphic>
+                </Button>
+            </GraphButtonWrapper>
+        </VBox>
+    </bottom>
+</BorderPane>

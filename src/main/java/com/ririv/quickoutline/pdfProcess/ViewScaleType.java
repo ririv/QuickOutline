@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.pdfProcess;
 
-public enum PdfViewScaleType {
+public enum ViewScaleType {
     FIT_TO_WIDTH,
     FIT_TO_HEIGHT,
     FIT_TO_PAGE,

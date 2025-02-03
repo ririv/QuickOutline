@@ -9,7 +9,7 @@ import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
-import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
+import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
     //    如果rootBookmark没有Children，即之前的text为空（当然这种情况已在Controller中被排除）
 //    list.clear()没有起作用（不知道原因），最终目录没有影响，怀疑原因是没有写入操作。
     @Override
-    public void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath, PdfViewScaleType scaleType) throws IOException {
+    public void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException {
         if (checkEncrypted(srcFilePath)) throw new EncryptedPdfException();
 
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
@@ -41,7 +41,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
 
 
     //合并了上面两个函数
-    private void bookmarkToOutlines(Bookmark parentBookmark, PdfOutline rootOutline, PdfDocument srcDoc, PdfViewScaleType scaleType) {
+    private void bookmarkToOutlines(Bookmark parentBookmark, PdfOutline rootOutline, PdfDocument srcDoc, ViewScaleType scaleType) {
 
         //不为根结点时，进行添加操作
         if (!parentBookmark.isRoot()) {

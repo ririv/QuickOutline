@@ -18,35 +18,51 @@ public class PopupCard extends Popup {
     PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(1));
     private boolean isHideAfterDelayWhenEscaped = true;
 
+    private Parent content;
 
-    public PopupCard(Parent parent) {
 
-        parent.getStylesheets().add(getClass().getResource("PopupCard.css").toExternalForm());
-        parent.getStyleClass().add("card");
-        this.getScene().setRoot(parent);
+
+    public PopupCard(Parent content) {
+        this.content = content;
+
+        content.getStylesheets().add(getClass().getResource("PopupCard.css").toExternalForm());
+        content.getStyleClass().add("card");
+        this.getScene().setRoot(content);
 //        this.setAutoHide(true); // 设置此会因为this获得焦点而导致点击按钮第一次无效（失去焦点）
 
         // 如果不设置宽高，第一出现popup是他们的值为0，导致出现位置错误
         // 已改为监听宽高，修复错误
 //        this.setWidth(popupNode.getPrefWidth());
 //        this.setHeight(popupNode.getPrefHeight());
-        keepDelayWhenHover(parent);
+        keepDelayWhenHover(content);
     }
 
     // 窗口移动时，PopupCard没有跟着移动
     public void showEventHandler(Event event) {
         Node ownerNode = (Node) event.getSource();
         Bounds buttonBounds = ownerNode.localToScreen( ownerNode.getBoundsInLocal());
-        this.widthProperty().addListener((observable, oldValue, newValue) -> {
-            double x = buttonBounds.getCenterX() - newValue.doubleValue()/2;
+
+        this.setOnShown(e->{
+            // Popup的width和height不一定是content的宽高
+            double x = buttonBounds.getCenterX() - this.getWidth() / 2;
+            double y = buttonBounds.getMinY() -  this.getHeight() - 5;
             this.setX(x);
-            logger.debug("x: {}", x);
-        });
-        this.heightProperty().addListener((observable, oldValue, newValue) -> {
-            double y = buttonBounds.getMinY() - newValue.doubleValue() - 5;
             this.setY(y);
-            logger.debug("y: {}", y);
+            logger.info("x: {}", x);
+            logger.info("y: {}", y);
         });
+
+//
+//        this.widthProperty().addListener((observable, oldValue, newValue) -> {
+//            double x = buttonBounds.getCenterX() - newValue.doubleValue()/2;
+//            this.setX(x);
+//            logger.info("x: {}", x);
+//        });
+//        this.heightProperty().addListener((observable, oldValue, newValue) -> {
+//            double y = buttonBounds.getMinY() - newValue.doubleValue() - 5;
+//            this.setY(y);
+//            logger.info("y: {}", y);
+//        });
 
         logger.debug("buttonBounds: {}", buttonBounds);
         logger.debug("popup: w:{} h:{}", this.getWidth(), this.getHeight());

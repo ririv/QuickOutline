@@ -5,7 +5,7 @@ import com.ririv.quickoutline.pdfProcess.itextImpl.ItextTocExtractor;
 
 import java.io.IOException;
 
-public class TocService {
+public class PdfTocService {
 
    public String extract(String pdfPath){
        try {

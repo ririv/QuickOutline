@@ -1,7 +1,7 @@
 package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.service.PdfService;
+import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
@@ -27,13 +27,13 @@ public class TreeTabController {
 
 
 
-    private PdfService pdfService;
+    private PdfOutlineService pdfOutlineService;
     private MainController mainController;
 
 
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
-        this.pdfService = mainController.pdfService;
+        this.pdfOutlineService = mainController.pdfOutlineService;
     }
 
 
@@ -72,7 +72,7 @@ public class TreeTabController {
             sb.append(line).append("\n");
         }
         System.out.println(sb);
-        rootBookmark = pdfService.convertTextToBookmarkTreeByMethod(sb.toString(), 0, Method.INDENT
+        rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(sb.toString(), 0, Method.INDENT
 //                ,true
         );
 

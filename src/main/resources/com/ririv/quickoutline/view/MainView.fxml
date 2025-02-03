@@ -2,7 +2,7 @@
 
 <?import com.ririv.quickoutline.view.controls.MessageContainer?>
 <?import com.ririv.quickoutline.view.controls.Remind?>
-<?import com.ririv.quickoutline.view.*?>
+<?import com.ririv.quickoutline.view.GraphButtonWrapper?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -40,77 +40,7 @@
             </VBox>
         </top>
         <left>
-            <BorderPane id="leftPane">
-                <fx:define>
-                    <ToggleGroup fx:id="tabToggleGroup"/>
-                </fx:define>
-                <top>
-                    <VBox>
-                        <GraphButtonWrapper>
-
-                            <ToggleButton fx:id="textTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
-                                          >
-                                <padding>
-                                    <Insets topRightBottomLeft="3.0"/>
-                                </padding>
-                                <graphic>
-                                    <Region styleClass="icon, tab-icon, edit-icon" prefWidth="20" prefHeight="20"/>
-                                </graphic>
-                            </ToggleButton>
-                        </GraphButtonWrapper>
-                        <GraphButtonWrapper>
-                            <ToggleButton fx:id="treeTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
-                                         >
-                                <padding>
-                                    <Insets topRightBottomLeft="3.0"/>
-                                </padding>
-                                <graphic>
-                                    <Region styleClass="icon, tab-icon, tree-diagram-icon"/>
-                                </graphic>
-                            </ToggleButton>
-                        </GraphButtonWrapper>
-                        <GraphButtonWrapper>
-                            <ToggleButton fx:id="tocTabBtn" visible="false" toggleGroup="$tabToggleGroup"
-                                          styleClass="graph-button" >
-                                <padding>
-                                    <Insets topRightBottomLeft="3.0"/>
-                                </padding>
-                                <graphic>
-                                    <Region styleClass="icon, tab-icon, toc-icon" />
-                                </graphic>
-                            </ToggleButton>
-                        </GraphButtonWrapper>
-                    </VBox>
-                </top>
-                <bottom>
-                    <VBox>
-                    <GraphButtonWrapper>
-                        <ToggleButton fx:id="settingBtn" toggleGroup="$tabToggleGroup" visible="false"
-                                      styleClass="graph-button"  >
-                            <padding>
-                                <Insets topRightBottomLeft="3.0"/>
-                            </padding>
-                            <graphic>
-                                <Region styleClass="icon, tab-icon, setting-icon"/>
-                            </graphic>
-                        </ToggleButton>
-                    </GraphButtonWrapper>
-                    <GraphButtonWrapper>
-                        <Button fx:id="helpBtn"
-                                styleClass="graph-button"
-                                onAction="#createHelpWindowAction"
-                                >
-                            <padding>
-                                <Insets topRightBottomLeft="3.0"/>
-                            </padding>
-                            <graphic>
-                                <Region styleClass="icon, tab-icon, help-icon"/>
-                            </graphic>
-                        </Button>
-                    </GraphButtonWrapper>
-                    </VBox>
-                </bottom>
-            </BorderPane>
+            <fx:include fx:id="leftPane"  source="LeftPane.fxml"/>
 
         </left>
         <center>
@@ -122,6 +52,7 @@
                 <fx:include fx:id="textTabView" source="TextTabView.fxml"/>
                 <fx:include fx:id="treeTabView" visible="false" source="TreeTabView.fxml"/>
                 <fx:include fx:id="tocGeneratorTabView" visible="false" source="TocGeneratorTabView.fxml"/>
+                <fx:include fx:id="pageLabelTabView" visible="false" source="PageLabelView.fxml"/>
 
             </StackPane>
 
@@ -129,8 +60,8 @@
         <bottom>
             <VBox>
                 <Region styleClass="dividing-line-h"/>
-
-                <GridPane id="bottomPane">
+                <StackPane>
+                <GridPane id="outlineBottomPane">
                     <HBox alignment="CENTER">
                         <!--                    <GridPane.margin>-->
                         <!--                        <Insets left="20.0"/>-->
@@ -214,6 +145,25 @@
                         <RowConstraints vgrow="SOMETIMES"/>
                     </rowConstraints>
                 </GridPane>
+
+                <GridPane id="pageLabelBottomPane" visible="false">
+                    <Button fx:id="setPageLabelBtn" styleClass="my-button,plain-button-important"
+                            onAction="#setContentsBtnAction"
+                            mnemonicParsing="false" prefWidth="120.0" text="添加页面标签"
+                            GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
+
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints vgrow="SOMETIMES"/>
+                    </rowConstraints>
+                </GridPane>
+                </StackPane>
             </VBox>
         </bottom>
     </BorderPane>
