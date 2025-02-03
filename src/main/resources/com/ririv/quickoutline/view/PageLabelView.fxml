@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.collections.FXCollections?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.*?>
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.ririv.quickoutline.view.PageLabelController"
+            >
+    <VBox alignment="CENTER">
+    <HBox alignment="CENTER_LEFT">
+        <Label text="编号样式" />
+        <ChoiceBox value="1, 2, 3, ...">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="无" />
+                    <String fx:value="1, 2, 3, ..." />
+                    <String fx:value="i, ii, iii, ..." />
+                    <String fx:value="I, II, III, ..." />
+                    <String fx:value="a, b, c, ..." />
+                    <String fx:value="A, B, C, ..." />
+                </FXCollections>
+            </items>
+        </ChoiceBox>
+    </HBox>
+    <HBox alignment="CENTER_LEFT"> <Label text="前缀" /> <TextField /> </HBox>
+    <HBox alignment="CENTER_LEFT"> <Label text="编号开始于"/><TextField  /><Label text="需要大于等于1，默认为1"/> </HBox>
+        <ScrollPane fx:id="labelRuleListLayout"/>
+
+    </VBox>
+</StackPane>

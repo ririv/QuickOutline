@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.service.TocService;
+import com.ririv.quickoutline.service.PdfTocService;
 import com.ririv.quickoutline.view.controls.Message;
 import com.ririv.quickoutline.view.controls.Switch;
 import javafx.beans.property.BooleanProperty;
@@ -57,7 +57,7 @@ public class GetContentsPopupController extends StackPane {
     }
 
     public void initialize() {
-        TocService tocService = new TocService();
+        PdfTocService pdfTocService = new PdfTocService();
 
 
         autoRecognize.bind(autoRecognizeSwitch.valueProperty());
@@ -104,12 +104,12 @@ public class GetContentsPopupController extends StackPane {
 
             String contents;
             if (autoRecognize.get()) {
-                contents = tocService.extract(filepath.get());
+                contents = pdfTocService.extract(filepath.get());
             } else {
                 if (startTF.getText().isEmpty() || endTF.getText().isEmpty()) {
                     mainController.messageManager.showMessage("请输入起始页码和结束页码", Message.MessageType.WARNING);
                 }
-                contents = tocService.extract(filepath.get(), Integer.parseInt(startTF.getText()), Integer.parseInt(endTF.getText()));
+                contents = pdfTocService.extract(filepath.get(), Integer.parseInt(startTF.getText()), Integer.parseInt(endTF.getText()));
             }
             this.mainController.textTabViewController.contentsTextArea.setText(contents);
         });

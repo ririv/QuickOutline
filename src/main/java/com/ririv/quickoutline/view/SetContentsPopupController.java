@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
+import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -48,16 +48,16 @@ public class SetContentsPopupController extends StackPane {
             String labelText;
             if (newValue == fitToWidthBtn){
                 labelText = "适合宽度";
-                this.mainController.viewScaleType = PdfViewScaleType.FIT_TO_WIDTH;
+                this.mainController.viewScaleType = ViewScaleType.FIT_TO_WIDTH;
             } else if (newValue == fitToHeightBtn){
                 labelText = "适合高度";
-                this.mainController.viewScaleType = PdfViewScaleType.FIT_TO_HEIGHT;
+                this.mainController.viewScaleType = ViewScaleType.FIT_TO_HEIGHT;
             } else if (newValue == actualSizeBtn){
                 labelText = "实际大小";
-                this.mainController.viewScaleType = PdfViewScaleType.ACTUAL_SIZE;
+                this.mainController.viewScaleType = ViewScaleType.ACTUAL_SIZE;
             } else { // null
                 labelText = "无缩放";
-                this.mainController.viewScaleType = PdfViewScaleType.None;
+                this.mainController.viewScaleType = ViewScaleType.None;
             }
             label.setText(labelText);
             });

@@ -20,6 +20,7 @@
 ![interface](image/screenshot.png)
 
 ## 使用方式
+
 1. 拖动PDF文件到窗口
 2. 写入目录文本，格式在下面
 3. 设定 页面偏移量=PDF中的页码–原书的页码
@@ -55,6 +56,7 @@
 
 ![screenvideo_1](image/screenvideo_1.gif)
 
+[1.0版本使用说明移步这里](https://zhuanlan.zhihu.com/p/390719305)
 
 
 ### Tips

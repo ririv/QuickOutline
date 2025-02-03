@@ -3,9 +3,9 @@ import com.itextpdf.kernel.pdf.PdfOutline;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
-import com.ririv.quickoutline.pdfProcess.PdfViewScaleType;
+import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextOutlineProcessor;
-import com.ririv.quickoutline.service.PdfService;
+import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 
 import java.io.IOException;
@@ -46,13 +46,13 @@ Part I  监督学习  25
     final String srcFilePath = "D:/a b/Probabilistic Graphical Models_ Principles and Applications.pdf";
     final Method method = Method.SEQ;
 
-    PdfService pdfService = new PdfService();
-    final Bookmark rootBookmark = pdfService.convertTextToBookmarkTreeByMethod(text, 2, method);
+    PdfOutlineService pdfOutlineService = new PdfOutlineService();
+    final Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, 2, method);
 
     @org.junit.jupiter.api.Test
     void test1() throws IOException {
         OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
-        outlineProcessor.setContents(rootBookmark, srcFilePath,"D:/gen.pdf", PdfViewScaleType.ACTUAL_SIZE);
+        outlineProcessor.setContents(rootBookmark, srcFilePath,"D:/gen.pdf", ViewScaleType.ACTUAL_SIZE);
     }
 
     @org.junit.jupiter.api.Test

@@ -19,7 +19,7 @@
     >
         <HBox>
             <Label fx:id="versionLabel" />
-            <Label text="-preview"/>
+<!--            <Label text="-preview"/>-->
         </HBox>
         <FlowPane>
             <Text>使用说明:</Text>
