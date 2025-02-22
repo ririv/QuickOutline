@@ -155,7 +155,7 @@ public class MainController {
         GetContentsPopupController getContentsPopupController = new GetContentsPopupController(this);
         getContentsPopupController.filepathProperty().bind(filepathTF.textProperty());
         getContentsPopupController.setPrefHeight(120);
-        getContentsPopupController.setPrefWidth(240);
+        getContentsPopupController.setPrefWidth(250);
 
 
         PopupCard popup1 = new PopupCard(getContentsPopupController);

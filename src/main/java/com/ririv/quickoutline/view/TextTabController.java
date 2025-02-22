@@ -2,6 +2,7 @@ package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
+import com.ririv.quickoutline.utils.InfoUtil;
 import com.ririv.quickoutline.utils.Pair;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -10,6 +11,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -19,6 +22,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,6 +83,11 @@ public class TextTabController {
         // 设置处理键盘事件
         // 按下SHIFT+TAB将自动去掉一格缩进（\t或者4个空格）
         contentsTextArea.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabKeyPress);
+
+        if (InfoUtil.isMacOS()) {
+            externalEditorBtn.setVisible(false);
+            externalEditorBtn.setManaged(false);
+        }
     }
 
 
@@ -265,11 +274,37 @@ public class TextTabController {
                 }),
                 () -> Platform.runLater(() -> {
                     ButtonType gotoButton = new ButtonType("前往官网下载", ButtonBar.ButtonData.OK_DONE);
+                    ButtonType cancelButton = new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE);
 
                     //必须加取消类型按钮，否则对话框右上角的"×"不起作用
-                    var result = showAlert(
-                            Alert.AlertType.WARNING, "未找到VSCode\n请确保安装并正确添加环境变量至PATH\n详情请查阅右上角帮助-使用说明", root.getScene().getWindow(),
-                            gotoButton, new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
+                    String contentText = "未找到VSCode\n请确保安装并正确添加环境变量至PATH\n详情请查阅右上角帮助-使用说明";
+
+
+                    Optional<ButtonType> result;
+                    result = showAlert(
+                            Alert.AlertType.WARNING, contentText, root.getScene().getWindow(),
+                            gotoButton, cancelButton);
+//
+//                    if (!InfoUtil.isMacOS()) {
+//                        result = showAlert(
+//                                Alert.AlertType.WARNING, contentText, root.getScene().getWindow(),
+//                                gotoButton, cancelButton);
+//                    }
+//                    else {
+//                        String cmd = "xattr -d com.apple.quarantine /Applications/QuickOutline.app";
+//                        contentText += "\n\nMacOS请在VSCode中安装Path到环境变量后\n使用如下命令重新运行本软件：\n"+ cmd;
+//                        ButtonType copyCmdButton = new ButtonType("复制命令", ButtonBar.ButtonData.OK_DONE);
+//                        result = showAlert(
+//                                Alert.AlertType.WARNING, contentText, root.getScene().getWindow(),
+//                                gotoButton, copyCmdButton, cancelButton);
+//                        if (result.isPresent() && result.get() == copyCmdButton) {
+//                            Clipboard clipboard = Clipboard.getSystemClipboard();
+//                            ClipboardContent content = new ClipboardContent();
+//                            content.putString(cmd);
+//                            clipboard.setContent(content);
+//                        }
+//                    }
+
                     if (result.isPresent() && result.get() == gotoButton) {
                         Desktop desktop = Desktop.getDesktop();
                         try {

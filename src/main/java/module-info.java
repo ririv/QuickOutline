@@ -28,5 +28,7 @@ module quickoutline {
     exports com.ririv.quickoutline.view.controls;
     exports com.ririv.quickoutline.pdfProcess;
     exports com.ririv.quickoutline.exception;
+    exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
+    exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions;
 
 }

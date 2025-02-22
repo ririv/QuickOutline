@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
 
-import com.ririv.quickoutline.exception.LaunchExternalEditorException;
+import com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions.LaunchExternalEditorException;
 import com.ririv.quickoutline.utils.InfoUtil;
 import org.slf4j.Logger;
 
@@ -36,13 +36,11 @@ public class VscodeImpl implements ExternalEditor {
         if (InfoUtil.isWindows()) {
             command = new String[]{"code.cmd", "-n", "-w", "-g", gotoArg};
         }
-//        else if (OsTypeUtil.isMacOS()) {
-//            command = new String[]{"open", "-a", "Visual Studio Code.app"};
-//        }
         else {
             command = new String[]{"code", "-n", "-w", "-g", gotoArg};
         }
 
+        logger.info("是否在沙盒中：{}", InfoUtil.isSandboxed());
 
         logger.info("Executing command: {}", String.join(" ", command));
 
