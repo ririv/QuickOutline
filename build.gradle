@@ -147,7 +147,7 @@ jlink {
         else if (os.isMacOsX()) {
             def entitlementsFile = file("src/main/resources/entitlements.plist")  // 权限文件路径
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
-            installerType = 'pkg' //dmg或pkg
+            installerType = 'dmg' //dmg或pkg
             installerOptions = installerOptionsParams
 //            + ['--mac-sign',                         // 启用签名
 ////            '--mac-signing-keychain', '/Library/Keychains/System.keychain', // 钥匙串路径
