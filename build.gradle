@@ -37,15 +37,15 @@ application{
 }
 
 
-// 不设置这个idea,没法下载文档
-// 注意更改系统
-configurations.configureEach {
-    attributes {
-        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
-        attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, 'windows')) // 根据您的操作系统调整
-        attribute(MachineArchitecture.ARCHITECTURE_ATTRIBUTE, objects.named(MachineArchitecture, 'x86-64')) // 根据您的架构调整
-    }
-}
+//// 不设置这个idea,没法下载文档
+//// 注意更改系统
+//configurations.configureEach {
+//    attributes {
+//        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+//        attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, 'windows')) // 根据您的操作系统调整
+//        attribute(MachineArchitecture.ARCHITECTURE_ATTRIBUTE, objects.named(MachineArchitecture, 'x86-64')) // 根据您的架构调整
+//    }
+//}
 
 
 
@@ -145,9 +145,14 @@ jlink {
             ]+installerOptionsParams
         }
         else if (os.isMacOsX()) {
+            def entitlementsFile = file("src/main/resources/entitlements.plist")  // 权限文件路径
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
-            installerType = 'dmg' //或pkg
+            installerType = 'pkg' //dmg或pkg
             installerOptions = installerOptionsParams
+//            + ['--mac-sign',                         // 启用签名
+////            '--mac-signing-keychain', '/Library/Keychains/System.keychain', // 钥匙串路径
+////            '--mac-signing-key-user-name', "Developer ID Application: Your Name (XXXXXXXXXX)", // 证书名称
+//            '--mac-entitlements', entitlementsFile.absolutePath ] // 权限文件
         }
     }
 
