@@ -330,7 +330,9 @@ public class MainController {
                     logger.info("执行命令外部输出: {}", s);
                 }
             } else if (result.isPresent() && result.get().equals(openFileButtonType)) {
-                Desktop.getDesktop().browse(new File(destFilePath()).toURI()); //打开文件
+                //打开文件
+//                Desktop.getDesktop().browse(new File(destFilePath()).toURI());
+                Desktop.getDesktop().open(new File(destFilePath())); //上面一条语句在mac上无法打开文件
             }
         } catch (IOException e) {
         e.printStackTrace();
