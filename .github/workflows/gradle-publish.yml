@@ -5,51 +5,46 @@
 # This workflow will build a package using Gradle and then publish it to GitHub packages when a release is created
 # For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#Publishing-using-gradle
 
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a package using Gradle and then publish it to GitHub packages when a release is created
-# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#Publishing-using-gradle
-
-
-
-name: Build for macos
+name: Build, Package & Publish
 
 on:
-  release:
-    types: [created]
-  workflow_dispatch:
+  push:
+    tags: ['v*'] # 仅在打标签时触发（例如 v1.0.0）
 
 jobs:
-  build:
-
-    runs-on: macos-latest
-    permissions:
-      contents: read
-      packages: write
+  build-and-package:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest] # 支持多平台打包
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 16
-      uses: actions/setup-java@v2
-      with:
-        java-version: '16'
-        distribution: 'adopt'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+    - uses: actions/checkout@v4
 
-    - name: jpackge with Gradle
-      run: jpackage
-
-    # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
-    # the publishing section of your build.gradle
-    - name: Publish to GitHub Packages
-      uses: gradle/gradle-build-action@4137be6a8bf7d7133955359dbd952c0ca73b1021
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
       with:
-        arguments: publish
+        java-version: '21'
+        distribution: 'corretto'
+
+    # 生成 jpackage 包
+    - name: Build with Gradle
+      run: ./gradlew clean jpackage
+
+    # 上传生成的包到 GitHub Releases
+    - name: Upload Release Artifact
+      uses: actions/upload-release-asset@v1
       env:
-        USERNAME: ${{ github.actor }}
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 使用 GitHub Token 权限
+      with:
+        upload_url: ${{ github.event.release.upload_url }} # 关联 release 事件
+        asset_path: ./build/jpackage/myapp.dmg # 根据实际路径调整
+        asset_name: myapp-${{ github.ref_name }}.dmg
+        asset_content_type: application/octet-stream
 
+    # 可选：上传到 GitHub Actions Artifacts（供下载测试）
+    - name: Upload Package to Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: jpackage-build-${{ matrix.os }}
+        path: ./build/jpackage/*.dmg  # 根据实际路径调整
