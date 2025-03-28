@@ -28,15 +28,24 @@ on:
         type: string
 
 jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.set-matrix.outputs.os }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" =~ ^refs/tags/v ]]; then
+            echo "os=['ubuntu-latest', 'macos-latest', 'windows-latest']" >> $GITHUB_OUTPUT
+          else
+            echo "os=['${{ inputs.os }}']" >> $GITHUB_OUTPUT
+          fi
   build:
-    runs-on: ${{ matrix.os }}
+    needs: setup-matrix
     strategy:
       matrix:
-        # 动态判断触发条件
-        os:
-          cond: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) }}
-          if_true: ['ubuntu-latest', 'macos-latest', 'windows-latest']  # string value
-          if_false: [inputs.os]  # string value
+        os: ${{ fromJSON(needs.setup-matrix.outputs.os) }}
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
