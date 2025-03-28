@@ -108,5 +108,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/jpackage/*.${{ matrix.extension }}
-          asset_name: myapp-${{ github.ref_name }}.${{ matrix.extension }}
+          asset_path: ./build/jpackage/*
+          asset_name: myapp-${{ github.ref_name }}.*
