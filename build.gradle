@@ -126,6 +126,8 @@ jlink {
 //     “警告: 当前不支持已签名模块化" 加入'--ignore-signing-information'选项
     options = ['--strip-debug', '--compress', 'zip-6', '--no-header-files', '--no-man-pages', '--ignore-signing-information']
 //    https://walczak.it/blog/distributing-javafx-desktop-applications-without-requiring-jvm-using-jlink-and-jpackage
+
+//    配置参考文档 https://docs.oracle.com/en/java/javase/17/docs/specs/man/jpackage.html
     jpackage {
 //        skipInstaller = true
         def installerOptionsParams = [
@@ -135,21 +137,38 @@ jlink {
 
         println('Current OS: '+os)
 
-        if (os.isWindows()){
+
+        // 安装器类型和图标（按平台动态配置）
+        if (os.isWindows()) {
+            installerType = 'msi'
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.ico'
-            installerType = 'msi' //或exe
             installerOptions = [
                     '--win-shortcut',
                     '--win-dir-chooser',
                     '--win-menu'
-            ]+installerOptionsParams
-        }
-        else if (os.isMacOsX()) {
-            def entitlementsFile = file("src/main/resources/entitlements.plist")  // 权限文件路径
+            ] + installerOptionsParams
+        } else if (os.isMacOsX()) {
+            installerType = 'dmg'
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
-            installerType = 'dmg' //dmg或pkg
-            installerOptions = installerOptionsParams
-//            + ['--mac-sign',                         // 启用签名
+            installerOptions = [
+                    '--mac-package-name', 'com.ririv.quickoutline',
+                    '--mac-package-identifier', 'com.ririv.quickoutline'
+            ] + installerOptionsParams
+        } else if (os.isLinux()) {
+            installerType = 'deb' // 或 'rpm'（根据需求选择）
+            icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.png' // Linux 支持 PNG/SVG
+            installerOptions = [
+                    '--linux-shortcut', // 创建桌面快捷方式
+                    '--linux-menu-group', 'Development', // 菜单分组
+                    '--linux-package-name', 'quickoutline' // 包名
+            ] + installerOptionsParams
+        }
+
+        // 其他通用配置（如权限文件、资源路径等）
+        if (os.isMacOsX()) {
+            def entitlementsFile = file("src/main/resources/entitlements.plist")
+            // macOS 权限配置（可选）
+            // signer = ['--mac-sign',                         // 启用签名
 ////            '--mac-signing-keychain', '/Library/Keychains/System.keychain', // 钥匙串路径
 ////            '--mac-signing-key-user-name', "Developer ID Application: Your Name (XXXXXXXXXX)", // 证书名称
 //            '--mac-entitlements', entitlementsFile.absolutePath ] // 权限文件
