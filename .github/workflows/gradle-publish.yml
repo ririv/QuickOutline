@@ -10,7 +10,6 @@ name: Build & Publish JPackage
 on:
   push:
     tags: ['v*']
-    
   workflow_dispatch:
     inputs:
       os:
@@ -90,7 +89,6 @@ jobs:
       # 自动发布Release
       - name: Create Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')  # 仅限标签推送
-        # if: github.event_name != 'workflow_dispatch'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
