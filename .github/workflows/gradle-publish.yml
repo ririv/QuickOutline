@@ -37,14 +37,17 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" =~ ^refs/tags/v ]]; then
             echo "os=['ubuntu-latest', 'macos-latest', 'windows-latest']" >> $GITHUB_OUTPUT
+            echo "extension=['.exe', '.sh', '.app']" >> $GITHUB_OUTPUT
           else
             echo "os=['${{ inputs.os }}']" >> $GITHUB_OUTPUT
+            echo "extension=['${{ inputs.extension }}']" >> $GITHUB_OUTPUT
           fi
   build:
     needs: setup-matrix
     strategy:
       matrix:
         os: ${{ fromJSON(needs.setup-matrix.outputs.os) }}
+        extension: ${{ fromJSON(needs.setup-matrix.outputs.extension) }}
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -84,7 +87,12 @@ jobs:
 
       # 构建命令统一化
       - name: Build with Gradle
-        run: ./gradlew clean jpackage -Pversion="$version"
+        run: |
+          if [ -n "$version" ]; then
+            ./gradlew clean jpackage -Pversion="$version"  # 传递版本号给 Gradle
+          else
+            ./gradlew clean jpackage
+          fi
 
       # 产物上传逻辑
       - name: Upload Artifact
