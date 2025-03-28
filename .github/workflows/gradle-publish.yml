@@ -33,12 +33,7 @@ jobs:
     strategy:
       matrix:
         # 动态判断触发条件
-        os: 
-          ${{ 
-            github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') 
-            ? ['ubuntu-latest', 'macos-latest', 'windows-latest'] 
-            : [inputs.os] 
-          }}
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest'] 
 
     steps:
       - uses: actions/checkout@v4
