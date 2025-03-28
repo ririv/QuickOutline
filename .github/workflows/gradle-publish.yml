@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       os: ${{ steps.set-matrix.outputs.os }}
+      extension: ${{ steps.set-matrix.outputs.extension }}
     steps:
       - id: set-matrix
         run: |
