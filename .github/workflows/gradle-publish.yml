@@ -32,16 +32,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       os: ${{ steps.set-matrix.outputs.os }}
-      extension: ${{ steps.set-matrix.outputs.extension }}
     steps:
       - id: set-matrix
         run: |
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" =~ ^refs/tags/v ]]; then
             echo "os=['ubuntu-latest', 'macos-latest', 'windows-latest']" >> $GITHUB_OUTPUT
-            echo "extension=['.exe', '.sh', '.app']" >> $GITHUB_OUTPUT
           else
             echo "os=['${{ inputs.os }}']" >> $GITHUB_OUTPUT
-            echo "extension=['${{ inputs.extension }}']" >> $GITHUB_OUTPUT
           fi
   build:
     needs: setup-matrix
@@ -100,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jpackage-${{ matrix.os }}
-          path: ./build/jpackage/*.${{ matrix.extension }}
+          path: ./build/jpackage/*
 
       # 自动发布Release
       - name: Create Release
