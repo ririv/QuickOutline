@@ -69,7 +69,7 @@ jobs:
             libgtk-3-0 \
             libxtst6 \
             libx11-xcb1 \
-            libasound2 \
+            libasound2t64 \
             libfontconfig1 \
             libfreetype6
 
