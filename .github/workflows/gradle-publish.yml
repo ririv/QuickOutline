@@ -45,7 +45,6 @@ jobs:
     strategy:
       matrix:
         os: ${{ fromJSON(needs.setup-matrix.outputs.os) }}
-        extension: ${{ fromJSON(needs.setup-matrix.outputs.extension) }}
     runs-on: ${{ matrix.os }}
 
     steps:
