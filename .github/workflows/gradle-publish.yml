@@ -8,6 +8,7 @@
 name: Build, Package & Publish
 
 on:
+  workflow_dispatch: # 手动触发
   push:
     tags: ['v*'] # 仅在打标签时触发（例如 v1.0.0）
 
