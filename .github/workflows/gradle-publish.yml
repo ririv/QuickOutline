@@ -4,17 +4,15 @@
 # documentation.
 # This workflow will build a package using Gradle and then publish it to GitHub packages when a release is created
 # For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#Publishing-using-gradle
+
 name: Build & Publish JPackage
 
 on:
-  # 自动触发：当推送符合 v* 格式的标签时
   push:
     tags: ['v*']
-  
-  # 手动触发：允许从 GitHub 界面直接运行
   workflow_dispatch:
     inputs:
-      os:  # 用户手动选择目标操作系统
+      os:
         description: 'Target OS for packaging'
         required: true
         default: 'macos-latest'
@@ -22,7 +20,8 @@ on:
         options: 
           - ubuntu-latest
           - macos-latest
-      version:  # 用户手动输入版本号（可选）
+          - windows-latest
+      version:
         description: 'Version number for the package'
         required: false
         default: '2.0.0'
@@ -33,7 +32,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]  # 默认支持多平台
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -52,25 +51,63 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # 如果是手动触发，使用用户输入的版本号
-      - name: Set Version (Manual Trigger)
-        if: github.event_name == 'workflow_dispatch'  # 仅在手动触发时生效
+      # 版本号设置逻辑
+      - name: Set Version from Tag (Auto)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Set Version from Input (Manual)
+        if: github.event_name == 'workflow_dispatch'
         run: echo "version=${{ inputs.version }}" >> $GITHUB_ENV
 
-      - name: Build with Gradle
+      # Ubuntu 依赖安装
+      - name: Install Ubuntu Dependencies
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          if [ -n "$version" ]; then
-            ./gradlew clean jpackage -Pversion="$version"  # 传递版本号给 Gradle
-          else
-            ./gradlew clean jpackage
-          fi
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-0 \
+            libxtst6 \
+            libx11-xcb1 \
+            libasound2 \
+            libfontconfig1 \
+            libfreetype6
 
+      # Windows 依赖安装（需要管理员权限）
+      - name: Install Windows Dependencies
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install wiix64
+          # 或者手动安装需要的Visual C++运行时库
+
+      # 构建步骤
+      - name: Build with Gradle
+        run: ./gradlew clean jpackage -Pversion="$version"
+
+      # 确定包扩展名
+      - name: Determine Package Extension
+        id: extension
+        run: |
+          case "$RUNNER_OS" in
+            Linux)
+              echo "EXTENSION=deb" >> $GITHUB_ENV
+              ;;
+            Windows)
+              echo "EXTENSION=msi" >> $GITHUB_ENV
+              ;;
+            Darwin)
+              echo "EXTENSION=dmg" >> $GITHUB_ENV
+              ;;
+          esac
+
+      # 上传构建产物
       - name: Upload Package to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: jpackage-build-${{ matrix.os }}
-          path: ./build/jpackage/*.dmg
+          path: ./build/jpackage/*.${{ env.EXTENSION }}
 
+      # 自动发布Release
       - name: Upload Release
         if: github.event_name != 'workflow_dispatch'  # 仅在自动触发时上传 Release
         uses: actions/upload-release-asset@v1
@@ -78,5 +115,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/jpackage/myapp.dmg
-          asset_name: myapp-${{ github.ref_name }}.dmg
+          asset_path: ./build/jpackage/*.${{ env.EXTENSION }}
+          asset_name: myapp-${{ github.ref_name }}.${{ env.EXTENSION }}
