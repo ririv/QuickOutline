@@ -21,7 +21,6 @@ on:
           - ubuntu-latest
           - windows-latest
           - macos-latest
-          - macos-15
       version:
         description: 'Version number for the package'
         required: false
