@@ -19,8 +19,9 @@ on:
         type: choice
         options: 
           - ubuntu-latest
-          - macos-latest
           - windows-latest
+          - macos-latest
+          - macos-15
       version:
         description: 'Version number for the package'
         required: false
