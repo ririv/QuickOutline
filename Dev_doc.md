@@ -25,6 +25,8 @@ plugins {
 请使用 Gradle 下的 Run 任务，不要使用IDEA自带的Main入口处运行（App）
 
 ## 打包
+
+### 手动打包
 运行 `Gradle - build - jpackageImage` 任务可以直接成功打包成应用镜像（可执行文件）
 
 运行 `jpackage` 任务则打包成安装包文件，在生成安装包时，需要操作系统相关的工具，例如：
@@ -35,6 +37,9 @@ plugins {
 > **Note:** jpackage 依赖于旧版本的 WiX，提示"找不到 WiX 工具 (light.exe, candle.exe)"
 >
 > 因此请使用 WiX 3，并确保它添加到环境变量
+
+### 自动打包
+本仓库已在 github actions 启用自动打包功能，也可手动触发 acitons 打包
 
 ### 减小打包体积
 发现3个因素影响：
