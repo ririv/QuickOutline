@@ -87,8 +87,11 @@ jobs:
       - name: Install Dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          choco install visualcppbuildtools -y
-          choco install dotnetruntime -y
+          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          choco install wixtoolset --version=3.14.1 -y
+          # choco install visualcppbuildtools -y
+          # choco install dotnetruntime -y
+          
 
       # 构建命令统一化
       - name: Build with Gradle
