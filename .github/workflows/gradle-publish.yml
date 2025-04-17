@@ -87,20 +87,33 @@ jobs:
       - name: Install Dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-          choco install wixtoolset --version=3.14.1 -y
+          # Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          # choco install wixtoolset --version=3.14.1 -y
           # choco install visualcppbuildtools -y
           # choco install dotnetruntime -y
           
 
       # 构建命令统一化
-      - name: Build with Gradle
+      - name: Build with Gradle (Ubuntu/macOS)
+        if: matrix.os != 'windows-latest'
         run: |
           if [ -n "$version" ]; then
             ./gradlew clean jpackage -Pversion="$version"  # 传递版本号给 Gradle
           else
             ./gradlew clean jpackage
           fi
+          
+      - name: Build with Gradle (Windows)
+        if: matrix.os == 'windows-latest'  # 仅在 Windows 执行
+        shell: pwsh
+        run: |
+          if ($env:version) {
+            Write-Host "Building version $env:version"
+            ./gradlew clean jpackage -Pversion="$env:version"
+          } else {
+            Write-Host "Building default version"
+            ./gradlew clean jpackage
+          }
 
       # 产物上传逻辑
       - name: Upload Artifact
