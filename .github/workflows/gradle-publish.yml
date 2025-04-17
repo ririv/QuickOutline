@@ -82,6 +82,7 @@ jobs:
             libgtk-3-0 \
             libxtst6 \
             libasound2 \
+            libasound2t64 \
             alsa-base
 
       - name: Install Dependencies (Windows)
