@@ -158,8 +158,8 @@ jlink {
             installerType = 'deb' // 或 'rpm'（根据需求选择）
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.png' // Linux 支持 PNG/SVG
             installerOptions = [
-                    '--linux-shortcut', // 创建桌面快捷方式
-                    '--linux-menu-group', 'Development', // 菜单分组
+                    // '--linux-shortcut', // 创建桌面快捷方式
+                    // '--linux-menu-group', 'Development', // 菜单分组
                     '--linux-package-name', 'quickoutline' // 包名
             ] + installerOptionsParams
         }
