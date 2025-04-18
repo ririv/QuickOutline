@@ -91,9 +91,14 @@
 
 ### Linux
 
-Linux 提供 deb 和 tar.gz 两种软件包，测试环境为 Ubuntu 22
+Linux 提供 deb 和 tar.gz 两种包，测试环境为 Ubuntu 22
 
-#### deb
+#### deb 安装包
+
+
+Q：缺少对应的依赖 liboss4-salsa-asound2 或 libasound2t64
+
+A：安装对应的依赖即可
 
 Q: 安装出现 `xdg-desktop-menu: No writable system menu directory found.`
 
@@ -105,13 +110,9 @@ A：运行如下命令
 sudo mkdir /usr/share/desktop-directories/
 ```
 
-Q：缺少对应的依赖 liboss4-salsa-asound2 或 libasound2t64
+#### tar.gz 压缩包
 
-A：安装对应的依赖即可
-
-#### tar.gz
-
-解压后直接运行 bin 文件夹下的同名软件
+解压后直接运行 bin 文件夹下的同名软件即可
 
 ## 使用 VSCode 以使用高级编辑功能
 
