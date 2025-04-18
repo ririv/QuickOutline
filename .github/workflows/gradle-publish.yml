@@ -81,7 +81,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             libgtk-3-0 \
             libxtst6 \
-            libasound2t64 \
+            # libasound2t64 \
+            liboss4-salsa-asound2 \
             alsa-base
 
       - name: Install Dependencies (Windows)
