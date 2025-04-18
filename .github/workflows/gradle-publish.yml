@@ -74,6 +74,8 @@ jobs:
         run: echo "version=${{ inputs.version }}" >> $GITHUB_ENV
 
       # 平台依赖安装
+      # liboss4-salsa-asound2 libasound2t64 仅需选择其一安装
+      # 其中 libasound2t64 要求 Ubuntu >= 24。Ubuntu 22 找不到对应包
       - name: Install Dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -84,7 +86,6 @@ jobs:
             alsa-base \
             liboss4-salsa-asound2
             # libasound2t64
-
 
       - name: Install Dependencies (Windows)
         if: matrix.os == 'windows-latest'
