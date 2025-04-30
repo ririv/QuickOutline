@@ -53,7 +53,7 @@ public class MainController {
 
     public StackPane root;
 
-    public ViewScaleType viewScaleType = ViewScaleType.None;
+    public ViewScaleType viewScaleType = ViewScaleType.NONE;
 
 
     //必须映射到textModeController，否则会无法报错
@@ -90,7 +90,9 @@ public class MainController {
     // 定义一个枚举类型的属性
     FnTab currenTab;
 
+    @FXML
     public void initialize() {
+//        LocalizationManager.autoBind(this); // 自动绑定子类的字段，用于@BindText
 
         textTabViewController.setMainController(this);
         treeTabViewController.setMainController(this);

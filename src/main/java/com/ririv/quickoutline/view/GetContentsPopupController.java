@@ -1,6 +1,7 @@
 package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.service.PdfTocService;
+import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.Message;
 import com.ririv.quickoutline.view.controls.Switch;
 import javafx.beans.property.BooleanProperty;
@@ -46,7 +47,10 @@ public class GetContentsPopupController extends StackPane {
         this.mainController = mainController;
 
         // 通过 FXMLLoader 加载 FXML
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("GetContentsPopup.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
+                "GetContentsPopup.fxml"),
+                LocalizationManager.getResourceBundle()
+        );
         fxmlLoader.setRoot(this); // 设置根节点为当前 Message 实例
         fxmlLoader.setController(this); // 设置控制器为当前 Message 实例
         try {

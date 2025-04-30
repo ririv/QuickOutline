@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.utils.LocalizationManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -9,7 +10,9 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.ResourceBundle;
 
 
 public class App extends Application {
@@ -17,13 +20,15 @@ public class App extends Application {
 //      注意javafx程序架子顺序：main启动程序，加载fxml，fxml加载指定的controller
         @Override
         public void start(Stage stage) throws IOException {
-            FXMLLoader fxmlLoader = new FXMLLoader();
 
-            URL url = getClass().getResource("MainView.fxml");
-            fxmlLoader.setLocation(url);
-            Parent content = fxmlLoader.load();
+            FXMLLoader fxmlLoader = new FXMLLoader(
+                    getClass().getResource("MainView.fxml"),
+                    LocalizationManager.getResourceBundle()
+            );
 
-            Scene scene = new Scene(content, 800, 600);
+            Parent root = fxmlLoader.load();
+
+            Scene scene = new Scene(root, 800, 600);
 
 
 //            stage.setResizable(false); //不可调整大小

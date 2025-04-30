@@ -16,7 +16,7 @@
             <VBox>
                 <HBox id="topPane" alignment="CENTER">
                     <TextField fx:id="filepathTF" disable="true" prefHeight="25"
-                               promptText="请选择或者拖拽PDF文件到窗口"
+                               promptText="%filepathTF.prompt"
                                HBox.hgrow="ALWAYS"/>
                     <GraphButtonWrapper wrapperPadding="3">
                         <HBox.margin>
@@ -28,7 +28,7 @@
                                 <Insets topRightBottomLeft="2.0"/>
                             </padding>
                             <tooltip>
-                                <Tooltip text="打开..."/>
+                                <Tooltip text="%browseFileBtn.tooltip"/>
                             </tooltip>
                             <graphic>
                                 <Region styleClass="icon,open-icon" prefWidth="15" prefHeight="15"/>
@@ -70,7 +70,7 @@
                             <Button fx:id="deleteBtn" onAction="#deleteBtnAction" styleClass="graph-button"
                                     prefWidth="30">
                                 <tooltip>
-                                    <Tooltip text="删除PDF目录（不会修改源文件）"/>
+                                    <Tooltip text="%deleteBtn.tooltip"/>
                                 </tooltip>
                                 <graphic>
                                     <Region styleClass="icon, delete-icon"/>
@@ -79,21 +79,21 @@
                         </GraphButtonWrapper>
                         <Button fx:id="getContentsBtn" styleClass="my-button,plain-button-primary"
                                 onAction="#getContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
-                                text="获取目录">
+                                text="%getContentsBtn.text">
                         </Button>
                     </HBox>
 
                     <Button fx:id="setContentsBtn" styleClass="my-button,plain-button-important"
                             onAction="#setContentsBtnAction"
-                            mnemonicParsing="false" prefWidth="120.0" text="添加目录"
+                            mnemonicParsing="false" prefWidth="120.0" text="%setContentsBtn.text"
                             GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
-                    <TextField fx:id="offsetTF" maxWidth="200" promptText="页码偏移量" GridPane.columnIndex="3"
+                    <TextField fx:id="offsetTF" maxWidth="200" promptText="%offsetTF.prompt" GridPane.columnIndex="3"
                                GridPane.halignment="CENTER">
                         <GridPane.margin>
                             <Insets left="20.0" right="20.0"/>
                         </GridPane.margin>
                         <tooltip>
-                            <Tooltip text="在添加目录时会加上偏移量，支持负数，相加的结果不要超出实际页码范围"/>
+                            <Tooltip text="%offsetTF.tooltip"/>
                         </tooltip>
                     </TextField>
                     <GridPane id="method-grid" alignment="CENTER_RIGHT" prefWidth="90.0" GridPane.columnIndex="4">
@@ -102,7 +102,7 @@
                         </fx:define>
                         <StackPane GridPane.rowIndex="0" GridPane.halignment="RIGHT">
                             <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
-                                         text="按序号" >
+                                         text="%seqRBtn.text" >
                                 <StackPane.margin>
                                     <Insets topRightBottomLeft="5" />
                                 </StackPane.margin>
@@ -111,16 +111,13 @@
                         </StackPane>
                         <StackPane GridPane.rowIndex="1" GridPane.halignment="RIGHT">
                             <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
-                                         text="按缩进">
+                                         text="%indentRBtn.text">
                                 <StackPane.margin>
                                     <Insets topRightBottomLeft="5" />
                                 </StackPane.margin>
                             </RadioButton>
                             <Remind fx:id="indentRBtnRemind" />
                         </StackPane>
-<!--                        <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"-->
-<!--                                     text="按缩进" GridPane.halignment="RIGHT"-->
-<!--                                     GridPane.rowIndex="1"/>-->
                         <rowConstraints>
                             <RowConstraints minHeight="10.0" prefHeight="30.0"/>
                             <RowConstraints minHeight="10.0" prefHeight="30.0"/>
@@ -149,7 +146,7 @@
                 <GridPane id="pageLabelBottomPane" visible="false">
                     <Button fx:id="setPageLabelBtn" styleClass="my-button,plain-button-important"
                             onAction="#setContentsBtnAction"
-                            mnemonicParsing="false" prefWidth="120.0" text="添加页面标签"
+                            mnemonicParsing="false" prefWidth="120.0" text="%setPageLabelBtn.text"
                             GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
 
                     <columnConstraints>

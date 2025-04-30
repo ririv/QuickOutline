@@ -11,7 +11,7 @@
 
     <StackPane HBox.hgrow="ALWAYS">
 
-        <TextArea fx:id="contentsTextArea" promptText="请输入目录文本">
+        <TextArea fx:id="contentsTextArea" promptText="%contentsTextArea.prompt">
 <!--            这里去掉右边Pane的阴影效果了，改为分割线显示，所以不用了-->
 <!--         <StackPane.margin>-->
 <!--             设置右margin，防止右边sidebar的阴影效果挡住部分区域（比如右边挡住滚动条,能看到。但按不了）,并且消除了边框&ndash;&gt;-->
@@ -19,7 +19,7 @@
 <!--         </StackPane.margin>-->
         </TextArea>
 
-        <Label fx:id="mask" textFill="gray" visible="false">
+        <Label fx:id="mask" textFill="gray" visible="false" text="%mask.text">
         </Label>
     </StackPane>
     <Region styleClass="dividing-line-v" />
@@ -30,13 +30,13 @@
     >
         <Button fx:id="externalEditorBtn" onAction="#externalEditorBtnAction" styleClass="my-button,plain-button-primary" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
             <tooltip >
-                <Tooltip text="使用VSCode编辑，文本会自动同步"/>
+                <Tooltip text="%externalEditorBtn.tooltip"/>
             </tooltip>
         </Button>
 
-        <Button fx:id="autoFormatBtn" onAction="#autoFormatBtnAction" styleClass="my-button,plain-button-primary" mnemonicParsing="false" prefWidth="75.0" text="自动缩进">
+        <Button fx:id="autoFormatBtn" onAction="#autoFormatBtnAction" styleClass="my-button,plain-button-primary" mnemonicParsing="false" prefWidth="75.0" text="%autoFormatBtn.text">
             <tooltip >
-                <Tooltip text="根据文本内容进行识别，自动格式化并缩进文本"/>
+                <Tooltip text="%autoFormatBtn.tooltip"/>
             </tooltip>
         </Button>
         <Label />
@@ -44,9 +44,10 @@
         <VBox  alignment="TOP_CENTER" maxWidth="100"
                AnchorPane.bottomAnchor="50" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
         >
-            <Label style="-fx-text-fill: #969696" text="Tip: 选中后按下"/>
-            <Label style="-fx-text-fill: #969696" text="Tab | Shift+Tab 键"/>
-            <Label style="-fx-text-fill: #969696" text="即可快速缩进"/>
+<!--            不写成一个Label是为了保证居中-->
+            <Label style="-fx-text-fill: #969696" text="%Tip.text1"/>
+            <Label style="-fx-text-fill: #969696" text="%Tip.text2"/>
+            <Label style="-fx-text-fill: #969696" text="%Tip.text3"/>
         </VBox>
     </AnchorPane>
 </HBox>

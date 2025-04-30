@@ -7,8 +7,8 @@
 
     <TreeTableView fx:id="treeTableView" HBox.hgrow="ALWAYS">
         <columns>
-            <TreeTableColumn fx:id="titleColumn" sortable="false" prefWidth="500" text="标题"  />
-            <TreeTableColumn fx:id="offsetPageColumn" sortable="false" prefWidth="100" text="页码" />
+            <TreeTableColumn fx:id="titleColumn" sortable="false" prefWidth="500" text="%titleColumn.text"  />
+            <TreeTableColumn fx:id="offsetPageColumn" sortable="false" prefWidth="100" text="%offsetPageColumn.text" />
         </columns>
     </TreeTableView>
 <!--    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" styleClass="out-shadow" vgap="50">-->

@@ -2,6 +2,7 @@ package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
+import com.ririv.quickoutline.utils.BindText;
 import com.ririv.quickoutline.utils.InfoUtil;
 import com.ririv.quickoutline.utils.Pair;
 import javafx.application.Platform;
@@ -37,6 +38,7 @@ public class TextTabController {
     public Button autoFormatBtn;
 
     private final SyncWithExternalEditorService syncWithExternalEditorService = new SyncWithExternalEditorService();
+
     public Label mask;
 //    public ScalePane
 
@@ -57,27 +59,10 @@ public class TextTabController {
 
     public void initialize() {
         textModelController = this;
-        mask.setText("正在等待VSCode关闭文件\n期间可使用\"自动缩进\"功能");
-
 /*
         \n没用，只好用\r了
         https://stackoverflow.com/questions/51698600/how-to-add-line-breaks-to-prompt-text-in-javafx
 */
-        contentsTextArea.setPromptText("""
-                请输入目录文本，格式如下\r
-                \r
-                按序号：\r
-                1  我是标题  1\r
-                1.1  我是子标题  2\r
-                1.1.1  我是子子标题 3\r
-                (此方式如有缩进将会自动去除，不会影响，最终生成的PDF中标题中也会带序号)\r
-                \r
-                按缩进（推荐使用制表符Tab键）：\r
-                我是标题  1\r
-                \t我是子标题  2\r
-                \t\t我是子子标题  3\r
-                (此方式如有序号将会视作标题，不会影响)\r
-                """);
 
 
         // 设置处理键盘事件

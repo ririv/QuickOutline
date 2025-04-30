@@ -94,7 +94,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
                         case CUSTOM_SCALE -> {
 //                            destination = PdfExplicitDestination.createXYZ(page, 0, top, zoom);
                         }
-                        case None -> {
+                        case NONE -> {
 //                            zoom 设为0，就会在跳转书签时保持缩放大小。
                             destination = PdfExplicitDestination.createXYZ(page, left, top, 0);
                         }

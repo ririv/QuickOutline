@@ -10,7 +10,7 @@
          prefWidth="100.0">
 
     <VBox spacing="10">
-        <Label styleClass="title" text="缩放类型" />
+        <Label styleClass="title" text="%setContentsPopup.title" />
         <HBox spacing="5" alignment="CENTER">
             <fx:define>
                 <ToggleGroup fx:id="viewScaleToggleGroup"/>
@@ -37,7 +37,7 @@
                 </ToggleButton>
             </GraphButtonWrapper>
         </HBox>
-        <HBox alignment="CENTER"><Label  fx:id="label" text="无缩放"/></HBox>
+        <HBox alignment="CENTER"><Label  fx:id="viewScaleTypeLabel" text="%viewScaleTypeLabel.NONE"/></HBox>
 
     </VBox>
 
