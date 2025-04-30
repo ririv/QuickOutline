@@ -1,6 +1,8 @@
 package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
+import com.ririv.quickoutline.utils.LocalizationManager;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -9,13 +11,14 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
+import java.util.ResourceBundle;
 
 public class SetContentsPopupController extends StackPane {
 
     private MainController mainController;
 
     @FXML
-    private Label label;
+    private Label viewScaleTypeLabel;
 
     @FXML
     private ToggleGroup viewScaleToggleGroup;
@@ -33,7 +36,10 @@ public class SetContentsPopupController extends StackPane {
         this.mainController = mainController;
 
         // 通过 FXMLLoader 加载 FXML
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("SetContentsPopup.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(
+                getClass().getResource("SetContentsPopup.fxml"),
+                LocalizationManager.getResourceBundle()
+        );
         fxmlLoader.setRoot(this); // 设置根节点为当前 Message 实例
         fxmlLoader.setController(this); // 设置控制器为当前 Message 实例
         try {
@@ -44,22 +50,24 @@ public class SetContentsPopupController extends StackPane {
     }
 
     public void initialize() {
+        ResourceBundle bundle = LocalizationManager.getResourceBundle();
+
         viewScaleToggleGroup.selectedToggleProperty().addListener( (event,oldValue, newValue) -> {
-            String labelText;
+            SimpleStringProperty labelText = new SimpleStringProperty();
             if (newValue == fitToWidthBtn){
-                labelText = "适合宽度";
+                labelText.set(bundle.getString("viewScaleTypeLabel.FIT_TO_WIDTH"));
                 this.mainController.viewScaleType = ViewScaleType.FIT_TO_WIDTH;
             } else if (newValue == fitToHeightBtn){
-                labelText = "适合高度";
+                labelText.set(bundle.getString("viewScaleTypeLabel.FIT_TO_HEIGHT"));
                 this.mainController.viewScaleType = ViewScaleType.FIT_TO_HEIGHT;
             } else if (newValue == actualSizeBtn){
-                labelText = "实际大小";
+                labelText.set(bundle.getString("viewScaleTypeLabel.ACTUAL_SIZE"));
                 this.mainController.viewScaleType = ViewScaleType.ACTUAL_SIZE;
             } else { // null
-                labelText = "无缩放";
-                this.mainController.viewScaleType = ViewScaleType.None;
+                labelText.set(bundle.getString("viewScaleTypeLabel.NONE"));
+                this.mainController.viewScaleType = ViewScaleType.NONE;
             }
-            label.setText(labelText);
+            viewScaleTypeLabel.textProperty().bind(labelText);
             });
     }
 

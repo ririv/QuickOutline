@@ -6,5 +6,5 @@ public enum ViewScaleType {
     FIT_TO_PAGE,
     ACTUAL_SIZE,
     CUSTOM_SCALE,
-    None
+    NONE
 }
