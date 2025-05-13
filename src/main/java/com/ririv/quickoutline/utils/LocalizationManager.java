@@ -19,7 +19,7 @@ public class LocalizationManager {
 
     static {
         // 2. （可选）设置默认 Locale（如果需要强制覆盖）
-        localeProperty.set(Locale.forLanguageTag("en-US"));
+//        localeProperty.set(Locale.forLanguageTag("en-US"));
 
         // 监听语言变化，自动更新资源包
         localeProperty.addListener((obs, oldVal, newVal) -> updateResourceBundle());
