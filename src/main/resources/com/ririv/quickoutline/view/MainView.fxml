@@ -61,27 +61,27 @@
             <VBox>
                 <Region styleClass="dividing-line-h"/>
                 <StackPane>
-                <GridPane id="outlineBottomPane">
-                    <HBox alignment="CENTER">
-                        <!--                    <GridPane.margin>-->
-                        <!--                        <Insets left="20.0"/>-->
-                        <!--                    </GridPane.margin>-->
-                        <GraphButtonWrapper>
-                            <Button fx:id="deleteBtn" onAction="#deleteBtnAction" styleClass="graph-button"
-                                    prefWidth="30">
-                                <tooltip>
-                                    <Tooltip text="%deleteBtn.tooltip"/>
-                                </tooltip>
-                                <graphic>
-                                    <Region styleClass="icon, delete-icon"/>
-                                </graphic>
+                    <GridPane id="outlineBottomPane">
+                        <HBox alignment="CENTER">
+                            <!--                    <GridPane.margin>-->
+                            <!--                        <Insets left="20.0"/>-->
+                            <!--                    </GridPane.margin>-->
+                            <GraphButtonWrapper>
+                                <Button fx:id="deleteBtn" onAction="#deleteBtnAction" styleClass="graph-button"
+                                        prefWidth="30">
+                                    <tooltip>
+                                        <Tooltip text="%deleteBtn.tooltip"/>
+                                    </tooltip>
+                                    <graphic>
+                                        <Region styleClass="icon, delete-icon"/>
+                                    </graphic>
+                                </Button>
+                            </GraphButtonWrapper>
+                            <Button fx:id="getContentsBtn" styleClass="my-button,plain-button-primary"
+                                    onAction="#getContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
+                                    text="%getContentsBtn.text">
                             </Button>
-                        </GraphButtonWrapper>
-                        <Button fx:id="getContentsBtn" styleClass="my-button,plain-button-primary"
-                                onAction="#getContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
-                                text="%getContentsBtn.text">
-                        </Button>
-                    </HBox>
+                        </HBox>
 
                     <Button fx:id="setContentsBtn" styleClass="my-button,plain-button-important"
                             onAction="#setContentsBtnAction"
@@ -96,11 +96,17 @@
                             <Tooltip text="%offsetTF.tooltip"/>
                         </tooltip>
                     </TextField>
-                    <GridPane id="method-grid" alignment="CENTER_RIGHT" prefWidth="90.0" GridPane.columnIndex="4">
+
+                    <VBox alignment="CENTER_RIGHT" prefWidth="80.0" GridPane.columnIndex="4">
+                        <GridPane.margin>
+                            <Insets left="35" right="20.0"/>
+                        </GridPane.margin>
+
                         <fx:define>
                             <ToggleGroup fx:id="methodToggleGroup"/>
                         </fx:define>
-                        <StackPane GridPane.rowIndex="0" GridPane.halignment="RIGHT">
+
+                        <StackPane alignment="CENTER_LEFT">
                             <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
                                          text="%seqRBtn.text" >
                                 <StackPane.margin>
@@ -109,7 +115,7 @@
                             </RadioButton>
                             <Remind fx:id="seqRBtnRemind" />
                         </StackPane>
-                        <StackPane GridPane.rowIndex="1" GridPane.halignment="RIGHT">
+                        <StackPane alignment="CENTER_LEFT">
                             <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
                                          text="%indentRBtn.text">
                                 <StackPane.margin>
@@ -118,48 +124,38 @@
                             </RadioButton>
                             <Remind fx:id="indentRBtnRemind" />
                         </StackPane>
-                        <rowConstraints>
-                            <RowConstraints minHeight="10.0" prefHeight="30.0"/>
-                            <RowConstraints minHeight="10.0" prefHeight="30.0"/>
-                        </rowConstraints>
-                        <columnConstraints>
-                            <ColumnConstraints/>
-                        </columnConstraints>
-                        <GridPane.margin>
-                            <Insets right="50.0"/>
-                        </GridPane.margin>
 
+                    </VBox>
+
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints vgrow="SOMETIMES"/>
+                        </rowConstraints>
                     </GridPane>
 
-                    <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                    </columnConstraints>
-                    <rowConstraints>
-                        <RowConstraints vgrow="SOMETIMES"/>
-                    </rowConstraints>
-                </GridPane>
+                    <GridPane id="pageLabelBottomPane" visible="false">
+                        <Button fx:id="setPageLabelBtn" styleClass="my-button,plain-button-important"
+                                onAction="#setContentsBtnAction"
+                                mnemonicParsing="false" prefWidth="120.0" text="%setPageLabelBtn.text"
+                                GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
 
-                <GridPane id="pageLabelBottomPane" visible="false">
-                    <Button fx:id="setPageLabelBtn" styleClass="my-button,plain-button-important"
-                            onAction="#setContentsBtnAction"
-                            mnemonicParsing="false" prefWidth="120.0" text="%setPageLabelBtn.text"
-                            GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
-
-                    <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                    </columnConstraints>
-                    <rowConstraints>
-                        <RowConstraints vgrow="SOMETIMES"/>
-                    </rowConstraints>
-                </GridPane>
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints vgrow="SOMETIMES"/>
+                        </rowConstraints>
+                    </GridPane>
                 </StackPane>
             </VBox>
         </bottom>

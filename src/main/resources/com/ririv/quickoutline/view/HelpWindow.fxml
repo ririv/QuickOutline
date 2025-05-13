@@ -22,23 +22,25 @@
 <!--            <Label text="-preview"/>-->
         </HBox>
         <FlowPane>
-            <Text>使用说明:</Text>
-            <Hyperlink onMouseClicked="#browseHelpOnZhihu">@知乎</Hyperlink>
+            <Text text="%helpWindow.usage" />
             <Hyperlink onMouseClicked="#browseHelpOnGithub">@Github</Hyperlink>
         </FlowPane>
 
-        <Text>开源软件使用: iText (AGPL license)</Text>
+        <HBox>
+            <Text text="%helpWindow.dependenciesText" />
+            <Text>: iText (AGPL license)</Text>
+        </HBox>
         <FlowPane>
             <Label styleClass="graph-button" >
                 <graphic>
                     <Region styleClass="icon,github-icon" prefWidth="15" prefHeight="15"/>
                 </graphic>
             </Label>
-            <Hyperlink onMouseClicked="#browseRemoteRepo">开放源代码</Hyperlink>
+            <Hyperlink onMouseClicked="#browseRemoteRepo">Source</Hyperlink>
         </FlowPane>
         <FlowPane>
             <Text>By </Text>
-            <Hyperlink onMouseClicked="#browseHelpOnMyPage" >小红花</Hyperlink>
+            <Hyperlink onMouseClicked="#browseHelpOnMyPage" text="%helpWindow.author"></Hyperlink>
             <Text fill="#fd5656">🌺</Text>
         </FlowPane>
     </FlowPane>

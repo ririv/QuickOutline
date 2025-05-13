@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.MainController.FnTab;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -75,10 +76,13 @@ public class LeftPaneController {
         if (helpStage == null) {
             helpStage = new Stage();
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("HelpWindow.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("HelpWindow.fxml"),
+                    LocalizationManager.getResourceBundle()
+            );
             Parent helpWinRoot = loader.load();
 
-            helpStage.setTitle("帮助");
+            helpStage.setTitle("Help");
             helpStage.setScene(new Scene(helpWinRoot, 400, 300));
 
             helpStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon/help_black.png"))));

@@ -8,6 +8,7 @@ import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.InfoUtil;
+import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.Message;
 import com.ririv.quickoutline.view.controls.MessageContainer;
 import com.ririv.quickoutline.view.controls.PopupCard;
@@ -28,16 +29,15 @@ import org.slf4j.Logger;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
 public class MainController {
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(MainController.class);
+    private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
 
     public TextField filepathTF;
     public Button browseFileBtn;
@@ -143,7 +143,7 @@ public class MainController {
 
         browseFileBtn.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF 文档", "*.pdf"));
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(bundle.getString("fileChooser.fileTypeText"), "*.pdf"));
             File file = fileChooser.showOpenDialog(null);
             openFile(file);
         });
@@ -156,8 +156,8 @@ public class MainController {
 
         GetContentsPopupController getContentsPopupController = new GetContentsPopupController(this);
         getContentsPopupController.filepathProperty().bind(filepathTF.textProperty());
-        getContentsPopupController.setPrefHeight(120);
-        getContentsPopupController.setPrefWidth(250);
+//        getContentsPopupController.setPrefHeight(120);
+//        getContentsPopupController.setPrefWidth(280);
 
 
         PopupCard popup1 = new PopupCard(getContentsPopupController);
@@ -187,7 +187,7 @@ public class MainController {
             if (!textTabViewController.contentsTextArea.getText().isEmpty()) {
                 Optional<ButtonType> buttonType = showAlert(
                         Alert.AlertType.CONFIRMATION,
-                        "正在获取文件的目录文本，文本域中含有可能未保存的内容，是否确认?",
+                        bundle.getString("alert.unsavedConfirmation"),
                         root.getScene().getWindow());
                 if (buttonType.isPresent() && buttonType.get().getButtonData().isCancelButton()) {
                     return;
@@ -195,7 +195,7 @@ public class MainController {
             }
 
             if (filepathTF.getText().isEmpty()) {
-                messageManager.showMessage("请选择PDF文件", Message.MessageType.WARNING);
+                messageManager.showMessage(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING);
                 return;
             }
 
@@ -221,25 +221,25 @@ public class MainController {
         try {
             pdfOutlineService.checkOpenFile(newFilePath);
         } catch (IOException e) {
-            messageManager.showMessage("无法打开文档\n"+e.getMessage(), Message.MessageType.ERROR);
+            messageManager.showMessage(bundle.getString("message.cannotOpenDoc")+e.getMessage(), Message.MessageType.ERROR);
             return;
         } catch (EncryptedPdfException e) {
-            messageManager.showMessage("该文档已加密", Message.MessageType.WARNING);
+            messageManager.showMessage(bundle.getString("message.encryptedDoc"), Message.MessageType.WARNING);
         } catch (com.itextpdf.io.exceptions.IOException e){
             e.printStackTrace();
             logger.info(String.valueOf(e));
-            messageManager.showMessage("文档可能已损坏\n"+e.getMessage(), Message.MessageType.ERROR);
+            messageManager.showMessage(bundle.getString("message.corruptedDoc")+e.getMessage(), Message.MessageType.ERROR);
             return;
         }
 
 
         if (!textTabViewController.contentsTextArea.getText().isEmpty()) {
-            ButtonType keepContentsTextBtnType = new ButtonType("保留", ButtonBar.ButtonData.OK_DONE);
-            ButtonType noKeepContentsTextBtnType = new ButtonType("否", ButtonBar.ButtonData.OK_DONE);
-            ButtonType cancelBtnType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+            ButtonType keepContentsTextBtnType = new ButtonType(bundle.getString("btnType.keepContents"), ButtonBar.ButtonData.OK_DONE);
+            ButtonType noKeepContentsTextBtnType = new ButtonType(bundle.getString("btnType.noKeepContents"), ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelBtnType = new ButtonType(bundle.getString("btnType.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE);
             Optional<ButtonType> result = showAlert(
                     Alert.AlertType.CONFIRMATION,
-                    "正在打开新文件，是否保留文本域中的内容?",
+                    bundle.getString(bundle.getString("alert.saveConfirmation")),
                     root.getScene().getWindow(),
                     keepContentsTextBtnType,noKeepContentsTextBtnType,cancelBtnType);
 
@@ -260,7 +260,7 @@ public class MainController {
     @FXML
     private void setContentsBtnAction(ActionEvent event) {
             if (filepathTF.getText().isEmpty()) {
-                messageManager.showMessage("请选择PDF文件", Message.MessageType.WARNING);
+                messageManager.showMessage(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING);
                 return;
             }
 
@@ -287,7 +287,7 @@ public class MainController {
                 messageManager.showMessage(e.getMessage(), Message.MessageType.ERROR);
                 return;
             } catch (EncryptedPdfException e) {
-                messageManager.showMessage("该文档已加密，请先解密", Message.MessageType.ERROR);
+                messageManager.showMessage(bundle.getString("message.decryptionPrompt"), Message.MessageType.ERROR);
                 return;
             }
 
@@ -295,10 +295,10 @@ public class MainController {
     }
 
     private void showSuccessDialog() {
-        ButtonType openDirAndSelectFileButtonType = new ButtonType("打开文件所在位置", ButtonBar.ButtonData.OK_DONE);
-        ButtonType openFileButtonType = new ButtonType("打开文件", ButtonBar.ButtonData.OK_DONE);
+        ButtonType openDirAndSelectFileButtonType = new ButtonType(bundle.getString("btnType.openFileLocation"), ButtonBar.ButtonData.OK_DONE);
+        ButtonType openFileButtonType = new ButtonType(bundle.getString("btnType.openFile"), ButtonBar.ButtonData.OK_DONE);
         var result = showAlert(Alert.AlertType.INFORMATION,
-                "文件存储在\n" + destFilePath(), root.getScene().getWindow(),
+                bundle.getString("alert.FileSavedAt") + destFilePath(), root.getScene().getWindow(),
                 openDirAndSelectFileButtonType, openFileButtonType, new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE));
         try {
             String destFilePath = destFilePath();
@@ -359,7 +359,7 @@ public class MainController {
             textTabViewController.contentsTextArea.setText(contents);
         } catch (NoOutlineException e) {
             e.printStackTrace();
-            messageManager.showMessage("该文档没有书签目录", Message.MessageType.WARNING);
+            messageManager.showMessage(bundle.getString("message.noBookmarks"), Message.MessageType.WARNING);
         }
     }
 
@@ -384,7 +384,7 @@ public class MainController {
 
     public void deleteBtnAction(ActionEvent event) {
         if (filepathTF.getText().isEmpty()) {
-            messageManager.showMessage("请选择PDF文件", Message.MessageType.WARNING);
+            messageManager.showMessage(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING);
             return;
         }
         pdfOutlineService.deleteContents(filepathTF.getText(), destFilePath());

@@ -102,7 +102,7 @@ public class LocalizationManager {
                     field.setAccessible(true);
                     Node targetNode = (Node) field.get(controller); // 获取字段对应的 UI 控件
 
-                    String text = ResourceBundle.getBundle("messages").getString(resourceKey);
+                    String text = getResourceBundle().getString(resourceKey);
                     if (targetNode instanceof Labeled) {
                         ((Labeled) targetNode).setText(text);
                     }

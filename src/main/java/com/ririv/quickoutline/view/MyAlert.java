@@ -60,25 +60,25 @@ public class MyAlert extends Alert {
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
                     "icon/warning.png"
             )));
-            this.setTitle("警告");
+            this.setTitle("WARNING");
         }
         else if (this.getAlertType() == AlertType.ERROR) {
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
                     "icon/error.png"
             )));
-            this.setTitle("错误");
+            this.setTitle("ERROR");
         }
         else if (this.getAlertType() == AlertType.CONFIRMATION){
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
                     "icon/confirmation.png"
             )));
-            this.setTitle("确认");
+            this.setTitle("CONFIRMATION");
         }
         else {
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
                     "icon/SmileFace.png"
             )));
-            this.setTitle("成功");
+            this.setTitle("SUCCESS");
         }
 //        stage.getIcons().add(image);
         ImageView imageView = new ImageView(image);
