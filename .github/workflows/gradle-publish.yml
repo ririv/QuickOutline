@@ -21,11 +21,6 @@ on:
           - ubuntu-latest
           - windows-latest
           - macos-latest
-      version:
-        description: 'Version number for the package'
-        required: false
-        default: '2.0.0'
-        type: string
 
 jobs:
   setup-matrix:
@@ -66,12 +61,8 @@ jobs:
 
       # 版本号设置逻辑
       - name: Set Version from Tag (Auto)
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
-      - name: Set Version from Input (Manual)
-        if: github.event_name == 'workflow_dispatch'
-        run: echo "version=${{ inputs.version }}" >> $GITHUB_ENV
 
       # 平台依赖安装
       # liboss4-salsa-asound2 libasound2t64 仅需选择其一安装
