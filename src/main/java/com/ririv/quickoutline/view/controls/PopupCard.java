@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class PopupCard extends Popup {
     private static final Logger logger = LoggerFactory.getLogger(PopupCard.class);
 
-    PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(1));
+    PauseTransition delay = new javafx.animation.PauseTransition(Duration.seconds(0.3));
     private boolean isHideAfterDelayWhenEscaped = true;
 
     private Parent content;

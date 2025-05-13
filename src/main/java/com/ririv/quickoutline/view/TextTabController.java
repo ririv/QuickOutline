@@ -4,6 +4,7 @@ import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.utils.BindText;
 import com.ririv.quickoutline.utils.InfoUtil;
+import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.utils.Pair;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +34,7 @@ import static com.ririv.quickoutline.view.MyAlert.showAlert;
 public class TextTabController {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TextTabController.class);
 
+    private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
 
     public TextArea contentsTextArea;
     public Button externalEditorBtn;
@@ -244,7 +247,7 @@ public class TextTabController {
                     Platform.runLater(() -> {
                         contentsTextArea.setDisable(true);
                         externalEditorBtn.setDisable(true);
-                        externalEditorBtn.setText("已连接...");
+                        externalEditorBtn.setText(bundle.getString("btn.externalEditorConnected"));
 //                                externalEditorBtn.setGraphic();
                         mask.setVisible(true);
                     });
@@ -258,12 +261,11 @@ public class TextTabController {
 
                 }),
                 () -> Platform.runLater(() -> {
-                    ButtonType gotoButton = new ButtonType("前往官网下载", ButtonBar.ButtonData.OK_DONE);
+                    ButtonType gotoButton = new ButtonType(bundle.getString("btnType.gotoDownload"), ButtonBar.ButtonData.OK_DONE);
                     ButtonType cancelButton = new ButtonType("OK", ButtonBar.ButtonData.CANCEL_CLOSE);
 
                     //必须加取消类型按钮，否则对话框右上角的"×"不起作用
-                    String contentText = "未找到VSCode\n请确保安装并正确添加环境变量至PATH\n详情请查阅右上角帮助-使用说明";
-
+                    String contentText = bundle.getString("alert.NotFoundVSCodePrompt");
 
                     Optional<ButtonType> result;
                     result = showAlert(

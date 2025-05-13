@@ -18,10 +18,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
+import java.util.ResourceBundle;
 
 public class GetContentsPopupController extends StackPane {
 
     private StringProperty filepath = new SimpleStringProperty();
+
+    private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
 
     public HBox pageNumRangeLayout;
 
@@ -102,7 +105,7 @@ public class GetContentsPopupController extends StackPane {
 
         extractTocBtn.setOnAction(event -> {
             if (filepath.get() == null || filepath.get().isEmpty()) {
-                mainController.messageManager.showMessage("请选择PDF文件", Message.MessageType.WARNING);
+                mainController.messageManager.showMessage( bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING);
                 return;
             }
 
@@ -111,7 +114,7 @@ public class GetContentsPopupController extends StackPane {
                 contents = pdfTocService.extract(filepath.get());
             } else {
                 if (startTF.getText().isEmpty() || endTF.getText().isEmpty()) {
-                    mainController.messageManager.showMessage("请输入起始页码和结束页码", Message.MessageType.WARNING);
+                    mainController.messageManager.showMessage(bundle.getString("message.inputPageNumRange"), Message.MessageType.WARNING);
                 }
                 contents = pdfTocService.extract(filepath.get(), Integer.parseInt(startTF.getText()), Integer.parseInt(endTF.getText()));
             }
