@@ -121,6 +121,6 @@ jobs:
           asset_name: myapp-${{ github.ref_name }}.*
 
       - name: Stop Gradle Daemon
-        run: ./gradlew --stop  # Linux/macOS
+        if: matrix.os == 'windows-latest'
         shell: pwsh  # Windows
         run: ./gradlew.bat --stop
