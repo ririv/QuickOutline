@@ -90,7 +90,7 @@ jobs:
       # 构建命令统一化
       - name: Build with Gradle (Ubuntu/macOS)
         # if: matrix.os != 'windows-latest'
-        shell: bash
+        # shell: bash
         run: |
           if [ -n "$version" ]; then
             ./gradlew clean jpackage -Pversion="$version"  # 传递版本号给 Gradle
