@@ -90,6 +90,7 @@ jobs:
       # 构建命令统一化
       - name: Build with Gradle (Ubuntu/macOS)
         if: matrix.os != 'windows-latest'
+        shell: bash
         run: |
           if [ -n "$version" ]; then
             ./gradlew clean jpackage -Pversion="$version"  # 传递版本号给 Gradle
@@ -97,23 +98,23 @@ jobs:
             ./gradlew clean jpackage
           fi
           
-      - name: Build with Gradle (Windows)
-        if: matrix.os == 'windows-latest'  # 仅在 Windows 执行
-        shell: pwsh
-        run: |
-          if ($env:version) {
-            Write-Host "Building version $env:version"
-            ./gradlew clean jpackage -Pversion="$env:version"
-          } else {
-            Write-Host "Building default version"
-            ./gradlew clean jpackage
-          }
+      # - name: Build with Gradle (Windows)
+      #   if: matrix.os == 'windows-latest'  # 仅在 Windows 执行
+      #   shell: pwsh
+      #   run: |
+      #     if ($env:version) {
+      #       Write-Host "Building version $env:version"
+      #       ./gradlew clean jpackage -Pversion="$env:version"
+      #     } else {
+      #       Write-Host "Building default version"
+      #       ./gradlew clean jpackage
+      #     }
 
       # 产物上传逻辑
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jpackage-${{ matrix.os }}
+          name: QuickOutline-${{ matrix.os }}
           path: ./build/jpackage/*
 
       # 自动发布Release
