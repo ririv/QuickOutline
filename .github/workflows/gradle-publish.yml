@@ -61,7 +61,8 @@ jobs:
 
       # 版本号设置逻辑
       - name: Set Version from Tag (Auto)
-        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        run: |
+          echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
 
       # 平台依赖安装
@@ -88,7 +89,7 @@ jobs:
           
 
       # 构建&打包
-      - name: Build with Gradle (jpackage)
+      - name: Build & Package with Gradle
         # windows会默认使用pwsh，导致语法不一致，需要指定shell
         shell: bash
         run: |
@@ -103,7 +104,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QuickOutline_${{GITHUB_REF_NAME#v}}_${{ matrix.os }}
+          name: QuickOutline_${{ env.version }}_${{ matrix.os }}
           path: ./build/jpackage/*
 
       # 自动发布Release
