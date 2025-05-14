@@ -89,7 +89,7 @@ jobs:
 
       # 构建命令统一化
       - name: Build with Gradle (Ubuntu/macOS)
-        if: matrix.os != 'windows-latest'
+        # if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           if [ -n "$version" ]; then
