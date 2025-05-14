@@ -87,8 +87,8 @@ jobs:
           # choco install dotnetruntime -y
           
 
-      # 构建
-      - name: Build with Gradle (Ubuntu/macOS)
+      # 构建&打包
+      - name: Build with Gradle (jpackage)
         # windows会默认使用pwsh，导致语法不一致，需要指定shell
         shell: bash
         run: |
