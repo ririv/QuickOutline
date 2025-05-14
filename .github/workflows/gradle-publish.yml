@@ -103,7 +103,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QuickOutline_${GITHUB_REF_NAME#v}_${{ matrix.os }}
+          name: QuickOutline_${{GITHUB_REF_NAME#v}}_${{ matrix.os }}
           path: ./build/jpackage/*
 
       # 自动发布Release
