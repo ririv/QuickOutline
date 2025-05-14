@@ -53,6 +53,7 @@ jobs:
 
       - name: Cache Gradle
         uses: actions/cache@v4
+        shell: bash
         with:
           path: ~/.gradle/caches/
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
@@ -61,6 +62,7 @@ jobs:
 
       # 版本号设置逻辑
       - name: Set Version from Tag (Auto)
+        shell: bash
         run: |
           echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
