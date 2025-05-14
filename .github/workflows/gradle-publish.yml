@@ -120,6 +120,7 @@ jobs:
           asset_path: ./build/jpackage/*
           asset_name: myapp-${{ github.ref_name }}.*
 
+      # 停止Gradle进程以缓存（windows下不执行会导致tar失败警告）
       - name: Stop Gradle Daemon
         if: matrix.os == 'windows-latest'
         shell: pwsh  # Windows
