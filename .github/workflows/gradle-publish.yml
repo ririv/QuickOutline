@@ -119,3 +119,8 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/jpackage/*
           asset_name: myapp-${{ github.ref_name }}.*
+
+      - name: Stop Gradle Daemon
+        run: ./gradlew --stop  # Linux/macOS
+        shell: pwsh  # Windows
+        run: ./gradlew.bat --stop
