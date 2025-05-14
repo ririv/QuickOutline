@@ -9,7 +9,7 @@ name: Build & Publish JPackage
 
 on:
   push:
-    tags: ['v*']
+    tags: ['v*'] # 仅当推送以 v 开头的 Tag 时触发
   workflow_dispatch:
     inputs:
       os:
