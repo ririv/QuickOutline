@@ -357,9 +357,18 @@ public class MainController {
         try {
             String contents = pdfOutlineService.getContents(filepathTF.getText(), 0);
             textTabViewController.contentsTextArea.setText(contents);
+            autoToggleToIndentMethod();
+
         } catch (NoOutlineException e) {
             e.printStackTrace();
             messageManager.showMessage(bundle.getString("message.noBookmarks"), Message.MessageType.WARNING);
+        }
+    }
+
+    public void autoToggleToIndentMethod() {
+        if (methodToggleGroup.getSelectedToggle() != indentRBtn) {
+            methodToggleGroup.selectToggle(indentRBtn);
+            indentRBtnRemind.play();
         }
     }
 

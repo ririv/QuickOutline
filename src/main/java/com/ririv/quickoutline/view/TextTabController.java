@@ -312,10 +312,7 @@ public class TextTabController {
         syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
         //自动格式化后，将方式切换为"indent",由于操作较为隐蔽，使用者不易发现变化，容易迷惑使用者，所以关闭
 
-        if (mainController.methodToggleGroup.getSelectedToggle() != mainController.indentRBtn) {
-            mainController.methodToggleGroup.selectToggle(mainController.indentRBtn);
-            mainController.indentRBtnRemind.play();
-        }
+        mainController.autoToggleToIndentMethod();
     }
 
 
