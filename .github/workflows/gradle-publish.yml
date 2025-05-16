@@ -9,7 +9,7 @@ name: Build & Publish JPackage
 
 on:
   push:
-    tags: ['v*']
+    tags: ['v*'] # 仅当推送以 v 开头的 Tag 时触发
   workflow_dispatch:
     inputs:
       os:
@@ -61,7 +61,9 @@ jobs:
 
       # 版本号设置逻辑
       - name: Set Version from Tag (Auto)
-        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        shell: bash
+        run: |
+          echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
 
       # 平台依赖安装
@@ -87,9 +89,10 @@ jobs:
           # choco install dotnetruntime -y
           
 
-      # 构建命令统一化
-      - name: Build with Gradle (Ubuntu/macOS)
-        if: matrix.os != 'windows-latest'
+      # 构建&打包
+      - name: Build & Package with Gradle
+        # windows会默认使用pwsh，导致语法不一致，需要指定shell
+        shell: bash
         run: |
           if [ -n "$version" ]; then
             ./gradlew clean jpackage -Pversion="$version"  # 传递版本号给 Gradle
@@ -97,23 +100,12 @@ jobs:
             ./gradlew clean jpackage
           fi
           
-      - name: Build with Gradle (Windows)
-        if: matrix.os == 'windows-latest'  # 仅在 Windows 执行
-        shell: pwsh
-        run: |
-          if ($env:version) {
-            Write-Host "Building version $env:version"
-            ./gradlew clean jpackage -Pversion="$env:version"
-          } else {
-            Write-Host "Building default version"
-            ./gradlew clean jpackage
-          }
 
       # 产物上传逻辑
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jpackage-${{ matrix.os }}
+          name: QuickOutline_${{ env.version }}_${{ matrix.os }}
           path: ./build/jpackage/*
 
       # 自动发布Release
@@ -127,3 +119,9 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/jpackage/*
           asset_name: myapp-${{ github.ref_name }}.*
+
+      # 停止Gradle进程以缓存（windows下不执行会导致tar失败警告）
+      - name: Stop Gradle Daemon
+        if: matrix.os == 'windows-latest'
+        shell: pwsh  # Windows
+        run: ./gradlew.bat --stop
