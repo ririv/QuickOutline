@@ -13,8 +13,8 @@ module quickoutline {
 //    requires bouncy.castle.adapter;
 //    requires bouncy.castle.connector;
 //    requires org.bouncycastle.provider;
-    requires org.bouncycastle.pkix;
-    requires org.apache.pdfbox; //加密的PDF必须添加
+    requires org.bouncycastle.pkix; //加密的PDF必须添加
+    requires org.apache.pdfbox;
 //    requires org.bouncycastle.util;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics ; //由于FXML使用反射访问controller
