@@ -239,7 +239,7 @@ public class MainController {
             ButtonType cancelBtnType = new ButtonType(bundle.getString("btnType.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE);
             Optional<ButtonType> result = showAlert(
                     Alert.AlertType.CONFIRMATION,
-                    bundle.getString(bundle.getString("alert.saveConfirmation")),
+                    bundle.getString("alert.saveConfirmation"),
                     root.getScene().getWindow(),
                     keepContentsTextBtnType,noKeepContentsTextBtnType,cancelBtnType);
 
