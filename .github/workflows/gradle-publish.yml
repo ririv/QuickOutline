@@ -27,7 +27,7 @@ jobs:
   setup-matrix:
     runs-on: ubuntu-latest
     outputs:
-      os: ${{ steps.set-matrix.outputs.os }}${{ steps.set-matrix-dispatch.outputs.os }}
+      os: ${{ steps.set-matrix.outputs.os || steps.set-matrix-dispatch.outputs.os }}
     steps:
       - name: Set full matrix for tag push or 'all' dispatch
         id: set-matrix-full
