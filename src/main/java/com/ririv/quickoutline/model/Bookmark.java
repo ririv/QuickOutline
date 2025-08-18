@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static com.ririv.quickoutline.textProcess.Constants.TwoNormSpace;
+import static com.ririv.quickoutline.textProcess.StringConstants.TwoNormSpace;
 
 //一个顶级目录为一个bookmark
 public class Bookmark{

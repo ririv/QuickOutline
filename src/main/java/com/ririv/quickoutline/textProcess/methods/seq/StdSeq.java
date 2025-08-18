@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.ririv.quickoutline.textProcess.Constants.TwoNormSpace;
+import static com.ririv.quickoutline.textProcess.StringConstants.TwoNormSpace;
 
 
 /*
