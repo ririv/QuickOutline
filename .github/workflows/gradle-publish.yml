@@ -104,6 +104,19 @@ jobs:
             ./gradlew clean jpackage
           fi
           
+      - name: Create Non-installable Archive
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          OS_NAME=$(echo "${{ matrix.os }}" | sed 's/-latest//')
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Use PowerShell to create a zip archive of the application directory
+            pwsh -Command "Compress-Archive -Path ./build/jpackage/QuickOutline -DestinationPath ./build/jpackage/QuickOutline-${OS_NAME}-${{ env.version }}.zip"
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            # Create a tar.gz archive of the application directory
+            tar -czvf ./build/jpackage/QuickOutline-${OS_NAME}-${{ env.version }}.tar.gz -C ./build/jpackage/QuickOutline .
+          fi
+
       - name: Rename artifact
         shell: bash
         run: |
@@ -150,5 +163,7 @@ jobs:
             artifacts/**/*.dmg
             artifacts/**/*.msi
             artifacts/**/*.deb
+            artifacts/**/*.zip
+            artifacts/**/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
