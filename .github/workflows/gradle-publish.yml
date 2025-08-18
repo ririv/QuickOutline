@@ -26,7 +26,7 @@ jobs:
   setup-matrix:
     runs-on: ubuntu-latest
     outputs:
-      os: ${{ steps.set-matrix.outputs.os || steps.set-matrix-dispatch.outputs.os }}
+      os: ${{ steps.set-matrix.outputs.os }}${{ steps.set-matrix-dispatch.outputs.os }}
     steps:
       - name: Set matrix for tag push
         id: set-matrix
@@ -41,7 +41,7 @@ jobs:
   build:
     needs: setup-matrix
     strategy:
-      matrix:
+      matrix: 
         os: ${{ fromJSON(needs.setup-matrix.outputs.os) }}
     runs-on: ${{ matrix.os }}
 
