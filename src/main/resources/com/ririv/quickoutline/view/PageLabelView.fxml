@@ -1,32 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
 <?import javafx.collections.FXCollections?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import java.lang.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
-           fx:controller="com.ririv.quickoutline.view.PageLabelController"
-            >
-    <VBox alignment="CENTER">
-    <HBox alignment="CENTER_LEFT">
-        <Label text="编号样式" />
-        <ChoiceBox value="1, 2, 3, ...">
-            <items>
-                <FXCollections fx:factory="observableArrayList">
-                    <String fx:value="无" />
-                    <String fx:value="1, 2, 3, ..." />
-                    <String fx:value="i, ii, iii, ..." />
-                    <String fx:value="I, II, III, ..." />
-                    <String fx:value="a, b, c, ..." />
-                    <String fx:value="A, B, C, ..." />
-                </FXCollections>
-            </items>
-        </ChoiceBox>
-    </HBox>
-    <HBox alignment="CENTER_LEFT"> <Label text="前缀" /> <TextField /> </HBox>
-    <HBox alignment="CENTER_LEFT"> <Label text="编号开始于"/><TextField  /><Label text="需要大于等于1，默认为1"/> </HBox>
-        <ScrollPane fx:id="labelRuleListLayout"/>
+           fx:controller="com.ririv.quickoutline.view.PageLabelController">
+    <BorderPane>
+        <padding>
+            <Insets bottom="15" left="15" right="15" top="15" />
+        </padding>
+        <center>
+            <VBox spacing="15">
+                <GridPane hgap="10" vgap="10">
+                    <columnConstraints>
+                        <ColumnConstraints halignment="RIGHT" minWidth="80" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                    </columnConstraints>
+                    <Label text="编号样式:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                    <ChoiceBox fx:id="numberingStyleChoiceBox" maxWidth="Infinity" value="1, 2, 3, ..."
+                               GridPane.columnIndex="1" GridPane.rowIndex="0">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <String fx:value="无" />
+                                <String fx:value="1, 2, 3, ..." />
+                                <String fx:value="i, ii, iii, ..." />
+                                <String fx:value="I, II, III, ..." />
+                                <String fx:value="a, b, c, ..." />
+                                <String fx:value="A, B, C, ..." />
+                            </FXCollections>
+                        </items>
+                    </ChoiceBox>
 
-    </VBox>
+                    <Label text="前缀:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                    <TextField fx:id="prefixTextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                    <Label text="编号开始于:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                    <TextField fx:id="startTextField" promptText="默认为 1" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                    <Label text="起始页码:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                    <TextField fx:id="fromPageTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                    <Label text="结束页码:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                    <TextField fx:id="toPageTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                </GridPane>
+
+                <HBox alignment="CENTER">
+                    <Button onAction="#addRule" text="添加规则" />
+                </HBox>
+
+                <Separator />
+
+                <Label text="规则列表:" />
+                <ScrollPane fx:id="labelRuleListLayout" fitToWidth="true" prefHeight="200" VBox.vgrow="ALWAYS" />
+            </VBox>
+        </center>
+        <bottom>
+            <HBox alignment="CENTER_RIGHT" spacing="10">
+                <padding>
+                    <Insets top="15"/>
+                </padding>
+                <Button defaultButton="true" onAction="#apply" text="应用" />
+            </HBox>
+        </bottom>
+    </BorderPane>
 </StackPane>
