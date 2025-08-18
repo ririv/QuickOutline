@@ -61,6 +61,7 @@ public class MainController {
     public TextTabController textTabViewController;
     public TreeTabController treeTabViewController;
     public LeftPaneController leftPaneController;
+    public PdfPreviewController pdfPreviewTabViewController;
 //    public TreeWebVIewController treeModeController;
 
     public MessageContainer messageManager;
@@ -80,9 +81,11 @@ public class MainController {
     private Node tocGeneratorTabView;
     @FXML
     private Node pageLabelTabView;
+    @FXML
+    private Node pdfPreviewTabView;
 
     public enum FnTab{
-        text, tree, toc, setting, label
+        text, tree, toc, setting, label, preview
     }
 
     public List<Node> viewList;
@@ -105,7 +108,7 @@ public class MainController {
         seqRBtn.setSelected(true);
 
         viewList = new ArrayList<>(Arrays.asList(textTabView,treeTabView,
-                tocGeneratorTabView,pageLabelTabView));
+                tocGeneratorTabView,pageLabelTabView,pdfPreviewTabView));
 
 
         offsetTF.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -178,6 +181,13 @@ public class MainController {
             viewList.forEach(view-> view.setVisible(view == tocGeneratorTabView));
         } else if (targetTab == FnTab.label){
             viewList.forEach(view-> view.setVisible(view == pageLabelTabView));
+        } else if (targetTab == FnTab.preview) {
+            viewList.forEach(view-> view.setVisible(view == pdfPreviewTabView));
+            if (filepathTF.getText() != null && !filepathTF.getText().isEmpty()) {
+                pdfPreviewTabViewController.loadPdf(new java.io.File(filepathTF.getText()));
+            } else {
+                pdfPreviewTabViewController.closePreview();
+            }
         }
         currenTab = targetTab;
     }

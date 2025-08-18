@@ -34,6 +34,7 @@ public class LeftPaneController {
 
     public ToggleButton tocTabBtn;
     public ToggleButton labelTabBtn;
+    public ToggleButton previewTabBtn;
 
 
     public MainController mainController;
@@ -66,6 +67,8 @@ public class LeftPaneController {
                 mainController.switchTab(FnTab.toc);
             } else if (labelTabBtn.isSelected()) {
                 mainController.switchTab(FnTab.label);
+            } else if (previewTabBtn.isSelected()) {
+                mainController.switchTab(FnTab.preview);
             }
         });
     }

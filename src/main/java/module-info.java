@@ -4,6 +4,7 @@ module quickoutline {
     requires java.desktop;
 //    requires javafx.web;
 //    requires java.validation;
+    requires javafx.swing;
     requires org.slf4j; //必须添加，否则会出现找不到 Exception java.lang.NoClassDefFoundError: org/slf4j/LoggerFactory
     requires org.apache.commons.logging;
 

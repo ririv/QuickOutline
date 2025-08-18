@@ -11,8 +11,8 @@ public class TocGeneratorTabController {
     public ImageView imageView;
 
     public void initialize() {
-        PdfPreview pdfPreview = new PdfPreview();
-        List<Image> imageList = pdfPreview.view();
-        imageView.setImage(imageList.getFirst());
+//        PdfPreview pdfPreview = new PdfPreview();
+//        List<Image> imageList = pdfPreview.view();
+//        imageView.setImage(imageList.getFirst());
     }
 }
