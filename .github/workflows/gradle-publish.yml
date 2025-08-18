@@ -9,7 +9,7 @@ name: Build & Publish JPackage
 
 on:
   push:
-    tags: ['*'] # 仅当推送以 v 开头的 Tag 时触发
+    tags: ['*']
   workflow_dispatch:
     inputs:
       os:
@@ -26,15 +26,18 @@ jobs:
   setup-matrix:
     runs-on: ubuntu-latest
     outputs:
-      os: ${{ steps.set-matrix.outputs.os }}
+      os: ${{ steps.set-matrix.outputs.os || steps.set-matrix-dispatch.outputs.os }}
     steps:
-      - id: set-matrix
-        run: |
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" =~ ^refs/tags/v ]]; then
-            echo "os=['ubuntu-latest', 'macos-latest', 'windows-latest']" >> $GITHUB_OUTPUT
-          else
-            echo "os=['${{ inputs.os }}']" >> $GITHUB_OUTPUT
-          fi
+      - name: Set matrix for tag push
+        id: set-matrix
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: echo "os=['ubuntu-latest', 'macos-latest', 'windows-latest']" >> $GITHUB_OUTPUT
+
+      - name: Set matrix for workflow dispatch
+        id: set-matrix-dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "os=['${{ inputs.os }}']" >> $GITHUB_OUTPUT
+
   build:
     needs: setup-matrix
     strategy:
@@ -107,18 +110,6 @@ jobs:
         with:
           name: QuickOutline_${{ env.version }}_${{ matrix.os }}
           path: ./build/jpackage/*
-
-      # 自动发布Release
-      - name: Create Release
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')  # 仅限标签推送
-        # if: github.event_name != 'workflow_dispatch'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/jpackage/*
-          asset_name: myapp-${{ github.ref_name }}.*
 
       # 停止Gradle进程以缓存（windows下不执行会导致tar失败警告）
       - name: Stop Gradle Daemon
