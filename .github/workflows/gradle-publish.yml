@@ -104,12 +104,23 @@ jobs:
             ./gradlew clean jpackage
           fi
           
+      - name: Rename artifact
+        shell: bash
+        run: |
+          OS_NAME=$(echo "${{ matrix.os }}" | sed 's/-latest//')
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            mv ./build/jpackage/*.msi ./build/jpackage/QuickOutline-${OS_NAME}-${{ env.version }}.msi
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            mv ./build/jpackage/*.deb ./build/jpackage/QuickOutline-${OS_NAME}-${{ env.version }}.deb
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            mv ./build/jpackage/*.dmg ./build/jpackage/QuickOutline-${OS_NAME}-${{ env.version }}.dmg
+          fi
 
       # 产物上传逻辑
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QuickOutline_${{ env.version }}_${{ matrix.os }}
+          name: QuickOutline_${{ matrix.os }}_${{ env.version }}
           path: ./build/jpackage/*
 
       # 停止Gradle进程以缓存（windows下不执行会导致tar失败警告）
