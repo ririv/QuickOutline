@@ -24,11 +24,11 @@ java {
     }
 }
 
-version = '2.1.0'
+version = '2.1.1'
 
 javafx {
     version = '23' // LTS
-    modules = ['javafx.controls', 'javafx.fxml', 'javafx.web']
+        modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing' ]
 }
 
 application{
