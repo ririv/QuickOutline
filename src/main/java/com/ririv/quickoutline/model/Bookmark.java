@@ -1,5 +1,7 @@
 package com.ririv.quickoutline.model;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +20,7 @@ public class Bookmark{
 
     private String title; // 一般情况下 title with seq
     private Integer offsetPageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
-    private final List<Bookmark> children = new ArrayList<>();
+    private final ObservableList<Bookmark> children = FXCollections.observableArrayList();
     private Bookmark parent;
     private int level; // 0为root，1为顶层目录（since v1.0.3，此前版本中-1为root，0为顶层）
     private List<Bookmark> linearBookmarkList; // root节点下将记录原始的线性Bookmark
@@ -108,12 +110,12 @@ public class Bookmark{
         this.parent = parent;
     }
 
-    public List<Bookmark> getChildren() {
+    public ObservableList<Bookmark> getChildren() {
         return children;
     }
 
     //得到该bookmark所属的列表,非子列表
-    public List<Bookmark> getOwnerList() {
+    public ObservableList<Bookmark> getOwnerList() {
         return this.getParent().getChildren();
     }
 
