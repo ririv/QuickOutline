@@ -98,7 +98,6 @@ public class MainController {
 //        LocalizationManager.autoBind(this); // 自动绑定子类的字段，用于@BindText
 
         textTabViewController.setMainController(this);
-        treeTabViewController.setMainController(this);
         leftPaneController.setMainController(this);
 
         currenTab = FnTab.text;

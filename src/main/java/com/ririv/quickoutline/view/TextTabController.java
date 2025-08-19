@@ -1,5 +1,7 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.event.BookmarksChangedEvent;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.utils.BindText;
@@ -62,6 +64,12 @@ public class TextTabController {
 
     public void initialize() {
         textModelController = this;
+
+        // Subscribe to BookmarksChangedEvent
+        AppEventBus.getInstance().subscribe(BookmarksChangedEvent.class, event -> {
+            Platform.runLater(() -> contentsTextArea.setText(event.getRootBookmark().toTreeText()));
+        });
+
 /*
         \n没用，只好用\r了
         https://stackoverflow.com/questions/51698600/how-to-add-line-breaks-to-prompt-text-in-javafx

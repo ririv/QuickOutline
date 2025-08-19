@@ -1,5 +1,7 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.event.BookmarksChangedEvent;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.utils.LocalizationManager;
@@ -22,13 +24,7 @@ public class TreeTabController {
     public TreeTableColumn<Bookmark, String> offsetPageColumn;
 
     private final Map<String, TreeItem<Bookmark>> itemCache = new HashMap<>();
-    private PdfOutlineService pdfOutlineService;
-    private MainController mainController;
 
-    public void setMainController(MainController mainController) {
-        this.mainController = mainController;
-        this.pdfOutlineService = mainController.pdfOutlineService;
-    }
 
     public void initialize() {
         treeTableView.setEditable(true);
@@ -183,7 +179,7 @@ public class TreeTabController {
         Bookmark rootBookmark = getRootBookmark();
         if (rootBookmark != null) {
             rootBookmark.updateLevelByStructureLevel();
-            mainController.textTabViewController.contentsTextArea.setText(rootBookmark.toTreeText());
+            AppEventBus.getInstance().publish(new BookmarksChangedEvent(rootBookmark));
         }
     }
 
