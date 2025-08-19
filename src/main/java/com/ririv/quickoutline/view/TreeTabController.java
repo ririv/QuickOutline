@@ -6,6 +6,7 @@ import com.ririv.quickoutline.textProcess.methods.Method;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.TextFieldTreeTableCell;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
@@ -319,9 +320,21 @@ public class TreeTabController {
             return new SimpleStringProperty(pageNumStr);
         });
 
-//        titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+        titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+        titleColumn.setOnEditCommit(event -> {
+            TreeItem<Bookmark> currentEditingItem = treeTableView.getTreeItem(event.getTreeTablePosition().getRow());
+            currentEditingItem.getValue().setTitle(event.getNewValue());
+        });
 
-//        titleColumn.setCellFactory(param -> new EditableTreeTableCell());
+        offsetPageColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+        offsetPageColumn.setOnEditCommit(event -> {
+            TreeItem<Bookmark> currentEditingItem = treeTableView.getTreeItem(event.getTreeTablePosition().getRow());
+            try {
+                currentEditingItem.getValue().setOffsetPageNum(Integer.parseInt(event.getNewValue()));
+            } catch (NumberFormatException e) {
+                //
+            }
+        });
 
 
 
@@ -370,57 +383,5 @@ public class TreeTabController {
     }
 
 
-    // 自定义 TreeTableCell，使其可编辑
-    @SuppressWarnings("unchecked")
-    private static class EditableTreeTableCell<S, T> extends javafx.scene.control.TreeTableCell<S, T> {
-        @Override
-        public void startEdit() {
-            super.startEdit();
-
-            if (getTableColumn().getText().equals("标题")) {
-                TextField textField = new TextField(getItem() != null ? getItem().toString() : "");
-                textField.setOnAction(event -> commitEdit((T) textField.getText())); // 提交编辑的文本
-                setGraphic(textField);
-                textField.selectAll();
-            } else if (getTableColumn().getText().equals("Age")) {
-                TextField textField = new TextField(getItem() != null ? getItem().toString() : "");
-                textField.setOnAction(event -> {
-                    try {
-                        commitEdit((T) Integer.valueOf(textField.getText())); // 提交编辑的整数值
-                    } catch (NumberFormatException e) {
-                        // 如果输入无效，提示用户并不进行提交
-                        Alert alert = new Alert(Alert.AlertType.WARNING);
-                        alert.setHeaderText("Invalid input");
-                        alert.setContentText("Please enter a valid number for Age.");
-                        alert.showAndWait();
-                    }
-                });
-                setGraphic(textField);
-                textField.selectAll();
-            }
-        }
-
-        @Override
-        public void cancelEdit() {
-            super.cancelEdit();
-            setText(getItem().toString());
-            setGraphic(null);
-        }
-
-        @Override
-        public void updateItem(T item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty) {
-                setText(null);
-                setGraphic(null);
-            } else {
-                if (isEditing()) {
-                    setText(null);
-                } else {
-                    setText(item != null ? item.toString() : "");
-                }
-            }
-        }
-    }
+    
 }
