@@ -174,6 +174,11 @@ public class MainController {
     public void switchTab(FnTab targetTab) {
         if (targetTab == FnTab.text) {
             viewList.forEach(view-> view.setVisible(view == textTabView));
+            Bookmark rootBookmark = treeTabViewController.getRootBookmark();
+            if (rootBookmark != null) {
+                rootBookmark.updateLevelByStructureLevel();
+                textTabViewController.contentsTextArea.setText(rootBookmark.toTreeText());
+            }
         } else if (targetTab == FnTab.tree) {
             viewList.forEach(view-> view.setVisible(view == treeTabView));
             reconstructTree();
@@ -274,17 +279,25 @@ public class MainController {
                 return;
             }
 
-            String text = textTabViewController.contentsTextArea.getText();
-
-            if (text == null || text.isEmpty()) {
-                return;
-            }
             String srcFilePath = filepathTF.getText();
             String destFilePath = destFilePath();
             try {
-                pdfOutlineService.setContents(text, srcFilePath, destFilePath, offset(),
-                        (Method) methodToggleGroup.getSelectedToggle().getUserData(),
-                        viewScaleType);
+                Bookmark rootBookmark = treeTabViewController.getRootBookmark();
+                if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
+                    // 如果树视图为空，则尝试从文本视图获取
+                    String text = textTabViewController.contentsTextArea.getText();
+                    if (text == null || text.isEmpty()) {
+                        messageManager.showMessage(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING);
+                        return;
+                    }
+                    pdfOutlineService.setContents(text, srcFilePath, destFilePath, offset(),
+                            (Method) methodToggleGroup.getSelectedToggle().getUserData(),
+                            viewScaleType);
+                } else {
+                    // 优先使用树视图的数据
+                    rootBookmark.updateLevelByStructureLevel(); // 更新层级信息
+                    pdfOutlineService.setContents(rootBookmark, srcFilePath, destFilePath, viewScaleType);
+                }
             } catch (BookmarkFormatException e) {
                 e.printStackTrace();
                 File file = new File(destFilePath);

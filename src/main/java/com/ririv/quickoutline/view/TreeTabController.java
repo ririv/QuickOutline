@@ -384,4 +384,10 @@ public class TreeTabController {
 
 
     
+    public Bookmark getRootBookmark() {
+        if (treeTableView.getRoot() != null) {
+            return treeTableView.getRoot().getValue();
+        }
+        return null;
+    }
 }
