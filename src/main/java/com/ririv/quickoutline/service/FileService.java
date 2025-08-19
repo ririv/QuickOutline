@@ -2,19 +2,16 @@ package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.exception.EncryptedPdfException;
 
-import java.io.File;
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileService {
 
     private static FileService instance;
 
-    private File srcFile;
-    private File destFile;
-
-
-    // Using PdfOutlineService to check file validity
-    private final PdfOutlineService pdfOutlineService = new PdfOutlineService();
+    private Path srcFile;
+    private Path destFile;
 
     private FileService() {
     }
@@ -26,41 +23,39 @@ public class FileService {
         return instance;
     }
 
-    public File getSrcFile() {
+    public Path getSrcFile() {
         return srcFile;
     }
 
-    public File getDestFile() {
+    public Path getDestFile() {
         return destFile;
     }
 
-    public void setSrcFile(File file) throws IOException, EncryptedPdfException {
+    public void setSrcFile(Path file) {
         if (file == null) {
             clear();
             return;
         }
-
-        // This check logic was in MainController's openFile
-        pdfOutlineService.checkOpenFile(file.getPath());
-
         this.srcFile = file;
-
         calculateDestFile();
     }
 
-    private void calculateDestFile() {
-        if (srcFile == null) {
-            destFile = null;
-            return;
+    public Path calculateDestFilePath(Path srcFilePath) {
+        if (srcFilePath == null) {
+            return null;
         }
-        String srcPath = srcFile.getPath().replaceAll("\\\\", "/");
-        String srcFileName = srcPath.substring(srcPath.lastIndexOf("/") + 1);
-        String ext = srcFileName.substring(srcFileName.lastIndexOf("."));
-        String destPath = srcPath.substring(0, srcPath.lastIndexOf(srcFileName)) +
-                          srcFileName.substring(0, srcFileName.lastIndexOf(".")) +
-                          "_含目录" + ext;
+        String srcFileName = srcFilePath.getFileName().toString();
+        int dotIndex = srcFileName.lastIndexOf(".");
+        String nameWithoutExt = (dotIndex == -1) ? srcFileName : srcFileName.substring(0, dotIndex);
+        String ext = (dotIndex == -1) ? "" : srcFileName.substring(dotIndex);
+        
+        Path parentDir = srcFilePath.getParent();
+        String destFileName = nameWithoutExt + "_含目录" + ext;
+        return parentDir.resolve(destFileName);
+    }
 
-        this.destFile = new File(destPath);
+    private void calculateDestFile() {
+        this.destFile = calculateDestFilePath(this.srcFile);
     }
 
     public void clear() {

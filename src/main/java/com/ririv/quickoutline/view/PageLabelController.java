@@ -144,8 +144,8 @@ public class PageLabelController {
         List<PageLabel> finalPageLabels = new ArrayList<>(pageLabelsMap.values());
 
 
-        String srcFilePath = fileService.getSrcFile().getPath();
-        String destFilePath = fileService.getDestFile().getPath();
+        String srcFilePath = fileService.getSrcFile().toString();
+        String destFilePath = fileService.getDestFile().toString();
         try {
             pdfLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
             showAlert("Success", "Page labels applied successfully.");

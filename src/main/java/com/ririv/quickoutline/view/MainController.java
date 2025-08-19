@@ -29,9 +29,12 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
+import com.ririv.quickoutline.service.FileService;
 import java.awt.Desktop;
 
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
@@ -74,6 +77,7 @@ public class MainController {
 
 
     PdfOutlineService pdfOutlineService = new PdfOutlineService();
+    FileService fileService = FileService.getInstance();
 
     @FXML
     private Node textTabView;  // <fx:include> 实际上对应的HBox类型
@@ -220,22 +224,19 @@ public class MainController {
     }
 
     private String destFilePath(){
-        String srcFilePath = filepathTF.getText();
-        srcFilePath = srcFilePath.replaceAll("\\\\", "/");
-        String srcFileName = srcFilePath.substring(srcFilePath.lastIndexOf("/") + 1);
-        String ext = srcFileName.substring(srcFileName.lastIndexOf("."));
-        return srcFilePath.substring(0, srcFilePath.lastIndexOf(srcFileName)) + srcFileName.substring(0, srcFileName.lastIndexOf(".")) + "_含目录" + ext;
+        return fileService.calculateDestFilePath(Paths.get(filepathTF.getText())).toString();
     }
 
     private void openFile(File file){
         if (file == null) return;
 
-        String newFilePath = file.getPath();
+        Path newFilePath = file.toPath();
         String oldFilePath = filepathTF.getText();
-        if (newFilePath.equals(oldFilePath)) return;
+        if (newFilePath.toString().equals(oldFilePath)) return;
 
         try {
-            pdfOutlineService.checkOpenFile(newFilePath);
+            pdfOutlineService.checkOpenFile(newFilePath.toString());
+            fileService.setSrcFile(newFilePath);
         } catch (IOException e) {
             messageManager.showMessage(bundle.getString("message.cannotOpenDoc")+e.getMessage(), Message.MessageType.ERROR);
             return;
@@ -262,11 +263,11 @@ public class MainController {
             if (result.isPresent() && result.get() == cancelBtnType) {
                 return;
             } else {
-                filepathTF.setText(newFilePath);
+                filepathTF.setText(newFilePath.toString());
                 resetState(result.isPresent() && result.get() == keepContentsTextBtnType);
             }
         } else {
-            filepathTF.setText(newFilePath);
+            filepathTF.setText(newFilePath.toString());
             resetState(false);
         }
 
@@ -327,14 +328,13 @@ public class MainController {
         try {
             String destFilePath = destFilePath();
             if (result.isPresent() && result.get() == openDirAndSelectFileButtonType) {
-
                 OsDesktopUtil.openFileLocation(destFilePath);
             } else if (result.isPresent() && result.get().equals(openFileButtonType)) {
                 OsDesktopUtil.openFile(destFilePath);
             }
         } catch (IOException e) {
-        e.printStackTrace();
-    }
+            e.printStackTrace();
+        }
     }
 
     //重置，并获得目录
