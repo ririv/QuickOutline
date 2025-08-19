@@ -110,6 +110,17 @@ public class Bookmark{
         this.parent = parent;
     }
 
+    // 防止忘记设置parent，增加addChild方法
+    public void addChild(Bookmark child) {
+        this.getChildren().add(child);
+        child.setParent(this);
+    }
+
+    public void addChild(int index, Bookmark child) {
+        this.getChildren().add(index, child);
+        child.setParent(this);
+    }
+
     public ObservableList<Bookmark> getChildren() {
         return children;
     }
@@ -227,18 +238,15 @@ public class Bookmark{
     private static Bookmark addLinearlyToBookmarkTree(Bookmark current, Bookmark last) {
         int currentLevel = current.getLevel();
         if (last.getLevelByStructure() == currentLevel) { //同级
-            last.getOwnerList().add(current);
-            current.setParent(last.getParent());
+            last.getParent().addChild(current);
         } else if (last.getLevelByStructure() < currentLevel) { //进入下一级，不会跳级
-            last.getChildren().add(current);
-            current.setParent(last);
+            last.addChild(current);
         } else { //回到上级，可能跳级
             Bookmark parent = last.getParent(); //目前last所属层级的parent
             for (int dif = last.getLevelByStructure() - currentLevel; dif != 0; dif--) { //实际current应属于的parent
                 parent = parent.getParent();
             }
-            parent.getChildren().add(current);
-            current.setParent(parent);
+            parent.addChild(current);
         }
 
         return current;

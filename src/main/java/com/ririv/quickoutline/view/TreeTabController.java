@@ -127,8 +127,7 @@ public class TreeTabController {
                         draggedBookmark.getOwnerList().remove(draggedBookmark);
                         Bookmark newParentBookmark = targetBookmark.getParent();
                         int targetIndex = newParentBookmark.getChildren().indexOf(targetBookmark);
-                        newParentBookmark.getChildren().add(targetIndex + 1, draggedBookmark);
-                        draggedBookmark.setParent(newParentBookmark);
+                        newParentBookmark.addChild(targetIndex + 1, draggedBookmark);
                         
                         treeTableView.getSelectionModel().select(draggedItemUI);
                         success = true;
@@ -149,20 +148,17 @@ public class TreeTabController {
         if (selectedItem == null) {
             Bookmark rootBookmark = treeTableView.getRoot().getValue();
             newBookmark = new Bookmark("New Bookmark", null, 1);
-            newBookmark.setParent(rootBookmark);
-            rootBookmark.getChildren().add(newBookmark);
+            rootBookmark.addChild(newBookmark);
         } else if (asChild) {
             Bookmark parentBookmark = selectedItem.getValue();
             newBookmark = new Bookmark("New Child", null, parentBookmark.getLevelByStructure() + 1);
-            newBookmark.setParent(parentBookmark);
-            parentBookmark.getChildren().add(newBookmark);
+            parentBookmark.addChild(newBookmark);
         } else {
             Bookmark parentBookmark = selectedItem.getParent().getValue();
             Bookmark siblingBookmark = selectedItem.getValue();
             int index = parentBookmark.getChildren().indexOf(siblingBookmark);
             newBookmark = new Bookmark("New Sibling", null, siblingBookmark.getLevelByStructure());
-            newBookmark.setParent(parentBookmark);
-            parentBookmark.getChildren().add(index + 1, newBookmark);
+            parentBookmark.addChild(index + 1, newBookmark);
         }
         syncTextTabView();
     }
