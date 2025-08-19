@@ -122,11 +122,11 @@ jobs:
         run: |
           OS_NAME=$(echo "${{ matrix.os }}" | sed 's/-latest//')
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            mv ./build/jpackage/*.msi ./build/jpackage/QuickOutline-${OS_NAME}-${{ env.version }}.msi
+            mv ./build/jpackage/*.msi ./build/jpackage/QuickOutline-${{ env.version }}-${OS_NAME}.msi
           elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            mv ./build/jpackage/*.deb ./build/jpackage/QuickOutline-${OS_NAME}-${{ env.version }}.deb
+            mv ./build/jpackage/*.deb ./build/jpackage/QuickOutline-${{ env.version }}-${OS_NAME}.deb
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            mv ./build/jpackage/*.dmg ./build/jpackage/QuickOutline-${OS_NAME}-${{ env.version }}.dmg
+            mv ./build/jpackage/*.dmg ./build/jpackage/QuickOutline-${{ env.version }}-${OS_NAME}.dmg
           fi
 
       # 产物上传逻辑
