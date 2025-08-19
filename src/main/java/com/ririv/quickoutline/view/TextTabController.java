@@ -4,10 +4,7 @@ import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.BookmarksChangedEvent;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
-import com.ririv.quickoutline.utils.BindText;
-import com.ririv.quickoutline.utils.InfoUtil;
-import com.ririv.quickoutline.utils.LocalizationManager;
-import com.ririv.quickoutline.utils.Pair;
+import com.ririv.quickoutline.utils.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -66,9 +63,8 @@ public class TextTabController {
         textModelController = this;
 
         // Subscribe to BookmarksChangedEvent
-        AppEventBus.getInstance().subscribe(BookmarksChangedEvent.class, event -> {
-            Platform.runLater(() -> contentsTextArea.setText(event.getRootBookmark().toTreeText()));
-        });
+        AppEventBus.getInstance().subscribe(BookmarksChangedEvent.class, event ->
+                Platform.runLater(() -> contentsTextArea.setText(event.getRootBookmark().toTreeText())));
 
 /*
         \n没用，只好用\r了
@@ -80,7 +76,7 @@ public class TextTabController {
         // 按下SHIFT+TAB将自动去掉一格缩进（\t或者4个空格）
         contentsTextArea.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabKeyPress);
 
-        if (InfoUtil.isMacOS()) {
+        if (OsDesktopUtil.isMacOS()) {
             externalEditorBtn.setVisible(false);
             externalEditorBtn.setManaged(false);
         }

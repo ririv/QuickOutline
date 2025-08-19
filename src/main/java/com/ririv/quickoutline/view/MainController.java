@@ -27,10 +27,12 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.slf4j.Logger;
 
-import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import com.ririv.quickoutline.utils.OsDesktopUtil;
+import java.awt.Desktop;
 
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
@@ -326,37 +328,9 @@ public class MainController {
             String destFilePath = destFilePath();
             if (result.isPresent() && result.get() == openDirAndSelectFileButtonType) {
 
-                //打开文件所在文件夹并选择文件
-                String[] command;
-                if (InfoUtil.isWindows()) {
-                    destFilePath = destFilePath.replaceAll("/", "\\\\");
-                    //实测该命令会在文件路径下因为检测到参数包含空格而未被引号包裹，于是主动加了双引号，形成的命令在powershell的确是有效的，但在cmd中无效
-                    //但默认是用cmd执行的,导致非预期结果
-                    //参考 ProcessImpl.java下 createCommandLine 和 needsEscaping 源码
-//                        command = new String[]{"explorer.exe", "/select,\"%s\"".formatted(destFilePath)};
-                    // 故采用如下方式执行
-                    command = new String[]{"cmd.exe", "/C", "explorer.exe /select,\"%s\"".formatted(destFilePath)};
-                }
-                else if (InfoUtil.isMacOS()) {
-                    command = new String[]{"open", "-R", destFilePath}; //macos
-                }
-                else {
-                    command = new String[]{"nautilus", destFilePath}; // 打开文件可以使用 xdg-open
-                }
-                Process p = Runtime.getRuntime().exec(command);
-
-                logger.info("Executing command: {}", String.join(" ", command));
-
-                InputStream is = p.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                String s;
-                while ((s = reader.readLine()) != null) {
-                    logger.info("执行命令外部输出: {}", s);
-                }
+                OsDesktopUtil.openFileLocation(destFilePath);
             } else if (result.isPresent() && result.get().equals(openFileButtonType)) {
-                //打开文件
-//                Desktop.getDesktop().browse(new File(destFilePath()).toURI());
-                Desktop.getDesktop().open(new File(destFilePath())); //上面一条语句在mac上无法打开文件
+                OsDesktopUtil.openFile(destFilePath);
             }
         } catch (IOException e) {
         e.printStackTrace();

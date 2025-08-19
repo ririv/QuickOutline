@@ -2,6 +2,7 @@ package com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
 
 import com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions.LaunchExternalEditorException;
 import com.ririv.quickoutline.utils.InfoUtil;
+import com.ririv.quickoutline.utils.OsDesktopUtil;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
@@ -33,7 +34,7 @@ public class VscodeImpl implements ExternalEditor {
 
         String[] command;
         String gotoArg = "%s:%d:%d".formatted(file.getAbsolutePath(), line, character);
-        if (InfoUtil.isWindows()) {
+        if (OsDesktopUtil.isWindows()) {
             command = new String[]{"code.cmd", "-n", "-w", "-g", gotoArg};
         }
         else {
