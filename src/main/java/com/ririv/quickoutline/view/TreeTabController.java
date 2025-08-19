@@ -3,16 +3,20 @@ package com.ririv.quickoutline.view;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.textProcess.methods.Method;
+import com.ririv.quickoutline.utils.LocalizationManager;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTreeTableCell;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 //import static com.ririv.contents.view.MainController.mainController;
 
@@ -49,7 +53,7 @@ public class TreeTabController {
         offsetPageColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.1));
 
 
-//        setupDragAndDrop(treeTableView);
+        setupRowFactory();
 
 //        gradeBtn.setOnAction(event -> grade(true));
 //        degradeBtn.setOnAction(event -> grade(false));
@@ -84,177 +88,96 @@ public class TreeTabController {
         treeTableView.refresh();
     }
 
-    private void setupDragAndDrop(TreeTableView<Bookmark> treeTableView) {
-        // 为行添加拖拽功能
+    private void setupRowFactory() {
+        ResourceBundle bundle = LocalizationManager.getResourceBundle();
+        ContextMenu contextMenu = new ContextMenu();
+
+        MenuItem addSiblingItem = new MenuItem(bundle.getString("contextMenu.addBookmark"));
+        addSiblingItem.setOnAction(event -> addBookmark(false));
+
+        MenuItem addChildItem = new MenuItem(bundle.getString("contextMenu.addChildBookmark"));
+        addChildItem.setOnAction(event -> addBookmark(true));
+
+        MenuItem deleteItem = new MenuItem(bundle.getString("contextMenu.deleteBookmark"));
+        deleteItem.setOnAction(event -> deleteSelectedBookmark());
+
+        contextMenu.getItems().addAll(addSiblingItem, addChildItem, new SeparatorMenuItem(), deleteItem);
+
         treeTableView.setRowFactory(tv -> {
             TreeTableRow<Bookmark> row = new TreeTableRow<>();
 
-            // 检测拖拽操作
+            // 1. Context Menu Logic
+            row.setOnMouseClicked(event -> {
+                if (event.getButton() == MouseButton.SECONDARY && (!row.isEmpty())) {
+                    contextMenu.show(row, event.getScreenX(), event.getScreenY());
+                } else {
+                    contextMenu.hide();
+                }
+            });
+
+            // 2. Drag and Drop Logic
             row.setOnDragDetected(event -> {
                 if (!row.isEmpty()) {
                     Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
-
+                    db.setDragView(row.snapshot(null, null));
                     ClipboardContent content = new ClipboardContent();
-                    content.putString(row.getItem().getId()); // 使用唯一标识符
+                    content.putString(row.getItem().getId());
                     db.setContent(content);
-
                     event.consume();
                 }
             });
-//
-//            // 处理拖拽进入目标节点
-//            row.setOnDragOver(event -> {
-//                Dragboard db = event.getDragboard();
-//
-//                // 检查是否是合法的拖拽行为
-//                if (event.getGestureSource() != row && db.hasString() && !row.isEmpty()) {
-//                    String draggedItemId = db.getString(); // 获取唯一标识符
-//                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), draggedItemId); // 根据 ID 查找
-//                    TreeItem<Bookmark> targetItem = row.getTreeItem();
-//
-//                    if (draggedItem != null && targetItem != null) {
-//                        // 检查目标节点是否是拖拽节点的子节点或自身节点
-//                        if (isChildOrSelf(draggedItem, targetItem)) {
-//                            event.acceptTransferModes(); // 禁止拖拽
-//                            event.consume();
-//                            return;
-//                        }
-//
-//                        // 如果合法，允许拖拽
-//                        event.acceptTransferModes(TransferMode.MOVE);
-//                    }
-//                }
-//
-//                event.consume();
-//            });
-//
-//
-//            // 处理拖拽释放到目标节点
-//            row.setOnDragDropped(event -> {
-//                Dragboard db = event.getDragboard();
-//
-//                if (db.hasString() && !row.isEmpty()) {
-//                    String draggedItemId = db.getString(); // 获取唯一标识符
-//                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), draggedItemId); // 根据 ID 查找
-//                    TreeItem<Bookmark> targetItem = row.getTreeItem();
-//
-//                    if (draggedItem != null && targetItem != null) {
-//
-//                        // 移动节点：从原父节点中删除
-//                        draggedItem.getParent().getChildren().remove(draggedItem);
-//
-//                        // 添加到目标节点
-//                        targetItem.getChildren().add(draggedItem);
-//
-//                        // 刷新视图（可选，确保视图更新）
-//                        treeTableView.refresh(); // 刷新整个视图
-//
-//                        // 设置选中项为拖拽的 TreeItem
-//                        treeTableView.getSelectionModel().select(draggedItem);
-//                    }
-//
-//                    event.setDropCompleted(true);
-//                } else {
-//                    event.setDropCompleted(false);
-//                }
-//
-//                event.consume();
-//            });
+
             row.setOnDragOver(event -> {
                 Dragboard db = event.getDragboard();
-
                 if (event.getGestureSource() != row && db.hasString() && !row.isEmpty()) {
-                    String draggedItemId = db.getString(); // 获取唯一标识符
-                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), draggedItemId); // 根据 ID 查找
+                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), db.getString());
                     TreeItem<Bookmark> targetItem = row.getTreeItem();
 
-                    if (draggedItem != null && targetItem != null) {
-                        // 检查目标节点是否是拖拽节点的子节点或自身节点
-                        if (isChildOrSelf(draggedItem, targetItem)) {
-                            event.acceptTransferModes(); // 禁止拖拽
-                            event.consume();
-                            return;
-                        }
-
-                        // 根据鼠标位置判断插入行为（上方/下方/作为子节点）
-                        double y = event.getY();
-                        double height = row.getHeight();
-                        if (y < height * 0.33) {
-                            // 鼠标在上三分之一处，表示插入到目标节点上方
-                            row.setStyle("-fx-border-color: blue; -fx-border-width: 2 0 0 0;"); // 高亮上边框
-                            row.getProperties().put("drag-insert-position", "above");
-                        } else if (y > height * 0.66) {
-                            // 鼠标在下三分之一处，表示插入到目标节点下方
-                            row.setStyle("-fx-border-color: blue; -fx-border-width: 0 0 2 0;"); // 高亮下边框
-                            row.getProperties().put("drag-insert-position", "below");
-                        } else {
-                            // 鼠标在中间区域，表示作为子节点
-                            row.setStyle("-fx-background-color: lightblue;"); // 高亮整个行
-                            row.getProperties().put("drag-insert-position", "child");
-                        }
-
+                    if (draggedItem != null && targetItem != null && !isChildOrSelf(draggedItem, targetItem)) {
                         event.acceptTransferModes(TransferMode.MOVE);
                     }
                 }
-
                 event.consume();
-            });
-
-            row.setOnDragExited(event -> {
-                row.setStyle(""); // 清除所有样式
-                row.getProperties().remove("drag-insert-position"); // 移除插入位置标记
             });
 
             row.setOnDragDropped(event -> {
                 Dragboard db = event.getDragboard();
-
+                boolean success = false;
                 if (db.hasString() && !row.isEmpty()) {
-                    String draggedItemId = db.getString(); // 获取唯一标识符
-                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), draggedItemId); // 根据 ID 查找
-                    TreeItem<Bookmark> targetItem = row.getTreeItem();
+                    TreeItem<Bookmark> draggedItemUI = findTreeItemById(treeTableView.getRoot(), db.getString());
+                    TreeItem<Bookmark> targetItemUI = row.getTreeItem();
 
-                    if (draggedItem != null && targetItem != null) {
-                        // 检查插入位置
-                        String position = (String) row.getProperties().get("drag-insert-position");
+                    if (draggedItemUI != null && targetItemUI != null && draggedItemUI != targetItemUI) {
+                        Bookmark draggedBookmark = draggedItemUI.getValue();
+                        Bookmark targetBookmark = targetItemUI.getValue();
+                        Bookmark oldParentBookmark = draggedItemUI.getParent().getValue();
+                        
+                        // Data Model Update
+                        oldParentBookmark.getChildren().remove(draggedBookmark);
+                        Bookmark newParentBookmark = targetItemUI.getParent().getValue();
+                        int targetIndexInData = newParentBookmark.getChildren().indexOf(targetBookmark);
+                        newParentBookmark.getChildren().add(targetIndexInData + 1, draggedBookmark);
+                        draggedBookmark.setParent(newParentBookmark);
 
-                        if ("above".equals(position)) {
-                            // 插入到目标节点上方
-                            TreeItem<Bookmark> parent = targetItem.getParent();
-                            if (parent != null) {
-                                int index = parent.getChildren().indexOf(targetItem);
-                                parent.getChildren().remove(draggedItem);
-                                parent.getChildren().add(index, draggedItem);
-                            }
-                        } else if ("below".equals(position)) {
-                            // 插入到目标节点下方
-                            TreeItem<Bookmark> parent = targetItem.getParent();
-                            if (parent != null) {
-                                int index = parent.getChildren().indexOf(targetItem);
-                                parent.getChildren().remove(draggedItem);
-                                parent.getChildren().add(index + 1, draggedItem);
-                            }
-                        } else {
-                            // 作为目标节点的子节点
-                            draggedItem.getParent().getChildren().remove(draggedItem);
-                            targetItem.getChildren().add(draggedItem);
-                        }
-//                         刷新视图（可选，确保视图更新）
-                        treeTableView.refresh(); // 刷新整个视图
-                        // 设置选中项为拖拽的 TreeItem
-                        treeTableView.getSelectionModel().select(draggedItem);
+                        // UI Update
+                        draggedItemUI.getParent().getChildren().remove(draggedItemUI);
+                        TreeItem<Bookmark> newParentUI = targetItemUI.getParent();
+                        int targetIndexInUI = newParentUI.getChildren().indexOf(targetItemUI);
+                        newParentUI.getChildren().add(targetIndexInUI + 1, draggedItemUI);
+                        
+                        treeTableView.getSelectionModel().select(draggedItemUI);
+                        success = true;
                     }
-
-                    event.setDropCompleted(true);
-                } else {
-                    event.setDropCompleted(false);
                 }
-
+                event.setDropCompleted(success);
                 event.consume();
+                if(success) {
+                    syncTextTabView();
+                }
             });
 
             return row;
         });
-
     }
 
     private TreeItem<Bookmark> findTreeItemById(TreeItem<Bookmark> root, String id) {
@@ -384,6 +307,89 @@ public class TreeTabController {
 
 
     
+    
+
+    private void addBookmark(boolean asChild) {
+        TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
+
+        // Case 1: No item selected, add to root
+        if (selectedItem == null) {
+            TreeItem<Bookmark> rootItem = treeTableView.getRoot();
+            if (rootItem == null) return;
+            Bookmark rootBookmark = rootItem.getValue();
+            Bookmark newBookmark = new Bookmark("New Bookmark", null, 1);
+            newBookmark.setParent(rootBookmark); // Set parent for data model consistency
+            rootBookmark.getChildren().add(newBookmark); // Data model update
+            TreeItem<Bookmark> newItem = new TreeItem<>(newBookmark);
+            rootItem.getChildren().add(newItem); // UI update
+            syncTextTabView();
+            return;
+        }
+
+        // Case 2: Add as a child of the selected item
+        if (asChild) {
+            Bookmark parentBookmark = selectedItem.getValue();
+            Bookmark newBookmark = new Bookmark("New Child", null, parentBookmark.getLevelByStructure() + 1);
+            newBookmark.setParent(parentBookmark); // Set parent for data model consistency
+            parentBookmark.getChildren().add(newBookmark); // Data model update
+            TreeItem<Bookmark> newItem = new TreeItem<>(newBookmark);
+            selectedItem.getChildren().add(newItem); // UI update
+            selectedItem.setExpanded(true);
+        }
+        // Case 3: Add as a sibling after the selected item
+        else {
+            TreeItem<Bookmark> parentItem = selectedItem.getParent();
+            if (parentItem == null) return; // Should not happen for visible items
+
+            Bookmark parentBookmark = parentItem.getValue();
+            Bookmark siblingBookmark = selectedItem.getValue();
+            int index = parentItem.getChildren().indexOf(selectedItem);
+
+            Bookmark newBookmark = new Bookmark("New Sibling", null, siblingBookmark.getLevelByStructure());
+            newBookmark.setParent(parentBookmark); // Set parent for data model consistency
+            parentBookmark.getChildren().add(index + 1, newBookmark); // Data model update
+
+            TreeItem<Bookmark> newItem = new TreeItem<>(newBookmark);
+            parentItem.getChildren().add(index + 1, newItem); // UI update
+        }
+        syncTextTabView();
+    }
+
+    private void deleteSelectedBookmark() {
+        TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
+        if (selectedItem == null || selectedItem.getParent() == null) { // Cannot delete the (hidden) root
+            return;
+        }
+
+        ResourceBundle bundle = LocalizationManager.getResourceBundle();
+        Optional<ButtonType> result = MyAlert.showAlert(
+                Alert.AlertType.CONFIRMATION,
+                bundle.getString("alert.deleteConfirmation"),
+                treeTableView.getScene().getWindow()
+        );
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            TreeItem<Bookmark> parentItem = selectedItem.getParent();
+            Bookmark parentBookmark = parentItem.getValue();
+            Bookmark bookmarkToRemove = selectedItem.getValue();
+
+            // Data model update
+            parentBookmark.getChildren().remove(bookmarkToRemove);
+
+            // UI update
+            parentItem.getChildren().remove(selectedItem);
+            syncTextTabView();
+        }
+    }
+
+    private void syncTextTabView() {
+        Bookmark rootBookmark = getRootBookmark();
+        if (rootBookmark != null) {
+            rootBookmark.updateLevelByStructureLevel();
+            mainController.textTabViewController.contentsTextArea.setText(rootBookmark.toTreeText());
+        }
+    }
+
     public Bookmark getRootBookmark() {
         if (treeTableView.getRoot() != null) {
             return treeTableView.getRoot().getValue();
