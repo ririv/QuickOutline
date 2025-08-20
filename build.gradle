@@ -115,7 +115,7 @@ run {
 
 def os = org.gradle.internal.os.OperatingSystem.current()
 
-//https://badass-jlink-plugin.beryx.org/releases/latest/
+// https://badass-jlink-plugin.beryx.org/releases/latest/
 // 仅对build中任务有效，对application中的run任务无效，
 jlink {
     launcher {
@@ -130,11 +130,14 @@ jlink {
 //    配置参考文档 https://docs.oracle.com/en/java/javase/21/docs/specs/man/jpackage.html
     jpackage {
 //        skipInstaller = true
-        def installerOptionsParams = [
-                '--name', 'QuickOutline', // <-- 添加这一行来指定应用名称
-                '--vendor', 'riri Personal', //必须加，否则报错
-                '--app-version', (String) version,
-        ]
+
+        // --- 核心修正 ---
+        // 1. 使用插件的专用属性来设置版本和开发者信息，避免命令行参数冲突
+        appVersion = project.version.toString()
+        vendor = 'riri Personal'
+
+        // 2. 移除错误的 installerOptionsParams 定义，因为它会导致参数重复
+        // def installerOptionsParams = [ ... ] // <--- 整个错误定义的代码块已被删除
 
         println('Current OS: '+os)
 
@@ -147,14 +150,14 @@ jlink {
                     '--win-shortcut',
                     '--win-dir-chooser',
                     '--win-menu'
-            ] + installerOptionsParams
+            ]
         } else if (os.isMacOsX()) {
             installerType = 'dmg'
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
             installerOptions = [
                     '--mac-package-name', 'com.ririv.quickoutline',
                     '--mac-package-identifier', 'com.ririv.quickoutline'
-            ] + installerOptionsParams
+            ]
         } else if (os.isLinux()) {
             installerType = 'deb' // 或 'rpm'（根据需求选择）
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.png' // Linux 支持 PNG/SVG
@@ -162,22 +165,10 @@ jlink {
                     '--linux-shortcut', // 创建桌面快捷方式
                     '--linux-menu-group', 'Development', // 菜单分组
                     '--linux-package-name', 'quickoutline' // 包名
-            ] + installerOptionsParams
-        }
-
-        // 其他通用配置（如权限文件、资源路径等）
-        if (os.isMacOsX()) {
-            def entitlementsFile = file("src/main/resources/entitlements.plist")
-            // macOS 权限配置（可选）
-            // signer = ['--mac-sign',                         // 启用签名
-////            '--mac-signing-keychain', '/Library/Keychains/System.keychain', // 钥匙串路径
-////            '--mac-signing-key-user-name', "Developer ID Application: Your Name (XXXXXXXXXX)", // 证书名称
-//            '--mac-entitlements', entitlementsFile.absolutePath ] // 权限文件
+            ]
         }
     }
-
 }
-
 
 
 
