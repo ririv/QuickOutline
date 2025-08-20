@@ -18,6 +18,14 @@ import java.util.TreeMap;
 
 public class PageLabelController {
 
+    // 代码风格优化: 将所有样式字符串定义为公共静态常量
+    public static final String STYLE_NONE = "无";
+    public static final String STYLE_DECIMAL = "1, 2, 3, ...";
+    public static final String STYLE_ROMAN_LOWER = "i, ii, iii, ...";
+    public static final String STYLE_ROMAN_UPPER = "I, II, III, ...";
+    public static final String STYLE_LETTERS_LOWER = "a, b, c, ...";
+    public static final String STYLE_LETTERS_UPPER = "A, B, C, ...";
+
     public ScrollPane labelRuleListLayout;
     @FXML
     private ChoiceBox<String> numberingStyleChoiceBox;
@@ -25,58 +33,44 @@ public class PageLabelController {
     private TextField prefixTextField;
     @FXML
     private TextField startTextField;
-
     @FXML
     private TextField fromPageTextField;
 
-    @FXML
-    private TextField toPageTextField;
-
-    // A record to hold rule data
-    private record PageLabelRule(int fromPage, int toPage, PageLabel.PageLabelNumberingStyle style, String styleString, String prefix, int start) {}
+    private record PageLabelRule(int fromPage, PageLabel.PageLabelNumberingStyle style, String styleString, String prefix, int start) {}
 
     private final List<PageLabelRule> pageLabelRules = new ArrayList<>();
-
     private final PdfLabelService pdfLabelService = new PdfLabelService();
     private final FileService fileService = FileService.getInstance();
-
-    private final VBox ruleVBox = new VBox(5); // Add some spacing
+    private final VBox ruleVBox = new VBox(5);
 
     public void initialize() {
         labelRuleListLayout.setContent(ruleVBox);
-        // Set default value for choice box if not set in FXML
+        // 使用常量来设置默认值
         if (numberingStyleChoiceBox.getValue() == null) {
-            numberingStyleChoiceBox.setValue("1, 2, 3, ...");
+            numberingStyleChoiceBox.setValue(STYLE_DECIMAL);
         }
     }
 
     @FXML
     void addRule() {
         try {
-            // 1. Parse and validate input
-            if (fromPageTextField.getText().isEmpty() || toPageTextField.getText().isEmpty()) {
-                showAlert("Invalid Input", "Page range fields cannot be empty.");
+            if (fromPageTextField.getText().isEmpty()) {
+                showAlert("输入无效", "'起始页' 字段不能为空。");
                 return;
             }
             int fromPage = Integer.parseInt(fromPageTextField.getText());
-            int toPage = Integer.parseInt(toPageTextField.getText());
 
-            if (fromPage <= 0 || toPage <= 0) {
-                showAlert("Invalid Input", "Page numbers must be positive.");
-                return;
-            }
-
-            if (fromPage > toPage) {
-                showAlert("Invalid Input", "'From' page must be less than or equal to 'To' page.");
+            if (fromPage <= 0) {
+                showAlert("输入无效", "页码必须是正数。");
                 return;
             }
 
             String prefix = prefixTextField.getText();
-            int start = 1; // Default value
+            int start = 1;
             if (!startTextField.getText().isEmpty()) {
                 start = Integer.parseInt(startTextField.getText());
                 if (start < 1) {
-                    showAlert("Invalid Input", "Start number must be 1 or greater.");
+                    showAlert("输入无效", "起始数字必须大于或等于 1。");
                     return;
                 }
             }
@@ -84,21 +78,17 @@ public class PageLabelController {
             String styleString = numberingStyleChoiceBox.getValue();
             PageLabel.PageLabelNumberingStyle style = getNumberingStyle(styleString);
 
-            // 2. Create and store the rule
-            PageLabelRule rule = new PageLabelRule(fromPage, toPage, style, styleString, prefix, start);
+            PageLabelRule rule = new PageLabelRule(fromPage, style, styleString, prefix, start);
             pageLabelRules.add(rule);
 
-            // 3. Update UI
             addRuleToView(rule);
 
-            // 4. Clear input fields for next entry
             fromPageTextField.clear();
-            toPageTextField.clear();
             prefixTextField.clear();
             startTextField.clear();
 
         } catch (NumberFormatException e) {
-            showAlert("Invalid Input", "Please enter valid numbers for page ranges and start number.");
+            showAlert("输入无效", "请在页码和起始数字字段中输入有效的数字。");
         }
     }
 
@@ -106,12 +96,11 @@ public class PageLabelController {
         HBox ruleBox = new HBox(10);
         ruleBox.setAlignment(Pos.CENTER_LEFT);
 
-        String text = String.format("页码 %d 到 %d: 样式=%s, 前缀='%s', 起始于=%d",
-                rule.fromPage(), rule.toPage(), rule.styleString(), rule.prefix(), rule.start());
+        String text = String.format("从第 %d 页开始: 样式=%s, 前缀='%s', 起始于=%d",
+                rule.fromPage(), rule.styleString(), rule.prefix(), rule.start());
         Label ruleLabel = new Label(text);
         HBox.setHgrow(ruleLabel, Priority.ALWAYS);
         ruleLabel.setMaxWidth(Double.MAX_VALUE);
-
 
         Button deleteButton = new Button("删除");
         deleteButton.setOnAction(event -> {
@@ -127,42 +116,52 @@ public class PageLabelController {
     @FXML
     void apply() {
         if (fileService.getSrcFile() == null) {
-            showAlert("Error", "Please select a PDF file first.");
+            showAlert("错误", "请先选择一个PDF文件。");
             return;
         }
 
-        // Generate PageLabel list from rules, handling overlaps
-        // Using a map ensures that later rules for the same page override earlier ones.
+        // ==============================================
+        // 我们只需要为每条规则的 *起始页* 创建一个 PageLabel 条目。
+
+        // 使用 Map (特别是 TreeMap) 可以确保对于同一个起始页，后添加的规则会覆盖先添加的规则。
         Map<Integer, PageLabel> pageLabelsMap = new TreeMap<>();
         for (PageLabelRule rule : pageLabelRules) {
-            for (int i = rule.fromPage(); i <= rule.toPage(); i++) {
-                int logicalPage = rule.start() + (i - rule.fromPage());
-                PageLabel pageLabel = new PageLabel(i, rule.style(), rule.prefix(), logicalPage);
-                pageLabelsMap.put(i, pageLabel);
-            }
+            // 对于每条规则，只为其起始页创建一个 PageLabel 对象。
+            // pageNum: 新编号开始的物理页码 (即 rule.fromPage())。
+            // style: 这个区段的编号样式。
+            // prefix: 这个区段的前缀。
+            // firstPage: 起始页应当具有的逻辑页码 (即 rule.start())。
+            PageLabel pageLabel = new PageLabel(rule.fromPage(), rule.style(), rule.prefix(), rule.start());
+
+            // Map 的键 (key) 就是规则开始的物理页码。
+            pageLabelsMap.put(rule.fromPage(), pageLabel);
         }
+
+        // 最终的列表就是这些唯一的、按页码排序的起始页规则的集合。
         List<PageLabel> finalPageLabels = new ArrayList<>(pageLabelsMap.values());
+        // ==============================================
 
 
         String srcFilePath = fileService.getSrcFile().toString();
         String destFilePath = fileService.getDestFile().toString();
         try {
             pdfLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
-            showAlert("Success", "Page labels applied successfully.");
+            showAlert("成功", "页码标签已成功应用。");
         } catch (IOException e) {
-            showAlert("Error", "Failed to apply page labels: " + e.getMessage());
+            showAlert("错误", "应用页码标签失败: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
     private PageLabel.PageLabelNumberingStyle getNumberingStyle(String styleString) {
+        // 在 switch 语句中使用常量，确保逻辑和定义一致
         return switch (styleString) {
-            case "1, 2, 3, ..." -> PageLabel.PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
-            case "i, ii, iii, ..." -> PageLabel.PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS;
-            case "I, II, III, ..." -> PageLabel.PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS;
-            case "a, b, c, ..." -> PageLabel.PageLabelNumberingStyle.LOWERCASE_LETTERS;
-            case "A, B, C, ..." -> PageLabel.PageLabelNumberingStyle.UPPERCASE_LETTERS;
-            default -> null; // "无" maps to null
+            case STYLE_DECIMAL -> PageLabel.PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
+            case STYLE_ROMAN_LOWER -> PageLabel.PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS;
+            case STYLE_ROMAN_UPPER -> PageLabel.PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS;
+            case STYLE_LETTERS_LOWER -> PageLabel.PageLabelNumberingStyle.LOWERCASE_LETTERS;
+            case STYLE_LETTERS_UPPER -> PageLabel.PageLabelNumberingStyle.UPPERCASE_LETTERS;
+            default -> null; // STYLE_NONE 和其他未知情况都返回 null
         };
     }
 

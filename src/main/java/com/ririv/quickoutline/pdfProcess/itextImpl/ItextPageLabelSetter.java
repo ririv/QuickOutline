@@ -4,6 +4,14 @@ import com.itextpdf.kernel.pdf.PageLabelNumberingStyle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.PdfPage;
+import com.itextpdf.kernel.pdf.PdfString;
+import com.itextpdf.kernel.pdf.PdfDictionary;
+import com.itextpdf.kernel.pdf.PdfName;
+import com.itextpdf.kernel.pdf.PdfObject;
+import com.itextpdf.kernel.pdf.PdfArray;
+import com.itextpdf.kernel.pdf.PdfNumber;
+import com.itextpdf.kernel.pdf.PdfNumTree;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.pdfProcess.PageLabelSetter;
 
@@ -11,24 +19,39 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static com.ririv.quickoutline.service.FileService.getUserHomePath;
 
 
 // https://kb.itextpdf.com/itext/page-labels
 public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingStyle> {
 
     public static void main(String[] args) throws IOException {
-        final String SRC = "";
-        final String DEST = "./target/sandbox/objects/page_labels.pdf";
+        final String SRC = getUserHomePath() +"/Downloads/统计学习方法_第2版.pdf";
+        final String DEST = "./tmp/page_labels_example.pdf";
+        System.out.println("Source file: " + SRC);
 
         List<PageLabel> labelList = new ArrayList<>();
-        labelList.add(new PageLabel(1, PageLabel.PageLabelNumberingStyle.UPPERCASE_LETTERS,null,null));
+        // 不从第一页开始设置页码标签，则后面的规则会失效。
+        labelList.add(new PageLabel(1, PageLabel.PageLabelNumberingStyle.UPPERCASE_LETTERS,"T",3));
+        labelList.add(new PageLabel(3, PageLabel.PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS,"G",3));
         File file = new File(DEST);
         file.getParentFile().mkdirs();
         new ItextPageLabelSetter().setPageLabels(SRC, DEST, labelList);
+
     }
 
     public void setPageLabels(String srcFilePath, String destFilePath, List<PageLabel> labelList) throws IOException {
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
+
+        // 不从第一页开始设置页码标签，则后面的规则会失效。
+        pdfDoc.getPage(1).setPageLabel(
+                PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS, // 标准数字
+                null, // 无前缀
+                1     // 从1开始
+        );
 
         for(PageLabel label: labelList){
             int pageNum = label.pageNum();
@@ -43,8 +66,29 @@ public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingS
                 pdfDoc.getPage(pageNum).setPageLabel(numberingStyle, labelPrefix, firstPage);
             }
         }
-
+        pdfDoc.close();
     }
+
+    @Override
+    /**
+     * 从PDF文件中获取所有页面的页面标签。
+     *
+     * @param srcFilePath PDF文件的路径。
+     * @return 一个包含所有页面标签的字符串数组。
+     * 如果文档没有自定义标签，则返回与页码对应的数字字符串数组。
+     * @throws IOException 当读取文件失败时抛出。
+     */
+
+    public String[] getPageLabels(String src) throws IOException {
+        PdfReader reader = new PdfReader(src);
+        PdfDocument pdfDoc = new PdfDocument(reader);
+
+        String[] pageLabels = pdfDoc.getPageLabels();
+
+        reader.close();
+        return pageLabels;
+    }
+
 
     @Override
     public PageLabelNumberingStyle mapPageLabelNumberingStyle(PageLabel.PageLabelNumberingStyle numberingStyle) {

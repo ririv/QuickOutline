@@ -1,21 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.String?>
+<?import com.ririv.quickoutline.view.*?>
 <?import javafx.collections.FXCollections?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ChoiceBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.ririv.quickoutline.view.PageLabelController">
@@ -31,16 +20,16 @@
                         <ColumnConstraints hgrow="ALWAYS" />
                     </columnConstraints>
                     <Label text="编号样式:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                    <ChoiceBox fx:id="numberingStyleChoiceBox" maxWidth="Infinity" value="1, 2, 3, ..."
+                    <ChoiceBox fx:id="numberingStyleChoiceBox" maxWidth="Infinity"
                                GridPane.columnIndex="1" GridPane.rowIndex="0">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
-                                <String fx:value="无" />
-                                <String fx:value="1, 2, 3, ..." />
-                                <String fx:value="i, ii, iii, ..." />
-                                <String fx:value="I, II, III, ..." />
-                                <String fx:value="a, b, c, ..." />
-                                <String fx:value="A, B, C, ..." />
+                                <PageLabelController fx:constant="STYLE_NONE" />
+                                <PageLabelController fx:constant="STYLE_DECIMAL" />
+                                <PageLabelController fx:constant="STYLE_ROMAN_LOWER" />
+                                <PageLabelController fx:constant="STYLE_ROMAN_UPPER" />
+                                <PageLabelController fx:constant="STYLE_LETTERS_LOWER" />
+                                <PageLabelController fx:constant="STYLE_LETTERS_UPPER" />
                             </FXCollections>
                         </items>
                     </ChoiceBox>
@@ -53,9 +42,6 @@
 
                     <Label text="起始页码:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
                     <TextField fx:id="fromPageTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-
-                    <Label text="结束页码:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                    <TextField fx:id="toPageTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                 </GridPane>
 
                 <HBox alignment="CENTER">

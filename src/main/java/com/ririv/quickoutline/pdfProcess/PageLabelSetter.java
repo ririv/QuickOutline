@@ -7,5 +7,7 @@ public interface PageLabelSetter<T> {
 
     void setPageLabels(String srcFilePath, String destFilePath, List<PageLabel> labelList) throws IOException;
 
+    String[] getPageLabels(String srcFilePath) throws IOException;
+
     T mapPageLabelNumberingStyle(PageLabel.PageLabelNumberingStyle numberingStyle);
 }
