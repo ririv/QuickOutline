@@ -183,9 +183,15 @@ Mac: 提供安装包，目前打开所生成的 PDF 文件所在位置功能有�
 ---
 
 ## TODO
-- 树视图操作
+- 树视图操作（完善）
 - TOC插入
-- Page Label
+- Page Label（完善）
 - 自定义正则表达式
 - 页码罗马数字支持
 - 文档分析自动生成目录，类似 Chrome插件-谷歌学术PDF阅读器（不知如何实现，有想法的可以交流）
+- AI：OpenAI SDK 支持
+
+## 感谢支持
+感谢支持，可以在小红书上关注我！
+
+[![小红书](https://img.shields.io/badge/小红书-关注我-FF6A6A?style=flat-square&logo=xiaohongshu)](https://www.xiaohongshu.com/user/profile/5f988414000000000101ca29)
