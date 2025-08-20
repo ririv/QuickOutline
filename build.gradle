@@ -49,7 +49,7 @@ application{
 
 
 
-def itextVersion = '9.0.0'
+def itextVersion = '9.2.0'
 
 // compile 不要用了，已经废弃了
 // 不能下载请配置gradle代理
@@ -127,10 +127,11 @@ jlink {
     options = ['--strip-debug', '--compress', 'zip-6', '--no-header-files', '--no-man-pages', '--ignore-signing-information']
 //    https://walczak.it/blog/distributing-javafx-desktop-applications-without-requiring-jvm-using-jlink-and-jpackage
 
-//    配置参考文档 https://docs.oracle.com/en/java/javase/17/docs/specs/man/jpackage.html
+//    配置参考文档 https://docs.oracle.com/en/java/javase/21/docs/specs/man/jpackage.html
     jpackage {
 //        skipInstaller = true
         def installerOptionsParams = [
+                '--name', 'QuickOutline', // <-- 添加这一行来指定应用名称
                 '--vendor', 'riri Personal', //必须加，否则报错
                 '--app-version', (String) version,
         ]
