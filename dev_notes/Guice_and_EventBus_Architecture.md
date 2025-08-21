@@ -41,3 +41,62 @@ Guice 扮演的是办公室的“人事和后勤”部门，它负责**对象的
 2.  **EventBus (广播系统)** 在大家开始工作后，负责传递动态消息，让不同部门的员工（对象）可以高效协作，而不需要知道对方的“分机号”或“工位在哪”。
 
 通过这种方式，我们构建了一个分工明确、灵活、易于扩展和维护的应用程序。
+
+## Provider
+
+这是一个非常核心的依赖注入概念。
+
+Provider 是干嘛的？【一个对象工厂】
+
+简单来说，Provider<T> 就是一个专门用来生产 T 类型实例的工厂。
+
+您可以把它想象成一台咖啡机 (Provider<咖啡>)：
+
+* 您不希望在第一天上班时，就有一杯咖啡放在桌上等到下班（这叫直接注入，@Inject Coffee coffee;）。等您想喝的时候，咖啡已经凉了。
+* 您想要的是，在任何需要的时候，都能走到咖啡机前按一下按钮 (provider.get())，然后立刻得到一杯全新的、热气腾腾的咖啡。
+
+这台咖啡机就是 Provider。它的职责就是按需生产新实例。
+
+总结 `Provider` 的两个主要作用：
+1. 懒加载 (Lazy Initialization): 只有在您调用 .get() 的时候，它才会真正去创建那个对象，而不是在程序启动时就创建好，从而节省了资源。
+2. 获取新实例 (Multiple Instances): 每次调用 .get()，它都会返回一个全新的对象实例，而不是像单例（Singleton）那样总是返回同一个。
+
+  ---
+## 为什么 Guice 中的单例需要在 AppModule 中配置，而 Provider 不需要？
+Guice 需要知道如何“创建”和“管理”一个对象的生命周期，而 `Provider` 本身就是一种特殊的“绑定规则”，而不是一个需要被管理的对象。
+
+我们来详细分解一下：
+
+1. 为什么单例（Singleton）需要在 AppModule 中配置？
+
+* Guice需要明确的指令: 当您请求一个对象时（比如 MainController），Guice 需要知道该如何为您提供这个对象。它有几种选择：
+    * 每次都创建一个全新的实例吗？（默认行为）
+    * 还是在整个应用中只创建一个，然后每次都返回这同一个实例？（单例行为）
+* `bind(...).in(Scopes.SINGLETON)`: 这行代码就是您给 Guice 下达的明确指令：“嘿，Guice，对于 CurrentFileState
+  这个类，我命令你采用单例的管理模式。第一次有人需要它时，你就创建一个；之后再有任何人需要它，就把第一次创建的那个给他。”
+* 集中管理: 将所有这些“管理规则”都集中写在 AppModule 里，可以让整个应用的依赖关系和对象生命周期一目了然，非常便于维护。
+
+2. 为什么 Provider 不需要（也不能）在 AppModule 中配置？
+
+* `Provider` 不是一个“东西”，而是一个“请求”: 当您在构造函数中请求 Provider<T> 时，您并不是在向 Guice 要一个 Provider 类型的对象。
+* 您真正的意思是：“嘿，Guice，请不要现在就给我一个 T 的实例。请给我一个能随时生产 T 的工厂（即Provider）。至于这个工厂该如何生产
+  T（是每次都new一个新的，还是返回一个单例），请遵循你在 AppModule 中为 T 配置的规则。”
+
+举个例子：
+
+* 场景A (单例):
+    * AppModule: bind(CoffeeService.class).in(Scopes.SINGLETON);
+    * MyController: @Inject MyController(CoffeeService service)
+    * 结果: MyController 得到的是一个全局唯一的 CoffeeService 实例。
+
+* 场景B (新实例):
+    * AppModule: // 对CoffeeService没有任何绑定
+    * MyController: @Inject MyController(Provider<CoffeeService> provider)
+    * 结果: MyController 得到的是一个 Provider。每次调用 provider.get()，Guice 都会 new 一个全新的 CoffeeService 实例。
+
+总结：
+
+* `bind(T).in(SINGLETON)` 是在配置 `T` 的生命周期。
+* 注入 `Provider<T>` 是在请求一个可以按需创建 `T` 的能力，它本身不是一个需要被配置的对象，而是Guice根据您对 T 的配置（或者不配置）而自动提供的一种注入机制。
+
+

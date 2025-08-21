@@ -1,7 +1,6 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.ririv.quickoutline.event.*;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.textProcess.methods.Method;
@@ -19,8 +18,8 @@ import java.util.ResourceBundle;
 public class BottomPaneController {
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
-    private final Provider<GetContentsPopupController> getContentsPopupProvider;
-    private final Provider<SetContentsPopupController> setContentsPopupProvider;
+    private final GetContentsPopupController getContentsPopupController;
+    private final SetContentsPopupController setContentsPopupController;
     private final AppEventBus eventBus;
 
     private PopupCard getContentsPopup;
@@ -40,9 +39,9 @@ public class BottomPaneController {
     @FXML public GridPane pageLabelBottomPane;
 
     @Inject
-    public BottomPaneController(Provider<GetContentsPopupController> getContentsPopupProvider, Provider<SetContentsPopupController> setContentsPopupProvider, AppEventBus eventBus) {
-        this.getContentsPopupProvider = getContentsPopupProvider;
-        this.setContentsPopupProvider = setContentsPopupProvider;
+    public BottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus) {
+        this.getContentsPopupController = getContentsPopupController;
+        this.setContentsPopupController = setContentsPopupController;
         this.eventBus = eventBus;
     }
 
@@ -71,8 +70,8 @@ public class BottomPaneController {
         });
 
         // Initialize popups once
-        getContentsPopup = new PopupCard(getContentsPopupProvider.get());
-        setContentsPopup = new PopupCard(setContentsPopupProvider.get());
+        getContentsPopup = new PopupCard(getContentsPopupController);
+        setContentsPopup = new PopupCard(setContentsPopupController);
 
         getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, getContentsPopup::showEventHandler);
         setContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, setContentsPopup::showEventHandler);
