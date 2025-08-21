@@ -1,7 +1,5 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.service.PdfTocService;
-import com.ririv.quickoutline.state.CurrentFileState;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.*;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
@@ -9,11 +7,15 @@ import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
+import com.ririv.quickoutline.service.PdfTocService;
+import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
 import com.ririv.quickoutline.view.controls.Message;
 import com.ririv.quickoutline.view.controls.MessageContainer;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -43,7 +45,7 @@ public class MainController {
     public TextField filepathTF;
     public Button browseFileBtn;
     public StackPane root;
-    public ViewScaleType viewScaleType = ViewScaleType.NONE;
+    private final ObjectProperty<ViewScaleType> viewScaleTypeProperty = new SimpleObjectProperty<>(ViewScaleType.NONE);
 
     // Child controllers
     public TextTabController textTabViewController;
@@ -99,6 +101,7 @@ public class MainController {
         eventBus.subscribe(ExtractTocEvent.class, this::handleExtractToc);
         eventBus.subscribe(AutoToggleToIndentEvent.class, event -> autoToggleToIndentMethod());
         eventBus.subscribe(SwitchTabEvent.class, event -> switchTab(event.targetTab));
+        eventBus.subscribe(ViewScaleChangedEvent.class, event -> viewScaleTypeProperty.set(event.viewScaleType));
 
         currenTab = FnTab.text;
 
@@ -179,10 +182,10 @@ public class MainController {
                 }
                 pdfOutlineService.setContents(text, srcFilePath, destFilePath, offset(),
                         bottomPaneController.getSelectedMethod(),
-                        viewScaleType);
+                        viewScaleTypeProperty.get());
             } else {
                 rootBookmark.updateLevelByStructureLevel();
-                pdfOutlineService.setContents(rootBookmark, srcFilePath, destFilePath, viewScaleType);
+                pdfOutlineService.setContents(rootBookmark, srcFilePath, destFilePath, viewScaleTypeProperty.get());
             }
         } catch (BookmarkFormatException e) {
             e.printStackTrace();

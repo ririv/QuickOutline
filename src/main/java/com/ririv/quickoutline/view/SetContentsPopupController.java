@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.event.ViewScaleChangedEvent;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.SetContentsEvent;
@@ -72,7 +73,7 @@ public class SetContentsPopupController extends StackPane {
                 viewScaleType = ViewScaleType.NONE;
             }
             viewScaleTypeLabel.textProperty().bind(labelText);
-            eventBus.publish(new SetContentsEvent(viewScaleType));
+            eventBus.publish(new ViewScaleChangedEvent(viewScaleType));
             });
     }
 

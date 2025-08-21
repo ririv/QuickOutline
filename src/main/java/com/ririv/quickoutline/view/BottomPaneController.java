@@ -85,7 +85,7 @@ public class BottomPaneController {
 
     @FXML
     private void setContentsBtnAction(ActionEvent event) {
-        eventBus.publish(new SetContentsEvent(ViewScaleType.NONE));
+        eventBus.publish(new SetContentsEvent());
     }
 
     @FXML
