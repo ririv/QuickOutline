@@ -13,6 +13,8 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -22,6 +24,7 @@ public class TreeTabController {
     public TreeTableColumn<Bookmark, String> offsetPageColumn;
 
     private final AppEventBus eventBus;
+    private final Map<String, TreeItem<Bookmark>> itemCache = new HashMap<>();
 
     @Inject
     public TreeTabController(AppEventBus eventBus) {
@@ -39,6 +42,10 @@ public class TreeTabController {
     void reconstructTree(Bookmark rootBookmark) {
         TreeItem<Bookmark> rootItem = new RecursiveTreeItem(rootBookmark);
         expandAllNodes(rootItem);
+
+        // Rebuild cache
+        itemCache.clear();
+        buildCache(rootItem);
 
         titleColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getTitle()));
         offsetPageColumn.setCellValueFactory(param -> {
@@ -66,6 +73,15 @@ public class TreeTabController {
         treeTableView.setShowRoot(false);
         treeTableView.setRoot(rootItem);
         treeTableView.refresh();
+    }
+
+    private void buildCache(TreeItem<Bookmark> item) {
+        if (item != null && item.getValue() != null) {
+            itemCache.put(item.getValue().getId(), item);
+            for (TreeItem<Bookmark> child : item.getChildren()) {
+                buildCache(child);
+            }
+        }
     }
 
     private void setupRowFactory() {
@@ -103,7 +119,7 @@ public class TreeTabController {
             row.setOnDragOver(event -> {
                 Dragboard db = event.getDragboard();
                 if (event.getGestureSource() != row && db.hasString() && !row.isEmpty()) {
-                    TreeItem<Bookmark> draggedItem = findTreeItemById(treeTableView.getRoot(), db.getString());
+                    TreeItem<Bookmark> draggedItem = findTreeItemById(db.getString());
                     if (draggedItem != null && !isChildOrSelf(draggedItem, row.getTreeItem())) {
                         event.acceptTransferModes(TransferMode.MOVE);
                     }
@@ -115,7 +131,7 @@ public class TreeTabController {
                 Dragboard db = event.getDragboard();
                 boolean success = false;
                 if (db.hasString() && !row.isEmpty()) {
-                    TreeItem<Bookmark> draggedItemUI = findTreeItemById(treeTableView.getRoot(), db.getString());
+                    TreeItem<Bookmark> draggedItemUI = findTreeItemById(db.getString());
                     TreeItem<Bookmark> targetItemUI = row.getTreeItem();
                     if (draggedItemUI != null && targetItemUI != null && draggedItemUI != targetItemUI) {
                         Bookmark draggedBookmark = draggedItemUI.getValue();
@@ -184,13 +200,8 @@ public class TreeTabController {
         }
     }
 
-    private TreeItem<Bookmark> findTreeItemById(TreeItem<Bookmark> root, String id) {
-        if (root.getValue().getId().equals(id)) return root;
-        for (TreeItem<Bookmark> child : root.getChildren()) {
-            TreeItem<Bookmark> result = findTreeItemById(child, id);
-            if (result != null) return result;
-        }
-        return null;
+    private TreeItem<Bookmark> findTreeItemById(String id) {
+        return itemCache.get(id);
     }
 
     private boolean isChildOrSelf(TreeItem<Bookmark> draggedItem, TreeItem<Bookmark> targetItem) {
