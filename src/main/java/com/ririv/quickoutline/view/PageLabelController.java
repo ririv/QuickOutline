@@ -1,8 +1,9 @@
 package com.ririv.quickoutline.view;
 
+import com.google.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.service.PdfLabelService;
-import com.ririv.quickoutline.service.FileService;
+import com.ririv.quickoutline.state.CurrentFileState;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -39,9 +40,15 @@ public class PageLabelController {
     private record PageLabelRule(int fromPage, PageLabel.PageLabelNumberingStyle style, String styleString, String prefix, int start) {}
 
     private final List<PageLabelRule> pageLabelRules = new ArrayList<>();
-    private final PdfLabelService pdfLabelService = new PdfLabelService();
-    private final FileService fileService = FileService.getInstance();
+    private final PdfLabelService pdfLabelService;
+    private final CurrentFileState fileService;
     private final VBox ruleVBox = new VBox(5);
+
+    @Inject
+    public PageLabelController(PdfLabelService pdfLabelService, CurrentFileState fileService) {
+        this.pdfLabelService = pdfLabelService;
+        this.fileService = fileService;
+    }
 
     public void initialize() {
         labelRuleListLayout.setContent(ruleVBox);

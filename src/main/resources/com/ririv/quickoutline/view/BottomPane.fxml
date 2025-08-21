@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.ririv.quickoutline.view.controls.Remind?>
+<?import com.ririv.quickoutline.view.GraphButtonWrapper?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!-- 根节点从 VBox 开始，并指定新的控制器 -->
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.ririv.quickoutline.view.BottomPaneController">
+    <Region styleClass="dividing-line-h"/>
+    <StackPane>
+        <GridPane fx:id="outlineBottomPane">
+            <HBox alignment="CENTER">
+                <GraphButtonWrapper>
+                    <Button fx:id="deleteBtn" onAction="#deleteBtnAction" styleClass="graph-button"
+                            prefWidth="30">
+                        <tooltip>
+                            <Tooltip text="%deleteBtn.tooltip"/>
+                        </tooltip>
+                        <graphic>
+                            <Region styleClass="icon, delete-icon"/>
+                        </graphic>
+                    </Button>
+                </GraphButtonWrapper>
+                <Button fx:id="getContentsBtn" styleClass="my-button,plain-button-primary"
+                        onAction="#getContentsBtnAction" mnemonicParsing="false" prefWidth="120.0"
+                        text="%getContentsBtn.text">
+                </Button>
+            </HBox>
+
+            <Button fx:id="setContentsBtn" styleClass="my-button,plain-button-important"
+                    onAction="#setContentsBtnAction"
+                    mnemonicParsing="false" prefWidth="120.0" text="%setContentsBtn.text"
+                    GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
+            <TextField fx:id="offsetTF" maxWidth="200" promptText="%offsetTF.prompt" GridPane.columnIndex="3"
+                       GridPane.halignment="CENTER">
+                <GridPane.margin>
+                    <Insets left="20.0" right="20.0"/>
+                </GridPane.margin>
+                <tooltip>
+                    <Tooltip text="%offsetTF.tooltip"/>
+                </tooltip>
+            </TextField>
+
+            <VBox alignment="CENTER_RIGHT" prefWidth="80.0" GridPane.columnIndex="4">
+                <GridPane.margin>
+                    <Insets left="35" right="20.0"/>
+                </GridPane.margin>
+
+                <fx:define>
+                    <ToggleGroup fx:id="methodToggleGroup"/>
+                </fx:define>
+
+                <StackPane alignment="CENTER_LEFT">
+                    <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                                 text="%seqRBtn.text" >
+                        <StackPane.margin>
+                            <Insets topRightBottomLeft="5" />
+                        </StackPane.margin>
+                    </RadioButton>
+                    <Remind fx:id="seqRBtnRemind" />
+                </StackPane>
+                <StackPane alignment="CENTER_LEFT">
+                    <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                                 text="%indentRBtn.text">
+                        <StackPane.margin>
+                            <Insets topRightBottomLeft="5" />
+                        </StackPane.margin>
+                    </RadioButton>
+                    <Remind fx:id="indentRBtnRemind" />
+                </StackPane>
+            </VBox>
+
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints vgrow="SOMETIMES"/>
+            </rowConstraints>
+        </GridPane>
+
+        <GridPane fx:id="pageLabelBottomPane" visible="false">
+            <Button fx:id="setPageLabelBtn" styleClass="my-button,plain-button-important"
+                    onAction="#setContentsBtnAction"
+                    mnemonicParsing="false" prefWidth="120.0" text="%setPageLabelBtn.text"
+                    GridPane.columnIndex="2" GridPane.halignment="CENTER"/>
+
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints vgrow="SOMETIMES"/>
+            </rowConstraints>
+        </GridPane>
+    </StackPane>
+</VBox>

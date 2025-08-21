@@ -16,9 +16,13 @@ module quickoutline {
 //    requires org.bouncycastle.provider;
     requires org.bouncycastle.pkix; //加密的PDF必须添加
     requires org.apache.pdfbox;
+    requires com.google.guice;
+    requires jakarta.inject;
 //    requires org.bouncycastle.util;
 
-    opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics ; //由于FXML使用反射访问controller
+    opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
+    opens com.ririv.quickoutline.service to com.google.guice;
+    opens com.ririv.quickoutline.state to com.google.guice; //由于FXML使用反射访问controller
     opens com.ririv.quickoutline.view.controls to javafx.fxml, javafx.graphics;
 
     exports com.ririv.quickoutline.view;
@@ -31,5 +35,6 @@ module quickoutline {
     exports com.ririv.quickoutline.exception;
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions;
+    exports com.ririv.quickoutline.state;
 
 }

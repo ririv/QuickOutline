@@ -1,5 +1,8 @@
 package com.ririv.quickoutline.view;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.ririv.quickoutline.di.AppModule;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -17,6 +20,13 @@ import java.util.ResourceBundle;
 
 public class App extends Application {
 
+    private Injector injector;
+
+    @Override
+    public void init() {
+        injector = Guice.createInjector(new AppModule());
+    }
+
 //      注意javafx程序架子顺序：main启动程序，加载fxml，fxml加载指定的controller
         @Override
         public void start(Stage stage) throws IOException {
@@ -26,6 +36,8 @@ public class App extends Application {
                     getClass().getResource("MainView.fxml"),
                     bundle
             );
+
+            fxmlLoader.setControllerFactory(injector::getInstance);
 
             Parent root = fxmlLoader.load();
 

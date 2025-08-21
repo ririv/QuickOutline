@@ -76,6 +76,11 @@ dependencies {
     implementation 'org.apache.pdfbox:pdfbox-tools:3.0.3'
     // 如果需要字体支持（比如渲染中文等非西文字符）
     implementation 'org.apache.pdfbox:fontbox:3.0.3'
+
+    // Guice for Dependency Injection
+    implementation 'com.google.inject:guice:7.0.0'
+    implementation 'jakarta.inject:jakarta.inject-api:2.0.1'
+    
 }
 
 repositories {
@@ -163,7 +168,7 @@ jlink {
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.png' // Linux 支持 PNG/SVG
             installerOptions = [
                     '--linux-shortcut', // 创建桌面快捷方式
-                    '--linux-menu-group', 'Development', // 菜单分组
+                    '--linux-menu-group', 'Development', // 应用被如何归类，有一些标准并且常用的类别名称
                     '--linux-package-name', 'quickoutline' // 包名
             ]
         }

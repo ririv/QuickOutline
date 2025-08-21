@@ -4,14 +4,6 @@ import com.itextpdf.kernel.pdf.PageLabelNumberingStyle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.pdf.PdfPage;
-import com.itextpdf.kernel.pdf.PdfString;
-import com.itextpdf.kernel.pdf.PdfDictionary;
-import com.itextpdf.kernel.pdf.PdfName;
-import com.itextpdf.kernel.pdf.PdfObject;
-import com.itextpdf.kernel.pdf.PdfArray;
-import com.itextpdf.kernel.pdf.PdfNumber;
-import com.itextpdf.kernel.pdf.PdfNumTree;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.pdfProcess.PageLabelSetter;
 
@@ -19,10 +11,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
-import static com.ririv.quickoutline.service.FileService.getUserHomePath;
+import static com.ririv.quickoutline.utils.PathUtils.getUserHomePath;
 
 
 // https://kb.itextpdf.com/itext/page-labels

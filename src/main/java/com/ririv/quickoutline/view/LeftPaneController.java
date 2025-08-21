@@ -1,5 +1,8 @@
 package com.ririv.quickoutline.view;
 
+import com.google.inject.Inject;
+import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.event.SwitchTabEvent;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.MainController.FnTab;
 import javafx.event.ActionEvent;
@@ -22,10 +25,10 @@ public class LeftPaneController {
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(LeftPaneController.class);
 
+    private final AppEventBus eventBus;
 
     public Node root;
     private Stage helpStage;
-
 
     public ToggleButton textTabBtn;
     public ToggleButton treeTabBtn;
@@ -36,43 +39,33 @@ public class LeftPaneController {
     public ToggleButton labelTabBtn;
     public ToggleButton previewTabBtn;
 
-
-    public MainController mainController;
-
-    FnTab currenTab;
-
-
-    void setMainController(MainController mainController){
-        this.mainController = mainController;
-        this.root = mainController.root;
-        this.currenTab = mainController.currenTab;
+    @Inject
+    public LeftPaneController(AppEventBus eventBus) {
+        this.eventBus = eventBus;
     }
-
 
     public void initialize() {
         textTabBtn.setSelected(true);
 
         tabToggleGroup.selectedToggleProperty().addListener((event,oldValue,newValue) -> {
-            // 保持选中状态，防止取消选中
             if (newValue == null){
                 tabToggleGroup.selectToggle(oldValue);
-                logger.info("select {}", oldValue);
+                return;
             }
 
-            if (textTabBtn.isSelected()) {
-                mainController.switchTab(FnTab.text);
-            } else if (treeTabBtn.isSelected()) {
-                mainController.switchTab(FnTab.tree);
-            } else if (tocTabBtn.isSelected()) {
-                mainController.switchTab(FnTab.toc);
-            } else if (labelTabBtn.isSelected()) {
-                mainController.switchTab(FnTab.label);
-            } else if (previewTabBtn.isSelected()) {
-                mainController.switchTab(FnTab.preview);
+            if (newValue == textTabBtn) {
+                eventBus.publish(new SwitchTabEvent(FnTab.text));
+            } else if (newValue == treeTabBtn) {
+                eventBus.publish(new SwitchTabEvent(FnTab.tree));
+            } else if (newValue == tocTabBtn) {
+                eventBus.publish(new SwitchTabEvent(FnTab.toc));
+            } else if (newValue == labelTabBtn) {
+                eventBus.publish(new SwitchTabEvent(FnTab.label));
+            } else if (newValue == previewTabBtn) {
+                eventBus.publish(new SwitchTabEvent(FnTab.preview));
             }
         });
     }
-
 
     @FXML
     public void createHelpWindowAction(ActionEvent actionEvent) throws IOException {
@@ -89,21 +82,12 @@ public class LeftPaneController {
             helpStage.setScene(new Scene(helpWinRoot, 400, 300));
 
             helpStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon/help_black.png"))));
-            helpStage.setResizable(false); //不可调整大小，且使最大化不可用
-            helpStage.initOwner(root.getScene().getWindow());//可以使最小化不可用，配合上一条语句，可以使最小化最大化隐藏，只留下"×"
+            helpStage.setResizable(false);
+            helpStage.initOwner(root.getScene().getWindow());
             helpStage.show();
-//            helpStage.focusedProperty().addListener((observable, oldValue, newValue) -> {
-//                if (!observable.getValue()) {
-//                    helpStage.hide();
-//                    ((Stage) root.getScene().getWindow()).toFront();
-//                }
-//            });
         }
         else {
-            // 如果窗口已经创建但被隐藏，重新显示
-            // 如果窗口已存在，将其聚焦到前台
             helpStage.show();
-//            helpStage.toFront();
             helpStage.requestFocus();
         }
     }
