@@ -1,9 +1,9 @@
 package com.ririv.quickoutline.view;
 
+import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.BookmarksChangedEvent;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.*;
@@ -13,8 +13,6 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -23,8 +21,12 @@ public class TreeTabController {
     public TreeTableColumn<Bookmark, String> titleColumn;
     public TreeTableColumn<Bookmark, String> offsetPageColumn;
 
-    private final Map<String, TreeItem<Bookmark>> itemCache = new HashMap<>();
+    private final AppEventBus eventBus;
 
+    @Inject
+    public TreeTabController(AppEventBus eventBus) {
+        this.eventBus = eventBus;
+    }
 
     public void initialize() {
         treeTableView.setEditable(true);
@@ -64,7 +66,6 @@ public class TreeTabController {
         treeTableView.setShowRoot(false);
         treeTableView.setRoot(rootItem);
         treeTableView.refresh();
-        itemCache.clear();
     }
 
     private void setupRowFactory() {
@@ -179,7 +180,7 @@ public class TreeTabController {
         Bookmark rootBookmark = getRootBookmark();
         if (rootBookmark != null) {
             rootBookmark.updateLevelByStructureLevel();
-            AppEventBus.getInstance().publish(new BookmarksChangedEvent(rootBookmark));
+            eventBus.publish(new BookmarksChangedEvent(rootBookmark));
         }
     }
 
