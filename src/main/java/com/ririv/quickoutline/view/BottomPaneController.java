@@ -23,6 +23,9 @@ public class BottomPaneController {
     private final Provider<SetContentsPopupController> setContentsPopupProvider;
     private final AppEventBus eventBus;
 
+    private PopupCard getContentsPopup;
+    private PopupCard setContentsPopup;
+
     @FXML public Button getContentsBtn;
     @FXML public Button setContentsBtn;
     @FXML public TextField offsetTF;
@@ -67,17 +70,12 @@ public class BottomPaneController {
             eventBus.publish(new ReconstructTreeEvent());
         });
 
-        getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
-            GetContentsPopupController popupController = getContentsPopupProvider.get();
-            PopupCard popup = new PopupCard(popupController);
-            popup.showEventHandler(event);
-        });
+        // Initialize popups once
+        getContentsPopup = new PopupCard(getContentsPopupProvider.get());
+        setContentsPopup = new PopupCard(setContentsPopupProvider.get());
 
-        setContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
-            SetContentsPopupController popupController = setContentsPopupProvider.get();
-            PopupCard popup = new PopupCard(popupController);
-            popup.showEventHandler(event);
-        });
+        getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, getContentsPopup::showEventHandler);
+        setContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, setContentsPopup::showEventHandler);
     }
 
     @FXML
@@ -104,7 +102,7 @@ public class BottomPaneController {
         }
         return 0;
     }
-    
+
     public Method getSelectedMethod() {
         return (Method) methodToggleGroup.getSelectedToggle().getUserData();
     }
