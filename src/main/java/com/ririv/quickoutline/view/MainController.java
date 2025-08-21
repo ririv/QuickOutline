@@ -88,8 +88,7 @@ public class MainController {
         text, tree, toc, setting, label, preview
     }
 
-    public List<Node> viewList;
-    FnTab currenTab;
+    private final ObjectProperty<FnTab> currentTabProperty = new SimpleObjectProperty<>(FnTab.text);
 
     @FXML
     public void initialize() {
@@ -97,16 +96,38 @@ public class MainController {
         eventBus.subscribe(GetContentsEvent.class, this::handleGetContents);
         eventBus.subscribe(SetContentsEvent.class, this::handleSetContents);
         eventBus.subscribe(DeleteContentsEvent.class, this::handleDeleteContents);
-        eventBus.subscribe(ReconstructTreeEvent.class, this::handleReconstructTree);
         eventBus.subscribe(ExtractTocEvent.class, this::handleExtractToc);
         eventBus.subscribe(AutoToggleToIndentEvent.class, event -> autoToggleToIndentMethod());
-        eventBus.subscribe(SwitchTabEvent.class, event -> switchTab(event.targetTab));
         eventBus.subscribe(ViewScaleChangedEvent.class, event -> viewScaleTypeProperty.set(event.viewScaleType));
+        eventBus.subscribe(ReconstructTreeEvent.class, this::handleReconstructTree);
+        eventBus.subscribe(SwitchTabEvent.class, event -> currentTabProperty.set(event.targetTab));
 
-        currenTab = FnTab.text;
+        // Bind tab visibility to currentTabProperty
+        textTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.text));
+        treeTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tree));
+        tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.toc));
+        pageLabelTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.label));
+        pdfPreviewTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.preview));
 
-        viewList = new ArrayList<>(Arrays.asList(textTabView, treeTabView,
-                tocGeneratorTabView, pageLabelTabView, pdfPreviewTabView));
+        // Add listener for tab-specific logic
+        currentTabProperty.addListener((obs, oldTab, newTab) -> {
+            if (newTab == FnTab.tree) {
+                reconstructTree();
+            } else if (newTab == FnTab.text) {
+                Bookmark rootBookmark = treeTabViewController.getRootBookmark();
+                if (rootBookmark != null) {
+                    rootBookmark.updateLevelByStructureLevel();
+                    textTabViewController.contentsTextArea.setText(rootBookmark.toTreeText());
+                }
+            } else if (newTab == FnTab.preview) {
+                Path srcFile = currentFileState.getSrcFile();
+                if (srcFile != null) {
+                    pdfPreviewTabViewController.loadPdf(srcFile.toFile());
+                } else {
+                    pdfPreviewTabViewController.closePreview();
+                }
+            }
+        });
 
         currentFileState.srcFileProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -117,7 +138,7 @@ public class MainController {
             }
         });
 
-        // Drag and drop logic remains here as it's on the root pane
+        // Drag and drop logic
         root.setOnDragOver(event -> {
             String pdfFormatPattern = ".+\\.[pP][dD][fF]$";
             Dragboard dragboard = event.getDragboard();
@@ -160,7 +181,7 @@ public class MainController {
         }
 
         getContents();
-        if (currenTab == FnTab.tree) reconstructTree();
+        if (currentTabProperty.get() == FnTab.tree) reconstructTree();
     }
 
     private void handleSetContents(SetContentsEvent event) {
@@ -216,7 +237,7 @@ public class MainController {
     }
 
     private void handleReconstructTree(ReconstructTreeEvent event) {
-        if (currenTab == FnTab.tree) {
+        if (currentTabProperty.get() == FnTab.tree) {
             reconstructTree();
         }
     }
@@ -236,33 +257,6 @@ public class MainController {
         textTabViewController.contentsTextArea.setText(contents);
     }
 
-    public void switchTab(FnTab targetTab) {
-        if (targetTab == FnTab.text) {
-            viewList.forEach(view -> view.setVisible(view == textTabView));
-            Bookmark rootBookmark = treeTabViewController.getRootBookmark();
-            if (rootBookmark != null) {
-                rootBookmark.updateLevelByStructureLevel();
-                textTabViewController.contentsTextArea.setText(rootBookmark.toTreeText());
-            }
-        } else if (targetTab == FnTab.tree) {
-            viewList.forEach(view -> view.setVisible(view == treeTabView));
-            reconstructTree();
-        } else if (targetTab == FnTab.toc) {
-            viewList.forEach(view -> view.setVisible(view == tocGeneratorTabView));
-        } else if (targetTab == FnTab.label) {
-            viewList.forEach(view -> view.setVisible(view == pageLabelTabView));
-        } else if (targetTab == FnTab.preview) {
-            viewList.forEach(view -> view.setVisible(view == pdfPreviewTabView));
-            Path srcFile = currentFileState.getSrcFile();
-            if (srcFile != null) {
-                pdfPreviewTabViewController.loadPdf(srcFile.toFile());
-            } else {
-                pdfPreviewTabViewController.closePreview();
-            }
-        }
-        currenTab = targetTab;
-    }
-
     private void openFile(File file) {
         if (file == null) return;
 
@@ -276,7 +270,7 @@ public class MainController {
             ButtonType cancelBtnType = new ButtonType(bundle.getString("btnType.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE);
             Optional<ButtonType> result = showAlert(
                     Alert.AlertType.CONFIRMATION,
-                    bundle.getString("alert.saveConfirmation"),
+                    bundle.getString("alert.unsavedConfirmation"),
                     root.getScene().getWindow(),
                     keepContentsTextBtnType, noKeepContentsTextBtnType, cancelBtnType);
 
@@ -320,7 +314,7 @@ public class MainController {
         bottomPaneController.offsetTF.setText(null);
         if (!keepContents) {
             getContents();
-            if (currenTab == FnTab.tree) reconstructTree();
+            if (currentTabProperty.get() == FnTab.tree) reconstructTree();
         }
     }
 
