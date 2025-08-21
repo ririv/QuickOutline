@@ -191,7 +191,10 @@ Mac: 提供安装包，目前打开所生成的 PDF 文件所在位置功能有�
 - 文档分析自动生成目录，类似 Chrome插件-谷歌学术PDF阅读器（不知如何实现，有想法的可以交流）
 - AI：OpenAI SDK 支持
 
-## 感谢支持
-感谢支持，可以在小红书上关注我！
+---
 
-[![小红书](https://img.shields.io/badge/小红书-关注我-FF6A6A?style=flat-square&logo=xiaohongshu)](https://www.xiaohongshu.com/user/profile/5f988414000000000101ca29)
+## ☕ 感谢支持！
+
+如果您觉得 QuickOutline 对您有帮助，欢迎通过以下方式支持我，您的支持是我持续维护和开发新功能的巨大动力！
+*   **关注我的小红书** [![小红书](https://img.shields.io/badge/小红书-关注我-FF6A6A?style=flat-square&logo=xiaohongshu)](https://www.xiaohongshu.com/user/profile/5f988414000000000101ca29)
+*   **请我喝杯咖啡** [微信支付](https://your_wechat_payment_link.com) | [支付宝](https://your_alipay_payment_link.com)
