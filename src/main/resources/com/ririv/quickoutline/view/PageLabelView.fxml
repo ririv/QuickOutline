@@ -59,7 +59,8 @@
                 <padding>
                     <Insets top="15"/>
                 </padding>
-                <Button defaultButton="true" onAction="#apply" text="应用" />
+                <Button defaultButton="true" onAction="#apply" prefWidth="120.0"
+                        styleClass="my-button,plain-button-important" text="%setPageLabelBtn.text"/>
             </HBox>
         </bottom>
     </BorderPane>

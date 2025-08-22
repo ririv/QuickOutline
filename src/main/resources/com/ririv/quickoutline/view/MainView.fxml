@@ -44,7 +44,7 @@
 
         </left>
         <center>
-
+            <VBox>
             <!-- 可切换视图区域 -->
             <StackPane id="operationPane">
 
@@ -56,11 +56,12 @@
                 <fx:include fx:id="pdfPreviewTabView" source="PdfPreview.fxml" visible="false" />
 
             </StackPane>
+            <Region styleClass="dividing-line-h"/>
+                <fx:include fx:id="bottomPane" source="BottomPane.fxml"/>
+            </VBox>
 
         </center>
-        <bottom>
-            <fx:include fx:id="bottomPane" source="BottomPane.fxml"/>
-        </bottom>
+
     </BorderPane>
     <MessageContainer fx:id="messageManager"/>
 </StackPane>

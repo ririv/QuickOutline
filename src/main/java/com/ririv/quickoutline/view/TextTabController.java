@@ -4,9 +4,12 @@ import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.AutoToggleToIndentEvent;
 import com.ririv.quickoutline.event.BookmarksChangedEvent;
+import com.ririv.quickoutline.event.ReconstructTreeEvent;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
+import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.*;
+import com.ririv.quickoutline.view.controls.Remind;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -46,6 +49,12 @@ public class TextTabController {
     public Label mask;
     public HBox root;
 
+    @FXML public RadioButton seqRBtn;
+    @FXML public RadioButton indentRBtn;
+    @FXML public ToggleGroup methodToggleGroup;
+    @FXML public Remind indentRBtnRemind;
+    @FXML public Remind seqRBtnRemind;
+
     private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\t|\\s{1,4})");
 
     @Inject
@@ -55,6 +64,14 @@ public class TextTabController {
     }
 
     public void initialize() {
+        seqRBtn.setUserData(Method.SEQ);
+        indentRBtn.setUserData(Method.INDENT);
+        seqRBtn.setSelected(true);
+        methodToggleGroup.selectedToggleProperty().addListener(event -> {
+            eventBus.publish(new ReconstructTreeEvent());
+        });
+        eventBus.subscribe(AutoToggleToIndentEvent.class, event -> autoToggleToIndentMethod());
+
         // Subscribe to BookmarksChangedEvent
         eventBus.subscribe(BookmarksChangedEvent.class, event ->
                 Platform.runLater(() -> contentsTextArea.setText(event.getRootBookmark().toTreeText())));
@@ -252,5 +269,16 @@ public class TextTabController {
         int x = getLineNumber(contentsTextArea, pos);
         int y = getColumnNumber(contentsTextArea, pos);
         return new Pair<>(x, y);
+    }
+
+    public Method getSelectedMethod() {
+        return (Method) methodToggleGroup.getSelectedToggle().getUserData();
+    }
+
+    public void autoToggleToIndentMethod() {
+        if (methodToggleGroup.getSelectedToggle() != indentRBtn) {
+            methodToggleGroup.selectToggle(indentRBtn);
+            indentRBtnRemind.play();
+        }
     }
 }

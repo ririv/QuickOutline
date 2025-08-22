@@ -29,9 +29,6 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -204,7 +201,7 @@ public class MainController {
                     return;
                 }
                 pdfOutlineService.setContents(text, srcFilePath, destFilePath, offset(),
-                        bottomPaneController.getSelectedMethod(),
+                        textTabViewController.getSelectedMethod(),
                         viewScaleTypeProperty.get());
             } else {
                 rootBookmark.updateLevelByStructureLevel();
@@ -345,7 +342,7 @@ public class MainController {
     public void reconstructTree() {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(
                 textTabViewController.contentsTextArea.getText(), 0,
-                bottomPaneController.getSelectedMethod()
+                textTabViewController.getSelectedMethod()
         );
         treeTabViewController.reconstructTree(rootBookmark);
     }

@@ -2,11 +2,8 @@ package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.*;
-import com.ririv.quickoutline.pdfProcess.ViewScaleType;
-import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.PopupCard;
-import com.ririv.quickoutline.view.controls.Remind;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -22,6 +19,9 @@ public class BottomPaneController {
     private final SetContentsPopupController setContentsPopupController;
     private final AppEventBus eventBus;
 
+    public Button TextEditViewBtn;
+    public Button TreeEditViewBtn;
+
     private PopupCard getContentsPopup;
     private PopupCard setContentsPopup;
 
@@ -29,14 +29,8 @@ public class BottomPaneController {
     @FXML public Button setContentsBtn;
     @FXML public TextField offsetTF;
     @FXML public Button deleteBtn;
-    @FXML public RadioButton seqRBtn;
-    @FXML public RadioButton indentRBtn;
-    @FXML public ToggleGroup methodToggleGroup;
-    @FXML public Remind indentRBtnRemind;
-    @FXML public Remind seqRBtnRemind;
-    @FXML public Button setPageLabelBtn;
+
     @FXML public GridPane outlineBottomPane;
-    @FXML public GridPane pageLabelBottomPane;
 
     @Inject
     public BottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus) {
@@ -47,11 +41,7 @@ public class BottomPaneController {
 
     @FXML
     public void initialize() {
-        eventBus.subscribe(AutoToggleToIndentEvent.class, event -> autoToggleToIndentMethod());
 
-        seqRBtn.setUserData(Method.SEQ);
-        indentRBtn.setUserData(Method.INDENT);
-        seqRBtn.setSelected(true);
 
         offsetTF.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty() && !newValue.matches("^-?[1-9]\\d*$|^0$|^-$")) {
@@ -65,9 +55,7 @@ public class BottomPaneController {
             }
         });
 
-        methodToggleGroup.selectedToggleProperty().addListener(event -> {
-            eventBus.publish(new ReconstructTreeEvent());
-        });
+
 
         // Initialize popups once
         getContentsPopup = new PopupCard(getContentsPopupController);
@@ -102,14 +90,21 @@ public class BottomPaneController {
         return 0;
     }
 
-    public Method getSelectedMethod() {
-        return (Method) methodToggleGroup.getSelectedToggle().getUserData();
+    @FXML
+    private void switchEditViewAction(ActionEvent event) {
+        Button btn = (Button) event.getSource();
+        if (btn == TextEditViewBtn) {
+            TextEditViewBtn.setVisible(false);
+            TreeEditViewBtn.setVisible(true);
+//            eventBus.publish(new SwitchBookmarkEditViewEvent(FnTab.text));
+        } else if (btn == TreeEditViewBtn) {
+            TextEditViewBtn.setVisible(true);
+            TreeEditViewBtn.setVisible(false);
+//            eventBus.publish(new SwitchBookmarkEditViewEvent(FnTab.tree));
+        }
     }
 
-    public void autoToggleToIndentMethod() {
-        if (methodToggleGroup.getSelectedToggle() != indentRBtn) {
-            methodToggleGroup.selectToggle(indentRBtn);
-            indentRBtnRemind.play();
-        }
+    @FXML
+    public void switchToTreeEditViewAction(ActionEvent actionEvent) {
     }
 }

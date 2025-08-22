@@ -20,7 +20,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-tab, edit-icon" prefWidth="20" prefHeight="20"/>
+                        <Region styleClass="icon, icon-tab, text-edit-icon" prefWidth="20" prefHeight="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
@@ -96,6 +96,11 @@
                     </graphic>
                 </Button>
             </GraphButtonWrapper>
+            <Region>
+                <VBox.margin>
+                    <Insets top="10"/>
+                </VBox.margin>
+            </Region>
         </VBox>
     </bottom>
 </BorderPane>

@@ -11,6 +11,8 @@
 }
 
 
+
+
 #deleteBtn:hover > .icon{
     -fx-background-color: -el-color-important;
 }
@@ -19,6 +21,12 @@
 #deleteBtn:pressed > .icon{
     -fx-background-color: -el-color-important-pressed;
 }
+
+.edit-view-btn:hover{
+    -fx-background-color: transparent;
+}
+
+
 
 
 
@@ -85,11 +93,13 @@
 
 
 .dividing-line-h{
+    -fx-min-height: 1;
     -fx-pref-height: 1;
     -fx-background-color: -my-color-divding-line;
 }
 
 .dividing-line-v{
+    -fx-min-height: 1;
     -fx-pref-width: 1;
     -fx-background-color: -my-color-divding-line;
 }
@@ -98,3 +108,4 @@
     -fx-pref-height: 20px;
     -fx-pref-width: 20px;
 }
+

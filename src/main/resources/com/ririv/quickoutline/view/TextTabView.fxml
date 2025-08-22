@@ -3,6 +3,8 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import com.ririv.quickoutline.view.controls.Remind?>
 <HBox
       xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
@@ -40,6 +42,35 @@
             </tooltip>
         </Button>
         <Label />
+        <VBox prefWidth="80.0" GridPane.columnIndex="4">
+            <GridPane.margin>
+                <Insets left="35" right="20.0"/>
+            </GridPane.margin>
+
+            <fx:define>
+                <ToggleGroup fx:id="methodToggleGroup"/>
+            </fx:define>
+
+            <StackPane alignment="CENTER_LEFT">
+                <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                             text="%bookmarkTab.seqRBtn.text" >
+                    <StackPane.margin>
+                        <Insets topRightBottomLeft="5" />
+                    </StackPane.margin>
+                </RadioButton>
+                <Remind fx:id="seqRBtnRemind" />
+            </StackPane>
+            <StackPane alignment="CENTER_LEFT">
+                <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                             text="%bookmarkTab.indentRBtn.text">
+                    <StackPane.margin>
+                        <Insets topRightBottomLeft="5" />
+                    </StackPane.margin>
+                </RadioButton>
+                <Remind fx:id="indentRBtnRemind" />
+            </StackPane>
+        </VBox>
+
     </FlowPane>
         <VBox  alignment="TOP_CENTER" maxWidth="100"
                AnchorPane.bottomAnchor="50" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
@@ -49,5 +80,6 @@
             <Label style="-fx-text-fill: #969696" text="%Tip.text2"/>
             <Label style="-fx-text-fill: #969696" text="%Tip.text3"/>
         </VBox>
+
     </AnchorPane>
 </HBox>
