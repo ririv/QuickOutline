@@ -35,7 +35,7 @@ public class SyncWithExternalEditorService {
             tempParentDir.deleteOnExit();
             temp.deleteOnExit();
 
-            logger.info("临时文件已创建: {}", temp.getName());
+            logger.debug("临时文件已创建: {}", temp.getName());
 
         } catch (IOException e) {
             e.printStackTrace();

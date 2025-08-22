@@ -48,8 +48,8 @@ public class PopupCard extends Popup {
             double y = buttonBounds.getMinY() -  this.getHeight() - 5;
             this.setX(x);
             this.setY(y);
-            logger.info("x: {}", x);
-            logger.info("y: {}", y);
+            logger.debug("x: {}", x);
+            logger.debug("y: {}", y);
         });
 
 //
