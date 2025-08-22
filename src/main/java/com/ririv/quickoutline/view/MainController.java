@@ -85,7 +85,7 @@ public class MainController {
     private Node pdfPreviewTabView;
 
     public enum FnTab {
-        text, tree, toc, setting, label, preview
+        text, tree, toc, setting, label, preview, tocGenerator
     }
 
     private final ObjectProperty<FnTab> currentTabProperty = new SimpleObjectProperty<>(FnTab.text);
@@ -101,6 +101,7 @@ public class MainController {
         eventBus.subscribe(ViewScaleChangedEvent.class, event -> viewScaleTypeProperty.set(event.viewScaleType));
         eventBus.subscribe(ReconstructTreeEvent.class, this::handleReconstructTree);
         eventBus.subscribe(SwitchTabEvent.class, event -> currentTabProperty.set(event.targetTab));
+        eventBus.subscribe(ShowMessageEvent.class, event -> messageManager.showMessage(event.message, event.messageType));
 
         // Bind tab visibility to currentTabProperty
         textTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.text));
@@ -108,6 +109,7 @@ public class MainController {
         tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.toc));
         pageLabelTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.label));
         pdfPreviewTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.preview));
+        tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tocGenerator));
 
         // Add listener for tab-specific logic
         currentTabProperty.addListener((obs, oldTab, newTab) -> {
@@ -238,6 +240,9 @@ public class MainController {
 
     private void handleReconstructTree(ReconstructTreeEvent event) {
         if (currentTabProperty.get() == FnTab.tree) {
+            reconstructTree();
+        }
+        if (currentTabProperty.get() == FnTab.tocGenerator) {
             reconstructTree();
         }
     }

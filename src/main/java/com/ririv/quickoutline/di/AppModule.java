@@ -1,5 +1,9 @@
 package com.ririv.quickoutline.di;
 
+import com.ririv.quickoutline.view.TocGeneratorTabController;
+import com.ririv.quickoutline.service.TocService;
+import com.ririv.quickoutline.service.TocPageGenerator;
+import com.ririv.quickoutline.service.iTextTocPageGenerator;
 import com.ririv.quickoutline.view.TreeTabController;
 import com.ririv.quickoutline.view.LeftPaneController;
 import com.ririv.quickoutline.view.PageLabelController;
@@ -19,6 +23,9 @@ public class AppModule extends AbstractModule {
         bind(PageLabelController.class).in(Scopes.SINGLETON);
         bind(LeftPaneController.class).in(Scopes.SINGLETON);
         bind(TreeTabController.class).in(Scopes.SINGLETON);
+        bind(TocGeneratorTabController.class).in(Scopes.SINGLETON);
+        bind(TocPageGenerator.class).to(iTextTocPageGenerator.class).in(Scopes.SINGLETON);
+        bind(TocService.class).in(Scopes.SINGLETON);
         bind(GetContentsPopupController.class).in(Scopes.SINGLETON);
         bind(SetContentsPopupController.class).in(Scopes.SINGLETON);
         bind(AppEventBus.class).toInstance(AppEventBus.getInstance());

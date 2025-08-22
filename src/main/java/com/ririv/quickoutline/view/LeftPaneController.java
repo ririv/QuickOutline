@@ -35,7 +35,7 @@ public class LeftPaneController {
     public ToggleGroup tabToggleGroup;
     public Button helpBtn;
 
-    public ToggleButton tocTabBtn;
+    public ToggleButton tocGeneratorTabBtn;
     public ToggleButton labelTabBtn;
     public ToggleButton previewTabBtn;
 
@@ -57,8 +57,8 @@ public class LeftPaneController {
                 eventBus.publish(new SwitchTabEvent(FnTab.text));
             } else if (newValue == treeTabBtn) {
                 eventBus.publish(new SwitchTabEvent(FnTab.tree));
-            } else if (newValue == tocTabBtn) {
-                eventBus.publish(new SwitchTabEvent(FnTab.toc));
+            } else if (newValue == tocGeneratorTabBtn) {
+                eventBus.publish(new SwitchTabEvent(FnTab.tocGenerator));
             } else if (newValue == labelTabBtn) {
                 eventBus.publish(new SwitchTabEvent(FnTab.label));
             } else if (newValue == previewTabBtn) {

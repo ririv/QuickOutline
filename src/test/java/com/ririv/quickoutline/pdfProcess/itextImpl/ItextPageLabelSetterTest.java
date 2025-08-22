@@ -12,10 +12,11 @@ import org.junit.jupiter.api.Test;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import static com.ririv.quickoutline.pdfProcess.itextImpl.ItextTocGenerator.SRC;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ItextPageLabelSetterTest {
+
+    String SRC = "tmp/page_labels_from_page_3.pdf";
 
     public static void main(String[] args) throws IOException {
 

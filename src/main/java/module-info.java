@@ -11,6 +11,8 @@ module quickoutline {
     requires kernel;
     requires layout;
     requires io;
+    requires font.asian;
+
 //    requires bouncy.castle.adapter;
 //    requires bouncy.castle.connector;
 //    requires org.bouncycastle.provider;
@@ -18,6 +20,7 @@ module quickoutline {
     requires org.apache.pdfbox;
     requires com.google.guice;
     requires jakarta.inject;
+    requires org.checkerframework.checker.qual;
 //    requires org.bouncycastle.util;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;

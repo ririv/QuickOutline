@@ -9,6 +9,8 @@
 .idea/vcs.xml
 .idea/misc.xml
 
+target
+
 /.env
 
 /tmp
