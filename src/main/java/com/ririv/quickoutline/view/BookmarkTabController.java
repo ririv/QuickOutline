@@ -76,7 +76,7 @@ public class BookmarkTabController {
                 getContents(), 0,
                 textTabController.getSelectedMethod()
         );
-        treeTabController.reconstructTree(rootBookmark);
+        bookmarkSettingsState.setRootBookmark(rootBookmark);
     }
 
     
@@ -123,15 +123,15 @@ public class BookmarkTabController {
 
     public void handleSwitchBookmarkViewEvent(SwitchBookmarkViewEvent event) {
         if (event.getView() == SwitchBookmarkViewEvent.View.TEXT) { // Switching TO Text View
-            // Get content from the currently visible tree view
-            String contents = treeTabController.getContents();
-            // Set it on the text view
-            textTabController.setContents(contents);
+            Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
+            if (rootBookmark != null) {
+                textTabController.setContents(rootBookmark.toTreeText());
+            }
             // Switch visibility
             textTab.setVisible(true);
             treeTab.setVisible(false);
         } else { // Switching TO Tree View
-            // The text view is currently visible. ReconstructTree will get its contents.
+            // The text view is currently visible. ReconstructTree will get its contents and update the state.
             reconstructTree();
             // Switch visibility
             treeTab.setVisible(true);
@@ -175,7 +175,7 @@ public class BookmarkTabController {
         String srcFilePath = srcFile.toString();
         String destFilePath = currentFileState.getDestFile().toString();
         try {
-            Bookmark rootBookmark = treeTabController.getRootBookmark();
+            Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
             if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
                 String text = getContents();
                 if (text == null || text.isEmpty()) {
@@ -210,7 +210,7 @@ public class BookmarkTabController {
 
     public void setContents(String text) {
         textTabController.setContents(text);
-        treeTabController.setContents(text);
+        reconstructTree(); // This will parse the text and update the shared state
     }
 
     public String getContents() {

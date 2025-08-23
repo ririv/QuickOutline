@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.ShowMessageEvent;
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.utils.LocalizationManager;
@@ -18,15 +19,15 @@ public class TocGeneratorTabController {
 
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
     private final CurrentFileState currentFileState;
-    private final TreeTabController treeTabController; // Injected to get bookmarks
+    private final BookmarkSettingsState bookmarkSettingsState;
     private final AppEventBus eventBus;
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
 
     @Inject
-    public TocGeneratorTabController(PdfTocPageGeneratorService pdfTocPageGeneratorService, CurrentFileState currentFileState, TreeTabController treeTabController, AppEventBus eventBus) {
+    public TocGeneratorTabController(PdfTocPageGeneratorService pdfTocPageGeneratorService, CurrentFileState currentFileState, BookmarkSettingsState bookmarkSettingsState, AppEventBus eventBus) {
         this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
         this.currentFileState = currentFileState;
-        this.treeTabController = treeTabController;
+        this.bookmarkSettingsState = bookmarkSettingsState;
         this.eventBus = eventBus;
     }
 
@@ -39,7 +40,7 @@ public class TocGeneratorTabController {
 
         String srcFile = currentFileState.getSrcFile().toString();
         String destFile = currentFileState.getDestFile().toString();
-        Bookmark rootBookmark = treeTabController.getRootBookmark();
+        Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
 
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
             eventBus.publish(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));

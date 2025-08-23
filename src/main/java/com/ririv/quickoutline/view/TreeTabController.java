@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.BookmarksChangedEvent;
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.*;
@@ -24,11 +25,13 @@ public class TreeTabController {
     public TreeTableColumn<Bookmark, String> offsetPageColumn;
 
     private final AppEventBus eventBus;
+    private final BookmarkSettingsState bookmarkSettingsState;
     private final Map<String, TreeItem<Bookmark>> itemCache = new HashMap<>();
 
     @Inject
-    public TreeTabController(AppEventBus eventBus) {
+    public TreeTabController(AppEventBus eventBus, BookmarkSettingsState bookmarkSettingsState) {
         this.eventBus = eventBus;
+        this.bookmarkSettingsState = bookmarkSettingsState;
     }
 
     public void initialize() {
@@ -37,42 +40,46 @@ public class TreeTabController {
         titleColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.9));
         offsetPageColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.1));
         setupRowFactory();
-    }
 
-    void reconstructTree(Bookmark rootBookmark) {
-        TreeItem<Bookmark> rootItem = new RecursiveTreeItem(rootBookmark);
-        expandAllNodes(rootItem);
-
-        // Rebuild cache
-        itemCache.clear();
-        buildCache(rootItem);
-
-        titleColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getTitle()));
-        offsetPageColumn.setCellValueFactory(param -> {
-            String pageNumStr = param.getValue().getValue().getOffsetPageNum()
-                                   .map(String::valueOf).orElse("");
-            return new SimpleStringProperty(pageNumStr);
-        });
-
-        titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
-        titleColumn.setOnEditCommit(event -> {
-            event.getRowValue().getValue().setTitle(event.getNewValue());
-            syncTextTabView();
-        });
-
-        offsetPageColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
-        offsetPageColumn.setOnEditCommit(event -> {
-            try {
-                event.getRowValue().getValue().setOffsetPageNum(Integer.parseInt(event.getNewValue()));
-            } catch (NumberFormatException e) {
-                treeTableView.refresh();
+        bookmarkSettingsState.rootBookmarkProperty().addListener((obs, oldRoot, newRoot) -> {
+            if (newRoot == null) {
+                treeTableView.setRoot(null);
+                return;
             }
-            syncTextTabView();
-        });
+            TreeItem<Bookmark> rootItem = new RecursiveTreeItem(newRoot);
+            expandAllNodes(rootItem);
 
-        treeTableView.setShowRoot(false);
-        treeTableView.setRoot(rootItem);
-        treeTableView.refresh();
+            // Rebuild cache
+            itemCache.clear();
+            buildCache(rootItem);
+
+            titleColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getTitle()));
+            offsetPageColumn.setCellValueFactory(param -> {
+                String pageNumStr = param.getValue().getValue().getOffsetPageNum()
+                        .map(String::valueOf).orElse("");
+                return new SimpleStringProperty(pageNumStr);
+            });
+
+            titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+            titleColumn.setOnEditCommit(event -> {
+                event.getRowValue().getValue().setTitle(event.getNewValue());
+                syncTextTabView();
+            });
+
+            offsetPageColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+            offsetPageColumn.setOnEditCommit(event -> {
+                try {
+                    event.getRowValue().getValue().setOffsetPageNum(Integer.parseInt(event.getNewValue()));
+                } catch (NumberFormatException e) {
+                    treeTableView.refresh();
+                }
+                syncTextTabView();
+            });
+
+            treeTableView.setShowRoot(false);
+            treeTableView.setRoot(rootItem);
+            treeTableView.refresh();
+        });
     }
 
     private void buildCache(TreeItem<Bookmark> item) {
@@ -159,7 +166,8 @@ public class TreeTabController {
         Bookmark newBookmark;
 
         if (selectedItem == null) {
-            Bookmark rootBookmark = treeTableView.getRoot().getValue();
+            Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
+            if (rootBookmark == null) return; // Cannot add to a non-existent tree
             newBookmark = new Bookmark("New Bookmark", null, 1);
             rootBookmark.addChild(newBookmark);
         } else if (asChild) {
@@ -193,7 +201,7 @@ public class TreeTabController {
     }
 
     private void syncTextTabView() {
-        Bookmark rootBookmark = getRootBookmark();
+        Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
         if (rootBookmark != null) {
             rootBookmark.updateLevelByStructureLevel();
             eventBus.publish(new BookmarksChangedEvent(rootBookmark));
@@ -223,28 +231,14 @@ public class TreeTabController {
     }
 
     public String getContents() {
-        Bookmark rootBookmark = getRootBookmark();
+        Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
         if (rootBookmark != null) {
             return rootBookmark.toTreeText();
         }
         return "";
     }
 
-    public void setContents(String contents) {
-        // This is a simplified implementation. A more robust implementation would
-        // involve parsing the text and reconstructing the tree.
-        Bookmark rootBookmark = new Bookmark("root", null, 0);
-        String[] lines = contents.split("\n");
-        for (String line : lines) {
-            rootBookmark.addChild(new Bookmark(line, null, 1));
-        }
-        reconstructTree(rootBookmark);
-    }
+    
 
-    public Bookmark getRootBookmark() {
-        if (treeTableView.getRoot() != null) {
-            return treeTableView.getRoot().getValue();
-        }
-        return null;
-    }
+    
 }
