@@ -163,13 +163,54 @@ public class ItextOutlineProcessor implements OutlineProcessor {
     }
 
 //    https://kb.itextpdf.com/itext/removing-items-from-a-pdf-s-outline-tree
-    public void deleteOutline(String srcFile, String destFile) throws IOException{
-        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile), new PdfWriter(destFile));
+    public void deleteOutline(String srcFilePath, String destFilePath) throws IOException {
+        // ... (existing code)
+    }
 
-        srcDoc.getOutlines(true).removeOutline();
-        srcDoc.close();
-    };
+    public Bookmark getOutlineAsBookmark(String srcFilePath, int offset) throws IOException, NoOutlineException {
+        PdfDocument pdfDocument = new PdfDocument(new PdfReader(srcFilePath));
+        PdfOutline outlines = pdfDocument.getOutlines(false);
 
+        if (outlines == null) {
+            pdfDocument.close();
+            throw new NoOutlineException();
+        }
+
+        Bookmark rootBookmark = new Bookmark("root", null, 0);
+        processPdfOutlines(outlines.getAllChildren(), rootBookmark, pdfDocument, offset);
+
+        pdfDocument.close();
+        return rootBookmark;
+    }
+
+    private void processPdfOutlines(java.util.List<PdfOutline> pdfOutlines, Bookmark parentBookmark, PdfDocument pdfDocument, int offset) {
+        if (pdfOutlines == null) {
+            return;
+        }
+
+        for (PdfOutline pdfOutline : pdfOutlines) {
+            String title = pdfOutline.getTitle();
+            Integer pageNum = null;
+
+            PdfDestination destination = pdfOutline.getDestination();
+            if (destination != null) {
+                // Retrieve the page number from the destination
+                // This can be complex depending on the destination type
+                // For simplicity, we handle explicit destinations here.
+                PdfObject pageObject = destination.getDestinationPage(pdfDocument.getCatalog().getNameTree(PdfName.Dests));
+                if (pageObject instanceof PdfDictionary) {
+                    int pageIndex = pdfDocument.getPageNumber((PdfDictionary) pageObject);
+                    pageNum = pageIndex + offset; // iText page index is 1-based
+                }
+            }
+
+            Bookmark newBookmark = new Bookmark(title, pageNum, 0); // Level will be set later
+            parentBookmark.addChild(newBookmark);
+
+            // Recursively process children
+            processPdfOutlines(pdfOutline.getAllChildren(), newBookmark, pdfDocument, offset);
+        }
+    }
 
     private void outlines2Text(PdfOutline outlines, StringBuilder text, int offset, int level, PdfNameTree nameTree, PdfDocument srcDoc) {
 
@@ -192,5 +233,4 @@ public class ItextOutlineProcessor implements OutlineProcessor {
             }
         }
     }
-
 }

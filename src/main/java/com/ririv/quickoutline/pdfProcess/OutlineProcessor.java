@@ -18,6 +18,8 @@ public interface OutlineProcessor {
 */
     void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException;
 
+    Bookmark getOutlineAsBookmark(String srcFilePath, int offset) throws IOException;
+
     String getContents(String srcFilePath, int offset) throws IOException;
 
     void deleteOutline(String srcFilePath, String destFilePath) throws IOException;

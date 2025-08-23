@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class TempTest {
+public class Test2 {
 
     String path1 = "D:/Probabilistic Graphical Models_ Principles and Applications.pdf";
 

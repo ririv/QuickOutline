@@ -1,17 +1,17 @@
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfOutline;
-import com.itextpdf.kernel.pdf.PdfReader;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextOutlineProcessor;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.textProcess.methods.Method;
+import com.ririv.quickoutline.utils.PathUtils;
+import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 
 
-public class Test {
+public class Test1 {
     final String text = """
 彩图  4
 第1版序言  11
@@ -42,24 +42,31 @@ Part I  监督学习  25
 
             """;
 
-//    final String srcFilePath = "D:/a b/Probabilistic Graphical Models_ Principles and Applications.pdf";
-    final String srcFilePath = "D:/a b/Probabilistic Graphical Models_ Principles and Applications.pdf";
+
+    final String srcFilePath = PathUtils.getUserHomePath()+ File.separator +"统计学习方法_第2版.pdf";
+    final String dstFilePath = PathUtils.getUserHomePath()+ File.separator +"统计学习方法_第2版_test.pdf";
+    final int offset = 0;
+
     final Method method = Method.SEQ;
 
     PdfOutlineService pdfOutlineService = new PdfOutlineService();
-    final Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, 2, method);
+    final Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, offset, method);
 
-    @org.junit.jupiter.api.Test
-    void test1() throws IOException {
+    @Test
+    void setOutline() throws IOException {
         OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
-        outlineProcessor.setOutline(rootBookmark, srcFilePath,"D:/gen.pdf", ViewScaleType.ACTUAL_SIZE);
+        outlineProcessor.setOutline(rootBookmark, srcFilePath, dstFilePath, ViewScaleType.ACTUAL_SIZE);
     }
 
-    @org.junit.jupiter.api.Test
-    void test2() throws IOException {
-        PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFilePath));
 
-        PdfOutline rootOutline = srcDoc.getOutlines(false);
+
+    @Test
+    void getRootBookmarkFromPdf() throws IOException {
+        System.out.println(srcFilePath);
+        OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
+        Bookmark bookmark = outlineProcessor.getOutlineAsBookmark(srcFilePath, offset);
+        String text = bookmark.toTreeText();
+        System.out.println(text);
     }
 
 

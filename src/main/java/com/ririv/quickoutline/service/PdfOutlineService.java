@@ -65,5 +65,16 @@ public class PdfOutlineService {
         }
     }
 
+    public Bookmark getOutlineAsBookmark(String srcFilepath, int offset) throws NoOutlineException {
+        if (srcFilepath.isEmpty()) throw new RuntimeException("PDF路径为空");
+
+        try {
+            return outlineProcessor.getOutlineAsBookmark(srcFilepath, offset);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }
 
