@@ -45,7 +45,7 @@
                 </GridPane>
 
                 <HBox alignment="CENTER">
-                    <Button onAction="#addRule" text="添加规则" />
+                    <Button styleClass="my-button, plain-button-primary" prefWidth="120.0" onAction="#addRule" text="添加规则" />
                 </HBox>
 
                 <Separator />
@@ -55,7 +55,7 @@
             </VBox>
         </center>
         <bottom>
-            <HBox alignment="CENTER_RIGHT" spacing="10">
+            <HBox alignment="CENTER" spacing="10">
                 <padding>
                     <Insets top="15"/>
                 </padding>

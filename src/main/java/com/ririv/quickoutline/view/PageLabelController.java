@@ -1,9 +1,12 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
+import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.event.ShowMessageEvent;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.state.CurrentFileState;
+import com.ririv.quickoutline.view.controls.Message;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -43,11 +46,13 @@ public class PageLabelController {
     private final PdfPageLabelService pdfPageLabelService;
     private final CurrentFileState fileService;
     private final VBox ruleVBox = new VBox(5);
+    private final AppEventBus appEventBus;
 
     @Inject
-    public PageLabelController(PdfPageLabelService pdfPageLabelService, CurrentFileState fileService) {
+    public PageLabelController(PdfPageLabelService pdfPageLabelService, CurrentFileState fileService, AppEventBus appEventBus) {
         this.pdfPageLabelService = pdfPageLabelService;
         this.fileService = fileService;
+        this.appEventBus = appEventBus;
     }
 
     public void initialize() {
@@ -62,13 +67,13 @@ public class PageLabelController {
     void addRule() {
         try {
             if (fromPageTextField.getText().isEmpty()) {
-                showAlert("输入无效", "'起始页' 字段不能为空。");
+                appEventBus.publish(new ShowMessageEvent("输入无效，'起始页' 字段不能为空。", Message.MessageType.ERROR));
                 return;
             }
             int fromPage = Integer.parseInt(fromPageTextField.getText());
 
             if (fromPage <= 0) {
-                showAlert("输入无效", "页码必须是正数。");
+                appEventBus.publish(new ShowMessageEvent("输入无效，页码必须是正数。", Message.MessageType.ERROR));
                 return;
             }
 
@@ -77,7 +82,7 @@ public class PageLabelController {
             if (!startTextField.getText().isEmpty()) {
                 start = Integer.parseInt(startTextField.getText());
                 if (start < 1) {
-                    showAlert("输入无效", "起始数字必须大于或等于 1。");
+                    appEventBus.publish(new ShowMessageEvent("输入无效，起始数字必须大于或等于 1。", Message.MessageType.ERROR));
                     return;
                 }
             }
@@ -95,7 +100,7 @@ public class PageLabelController {
             startTextField.clear();
 
         } catch (NumberFormatException e) {
-            showAlert("输入无效", "请在页码和起始数字字段中输入有效的数字。");
+            appEventBus.publish(new ShowMessageEvent("输入无效，请在页码和起始数字字段中输入有效的数字。", Message.MessageType.ERROR));
         }
     }
 
@@ -123,7 +128,7 @@ public class PageLabelController {
     @FXML
     void apply() {
         if (fileService.getSrcFile() == null) {
-            showAlert("错误", "请先选择一个PDF文件。");
+            appEventBus.publish(new ShowMessageEvent("请先选择一个PDF文件", Message.MessageType.WARNING));
             return;
         }
 
@@ -153,9 +158,9 @@ public class PageLabelController {
         String destFilePath = fileService.getDestFile().toString();
         try {
             pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
-            showAlert("成功", "页码标签已成功应用。");
+            appEventBus.publish(new ShowMessageEvent("页码标签已成功应用。", Message.MessageType.SUCCESS));
         } catch (IOException e) {
-            showAlert("错误", "应用页码标签失败: " + e.getMessage());
+            appEventBus.publish(new ShowMessageEvent("应用页码标签失败: " + "e.getMessage()", Message.MessageType.ERROR));
             throw new RuntimeException(e);
         }
     }
@@ -170,13 +175,5 @@ public class PageLabelController {
             case STYLE_LETTERS_UPPER -> PageLabel.PageLabelNumberingStyle.UPPERCASE_LETTERS;
             default -> null; // STYLE_NONE 和其他未知情况都返回 null
         };
-    }
-
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 }
