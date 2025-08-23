@@ -3,6 +3,7 @@ package com.ririv.quickoutline.di;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.PdfTocExtractorService;
 import com.ririv.quickoutline.state.CurrentFileState;
+import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.*;
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
@@ -28,6 +29,7 @@ public class AppModule extends AbstractModule {
         bind(PdfTocExtractorService.class).in(Scopes.SINGLETON);
         bind(BookmarkTabController.class).in(Scopes.SINGLETON);
         bind(BookmarkBottomPaneController.class).in(Scopes.SINGLETON);
+        bind(BookmarkSettingsState.class).in(Scopes.SINGLETON);
         
     }
 

@@ -3,6 +3,7 @@ package com.ririv.quickoutline.view;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.*;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
+import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.PopupCard;
@@ -13,6 +14,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.util.converter.NumberStringConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,7 @@ public class BookmarkBottomPaneController {
     private final SetContentsPopupController setContentsPopupController;
     private final AppEventBus eventBus;
     private final CurrentFileState currentFileState;
+    private final BookmarkSettingsState bookmarkSettingsState;
 
     public Button switchToTreeEditViewBtn;
     public Button switchToTextEditViewBtn;
@@ -44,11 +47,12 @@ public class BookmarkBottomPaneController {
     @FXML public GridPane outlineBottomPane;
 
     @Inject
-        public BookmarkBottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus, CurrentFileState currentFileState) {
+        public BookmarkBottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus, CurrentFileState currentFileState, BookmarkSettingsState bookmarkSettingsState) {
         this.getContentsPopupController = getContentsPopupController;
         this.setContentsPopupController = setContentsPopupController;
         this.eventBus = eventBus;
         this.currentFileState = currentFileState;
+        this.bookmarkSettingsState = bookmarkSettingsState;
     }
 
     @FXML
@@ -60,6 +64,29 @@ public class BookmarkBottomPaneController {
             }
         });
 
+        // Bind the offset text field to the shared state manually
+        bookmarkSettingsState.offsetProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null) {
+                offsetTF.setText("");
+            } else {
+                if (!offsetTF.getText().equals(newVal.toString())) {
+                    offsetTF.setText(newVal.toString());
+                }
+            }
+        });
+
+        offsetTF.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.isEmpty() || "-".equals(newVal)) {
+                bookmarkSettingsState.setOffset(null);
+            } else {
+                try {
+                    bookmarkSettingsState.setOffset(Integer.parseInt(newVal));
+                } catch (NumberFormatException e) {
+                    // Invalid number format, set state to null
+                    bookmarkSettingsState.setOffset(null);
+                }
+            }
+        });
 
         // Use a TextFormatter to allow only integer input
         UnaryOperator<TextFormatter.Change> integerFilter = change -> {
@@ -98,19 +125,7 @@ public class BookmarkBottomPaneController {
         eventBus.publish(new DeleteContentsEvent());
     }
 
-    public int getOffset() {
-        String offsetText = offsetTF.getText();
-        if (offsetText == null || offsetText.isEmpty() || "-".equals(offsetText)) {
-            return 0;
-        }
-        try {
-            return Integer.parseInt(offsetText);
-        } catch (NumberFormatException e) {
-            // This should rarely happen thanks to the TextFormatter, but as a fallback.
-            logger.warn("Could not parse offset value: {}", offsetText, e);
-            return 0;
-        }
-    }
+    
 
     @FXML
     private void switchEditViewAction(ActionEvent event) {

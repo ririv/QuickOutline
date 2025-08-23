@@ -10,6 +10,7 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.PdfTocExtractorService;
+import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.Message;
@@ -44,17 +45,17 @@ public class BookmarkTabController {
     private final AppEventBus eventBus;
     private final PdfOutlineService pdfOutlineService;
     private final CurrentFileState currentFileState;
-    private final BookmarkBottomPaneController bookmarkBottomPaneController;
     private final PdfTocExtractorService pdfTocExtractorService;
+    private final BookmarkSettingsState bookmarkSettingsState;
     private final ResourceBundle bundle;
 
     @Inject
-    public BookmarkTabController(AppEventBus eventBus, PdfOutlineService pdfOutlineService, CurrentFileState currentFileState, BookmarkBottomPaneController bookmarkBottomPaneController, PdfTocExtractorService pdfTocExtractorService) {
+    public BookmarkTabController(AppEventBus eventBus, PdfOutlineService pdfOutlineService, CurrentFileState currentFileState, PdfTocExtractorService pdfTocExtractorService, BookmarkSettingsState bookmarkSettingsState) {
         this.eventBus = eventBus;
         this.pdfOutlineService = pdfOutlineService;
         this.currentFileState = currentFileState;
-        this.bookmarkBottomPaneController = bookmarkBottomPaneController;
         this.pdfTocExtractorService = pdfTocExtractorService;
+        this.bookmarkSettingsState = bookmarkSettingsState;
         this.bundle = LocalizationManager.getResourceBundle();
         eventBus.subscribe(SwitchBookmarkViewEvent.class, this::handleSwitchBookmarkViewEvent);
         eventBus.subscribe(GetContentsEvent.class, this::handleGetContents);
@@ -181,7 +182,8 @@ public class BookmarkTabController {
                     eventBus.publish(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));
                     return;
                 }
-                pdfOutlineService.setContents(text, srcFilePath, destFilePath, bookmarkBottomPaneController.getOffset(),
+                Integer offset = bookmarkSettingsState.getOffset();
+                pdfOutlineService.setContents(text, srcFilePath, destFilePath, (offset == null) ? 0 : offset,
                         textTabController.getSelectedMethod(),
                         viewScaleType);
             } else {
