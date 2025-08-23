@@ -122,10 +122,18 @@ public class BookmarkTabController {
     }
 
     public void handleSwitchBookmarkViewEvent(SwitchBookmarkViewEvent event) {
-        if (event.getView() == SwitchBookmarkViewEvent.View.TEXT) {
+        if (event.getView() == SwitchBookmarkViewEvent.View.TEXT) { // Switching TO Text View
+            // Get content from the currently visible tree view
+            String contents = treeTabController.getContents();
+            // Set it on the text view
+            textTabController.setContents(contents);
+            // Switch visibility
             textTab.setVisible(true);
             treeTab.setVisible(false);
-        } else {
+        } else { // Switching TO Tree View
+            // The text view is currently visible. ReconstructTree will get its contents.
+            reconstructTree();
+            // Switch visibility
             treeTab.setVisible(true);
             textTab.setVisible(false);
         }

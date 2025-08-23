@@ -67,9 +67,6 @@ public class TextTabController {
         seqRBtn.setUserData(Method.SEQ);
         indentRBtn.setUserData(Method.INDENT);
         seqRBtn.setSelected(true);
-        methodToggleGroup.selectedToggleProperty().addListener(event -> {
-            eventBus.publish(new ReconstructTreeEvent());
-        });
         eventBus.subscribe(AutoToggleToIndentEvent.class, event -> autoToggleToIndentMethod());
 
         // Subscribe to BookmarksChangedEvent
