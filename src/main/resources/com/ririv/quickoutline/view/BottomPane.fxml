@@ -16,7 +16,8 @@
             <Button fx:id="getContentsBtn" minHeight="35.0" mnemonicParsing="false" onAction="#getContentsBtnAction" prefWidth="120.0" styleClass="my-button,plain-button-primary" text="%bookmarkTab.getContentsBtn.text">
             </Button>
 
-            <Button fx:id="deleteBtn" onAction="#deleteBtnAction" prefWidth="30" styleClass="graph-button" GridPane.columnIndex="1">
+            <Button fx:id="deleteBtn" onAction="#deleteBtnAction" prefWidth="30"
+                    styleClass="graph-button, graph-button-important" GridPane.columnIndex="1">
                 <tooltip>
                     <Tooltip text="%bookmarkTab.deleteBtn.tooltip" />
                 </tooltip>
@@ -37,22 +38,31 @@
                 </tooltip>
             </TextField>
             <StackPane GridPane.columnIndex="4" alignment="CENTER_RIGHT">
-                <Button fx:id="TextEditViewBtn"  styleClass="graph-button, edit-view-btn"  onAction="#switchEditViewAction" prefWidth="30">
+                <Button fx:id="switchToTreeEditViewBtn"
+                        styleClass="graph-button, graph-button-basic" onAction="#switchEditViewAction" prefWidth="30">
                     <tooltip>
                         <Tooltip text="%bookmarkTab.textEditViewBtn.tooltip" />
                     </tooltip>
                     <graphic>
-                        <Region styleClass="icon, edit-view-icon, text-edit-icon" />
+                        <HBox spacing="5" alignment="CENTER_RIGHT">
+                            <Region styleClass="icon, icon-size-bottom-menu, tree-diagram-icon" />
+                            <Region styleClass="icon, icon-size-bottom-menu, switch-icon" />
+                        </HBox>
                     </graphic>
                 </Button>
-                <Button fx:id="TreeEditViewBtn" styleClass="graph-button, edit-view-btn"  onAction="#switchEditViewAction" prefWidth="30" visible="false">
+                <Button fx:id="switchToTextEditViewBtn"
+                        styleClass="graph-button, graph-button-basic" onAction="#switchEditViewAction" prefWidth="30" visible="false">
                     <tooltip>
                         <Tooltip text="%bookmarkTab.treeEditViewBtn.tooltip" />
                     </tooltip>
                     <graphic>
-                        <Region styleClass="icon,edit-view-icon, tree-diagram-icon" />
+                        <HBox spacing="5" alignment="CENTER_RIGHT">
+                            <Region styleClass="icon, icon-size-bottom-menu, text-edit-icon" />
+                            <Region styleClass="icon, icon-size-bottom-menu, switch-icon" />
+                        </HBox>
                     </graphic>
                 </Button>
+<!--                </HBox>-->
             </StackPane>
 
             <columnConstraints>

@@ -16,21 +16,21 @@
                 <ToggleGroup fx:id="viewScaleToggleGroup"/>
             </fx:define>
             <GraphButtonWrapper wrapperPadding="0">
-                <ToggleButton fx:id="fitToHeightBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
+                <ToggleButton fx:id="fitToHeightBtn" styleClass="graph-button, graph-toggle-button, view-scale-button-padding" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
                         <Region styleClass="icon, fit-to-height-icon" prefHeight="20" prefWidth="20" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper wrapperPadding="0">
-                <ToggleButton fx:id="fitToWidthBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
+                <ToggleButton fx:id="fitToWidthBtn" styleClass="graph-button, graph-toggle-button, view-scale-button-padding" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
                         <Region styleClass="icon, fit-to-width-icon" prefHeight="20" prefWidth="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper wrapperPadding="0">
-                <ToggleButton fx:id="actualSizeBtn" styleClass="graph-button" toggleGroup="$viewScaleToggleGroup">
+                <ToggleButton fx:id="actualSizeBtn" styleClass="graph-button, graph-toggle-button, view-scale-button-padding" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
                         <Region styleClass="icon, actual-size-icon" prefHeight="20" prefWidth="20"/>
                     </graphic>

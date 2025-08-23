@@ -2,32 +2,9 @@
 
 *{
     -my-color-divding-line: #dfdfdf;
+    -icon-size-tab: 20px;
+    -icon-size-bottom-menu: 18px;
 }
-
-
-
-#deleteBtn:hover{
-    -fx-background-color: transparent;
-}
-
-
-
-
-#deleteBtn:hover > .icon{
-    -fx-background-color: -el-color-important;
-}
-
-
-#deleteBtn:pressed > .icon{
-    -fx-background-color: -el-color-important-pressed;
-}
-
-.edit-view-btn:hover{
-    -fx-background-color: transparent;
-}
-
-
-
 
 
 .text-field{
@@ -104,8 +81,21 @@
     -fx-background-color: -my-color-divding-line;
 }
 
-.icon-tab{
-    -fx-pref-height: 20px;
-    -fx-pref-width: 20px;
+.icon-size-tab{
+    -fx-pref-height: -icon-size-tab;
+    -fx-min-height: -icon-size-tab;
+    -fx-max-height: -icon-size-tab;
+    -fx-pref-width: -icon-size-tab;
+    -fx-min-width: -icon-size-tab;
+    -fx-max-width: -icon-size-tab;
+}
+
+.icon-size-bottom-menu{
+    -fx-pref-height: -icon-size-bottom-menu;
+    -fx-min-height: -icon-size-bottom-menu;
+    -fx-max-height: -icon-size-bottom-menu;
+    -fx-pref-width: -icon-size-bottom-menu;
+    -fx-min-width: -icon-size-bottom-menu;
+    -fx-max-width: -icon-size-bottom-menu;
 }
 

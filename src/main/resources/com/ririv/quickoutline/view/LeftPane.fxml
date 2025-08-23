@@ -14,57 +14,57 @@
     <top>
         <VBox>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="textTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
+                <ToggleButton fx:id="textTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button, graph-toggle-button"
                 >
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-tab, text-edit-icon" prefWidth="20" prefHeight="20"/>
+                        <Region styleClass="icon, icon-size-tab, text-edit-icon" prefWidth="20" prefHeight="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="treeTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button"
+                <ToggleButton fx:id="treeTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button, graph-toggle-button"
                 >
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-tab, tree-diagram-icon"/>
+                        <Region styleClass="icon, icon-size-tab, tree-diagram-icon"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="tocGeneratorTabBtn" visible="true" toggleGroup="$tabToggleGroup"
-                              styleClass="graph-button" >
+                <ToggleButton fx:id="tocGeneratorTabBtn" toggleGroup="$tabToggleGroup"
+                              styleClass="graph-button, graph-toggle-button" >
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-tab, toc-icon" />
+                        <Region styleClass="icon, icon-size-tab, toc-icon" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="labelTabBtn" visible="true" toggleGroup="$tabToggleGroup"
-                              styleClass="graph-button" >
+                <ToggleButton fx:id="labelTabBtn" toggleGroup="$tabToggleGroup"
+                              styleClass="graph-button, graph-toggle-button" >
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-tab, label-icon" />
+                        <Region styleClass="icon, icon-size-tab, label-icon" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper>
                 <ToggleButton fx:id="previewTabBtn" toggleGroup="$tabToggleGroup"
-                              styleClass="graph-button">
+                              styleClass="graph-button, graph-toggle-button">
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-tab, preview-icon" prefWidth="20" prefHeight="20"/>
+                        <Region styleClass="icon, icon-size-tab, preview-icon" prefWidth="20" prefHeight="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
@@ -79,7 +79,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-tab, setting-icon"/>
+                        <Region styleClass="icon, icon-size-tab, setting-icon"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
@@ -92,7 +92,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-tab, help-icon"/>
+                        <Region styleClass="icon, icon-size-tab, help-icon"/>
                     </graphic>
                 </Button>
             </GraphButtonWrapper>

@@ -1,7 +1,7 @@
 @import "svg.css";
 @import "BasicControls.css";
 
-.toggle-button{
+.view-scale-button-padding{
     -fx-padding: 0;
 }
 

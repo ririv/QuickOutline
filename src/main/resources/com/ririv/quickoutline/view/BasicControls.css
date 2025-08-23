@@ -287,15 +287,40 @@
     /*snow 与 white 不是一个颜色，snow更红一点*/
 }
 
-.graph-button:hover{
+
+.graph-toggle-button:hover{
     -fx-background-color: rgba(210, 210, 210, 0.9);
 }
 
 
-.graph-button:selected{
+.graph-toggle-button:selected{
     -fx-background-color: rgba(210, 210, 210, 0.9);
 }
 
-.graph-button:selected>.icon, .graph-button:pressed>.icon{
+.graph-toggle-button:selected>.icon, .graph-toggle-button:pressed>.icon{
     -fx-background-color: #4b4b4b;
 }
+
+
+.graph-button-important:hover .icon{
+    -fx-background-color: -el-color-important;
+}
+
+
+.graph-button-important:pressed .icon{
+    -fx-background-color: -el-color-important-pressed;
+}
+
+
+.graph-button-basic:hover .icon{
+    -fx-background-color: #363636;
+}
+
+
+.graph-button-basic:pressed .icon{
+    -fx-background-color: rgba(150, 150, 150, 0.9);
+}
+
+
+
+

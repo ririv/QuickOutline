@@ -19,8 +19,8 @@ public class BottomPaneController {
     private final SetContentsPopupController setContentsPopupController;
     private final AppEventBus eventBus;
 
-    public Button TextEditViewBtn;
-    public Button TreeEditViewBtn;
+    public Button switchToTreeEditViewBtn;
+    public Button switchToTextEditViewBtn;
 
     private PopupCard getContentsPopup;
     private PopupCard setContentsPopup;
@@ -93,18 +93,14 @@ public class BottomPaneController {
     @FXML
     private void switchEditViewAction(ActionEvent event) {
         Button btn = (Button) event.getSource();
-        if (btn == TextEditViewBtn) {
-            TextEditViewBtn.setVisible(false);
-            TreeEditViewBtn.setVisible(true);
+        if (btn == switchToTreeEditViewBtn) {
+            switchToTreeEditViewBtn.setVisible(false);
+            switchToTextEditViewBtn.setVisible(true);
 //            eventBus.publish(new SwitchBookmarkEditViewEvent(FnTab.text));
-        } else if (btn == TreeEditViewBtn) {
-            TextEditViewBtn.setVisible(true);
-            TreeEditViewBtn.setVisible(false);
+        } else if (btn == switchToTextEditViewBtn) {
+            switchToTreeEditViewBtn.setVisible(true);
+            switchToTextEditViewBtn.setVisible(false);
 //            eventBus.publish(new SwitchBookmarkEditViewEvent(FnTab.tree));
         }
-    }
-
-    @FXML
-    public void switchToTreeEditViewAction(ActionEvent actionEvent) {
     }
 }
