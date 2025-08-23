@@ -3,15 +3,8 @@ package com.ririv.quickoutline.view;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.*;
 import com.ririv.quickoutline.event.ShowSuccessDialogEvent;
-import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.exception.EncryptedPdfException;
-import com.ririv.quickoutline.exception.NoOutlineException;
-import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.pdfProcess.ViewScaleType;
-import com.ririv.quickoutline.service.PdfTocExtractorService;
 import com.ririv.quickoutline.state.CurrentFileState;
-
-import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
 import com.ririv.quickoutline.view.controls.Message;
@@ -32,7 +25,6 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
