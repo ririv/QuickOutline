@@ -6,13 +6,21 @@ import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.PopupCard;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ResourceBundle;
+import java.util.function.UnaryOperator;
 
 public class BookmarkBottomPaneController {
+
+    private static final Logger logger = LoggerFactory.getLogger(BookmarkBottomPaneController.class);
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
     private final GetContentsPopupController getContentsPopupController;
@@ -33,7 +41,7 @@ public class BookmarkBottomPaneController {
     @FXML public GridPane outlineBottomPane;
 
     @Inject
-    public BookmarkBottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus) {
+        public BookmarkBottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus) {
         this.getContentsPopupController = getContentsPopupController;
         this.setContentsPopupController = setContentsPopupController;
         this.eventBus = eventBus;
@@ -43,19 +51,16 @@ public class BookmarkBottomPaneController {
     public void initialize() {
 
 
-        offsetTF.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null && !newValue.isEmpty() && !newValue.matches("^-?[1-9]\\d*$|^0$|^-$")) {
-                if (newValue.charAt(0) == '-') {
-                    newValue = newValue.substring(1);
-                    newValue = newValue.replaceAll("[^0-9]", "");
-                    newValue = '-'+newValue;
-                }
-                else newValue = newValue.replaceAll("[^0-9]", "");
-                offsetTF.setText(newValue);
+        // Use a TextFormatter to allow only integer input
+        UnaryOperator<TextFormatter.Change> integerFilter = change -> {
+            String newText = change.getControlNewText();
+            if (newText.matches("-?(\\d*)")) { // Allows empty, a minus sign, and digits
+                return change;
             }
-        });
+            return null; // Reject the change
+        };
 
-
+        offsetTF.setTextFormatter(new TextFormatter<>(integerFilter));
 
         // Initialize popups once
         getContentsPopup = new PopupCard(getContentsPopupController);
@@ -81,13 +86,17 @@ public class BookmarkBottomPaneController {
     }
 
     public int getOffset() {
-        String offsetText = this.offsetTF.getText();
-        try {
-            return Integer.parseInt(offsetText != null && !offsetText.isEmpty() && !offsetText.equals("-") ? offsetText : "0");
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
+        String offsetText = offsetTF.getText();
+        if (offsetText == null || offsetText.isEmpty() || "-".equals(offsetText)) {
+            return 0;
         }
-        return 0;
+        try {
+            return Integer.parseInt(offsetText);
+        } catch (NumberFormatException e) {
+            // This should rarely happen thanks to the TextFormatter, but as a fallback.
+            logger.warn("Could not parse offset value: {}", offsetText, e);
+            return 0;
+        }
     }
 
     @FXML
