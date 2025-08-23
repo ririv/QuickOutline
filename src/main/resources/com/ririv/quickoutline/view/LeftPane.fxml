@@ -73,7 +73,7 @@
             </GraphButtonWrapper>
             <GraphButtonWrapper>
                 <Button fx:id="helpBtn"
-                        styleClass="graph-button"
+                        styleClass="graph-button, graph-toggle-button"
                         onAction="#createHelpWindowAction"
                 >
                     <padding>
