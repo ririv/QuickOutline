@@ -69,7 +69,13 @@ public class SetContentsPopupController extends StackPane {
 
         // Bind label to the property
         viewScaleTypeProperty.addListener((obs, oldVal, newVal) -> {
-            viewScaleTypeLabel.setText(bundle.getString("viewScaleTypeLabel." + newVal.name()));
+            String text = switch (newVal) {
+                case FIT_TO_HEIGHT -> bundle.getString("viewScaleTypeLabel.FIT_TO_HEIGHT");
+                case FIT_TO_WIDTH -> bundle.getString("viewScaleTypeLabel.FIT_TO_WIDTH");
+                case ACTUAL_SIZE -> bundle.getString("viewScaleTypeLabel.ACTUAL_SIZE");
+                default -> bundle.getString("viewScaleTypeLabel.NONE");
+            };
+            viewScaleTypeLabel.setText(text);
         });
 
     }
