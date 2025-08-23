@@ -30,8 +30,7 @@ public class LeftPaneController {
     public Node root;
     private Stage helpStage;
 
-    public ToggleButton textTabBtn;
-    public ToggleButton treeTabBtn;
+    public ToggleButton bookmarkTabBtn;
     public ToggleGroup tabToggleGroup;
     public Button helpBtn;
 
@@ -45,7 +44,7 @@ public class LeftPaneController {
     }
 
     public void initialize() {
-        textTabBtn.setSelected(true);
+        bookmarkTabBtn.setSelected(true);
 
         tabToggleGroup.selectedToggleProperty().addListener((event,oldValue,newValue) -> {
             if (newValue == null){
@@ -53,10 +52,8 @@ public class LeftPaneController {
                 return;
             }
 
-            if (newValue == textTabBtn) {
-                eventBus.publish(new SwitchTabEvent(FnTab.text));
-            } else if (newValue == treeTabBtn) {
-                eventBus.publish(new SwitchTabEvent(FnTab.tree));
+            if (newValue == bookmarkTabBtn) {
+                eventBus.publish(new SwitchTabEvent(FnTab.bookmark));
             } else if (newValue == tocGeneratorTabBtn) {
                 eventBus.publish(new SwitchTabEvent(FnTab.tocGenerator));
             } else if (newValue == labelTabBtn) {

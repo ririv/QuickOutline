@@ -14,24 +14,12 @@
     <top>
         <VBox>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="textTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button, graph-toggle-button"
-                >
+                <ToggleButton fx:id="bookmarkTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button, graph-toggle-button">
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-size-tab, text-edit-icon" prefWidth="20" prefHeight="20"/>
-                    </graphic>
-                </ToggleButton>
-            </GraphButtonWrapper>
-            <GraphButtonWrapper>
-                <ToggleButton fx:id="treeTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button, graph-toggle-button"
-                >
-                    <padding>
-                        <Insets topRightBottomLeft="3.0"/>
-                    </padding>
-                    <graphic>
-                        <Region styleClass="icon, icon-size-tab, tree-diagram-icon"/>
+                        <Region styleClass="icon, icon-size-tab, bookmark-icon" prefWidth="20" prefHeight="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>

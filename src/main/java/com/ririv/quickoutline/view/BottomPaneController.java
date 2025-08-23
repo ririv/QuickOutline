@@ -96,11 +96,11 @@ public class BottomPaneController {
         if (btn == switchToTreeEditViewBtn) {
             switchToTreeEditViewBtn.setVisible(false);
             switchToTextEditViewBtn.setVisible(true);
-//            eventBus.publish(new SwitchBookmarkEditViewEvent(FnTab.text));
+            eventBus.publish(new SwitchBookmarkViewEvent(SwitchBookmarkViewEvent.View.TEXT));
         } else if (btn == switchToTextEditViewBtn) {
             switchToTreeEditViewBtn.setVisible(true);
             switchToTextEditViewBtn.setVisible(false);
-//            eventBus.publish(new SwitchBookmarkEditViewEvent(FnTab.tree));
+            eventBus.publish(new SwitchBookmarkViewEvent(SwitchBookmarkViewEvent.View.TREE));
         }
     }
 }

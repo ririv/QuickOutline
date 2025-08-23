@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.StackPane?>
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ririv.quickoutline.view.BookmarkTabController">
+    <fx:include fx:id="textTab" source="TextTabView.fxml"/>
+    <fx:include fx:id="treeTab" source="TreeTabView.fxml"/>
+</StackPane>

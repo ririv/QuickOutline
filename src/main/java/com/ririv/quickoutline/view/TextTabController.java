@@ -275,6 +275,14 @@ public class TextTabController {
         return (Method) methodToggleGroup.getSelectedToggle().getUserData();
     }
 
+    public String getContents() {
+        return contentsTextArea.getText();
+    }
+
+    public void setContents(String contents) {
+        contentsTextArea.setText(contents);
+    }
+
     public void autoToggleToIndentMethod() {
         if (methodToggleGroup.getSelectedToggle() != indentRBtn) {
             methodToggleGroup.selectToggle(indentRBtn);

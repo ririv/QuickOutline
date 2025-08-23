@@ -39,25 +39,25 @@
             </TextField>
             <StackPane GridPane.columnIndex="4" alignment="CENTER_RIGHT">
                 <Button fx:id="switchToTreeEditViewBtn"
-                        styleClass="graph-button, graph-button-basic" onAction="#switchEditViewAction" prefWidth="30">
+                        styleClass="graph-button, graph-button-basic" onAction="#switchEditViewAction" prefWidth="30" visible="false">
                     <tooltip>
                         <Tooltip text="%bookmarkTab.textEditViewBtn.tooltip" />
                     </tooltip>
                     <graphic>
                         <HBox spacing="5" alignment="CENTER_RIGHT">
-                            <Region styleClass="icon, icon-size-bottom-menu, tree-diagram-icon" />
+                            <Region styleClass="icon, icon-size-bottom-menu, text-edit-icon" />
                             <Region styleClass="icon, icon-size-bottom-menu, switch-icon" />
                         </HBox>
                     </graphic>
                 </Button>
                 <Button fx:id="switchToTextEditViewBtn"
-                        styleClass="graph-button, graph-button-basic" onAction="#switchEditViewAction" prefWidth="30" visible="false">
+                        styleClass="graph-button, graph-button-basic" onAction="#switchEditViewAction" prefWidth="30">
                     <tooltip>
                         <Tooltip text="%bookmarkTab.treeEditViewBtn.tooltip" />
                     </tooltip>
                     <graphic>
                         <HBox spacing="5" alignment="CENTER_RIGHT">
-                            <Region styleClass="icon, icon-size-bottom-menu, text-edit-icon" />
+                            <Region styleClass="icon, icon-size-bottom-menu, tree-diagram-icon" />
                             <Region styleClass="icon, icon-size-bottom-menu, switch-icon" />
                         </HBox>
                     </graphic>

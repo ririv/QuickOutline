@@ -45,8 +45,6 @@ public class MainController {
     private final ObjectProperty<ViewScaleType> viewScaleTypeProperty = new SimpleObjectProperty<>(ViewScaleType.NONE);
 
     // Child controllers
-    public TextTabController textTabViewController;
-    public TreeTabController treeTabViewController;
     public LeftPaneController leftPaneController;
     public PdfPreviewController pdfPreviewTabViewController;
 
@@ -71,9 +69,9 @@ public class MainController {
     }
 
     @FXML
-    private Node textTabView;
+    private Node bookmarkTabView;
     @FXML
-    private Node treeTabView;
+    private BookmarkTabController bookmarkTabViewController;
     @FXML
     private Node tocGeneratorTabView;
     @FXML
@@ -82,10 +80,10 @@ public class MainController {
     private Node pdfPreviewTabView;
 
     public enum FnTab {
-        text, tree, toc, setting, label, preview, tocGenerator
+        bookmark, toc, setting, label, preview, tocGenerator
     }
 
-    private final ObjectProperty<FnTab> currentTabProperty = new SimpleObjectProperty<>(FnTab.text);
+    private final ObjectProperty<FnTab> currentTabProperty = new SimpleObjectProperty<>(FnTab.bookmark);
 
     @FXML
     public void initialize() {
@@ -101,8 +99,7 @@ public class MainController {
         eventBus.subscribe(ShowMessageEvent.class, event -> messageManager.showMessage(event.message, event.messageType));
 
         // Bind tab visibility to currentTabProperty
-        textTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.text));
-        treeTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tree));
+        bookmarkTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.bookmark));
         tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.toc));
         pageLabelTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.label));
         pdfPreviewTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.preview));
@@ -110,14 +107,8 @@ public class MainController {
 
         // Add listener for tab-specific logic
         currentTabProperty.addListener((obs, oldTab, newTab) -> {
-            if (newTab == FnTab.tree) {
+            if (newTab == FnTab.bookmark) {
                 reconstructTree();
-            } else if (newTab == FnTab.text) {
-                Bookmark rootBookmark = treeTabViewController.getRootBookmark();
-                if (rootBookmark != null) {
-                    rootBookmark.updateLevelByStructureLevel();
-                    textTabViewController.contentsTextArea.setText(rootBookmark.toTreeText());
-                }
             } else if (newTab == FnTab.preview) {
                 Path srcFile = currentFileState.getSrcFile();
                 if (srcFile != null) {
@@ -164,7 +155,7 @@ public class MainController {
     }
 
     private void handleGetContents(GetContentsEvent event) {
-        if (!textTabViewController.contentsTextArea.getText().isEmpty()) {
+        if (!bookmarkTabViewController.getContents().isEmpty()) {
             Optional<ButtonType> buttonType = showAlert(
                     Alert.AlertType.CONFIRMATION,
                     bundle.getString("alert.unsavedConfirmation"),
@@ -180,7 +171,7 @@ public class MainController {
         }
 
         getContents();
-        if (currentTabProperty.get() == FnTab.tree) reconstructTree();
+        if (currentTabProperty.get() == FnTab.bookmark) reconstructTree();
     }
 
     private void handleSetContents(SetContentsEvent event) {
@@ -193,15 +184,15 @@ public class MainController {
         String srcFilePath = srcFile.toString();
         String destFilePath = currentFileState.getDestFile().toString();
         try {
-            Bookmark rootBookmark = treeTabViewController.getRootBookmark();
+            Bookmark rootBookmark = bookmarkTabViewController.treeTabController.getRootBookmark();
             if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
-                String text = textTabViewController.contentsTextArea.getText();
+                String text = bookmarkTabViewController.getContents();
                 if (text == null || text.isEmpty()) {
                     messageManager.showMessage(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING);
                     return;
                 }
                 pdfOutlineService.setContents(text, srcFilePath, destFilePath, offset(),
-                        textTabViewController.getSelectedMethod(),
+                        bookmarkTabViewController.textTabController.getSelectedMethod(),
                         viewScaleTypeProperty.get());
             } else {
                 rootBookmark.updateLevelByStructureLevel();
@@ -236,7 +227,7 @@ public class MainController {
     }
 
     private void handleReconstructTree(ReconstructTreeEvent event) {
-        if (currentTabProperty.get() == FnTab.tree) {
+        if (currentTabProperty.get() == FnTab.bookmark) {
             reconstructTree();
         }
         if (currentTabProperty.get() == FnTab.tocGenerator) {
@@ -256,7 +247,7 @@ public class MainController {
         } else {
             contents = pdfTocService.extract(srcFile.toString(), event.startPage, event.endPage);
         }
-        textTabViewController.contentsTextArea.setText(contents);
+        bookmarkTabViewController.setContents(contents);
     }
 
     private void openFile(File file) {
@@ -266,7 +257,7 @@ public class MainController {
         Path oldFile = currentFileState.getSrcFile();
         if (oldFile != null && oldFile.equals(newFilePath)) return;
 
-        if (!textTabViewController.contentsTextArea.getText().isEmpty()) {
+        if (!bookmarkTabViewController.getContents().isEmpty()) {
             ButtonType keepContentsTextBtnType = new ButtonType(bundle.getString("btnType.keepContents"), ButtonBar.ButtonData.OK_DONE);
             ButtonType noKeepContentsTextBtnType = new ButtonType(bundle.getString("btnType.noKeepContents"), ButtonBar.ButtonData.OK_DONE);
             ButtonType cancelBtnType = new ButtonType(bundle.getString("btnType.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE);
@@ -316,14 +307,14 @@ public class MainController {
         bottomPaneController.offsetTF.setText(null);
         if (!keepContents) {
             getContents();
-            if (currentTabProperty.get() == FnTab.tree) reconstructTree();
+            if (currentTabProperty.get() == FnTab.bookmark) reconstructTree();
         }
     }
 
     private void getContents() {
         try {
             String contents = pdfOutlineService.getContents(currentFileState.getSrcFile().toString(), 0);
-            textTabViewController.contentsTextArea.setText(contents);
+            bookmarkTabViewController.setContents(contents);
             autoToggleToIndentMethod();
         } catch (NoOutlineException e) {
             e.printStackTrace();
@@ -341,9 +332,9 @@ public class MainController {
 
     public void reconstructTree() {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(
-                textTabViewController.contentsTextArea.getText(), 0,
-                textTabViewController.getSelectedMethod()
+                bookmarkTabViewController.getContents(), 0,
+                bookmarkTabViewController.textTabController.getSelectedMethod()
         );
-        treeTabViewController.reconstructTree(rootBookmark);
+        bookmarkTabViewController.treeTabController.reconstructTree(rootBookmark);
     }
 }

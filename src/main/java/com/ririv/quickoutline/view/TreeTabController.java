@@ -222,6 +222,25 @@ public class TreeTabController {
         }
     }
 
+    public String getContents() {
+        Bookmark rootBookmark = getRootBookmark();
+        if (rootBookmark != null) {
+            return rootBookmark.toTreeText();
+        }
+        return "";
+    }
+
+    public void setContents(String contents) {
+        // This is a simplified implementation. A more robust implementation would
+        // involve parsing the text and reconstructing the tree.
+        Bookmark rootBookmark = new Bookmark("root", null, 0);
+        String[] lines = contents.split("\n");
+        for (String line : lines) {
+            rootBookmark.addChild(new Bookmark(line, null, 1));
+        }
+        reconstructTree(rootBookmark);
+    }
+
     public Bookmark getRootBookmark() {
         if (treeTableView.getRoot() != null) {
             return treeTableView.getRoot().getValue();
