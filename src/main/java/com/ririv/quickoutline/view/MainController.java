@@ -16,6 +16,7 @@ import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
 import com.ririv.quickoutline.view.controls.Message;
 import com.ririv.quickoutline.view.controls.MessageContainer;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -119,6 +120,14 @@ public class MainController {
             File file = fileChooser.showOpenDialog(null);
             openFile(file);
         });
+
+         filepathTF.textProperty().bind(
+                Bindings.createStringBinding(() -> {
+                    Path path = currentFileState.getSrcFile();
+                    return (path != null) ? path.toString() : "";
+                }, currentFileState.srcFileProperty())
+         );
+
     }
 
     private void openFile(File file) {
