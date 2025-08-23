@@ -25,7 +25,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
     //    如果rootBookmark没有Children，即之前的text为空（当然这种情况已在Controller中被排除）
 //    list.clear()没有起作用（不知道原因），最终目录没有影响，怀疑原因是没有写入操作。
     @Override
-    public void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException {
+    public void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException {
         if (checkEncrypted(srcFilePath)) throw new EncryptedPdfException();
 
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
@@ -163,7 +163,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
     }
 
 //    https://kb.itextpdf.com/itext/removing-items-from-a-pdf-s-outline-tree
-    public void deleteContents(String srcFile, String destFile) throws IOException{
+    public void deleteOutline(String srcFile, String destFile) throws IOException{
         PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile), new PdfWriter(destFile));
 
         srcDoc.getOutlines(true).removeOutline();

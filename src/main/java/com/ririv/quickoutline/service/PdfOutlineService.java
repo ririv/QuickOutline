@@ -17,20 +17,20 @@ public class PdfOutlineService {
 
     private final OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
 
-    public void setContents(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException {
+    public void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
-        outlineProcessor.setContents(rootBookmark, srcFilePath, destFilePath, scaleType);
+        outlineProcessor.setOutline(rootBookmark, srcFilePath, destFilePath, scaleType);
     }
 
-    public void setContents(String text, String srcFilePath, String destFilePath, int offset, Method method, ViewScaleType scaleType) throws IOException {
+    public void setOutline(String text, String srcFilePath, String destFilePath, int offset, Method method, ViewScaleType scaleType) throws IOException {
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);
-        setContents(rootBookmark, srcFilePath, destFilePath, scaleType);
+        setOutline(rootBookmark, srcFilePath, destFilePath, scaleType);
     }
 
-    public void deleteContents(String srcFilePath, String destFilePath) {
+    public void deleteOutline(String srcFilePath, String destFilePath) {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
         try {
-            outlineProcessor.deleteContents(srcFilePath, destFilePath);
+            outlineProcessor.deleteOutline(srcFilePath, destFilePath);
         }
         catch (IOException e){
             e.printStackTrace();

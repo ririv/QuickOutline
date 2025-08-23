@@ -52,7 +52,7 @@ Part I  监督学习  25
     @org.junit.jupiter.api.Test
     void test1() throws IOException {
         OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
-        outlineProcessor.setContents(rootBookmark, srcFilePath,"D:/gen.pdf", ViewScaleType.ACTUAL_SIZE);
+        outlineProcessor.setOutline(rootBookmark, srcFilePath,"D:/gen.pdf", ViewScaleType.ACTUAL_SIZE);
     }
 
     @org.junit.jupiter.api.Test

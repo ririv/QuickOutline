@@ -14,13 +14,10 @@ import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.Message;
-import com.ririv.quickoutline.view.controls.MessageContainer;
-import javafx.beans.property.ObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.Pane;
-import javafx.stage.Window;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -95,7 +92,7 @@ public class BookmarkTabController {
             eventBus.publish(new ShowMessageEvent(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING));
             return;
         }
-        pdfOutlineService.deleteContents(srcFile.toString(), currentFileState.getDestFile().toString());
+        pdfOutlineService.deleteOutline(srcFile.toString(), currentFileState.getDestFile().toString());
         eventBus.publish(new ShowSuccessDialogEvent());
     }
 
@@ -183,12 +180,12 @@ public class BookmarkTabController {
                     return;
                 }
                 Integer offset = bookmarkSettingsState.getOffset();
-                pdfOutlineService.setContents(text, srcFilePath, destFilePath, (offset == null) ? 0 : offset,
+                pdfOutlineService.setOutline(text, srcFilePath, destFilePath, (offset == null) ? 0 : offset,
                         textTabController.getSelectedMethod(),
                         viewScaleType);
             } else {
                 rootBookmark.updateLevelByStructureLevel();
-                pdfOutlineService.setContents(rootBookmark, srcFilePath, destFilePath, viewScaleType);
+                pdfOutlineService.setOutline(rootBookmark, srcFilePath, destFilePath, viewScaleType);
             }
         } catch (BookmarkFormatException e) {
             e.printStackTrace();
