@@ -2,6 +2,8 @@ package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.*;
+import com.ririv.quickoutline.pdfProcess.ViewScaleType;
+import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.PopupCard;
 import javafx.event.ActionEvent;
@@ -26,6 +28,7 @@ public class BookmarkBottomPaneController {
     private final GetContentsPopupController getContentsPopupController;
     private final SetContentsPopupController setContentsPopupController;
     private final AppEventBus eventBus;
+    private final CurrentFileState currentFileState;
 
     public Button switchToTreeEditViewBtn;
     public Button switchToTextEditViewBtn;
@@ -41,14 +44,21 @@ public class BookmarkBottomPaneController {
     @FXML public GridPane outlineBottomPane;
 
     @Inject
-        public BookmarkBottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus) {
+        public BookmarkBottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus, CurrentFileState currentFileState) {
         this.getContentsPopupController = getContentsPopupController;
         this.setContentsPopupController = setContentsPopupController;
         this.eventBus = eventBus;
+        this.currentFileState = currentFileState;
     }
 
     @FXML
     public void initialize() {
+
+        currentFileState.srcFileProperty().addListener((obs, old, nu) -> {
+            if (nu != null) {
+                offsetTF.setText(null);
+            }
+        });
 
 
         // Use a TextFormatter to allow only integer input
@@ -77,8 +87,11 @@ public class BookmarkBottomPaneController {
 
     @FXML
     private void setContentsBtnAction(ActionEvent event) {
-        eventBus.publish(new SetContentsEvent());
+        ViewScaleType selectedType = setContentsPopupController.getSelectedViewScaleType();
+        eventBus.publish(new SetContentsEvent(selectedType));
     }
+
+    
 
     @FXML
     public void deleteBtnAction(ActionEvent event) {

@@ -1,12 +1,15 @@
 package com.ririv.quickoutline.view;
 
+import com.google.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PdfPreview;
+import com.ririv.quickoutline.state.CurrentFileState;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class PdfPreviewController {
 
@@ -28,11 +31,24 @@ public class PdfPreviewController {
     private PdfPreview pdfPreview;
     private int currentPageIndex = 0;
 
-    public PdfPreviewController() {
+    private final CurrentFileState currentFileState;
+
+    @Inject
+    public PdfPreviewController(CurrentFileState currentFileState) {
+        this.currentFileState = currentFileState;
     }
 
     @FXML
     public void initialize() {
+        currentFileState.srcFileProperty().addListener((obs, oldPath, newPath) -> {
+            if (newPath != null) {
+                loadPdf(newPath.toFile());
+            } else {
+                closePreview();
+                imageView.setImage(null);
+                updateControls();
+            }
+        });
         updateControls();
     }
 

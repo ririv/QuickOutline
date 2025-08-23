@@ -42,5 +42,6 @@ module quickoutline {
     exports com.ririv.quickoutline.pdfProcess.itextImpl;
     opens com.ririv.quickoutline.pdfProcess.itextImpl to com.google.guice;
     opens com.ririv.quickoutline.pdfProcess to com.google.guice;
+    opens com.ririv.quickoutline.di to com.google.guice;
 
 }

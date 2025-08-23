@@ -2,6 +2,7 @@ package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.*;
+import com.ririv.quickoutline.event.ShowSuccessDialogEvent;
 import com.ririv.quickoutline.exception.BookmarkFormatException;
 import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.exception.NoOutlineException;
@@ -9,6 +10,7 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.service.PdfTocExtractorService;
 import com.ririv.quickoutline.state.CurrentFileState;
+
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
@@ -42,7 +44,6 @@ public class MainController {
     public TextField filepathTF;
     public Button browseFileBtn;
     public StackPane root;
-    private final ObjectProperty<ViewScaleType> viewScaleTypeProperty = new SimpleObjectProperty<>(ViewScaleType.NONE);
 
     // Child controllers
     public LeftPaneController leftPaneController;
@@ -59,15 +60,12 @@ public class MainController {
     @FXML private Node pageLabelBottomPane;
     @FXML private Node emptyBottomPane;
 
-    private final PdfOutlineService pdfOutlineService;
-    private final PdfTocExtractorService pdfTocExtractorService;
+    
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
 
     @Inject
-    public MainController(PdfOutlineService pdfOutlineService, PdfTocExtractorService pdfTocExtractorService, CurrentFileState currentFileState, AppEventBus eventBus) {
-        this.pdfOutlineService = pdfOutlineService;
-        this.pdfTocExtractorService = pdfTocExtractorService;
+    public MainController(CurrentFileState currentFileState, AppEventBus eventBus) {
         this.currentFileState = currentFileState;
         this.eventBus = eventBus;
     }
@@ -92,15 +90,9 @@ public class MainController {
     @FXML
     public void initialize() {
         // Register event listeners
-        eventBus.subscribe(GetContentsEvent.class, this::handleGetContents);
-        eventBus.subscribe(SetContentsEvent.class, this::handleSetContents);
-        eventBus.subscribe(DeleteContentsEvent.class, this::handleDeleteContents);
-        eventBus.subscribe(ExtractTocEvent.class, this::handleExtractToc);
-        eventBus.subscribe(AutoToggleToIndentEvent.class, event -> autoToggleToIndentMethod());
-        eventBus.subscribe(ViewScaleChangedEvent.class, event -> viewScaleTypeProperty.set(event.viewScaleType));
-        eventBus.subscribe(ReconstructTreeEvent.class, this::handleReconstructTree);
         eventBus.subscribe(SwitchTabEvent.class, event -> currentTabProperty.set(event.targetTab));
         eventBus.subscribe(ShowMessageEvent.class, event -> messageManager.showMessage(event.message, event.messageType));
+        eventBus.subscribe(ShowSuccessDialogEvent.class, this::handleShowSuccessDialog);
 
         // Bind tab visibility to currentTabProperty
         bookmarkTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.bookmark));
@@ -116,29 +108,6 @@ public class MainController {
             currentTabProperty.isEqualTo(FnTab.preview)
             .or(currentTabProperty.isEqualTo(FnTab.setting))
         );
-
-        // Add listener for tab-specific logic
-        currentTabProperty.addListener((obs, oldTab, newTab) -> {
-            if (newTab == FnTab.bookmark) {
-                reconstructTree();
-            } else if (newTab == FnTab.preview) {
-                Path srcFile = currentFileState.getSrcFile();
-                if (srcFile != null) {
-                    pdfPreviewTabViewController.loadPdf(srcFile.toFile());
-                } else {
-                    pdfPreviewTabViewController.closePreview();
-                }
-            }
-        });
-
-        currentFileState.srcFileProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                filepathTF.setText(newValue.toString());
-                resetState(false);
-            } else {
-                filepathTF.clear();
-            }
-        });
 
         // Drag and drop logic
         root.setOnDragOver(event -> {
@@ -164,102 +133,6 @@ public class MainController {
             File file = fileChooser.showOpenDialog(null);
             openFile(file);
         });
-    }
-
-    private void handleGetContents(GetContentsEvent event) {
-        if (!bookmarkTabViewController.getContents().isEmpty()) {
-            Optional<ButtonType> buttonType = showAlert(
-                    Alert.AlertType.CONFIRMATION,
-                    bundle.getString("alert.unsavedConfirmation"),
-                    root.getScene().getWindow());
-            if (buttonType.isPresent() && buttonType.get().getButtonData().isCancelButton()) {
-                return;
-            }
-        }
-
-        if (currentFileState.getSrcFile() == null) {
-            messageManager.showMessage(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING);
-            return;
-        }
-
-        getContents();
-        if (currentTabProperty.get() == FnTab.bookmark) reconstructTree();
-    }
-
-    private void handleSetContents(SetContentsEvent event) {
-        Path srcFile = currentFileState.getSrcFile();
-        if (srcFile == null) {
-            messageManager.showMessage(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING);
-            return;
-        }
-
-        String srcFilePath = srcFile.toString();
-        String destFilePath = currentFileState.getDestFile().toString();
-        try {
-            Bookmark rootBookmark = bookmarkTabViewController.treeTabController.getRootBookmark();
-            if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
-                String text = bookmarkTabViewController.getContents();
-                if (text == null || text.isEmpty()) {
-                    messageManager.showMessage(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING);
-                    return;
-                }
-                pdfOutlineService.setContents(text, srcFilePath, destFilePath, offset(),
-                        bookmarkTabViewController.textTabController.getSelectedMethod(),
-                        viewScaleTypeProperty.get());
-            } else {
-                rootBookmark.updateLevelByStructureLevel();
-                pdfOutlineService.setContents(rootBookmark, srcFilePath, destFilePath, viewScaleTypeProperty.get());
-            }
-        } catch (BookmarkFormatException e) {
-            e.printStackTrace();
-            File file = new File(destFilePath);
-            boolean deleteSuccess = file.delete();
-            logger.info("删除文件成功: {}", deleteSuccess);
-            messageManager.showMessage(e.getMessage(), Message.MessageType.ERROR);
-            return;
-        } catch (IOException e) {
-            messageManager.showMessage(e.getMessage(), Message.MessageType.ERROR);
-            return;
-        } catch (EncryptedPdfException e) {
-            messageManager.showMessage(bundle.getString("message.decryptionPrompt"), Message.MessageType.ERROR);
-            return;
-        }
-
-        showSuccessDialog();
-    }
-
-    private void handleDeleteContents(DeleteContentsEvent event) {
-        Path srcFile = currentFileState.getSrcFile();
-        if (srcFile == null) {
-            messageManager.showMessage(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING);
-            return;
-        }
-        pdfOutlineService.deleteContents(srcFile.toString(), currentFileState.getDestFile().toString());
-        showSuccessDialog();
-    }
-
-    private void handleReconstructTree(ReconstructTreeEvent event) {
-        if (currentTabProperty.get() == FnTab.bookmark) {
-            reconstructTree();
-        }
-        if (currentTabProperty.get() == FnTab.tocGenerator) {
-            reconstructTree();
-        }
-    }
-
-    private void handleExtractToc(ExtractTocEvent event) {
-        Path srcFile = currentFileState.getSrcFile();
-        if (srcFile == null) {
-            messageManager.showMessage(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING);
-            return;
-        }
-        String contents;
-        if (event.startPage == null || event.endPage == null) {
-            contents = pdfTocExtractorService.extract(srcFile.toString());
-        } else {
-            contents = pdfTocExtractorService.extract(srcFile.toString(), event.startPage, event.endPage);
-        }
-        bookmarkTabViewController.setContents(contents);
     }
 
     private void openFile(File file) {
@@ -297,7 +170,8 @@ public class MainController {
         }
     }
 
-    private void showSuccessDialog() {
+
+    private void handleShowSuccessDialog(ShowSuccessDialogEvent event) {
         ButtonType openDirAndSelectFileButtonType = new ButtonType(bundle.getString("btnType.openFileLocation"), ButtonBar.ButtonData.OK_DONE);
         ButtonType openFileButtonType = new ButtonType(bundle.getString("btnType.openFile"), ButtonBar.ButtonData.OK_DONE);
         var result = showAlert(Alert.AlertType.INFORMATION,
@@ -314,39 +188,5 @@ public class MainController {
             e.printStackTrace();
         }
     }
-
-    private void resetState(boolean keepContents) {
-        bookmarkBottomPaneController.offsetTF.setText(null);
-        if (!keepContents) {
-            getContents();
-            if (currentTabProperty.get() == FnTab.bookmark) reconstructTree();
-        }
-    }
-
-    private void getContents() {
-        try {
-            String contents = pdfOutlineService.getContents(currentFileState.getSrcFile().toString(), 0);
-            bookmarkTabViewController.setContents(contents);
-            autoToggleToIndentMethod();
-        } catch (NoOutlineException e) {
-            e.printStackTrace();
-            messageManager.showMessage(bundle.getString("message.noBookmarks"), Message.MessageType.WARNING);
-        }
-    }
-
-    public void autoToggleToIndentMethod() {
-        eventBus.publish(new AutoToggleToIndentEvent());
-    }
-
-    public int offset() {
-        return bookmarkBottomPaneController.getOffset();
-    }
-
-    public void reconstructTree() {
-        Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(
-                bookmarkTabViewController.getContents(), 0,
-                bookmarkTabViewController.textTabController.getSelectedMethod()
-        );
-        bookmarkTabViewController.treeTabController.reconstructTree(rootBookmark);
-    }
+    
 }
