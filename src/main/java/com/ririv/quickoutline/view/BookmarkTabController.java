@@ -47,7 +47,6 @@ public class BookmarkTabController {
     private final BookmarkBottomPaneController bookmarkBottomPaneController;
     private final PdfTocExtractorService pdfTocExtractorService;
     private final ResourceBundle bundle;
-    private MessageContainer messageManager;
 
     @Inject
     public BookmarkTabController(AppEventBus eventBus, PdfOutlineService pdfOutlineService, CurrentFileState currentFileState, BookmarkBottomPaneController bookmarkBottomPaneController, PdfTocExtractorService pdfTocExtractorService) {
