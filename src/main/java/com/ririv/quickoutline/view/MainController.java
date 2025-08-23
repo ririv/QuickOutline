@@ -128,21 +128,6 @@ public class MainController {
         Path oldFile = currentFileState.getSrcFile();
         if (oldFile != null && oldFile.equals(newFilePath)) return;
 
-        if (!bookmarkTabViewController.getContents().isEmpty()) {
-            ButtonType keepContentsTextBtnType = new ButtonType(bundle.getString("btnType.keepContents"), ButtonBar.ButtonData.OK_DONE);
-            ButtonType noKeepContentsTextBtnType = new ButtonType(bundle.getString("btnType.noKeepContents"), ButtonBar.ButtonData.OK_DONE);
-            ButtonType cancelBtnType = new ButtonType(bundle.getString("btnType.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE);
-            Optional<ButtonType> result = showAlert(
-                    Alert.AlertType.CONFIRMATION,
-                    bundle.getString("alert.unsavedConfirmation"),
-                    root.getScene().getWindow(),
-                    keepContentsTextBtnType, noKeepContentsTextBtnType, cancelBtnType);
-
-            if (result.isPresent() && result.get() == cancelBtnType) {
-                return;
-            }
-        }
-
         try {
             currentFileState.setSrcFile(newFilePath);
         } catch (java.io.IOException e) { // Catch standard IO Exception

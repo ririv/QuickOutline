@@ -1,3 +1,5 @@
+## 数据驱动Bookmark实现（Bookmark与TreeView同步）
+
 在 `Bookmark.java` 中使用 `ObservableList` 是非常合适且正确的做法，这正是 JavaFX 框架推荐的设计模式。
 
 
@@ -193,3 +195,23 @@ void reconstructTree(Bookmark rootBookmark) {
 
 
 这个设计是健壮且可维护的，因为业务逻辑和 UI 逻辑被清晰地分离开来
+
+## 文本视图与Bookmark模型的双向同步机制
+
+在重构后，我们确立了`BookmarkSettingsState`中的`rootBookmark`作为唯一、权威的数据源。文本视图（Text View）和树状视图（Tree View）都只是这个数据源的不同“投影”。为了保证UI上修改后的文本能与`rootBookmark`正确同步，我们设计了基于关键“提交点”的同步策略。
+
+用户在文本框中的输入过程是自由的，程序不会在每次按键后都进行同步，而是在用户执行一个明确的“意图”动作时，才用文本框的最新内容去更新`rootBookmark`。
+
+这样的“提交点”有两个：
+
+1.  **当用户从“文本视图”切换到“树状视图”时：**
+    - 在`BookmarkTabController`的`handleSwitchBookmarkViewEvent`方法中，当检测到视图切换时，会立刻调用`reconstructTreeByContents()`方法。
+    - 该方法会读取文本视图中的**全部当前内容**，将其完整解析，并用解析结果**覆盖**`BookmarkSettingsState`中旧的`rootBookmark`。
+    - 这保证了树状视图在显示时，其内容绝对是和文本视图同步的。
+
+2.  **当用户点击“保存”按钮时：**
+    - 在`BookmarkTabController`的`saveBookmarksToPdf`方法中，在执行保存操作的最开始，会先判断当前是否停留在文本视图。
+    - 如果是，同样会调用一次`reconstructTreeByContents()`。
+    - 这一步至关重要，它确保了即使用户没有切换视图，而是直接在文本视图中修改后就点击保存，我们也能捕获到他最终的修改，并用这些修改去更新中央的`rootBookmark`状态，然后再用这个最新的状态去执行保存。
+
+通过在这两个关键“提交点”进行强制同步，我们确保了无论用户如何操作，`BookmarkSettingsState`中的数据模型永远是最新、最准确的。

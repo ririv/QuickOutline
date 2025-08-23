@@ -24,6 +24,7 @@ public class TreeTabController {
     public TreeTableColumn<Bookmark, String> titleColumn;
     public TreeTableColumn<Bookmark, String> offsetPageColumn;
 
+    private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
     private final AppEventBus eventBus;
     private final BookmarkSettingsState bookmarkSettingsState;
     private final Map<String, TreeItem<Bookmark>> itemCache = new HashMap<>();
@@ -63,7 +64,6 @@ public class TreeTabController {
             titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
             titleColumn.setOnEditCommit(event -> {
                 event.getRowValue().getValue().setTitle(event.getNewValue());
-                syncTextTabView();
             });
 
             offsetPageColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
@@ -73,7 +73,6 @@ public class TreeTabController {
                 } catch (NumberFormatException e) {
                     treeTableView.refresh();
                 }
-                syncTextTabView();
             });
 
             treeTableView.setShowRoot(false);
@@ -92,7 +91,6 @@ public class TreeTabController {
     }
 
     private void setupRowFactory() {
-        ResourceBundle bundle = LocalizationManager.getResourceBundle();
         ContextMenu contextMenu = new ContextMenu();
         MenuItem addSiblingItem = new MenuItem(bundle.getString("contextMenu.addBookmark"));
         addSiblingItem.setOnAction(event -> addBookmark(false));
@@ -155,7 +153,6 @@ public class TreeTabController {
                 }
                 event.setDropCompleted(success);
                 event.consume();
-                if (success) syncTextTabView();
             });
             return row;
         });
@@ -181,14 +178,12 @@ public class TreeTabController {
             newBookmark = new Bookmark("New Sibling", null, siblingBookmark.getLevelByStructure());
             parentBookmark.addChild(index + 1, newBookmark);
         }
-        syncTextTabView();
     }
 
     private void deleteSelectedBookmark() {
         TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
         if (selectedItem == null || selectedItem.getParent() == null) return;
 
-        ResourceBundle bundle = LocalizationManager.getResourceBundle();
         Optional<ButtonType> result = MyAlert.showAlert(Alert.AlertType.CONFIRMATION,
                 bundle.getString("alert.deleteConfirmation"), treeTableView.getScene().getWindow());
 
@@ -196,15 +191,6 @@ public class TreeTabController {
             Bookmark parentBookmark = selectedItem.getParent().getValue();
             Bookmark bookmarkToRemove = selectedItem.getValue();
             parentBookmark.getChildren().remove(bookmarkToRemove);
-            syncTextTabView();
-        }
-    }
-
-    private void syncTextTabView() {
-        Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
-        if (rootBookmark != null) {
-            rootBookmark.updateLevelByStructureLevel();
-            eventBus.publish(new BookmarksChangedEvent(rootBookmark));
         }
     }
 
@@ -237,8 +223,5 @@ public class TreeTabController {
         }
         return "";
     }
-
-    
-
     
 }

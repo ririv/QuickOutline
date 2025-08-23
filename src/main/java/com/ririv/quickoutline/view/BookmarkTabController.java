@@ -16,6 +16,7 @@ import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.Message;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.Pane;
 import org.slf4j.Logger;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.ResourceBundle;
+
+import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
 public class BookmarkTabController {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(BookmarkTabController.class);
@@ -55,11 +58,10 @@ public class BookmarkTabController {
         this.bookmarkSettingsState = bookmarkSettingsState;
         this.bundle = LocalizationManager.getResourceBundle();
         eventBus.subscribe(SwitchBookmarkViewEvent.class, this::handleSwitchBookmarkViewEvent);
-        eventBus.subscribe(GetContentsEvent.class, this::handleGetContents);
-        eventBus.subscribe(SetContentsEvent.class, this::handleSetContents);
-        eventBus.subscribe(DeleteContentsEvent.class, this::handleDeleteContents);
+        eventBus.subscribe(GetContentsEvent.class, this::handleGetBookmarks);
+        eventBus.subscribe(SetContentsEvent.class, this::handleSetBookmarks);
+        eventBus.subscribe(DeleteContentsEvent.class, this::handleDeleteBookmarks);
         eventBus.subscribe(ExtractTocEvent.class, this::handleExtractToc);
-        eventBus.subscribe(ReconstructTreeEvent.class, event -> reconstructTree());
 
         currentFileState.srcFileProperty().addListener((obs, old, nu) -> {
             if (nu != null) {
@@ -68,25 +70,15 @@ public class BookmarkTabController {
         });
     }
 
-    private void reconstructTree() {
-        Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(
-                getContents(), 0,
-                textTabController.getSelectedMethod()
-        );
-        bookmarkSettingsState.setRootBookmark(rootBookmark);
-    }
-
-    
-
-    private void handleGetContents(GetContentsEvent event) {
+    private void handleGetBookmarks(GetContentsEvent event) {
         loadBookmarksFromPdf();
     }
 
-    private void handleSetContents(SetContentsEvent event) {
+    private void handleSetBookmarks(SetContentsEvent event) {
         saveBookmarksToPdf(event.getViewScaleType());
     }
 
-    private void handleDeleteContents(DeleteContentsEvent event) {
+    private void handleDeleteBookmarks(DeleteContentsEvent event) {
         Path srcFile = currentFileState.getSrcFile();
         if (srcFile == null) {
             eventBus.publish(new ShowMessageEvent(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING));
@@ -108,7 +100,7 @@ public class BookmarkTabController {
         } else {
             contents = pdfTocExtractorService.extract(srcFile.toString(), event.startPage, event.endPage);
         }
-        setContents(contents);
+        textTabController.setContents(contents);
     }
 
 
@@ -120,29 +112,46 @@ public class BookmarkTabController {
 
     public void handleSwitchBookmarkViewEvent(SwitchBookmarkViewEvent event) {
         if (event.getView() == SwitchBookmarkViewEvent.View.TEXT) { // Switching TO Text View
-            Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
-            if (rootBookmark != null) {
-                textTabController.setContents(rootBookmark.toTreeText());
-            }
+            resetContentsByTree();
             // Switch visibility
             textTab.setVisible(true);
             treeTab.setVisible(false);
         } else { // Switching TO Tree View
             // The text view is currently visible. ReconstructTree will get its contents and update the state.
-            reconstructTree();
+            reconstructTreeByContents();
             // Switch visibility
             treeTab.setVisible(true);
             textTab.setVisible(false);
         }
     }
 
+    private void resetContentsByTree() {
+        Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
+        if (rootBookmark != null) {
+            textTabController.setContents(rootBookmark.toTreeText());
+        }
+    }
+
+    //    This will parse the text and update the shared state
+    private void reconstructTreeByContents() {
+        Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(
+                getContents(), 0,
+                textTabController.getSelectedMethod()
+        );
+        bookmarkSettingsState.setRootBookmark(rootBookmark);
+    }
+
     public void loadBookmarksFromPdf() {
         if (!getContents().isEmpty()) {
-            Optional<ButtonType> buttonType = MyAlert.showAlert(
+            ButtonType keepContentsTextBtnType = new ButtonType(bundle.getString("btnType.keepContents"), ButtonBar.ButtonData.OK_DONE);
+            ButtonType noKeepContentsTextBtnType = new ButtonType(bundle.getString("btnType.noKeepContents"), ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelBtnType = new ButtonType(bundle.getString("btnType.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE);
+            Optional<ButtonType> result = showAlert(
                     Alert.AlertType.CONFIRMATION,
                     bundle.getString("alert.unsavedConfirmation"),
-                    textTab.getScene().getWindow());
-            if (buttonType.isPresent() && buttonType.get().getButtonData().isCancelButton()) {
+                    textTab.getScene().getWindow(),
+                    keepContentsTextBtnType, noKeepContentsTextBtnType, cancelBtnType);
+            if (result.isPresent() && result.get() == cancelBtnType) {
                 return;
             }
         }
@@ -153,13 +162,15 @@ public class BookmarkTabController {
         }
 
         try {
-            String contents = pdfOutlineService.getContents(currentFileState.getSrcFile().toString(), 0);
-            setContents(contents);
+            Bookmark rootBookmark = pdfOutlineService.getOutlineAsBookmark(currentFileState.getSrcFile().toString(), 0);
+            if (rootBookmark != null) {
+                bookmarkSettingsState.setRootBookmark(rootBookmark);
+                textTabController.setContents(rootBookmark.toTreeText());
+            }
         } catch (NoOutlineException e) {
             e.printStackTrace();
             eventBus.publish(new ShowMessageEvent(bundle.getString("message.noBookmarks"), Message.MessageType.WARNING));
         }
-        eventBus.publish(new ReconstructTreeEvent());
     }
 
     public void saveBookmarksToPdf(ViewScaleType viewScaleType) {
@@ -169,24 +180,24 @@ public class BookmarkTabController {
             return;
         }
 
+        // Ensure the state is in sync with the active view before saving
+        if (textTab.isVisible()) {
+            reconstructTreeByContents();
+        }
+
         String srcFilePath = srcFile.toString();
         String destFilePath = currentFileState.getDestFile().toString();
         try {
             Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
+
             if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
-                String text = getContents();
-                if (text == null || text.isEmpty()) {
-                    eventBus.publish(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));
-                    return;
-                }
-                Integer offset = bookmarkSettingsState.getOffset();
-                pdfOutlineService.setOutline(text, srcFilePath, destFilePath, (offset == null) ? 0 : offset,
-                        textTabController.getSelectedMethod(),
-                        viewScaleType);
-            } else {
-                rootBookmark.updateLevelByStructureLevel();
-                pdfOutlineService.setOutline(rootBookmark, srcFilePath, destFilePath, viewScaleType);
+                eventBus.publish(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));
+                return;
             }
+
+            rootBookmark.updateLevelByStructureLevel();
+            pdfOutlineService.setOutline(rootBookmark, srcFilePath, destFilePath, viewScaleType);
+
         } catch (BookmarkFormatException e) {
             e.printStackTrace();
             File file = new File(destFilePath);
@@ -203,11 +214,6 @@ public class BookmarkTabController {
         }
 
         eventBus.publish(new ShowSuccessDialogEvent());
-    }
-
-    public void setContents(String text) {
-        textTabController.setContents(text);
-        reconstructTree(); // This will parse the text and update the shared state
     }
 
     public String getContents() {
