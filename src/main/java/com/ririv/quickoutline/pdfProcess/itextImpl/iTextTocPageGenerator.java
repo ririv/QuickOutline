@@ -1,15 +1,13 @@
-package com.ririv.quickoutline.service;
+package com.ririv.quickoutline.pdfProcess.itextImpl;
 
 import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfPage;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.action.PdfAction;
 import com.itextpdf.kernel.pdf.canvas.draw.DottedLine;
-import com.itextpdf.kernel.pdf.navigation.PdfDestination;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.AreaBreak;
@@ -20,13 +18,11 @@ import com.itextpdf.layout.properties.AreaBreakType;
 import com.itextpdf.layout.properties.TabAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.Bookmark;
-import org.checkerframework.checker.units.qual.A;
+import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class iTextTocPageGenerator implements TocPageGenerator {

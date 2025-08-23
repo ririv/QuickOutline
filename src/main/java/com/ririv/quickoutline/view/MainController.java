@@ -7,7 +7,7 @@ import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
-import com.ririv.quickoutline.service.PdfTocService;
+import com.ririv.quickoutline.service.PdfTocExtractorService;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.utils.LocalizationManager;
@@ -56,14 +56,14 @@ public class MainController {
     public BorderPane leftPane;
 
     private final PdfOutlineService pdfOutlineService;
-    private final PdfTocService pdfTocService;
+    private final PdfTocExtractorService pdfTocExtractorService;
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
 
     @Inject
-    public MainController(PdfOutlineService pdfOutlineService, PdfTocService pdfTocService, CurrentFileState currentFileState, AppEventBus eventBus) {
+    public MainController(PdfOutlineService pdfOutlineService, PdfTocExtractorService pdfTocExtractorService, CurrentFileState currentFileState, AppEventBus eventBus) {
         this.pdfOutlineService = pdfOutlineService;
-        this.pdfTocService = pdfTocService;
+        this.pdfTocExtractorService = pdfTocExtractorService;
         this.currentFileState = currentFileState;
         this.eventBus = eventBus;
     }
@@ -243,9 +243,9 @@ public class MainController {
         }
         String contents;
         if (event.startPage == null || event.endPage == null) {
-            contents = pdfTocService.extract(srcFile.toString());
+            contents = pdfTocExtractorService.extract(srcFile.toString());
         } else {
-            contents = pdfTocService.extract(srcFile.toString(), event.startPage, event.endPage);
+            contents = pdfTocExtractorService.extract(srcFile.toString(), event.startPage, event.endPage);
         }
         bookmarkTabViewController.setContents(contents);
     }

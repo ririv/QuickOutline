@@ -8,7 +8,7 @@ import com.ririv.quickoutline.pdfProcess.itextImpl.ItextPageLabelSetter;
 import java.io.IOException;
 import java.util.List;
 
-public class PdfLabelService {
+public class PdfPageLabelService {
     private final PageLabelSetter<PageLabelNumberingStyle> pageLabelSetter = new ItextPageLabelSetter();
 
     public void setPageLabels(String srcFilePath, String destFilePath, List<PageLabel> labelList) throws IOException{

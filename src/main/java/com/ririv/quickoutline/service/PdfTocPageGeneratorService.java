@@ -2,16 +2,17 @@ package com.ririv.quickoutline.service;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 
 import java.io.IOException;
 import java.util.List;
 
-public class TocService {
+public class PdfTocPageGeneratorService {
 
     private final TocPageGenerator tocPageGenerator;
 
     @Inject
-    public TocService(TocPageGenerator tocPageGenerator) {
+    public PdfTocPageGeneratorService(TocPageGenerator tocPageGenerator) {
         this.tocPageGenerator = tocPageGenerator;
     }
 

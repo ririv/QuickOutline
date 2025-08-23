@@ -2,7 +2,7 @@ package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
-import com.ririv.quickoutline.service.PdfLabelService;
+import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.state.CurrentFileState;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -40,13 +40,13 @@ public class PageLabelController {
     private record PageLabelRule(int fromPage, PageLabel.PageLabelNumberingStyle style, String styleString, String prefix, int start) {}
 
     private final List<PageLabelRule> pageLabelRules = new ArrayList<>();
-    private final PdfLabelService pdfLabelService;
+    private final PdfPageLabelService pdfPageLabelService;
     private final CurrentFileState fileService;
     private final VBox ruleVBox = new VBox(5);
 
     @Inject
-    public PageLabelController(PdfLabelService pdfLabelService, CurrentFileState fileService) {
-        this.pdfLabelService = pdfLabelService;
+    public PageLabelController(PdfPageLabelService pdfPageLabelService, CurrentFileState fileService) {
+        this.pdfPageLabelService = pdfPageLabelService;
         this.fileService = fileService;
     }
 
@@ -152,7 +152,7 @@ public class PageLabelController {
         String srcFilePath = fileService.getSrcFile().toString();
         String destFilePath = fileService.getDestFile().toString();
         try {
-            pdfLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
+            pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
             showAlert("成功", "页码标签已成功应用。");
         } catch (IOException e) {
             showAlert("错误", "应用页码标签失败: " + e.getMessage());

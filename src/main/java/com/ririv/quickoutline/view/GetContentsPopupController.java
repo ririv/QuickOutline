@@ -3,7 +3,7 @@ package com.ririv.quickoutline.view;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.ExtractTocEvent;
-import com.ririv.quickoutline.service.PdfTocService;
+import com.ririv.quickoutline.service.PdfTocExtractorService;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.Switch;
 import javafx.beans.property.BooleanProperty;
@@ -24,7 +24,7 @@ public class GetContentsPopupController extends StackPane {
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
     private final AppEventBus eventBus;
-    private final PdfTocService pdfTocService;
+    private final PdfTocExtractorService pdfTocExtractorService;
 
     public HBox pageNumRangeLayout;
 
@@ -45,9 +45,9 @@ public class GetContentsPopupController extends StackPane {
     private final BooleanProperty autoRecognize = new SimpleBooleanProperty(true);
 
     @Inject
-    public GetContentsPopupController(AppEventBus eventBus, PdfTocService pdfTocService) {
+    public GetContentsPopupController(AppEventBus eventBus, PdfTocExtractorService pdfTocExtractorService) {
         this.eventBus = eventBus;
-        this.pdfTocService = pdfTocService;
+        this.pdfTocExtractorService = pdfTocExtractorService;
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
                 "GetContentsPopup.fxml"),

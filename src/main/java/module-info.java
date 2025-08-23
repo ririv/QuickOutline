@@ -39,5 +39,8 @@ module quickoutline {
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions;
     exports com.ririv.quickoutline.state;
+    exports com.ririv.quickoutline.pdfProcess.itextImpl;
+    opens com.ririv.quickoutline.pdfProcess.itextImpl to com.google.guice;
+    opens com.ririv.quickoutline.pdfProcess to com.google.guice;
 
 }
