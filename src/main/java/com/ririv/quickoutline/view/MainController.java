@@ -48,12 +48,16 @@ public class MainController {
     public LeftPaneController leftPaneController;
     public PdfPreviewController pdfPreviewTabViewController;
 
-    // Included controller
     @FXML
-    private BottomPaneController bottomPaneController;
+    private BookmarkBottomPaneController bookmarkBottomPaneController;
 
     public MessageContainer messageManager;
     public BorderPane leftPane;
+
+    @FXML private Node bookmarkBottomPane;
+    @FXML private Node tocGeneratorBottomPane;
+    @FXML private Node pageLabelBottomPane;
+    @FXML private Node emptyBottomPane;
 
     private final PdfOutlineService pdfOutlineService;
     private final PdfTocExtractorService pdfTocExtractorService;
@@ -100,10 +104,18 @@ public class MainController {
 
         // Bind tab visibility to currentTabProperty
         bookmarkTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.bookmark));
-        tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.toc));
+        tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tocGenerator));
         pageLabelTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.label));
         pdfPreviewTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.preview));
-        tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tocGenerator));
+
+        // Bind bottom pane visibility to currentTabProperty
+        bookmarkBottomPane.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.bookmark));
+        tocGeneratorBottomPane.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tocGenerator));
+        pageLabelBottomPane.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.label));
+        emptyBottomPane.visibleProperty().bind(
+            currentTabProperty.isEqualTo(FnTab.preview)
+            .or(currentTabProperty.isEqualTo(FnTab.setting))
+        );
 
         // Add listener for tab-specific logic
         currentTabProperty.addListener((obs, oldTab, newTab) -> {
@@ -304,7 +316,7 @@ public class MainController {
     }
 
     private void resetState(boolean keepContents) {
-        bottomPaneController.offsetTF.setText(null);
+        bookmarkBottomPaneController.offsetTF.setText(null);
         if (!keepContents) {
             getContents();
             if (currentTabProperty.get() == FnTab.bookmark) reconstructTree();
@@ -327,7 +339,7 @@ public class MainController {
     }
 
     public int offset() {
-        return bottomPaneController.getOffset();
+        return bookmarkBottomPaneController.getOffset();
     }
 
     public void reconstructTree() {

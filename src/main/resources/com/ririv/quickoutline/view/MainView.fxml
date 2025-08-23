@@ -64,7 +64,12 @@
 
             </StackPane>
             <Region styleClass="dividing-line-h"/>
-                <fx:include fx:id="bottomPane" source="BottomPane.fxml"/>
+                <StackPane>
+                <fx:include fx:id="bookmarkBottomPane" source="BookmarkBottomPane.fxml"/>
+                <fx:include fx:id="tocGeneratorBottomPane" source="TocGeneratorBottomPane.fxml" visible="false"/>
+                <fx:include fx:id="pageLabelBottomPane" source="PageLabelBottomPane.fxml" visible="false"/>
+                <VBox fx:id="emptyBottomPane" visible="false"/>
+            </StackPane>
             </VBox>
 
         </center>

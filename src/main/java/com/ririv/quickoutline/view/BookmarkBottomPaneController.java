@@ -12,7 +12,7 @@ import javafx.scene.layout.GridPane;
 
 import java.util.ResourceBundle;
 
-public class BottomPaneController {
+public class BookmarkBottomPaneController {
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
     private final GetContentsPopupController getContentsPopupController;
@@ -33,7 +33,7 @@ public class BottomPaneController {
     @FXML public GridPane outlineBottomPane;
 
     @Inject
-    public BottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus) {
+    public BookmarkBottomPaneController(GetContentsPopupController getContentsPopupController, SetContentsPopupController setContentsPopupController, AppEventBus eventBus) {
         this.getContentsPopupController = getContentsPopupController;
         this.setContentsPopupController = setContentsPopupController;
         this.eventBus = eventBus;
