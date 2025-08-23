@@ -45,10 +45,9 @@
         </left>
         <center>
             <VBox>
-            <!-- 可切换视图区域 -->
-            <StackPane id="operationPane">
+            <StackPane id="operationPane" VBox.vgrow="ALWAYS">
 
-                <!--                            导入其他fxml &ndash;&gt;-->
+                
 <!--                <Tab fx:id="bookmarkTab" closable="false">-->
 <!--                <graphic>-->
 <!--                    <Label text="Bookmark Edit"/>-->
@@ -62,13 +61,6 @@
                 <fx:include fx:id="pageLabelTabView" visible="false" source="PageLabelView.fxml"/>
                 <fx:include fx:id="pdfPreviewTabView" source="PdfPreview.fxml" visible="false" />
 
-            </StackPane>
-            <Region styleClass="dividing-line-h"/>
-                <StackPane>
-                <fx:include fx:id="bookmarkBottomPane" source="BookmarkBottomPane.fxml"/>
-                <fx:include fx:id="tocGeneratorBottomPane" source="TocGeneratorBottomPane.fxml" visible="false"/>
-                <fx:include fx:id="pageLabelBottomPane" source="PageLabelBottomPane.fxml" visible="false"/>
-                <VBox fx:id="emptyBottomPane" visible="false"/>
             </StackPane>
             </VBox>
 

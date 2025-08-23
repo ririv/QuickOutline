@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.layout.VBox?>
-
-<VBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ririv.quickoutline.view.TocGeneratorBottomPaneController">
-    <!-- 未来可以添加用于TOC生成的控件 -->
-</VBox>

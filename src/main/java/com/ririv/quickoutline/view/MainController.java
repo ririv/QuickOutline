@@ -55,11 +55,6 @@ public class MainController {
     public MessageContainer messageManager;
     public BorderPane leftPane;
 
-    @FXML private Node bookmarkBottomPane;
-    @FXML private Node tocGeneratorBottomPane;
-    @FXML private Node pageLabelBottomPane;
-    @FXML private Node emptyBottomPane;
-
     
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
@@ -99,15 +94,6 @@ public class MainController {
         tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tocGenerator));
         pageLabelTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.label));
         pdfPreviewTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.preview));
-
-        // Bind bottom pane visibility to currentTabProperty
-        bookmarkBottomPane.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.bookmark));
-        tocGeneratorBottomPane.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tocGenerator));
-        pageLabelBottomPane.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.label));
-        emptyBottomPane.visibleProperty().bind(
-            currentTabProperty.isEqualTo(FnTab.preview)
-            .or(currentTabProperty.isEqualTo(FnTab.setting))
-        );
 
         // Drag and drop logic
         root.setOnDragOver(event -> {
