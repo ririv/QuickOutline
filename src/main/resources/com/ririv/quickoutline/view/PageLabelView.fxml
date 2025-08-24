@@ -35,7 +35,7 @@
                 </GridPane>
 
                 <HBox alignment="CENTER">
-                    <Button onAction="#addRule" text="%pageLabel.addRuleBtn" styleClass="my-button, plain-button-primary"/>
+                    <Button onAction="#addRule" prefWidth="120.0" text="%pageLabel.addRuleBtn" styleClass="my-button, plain-button-primary"/>
                 </HBox>
 
                 <Separator/>

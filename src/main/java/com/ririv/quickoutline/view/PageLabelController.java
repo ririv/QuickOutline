@@ -11,9 +11,11 @@ import com.ririv.quickoutline.view.controls.message.Message;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
@@ -119,7 +121,12 @@ public class PageLabelController {
         HBox.setHgrow(ruleLabel, Priority.ALWAYS);
         ruleLabel.setMaxWidth(Double.MAX_VALUE);
 
-        Button deleteButton = new Button("删除");
+        Button deleteButton = new Button();
+        deleteButton.getStyleClass().addAll("graph-button","graph-button-important");
+        deleteButton.setPrefWidth(30);
+        Node graphic = new Region();
+        graphic.getStyleClass().addAll("icon", "delete-item-icon");
+        deleteButton.setGraphic(graphic);
         deleteButton.setOnAction(event -> {
             pageLabelRules.remove(rule);
             ruleVBox.getChildren().remove(ruleBox);

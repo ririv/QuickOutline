@@ -332,6 +332,22 @@
     -fx-background-color: rgba(150, 150, 150, 0.9);
 }
 
+.text-field{
+    -fx-background-color: white;
+    -fx-border-color: #d9d9d9;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #333333;
+}
+
+.text-field:hover {
+    -fx-border-color: -el-color-primary;
+}
+
+.text-field:focused {
+    -fx-border-color: -el-color-primary;
+}
 
 
 

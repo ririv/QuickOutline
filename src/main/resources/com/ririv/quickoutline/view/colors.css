@@ -23,6 +23,7 @@
     -el-color-default-pressed-border: -el-color-plain-primary-border;
     -el-color-default-text: #606266;
     -el-color-default-active-text: -el-color-primary;
+    -el-color-primary-shadow: rgba(64, 158, 255, 0.2);
 
     -el-color-textbtn-hover-bg: #f5f7fa;
     -el-color-textbtn-active-bg: #f0f2f5;

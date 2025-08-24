@@ -7,14 +7,14 @@
 }
 
 
-.text-field{
+#filepathTF{
     /*去除边框*/
     -fx-background-color: transparent;
     -fx-background-radius: 0;
     -fx-prompt-text-fill: rgba(150, 150, 150, 0.9);
 }
 
-.text-field:disabled{
+#filepathTF:disabled{
     -fx-background-color: transparent;
     -fx-opacity: 0.9; /* 默认有值，需修改使得没那么透明 */
     -fx-text-fill: rgba(100, 100, 100);
