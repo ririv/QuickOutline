@@ -19,9 +19,10 @@
     -fx-text-fill: #333333;
 }
 
-.text-area:hover {
-    -fx-border-color: -el-color-primary;
-}
+/*bug：鼠标悬浮移出后滚动条会消失*/
+/*.text-area:hover {*/
+/*    -fx-border-color: -el-color-primary;*/
+/*}*/
 
 .text-area:focused {
     -fx-background-color: transparent;
