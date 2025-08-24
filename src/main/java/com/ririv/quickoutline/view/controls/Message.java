@@ -1,7 +1,11 @@
 package com.ririv.quickoutline.view.controls;
 
 import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.ParallelTransition;
+import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -78,40 +82,19 @@ public class Message extends StackPane {
         setVisible(true);
         setDisable(false);
 
-        // 创建平移动画（从上方进入）
-        TranslateTransition translateIn = new TranslateTransition(Duration.seconds(0.5), this);
-        double height = 30;
-        translateIn.setFromY(-height);  // 从组件的上方开始
-        translateIn.setToY(0);          // 移动到原始位置
+        // The container will handle all positioning. This component only handles fading.
+        setOpacity(0);
+        FadeTransition fadeIn = new FadeTransition(Duration.seconds(0.4), this);
+        fadeIn.setToValue(1);
+        fadeIn.play();
 
+        // --- Disappearance Animation ---
+        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.4), this);
+        fadeOut.setToValue(0);
 
-        // 创建淡入动画
-        FadeTransition fadeIn = new FadeTransition(Duration.seconds(0.5), this);
-        fadeIn.setFromValue(0);  // 初始透明度为0
-        fadeIn.setToValue(1);    // 目标透明度为1
-
-        // 使用 ParallelTransition 将平移和淡入动画合并
-        ParallelTransition parallelIn = new ParallelTransition(translateIn, fadeIn);
-        // 淡入和平移同时执行
-        parallelIn.play();
-
-        TranslateTransition translateOut = new TranslateTransition(Duration.seconds(0.5), this);
-        translateOut.setFromY(0);  // 从原始位置
-        translateOut.setToY(-height);  // 向下滑出
-
-        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.5), this);
-        fadeOut.setFromValue(1);  // 初始透明度为1
-        fadeOut.setToValue(0);    // 目标透明度为0
-
-
-        parallelOut = new ParallelTransition(translateOut, fadeOut);
-        parallelOut.setDelay(Duration.seconds(3));  // 2秒后开始淡出（展示消息2秒）
-        parallelOut.setOnFinished(e -> {
-            // 消息消失后清空组件，恢复初始状态
-            setVisible(false); // 隐藏消息框
-            setManaged(false);
-
-        });
+        parallelOut = new ParallelTransition(fadeOut);
+        parallelOut.setDelay(Duration.seconds(3));  // 3秒后开始消失
+        // The onFinished handler will be set by the MessageContainer
 
         parallelOut.play();
     }
