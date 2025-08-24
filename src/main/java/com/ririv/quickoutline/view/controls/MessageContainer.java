@@ -27,19 +27,6 @@ public class MessageContainer extends AnchorPane {
     public void showMessage(String text, Message.MessageType messageType) {
         final Message message = new Message(text, messageType);
 
-        // Restore original centering logic by listening to width changes
-        message.widthProperty().addListener((obs, oldVal, newVal) -> {
-            if (message.getScene() != null) {
-                message.setTranslateX((getScene().getWidth() - newVal.doubleValue()) / 2);
-            }
-        });
-        // Also listen for scene changes to apply centering if the scene is not yet available
-        message.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) {
-                message.setTranslateX((newScene.getWidth() - message.getWidth()) / 2);
-            }
-        });
-
         // Set initial position to avoid jarring animation from the top
         double startY = TOP_MARGIN;
         if (!getChildren().isEmpty()) {

@@ -61,6 +61,19 @@ public class Message extends StackPane {
         }
         messageText.setText(text);
         setMouseTransparent(true);
+
+        // Add listeners to keep the message centered horizontally
+        sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                setTranslateX((newScene.getWidth() - getWidth()) / 2);
+            }
+        });
+        widthProperty().addListener((obs, oldVal, newVal) -> {
+            if (getScene() != null) {
+                setTranslateX((getScene().getWidth() - newVal.doubleValue()) / 2);
+            }
+        });
+
         this.show();
     }
 
