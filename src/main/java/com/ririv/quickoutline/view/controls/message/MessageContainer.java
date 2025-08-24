@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.controls;
+package com.ririv.quickoutline.view.controls.message;
 
 import javafx.animation.Interpolator;
 import javafx.animation.TranslateTransition;

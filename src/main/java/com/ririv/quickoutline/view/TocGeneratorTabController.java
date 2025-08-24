@@ -8,7 +8,7 @@ import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.utils.LocalizationManager;
-import com.ririv.quickoutline.view.controls.Message;
+import com.ririv.quickoutline.view.controls.message.Message;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 

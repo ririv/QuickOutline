@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.ririv.quickoutline.view.controls.MessageContainer?>
+<?import com.ririv.quickoutline.view.controls.message.MessageContainer?>
 <?import com.ririv.quickoutline.view.controls.Remind?>
 <?import com.ririv.quickoutline.view.GraphButtonWrapper?>
 <?import javafx.geometry.*?>

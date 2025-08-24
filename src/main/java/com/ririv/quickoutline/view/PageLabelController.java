@@ -7,7 +7,7 @@ import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.view.controls.select.StyledSelect;
-import com.ririv.quickoutline.view.controls.Message;
+import com.ririv.quickoutline.view.controls.message.Message;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;

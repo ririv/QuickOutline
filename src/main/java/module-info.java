@@ -45,5 +45,7 @@ module quickoutline {
     opens com.ririv.quickoutline.di to com.google.guice;
     exports com.ririv.quickoutline.view.controls.select;
     opens com.ririv.quickoutline.view.controls.select to javafx.fxml, javafx.graphics;
+    exports com.ririv.quickoutline.view.controls.message;
+    opens com.ririv.quickoutline.view.controls.message to javafx.fxml, javafx.graphics;
 
 }

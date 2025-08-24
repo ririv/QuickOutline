@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.event;
 
-import com.ririv.quickoutline.view.controls.Message;
+import com.ririv.quickoutline.view.controls.message.Message;
 
 public class ShowMessageEvent {
     public final String message;
