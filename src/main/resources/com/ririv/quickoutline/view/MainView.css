@@ -99,3 +99,8 @@
     -fx-max-width: -icon-size-bottom-menu;
 }
 
+.title{
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #9198a1;
+}
