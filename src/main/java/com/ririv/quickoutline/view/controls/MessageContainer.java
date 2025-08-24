@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view.controls;
 
+import javafx.animation.Interpolator;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -67,8 +68,9 @@ public class MessageContainer extends AnchorPane {
                 double targetY = currentY;
 
                 // Animate the message to its new vertical position
-                TranslateTransition tt = new TranslateTransition(Duration.millis(300), msg);
+                TranslateTransition tt = new TranslateTransition(Duration.millis(500), msg);
                 tt.setToY(targetY);
+                tt.setInterpolator(Interpolator.EASE_BOTH);
                 tt.play();
 
                 currentY += msg.getHeight() + SPACING;

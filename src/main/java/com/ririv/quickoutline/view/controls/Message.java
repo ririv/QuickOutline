@@ -4,6 +4,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
@@ -84,13 +85,15 @@ public class Message extends StackPane {
 
         // The container will handle all positioning. This component only handles fading.
         setOpacity(0);
-        FadeTransition fadeIn = new FadeTransition(Duration.seconds(0.4), this);
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(500), this);
         fadeIn.setToValue(1);
+        fadeIn.setInterpolator(Interpolator.EASE_OUT);
         fadeIn.play();
 
         // --- Disappearance Animation ---
-        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.4), this);
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(500), this);
         fadeOut.setToValue(0);
+        fadeOut.setInterpolator(Interpolator.EASE_IN);
 
         parallelOut = new ParallelTransition(fadeOut);
         parallelOut.setDelay(Duration.seconds(3));  // 3秒后开始消失
