@@ -6,7 +6,9 @@ import com.ririv.quickoutline.event.ShowMessageEvent;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.state.CurrentFileState;
+import com.ririv.quickoutline.view.controls.select.StyledSelect;
 import com.ririv.quickoutline.view.controls.Message;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -32,7 +34,7 @@ public class PageLabelController {
 
     public ScrollPane labelRuleListLayout;
     @FXML
-    private ChoiceBox<String> numberingStyleChoiceBox;
+    private StyledSelect<String> numberingStyleChoiceBox;
     @FXML
     private TextField prefixTextField;
     @FXML
@@ -57,6 +59,9 @@ public class PageLabelController {
 
     public void initialize() {
         labelRuleListLayout.setContent(ruleVBox);
+        numberingStyleChoiceBox.setItems(FXCollections.observableArrayList(
+                STYLE_NONE, STYLE_DECIMAL, STYLE_ROMAN_LOWER, STYLE_ROMAN_UPPER, STYLE_LETTERS_LOWER, STYLE_LETTERS_UPPER
+        ));
         // 使用常量来设置默认值
         if (numberingStyleChoiceBox.getValue() == null) {
             numberingStyleChoiceBox.setValue(STYLE_DECIMAL);

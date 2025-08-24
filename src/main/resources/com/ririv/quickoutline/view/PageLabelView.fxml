@@ -1,57 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.ririv.quickoutline.view.*?>
-<?import javafx.collections.FXCollections?>
+<?import com.ririv.quickoutline.view.controls.select.StyledSelect?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
-           fx:controller="com.ririv.quickoutline.view.PageLabelController">
+           fx:controller="com.ririv.quickoutline.view.PageLabelController"
+           stylesheets="@BasicControls.css, @MainView.css, @controls/select/StyledSelect.css">
     <BorderPane>
         <padding>
-            <Insets bottom="15" left="15" right="15" top="15" />
+            <Insets bottom="15" left="15" right="15" top="15"/>
         </padding>
         <center>
             <VBox spacing="15">
-                <GridPane hgap="10" vgap="10">
+                <GridPane hgap="10" vgap="15">
                     <columnConstraints>
-                        <ColumnConstraints halignment="RIGHT" minWidth="80" />
-                        <ColumnConstraints hgrow="ALWAYS" />
+                        <ColumnConstraints halignment="RIGHT" minWidth="80"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
                     </columnConstraints>
-                    <Label text="编号样式:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                    <ChoiceBox fx:id="numberingStyleChoiceBox" maxWidth="Infinity"
-                               GridPane.columnIndex="1" GridPane.rowIndex="0">
-                        <items>
-                            <FXCollections fx:factory="observableArrayList">
-                                <PageLabelController fx:constant="STYLE_NONE" />
-                                <PageLabelController fx:constant="STYLE_DECIMAL" />
-                                <PageLabelController fx:constant="STYLE_ROMAN_LOWER" />
-                                <PageLabelController fx:constant="STYLE_ROMAN_UPPER" />
-                                <PageLabelController fx:constant="STYLE_LETTERS_LOWER" />
-                                <PageLabelController fx:constant="STYLE_LETTERS_UPPER" />
-                            </FXCollections>
-                        </items>
-                    </ChoiceBox>
+                    <Label text="%pageLabel.style" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <StyledSelect fx:id="numberingStyleChoiceBox" maxWidth="Infinity"
+                                  GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                    <Label text="前缀:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                    <TextField fx:id="prefixTextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                    <Label text="%pageLabel.prefix" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <TextField fx:id="prefixTextField" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                    <Label text="编号开始于:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                    <TextField fx:id="startTextField" promptText="默认为 1" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                    <Label text="%pageLabel.startNumber" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <TextField fx:id="startTextField" promptText="%pageLabel.startNumber.prompt" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 
-                    <Label text="起始页码:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                    <TextField fx:id="fromPageTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                    <Label text="%pageLabel.startPage" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                    <TextField fx:id="fromPageTextField" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
                 </GridPane>
 
                 <HBox alignment="CENTER">
-                    <Button styleClass="my-button, plain-button-primary" prefWidth="120.0" onAction="#addRule" text="添加规则" />
+                    <Button onAction="#addRule" text="%pageLabel.addRuleBtn" styleClass="my-button, plain-button-primary"/>
                 </HBox>
 
-                <Separator />
+                <Separator/>
 
-                <Label text="规则列表:" />
-                <ScrollPane fx:id="labelRuleListLayout" fitToWidth="true" prefHeight="200" VBox.vgrow="ALWAYS" />
+                <Label text="%pageLabel.ruleList" styleClass="title"/>
+                <ScrollPane fx:id="labelRuleListLayout" fitToWidth="true" prefHeight="200" VBox.vgrow="ALWAYS"/>
             </VBox>
         </center>
         <bottom>
