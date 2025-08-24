@@ -43,5 +43,7 @@ module quickoutline {
     opens com.ririv.quickoutline.pdfProcess.itextImpl to com.google.guice;
     opens com.ririv.quickoutline.pdfProcess to com.google.guice;
     opens com.ririv.quickoutline.di to com.google.guice;
+    exports com.ririv.quickoutline.view.controls.select;
+    opens com.ririv.quickoutline.view.controls.select to javafx.fxml, javafx.graphics;
 
 }
