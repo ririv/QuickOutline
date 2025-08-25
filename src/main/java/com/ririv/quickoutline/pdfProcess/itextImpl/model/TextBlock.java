@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class TextBlock {
-    public int type = 0; // 0: default, 1: header, 2: footer, 4: figure, 5: table, 9: toc, 10: bib, 12: other
+    public int type = 0; 
     private final List<LineWithMetadata> lines = new ArrayList<>();
     private String cachedText = null;
     private CharacterPattern charPattern = null;
@@ -13,14 +13,14 @@ public class TextBlock {
     public TextBlock(LineWithMetadata initialLine) { addLine(initialLine); }
     public void addLine(LineWithMetadata line) {
         lines.add(line);
-        cachedText = null; // Invalidate cache
+        cachedText = null;
         charPattern = null;
     }
     public List<LineWithMetadata> getLines() { return lines; }
     public LineWithMetadata getPrimaryLine() { return lines.get(0); }
     public String getText() {
         if (cachedText == null) {
-            cachedText = lines.stream().map(LineWithMetadata::getTextContent).collect(Collectors.joining(" "));
+            cachedText = lines.stream().map(LineWithMetadata::getTextContent).collect(Collectors.joining(" ")); // Changed to space
         }
         return cachedText;
     }
