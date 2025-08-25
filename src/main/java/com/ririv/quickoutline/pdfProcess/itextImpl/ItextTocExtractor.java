@@ -6,7 +6,6 @@ import com.itextpdf.kernel.pdf.canvas.parser.PdfCanvasProcessor;
 import com.ririv.quickoutline.pdfProcess.TocExtractor;
 import com.ririv.quickoutline.pdfProcess.itextImpl.model.LineWithMetadata;
 import com.ririv.quickoutline.pdfProcess.itextImpl.model.Style;
-import com.ririv.quickoutline.pdfProcess.itextImpl.model.TextChunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -90,7 +90,7 @@ public class TextChunk {
         float y = first.getY();
         float width = (float) chunks.stream().mapToDouble(TextChunk::getWidth).sum();
         double skew = chunks.stream().mapToDouble(TextChunk::getSkew).average().orElse(0.0);
-        return new LineWithMetadata(text, x, y, width, style, pdfDoc.getPageNumber(page), page.getPageSize(), skew);
+        return new LineWithMetadata(text, x, y, width, style, pdfDoc.getPageNumber(page), page.getPageSize(), skew, chunks);
     }
 
 }
