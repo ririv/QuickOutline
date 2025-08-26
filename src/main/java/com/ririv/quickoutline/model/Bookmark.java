@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static com.ririv.quickoutline.textProcess.StringConstants.FourNormSpace;
 import static com.ririv.quickoutline.textProcess.StringConstants.TwoNormSpace;
 
 //一个顶级目录为一个bookmark
@@ -190,7 +191,7 @@ public class Bookmark{
     public static void buildLine(StringBuilder text, int level, String title, String pageNum) {
         text.append("\t".repeat(level-1)); //顶层为1，不要缩进
         text.append(title);
-        text.append(TwoNormSpace);
+        text.append(FourNormSpace);
         text.append(pageNum);
         text.append("\n");
     }
