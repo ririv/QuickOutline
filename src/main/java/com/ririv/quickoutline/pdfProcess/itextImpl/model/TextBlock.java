@@ -12,6 +12,9 @@ public class TextBlock {
     private String cachedText = null;
     private CharacterPattern charPattern = null;
 
+    private static final Pattern NUMBERING_PATTERN = Pattern.compile("^\\s*([\\d.]+|[A-Za-z][.]|[IVXLCDM]+[.)]).*\s*$");
+
+
     public TextBlock(LineWithMetadata initialLine) { addLine(initialLine); }
     public void addLine(LineWithMetadata line) {
         lines.add(line);
@@ -120,7 +123,7 @@ public class TextBlock {
         String prevText = lastLine.getTextContent().trim();
         if (prevText.endsWith(".") || prevText.endsWith("?") || prevText.endsWith("!") || prevText.endsWith(":")) return false;
         String nextText = nextLine.getTextContent().trim();
-        if (nextText.isEmpty() || Pattern.compile("^\\s*([\\d.]+|[A-Za-z][.]|[IVXLCDM]+[.)]).*\s*$").matcher(nextText).matches()) return false;
+        if (nextText.isEmpty() || NUMBERING_PATTERN.matcher(nextText).matches()) return false;
 
         if (!Character.isLowerCase(nextText.charAt(0))) {
             return prevText.length() <= 60;
