@@ -21,6 +21,8 @@ module quickoutline {
     requires com.google.guice;
     requires jakarta.inject;
     requires org.checkerframework.checker.qual;
+    requires openai.java.core;
+    requires openai.java.client.okhttp;
 //    requires org.bouncycastle.util;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
