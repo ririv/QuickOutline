@@ -27,6 +27,7 @@ public class ItextTocExtractor implements TocExtractor {
     private static final Logger log = LoggerFactory.getLogger(ItextTocExtractor.class);
     private static final Pattern TOC_DOT_PATTERN = Pattern.compile(".*([.]\\s*|\\s{2,}){4,}\\s*\\d+\\s*$");
     private static final Pattern TOC_NUMERIC_END_PATTERN = Pattern.compile("^(.*[^\\d])\\s+(\\d+)\\s*$");
+    private static final Pattern NUMBERING_PATTERN = Pattern.compile("^\\s*([\\d.]+|[A-Za-z][.]|[IVXLCDM]+[.)]).*\s*$");
 
     private final PdfDocument pdfDoc;
 
@@ -93,7 +94,9 @@ public class ItextTocExtractor implements TocExtractor {
             return false;
         }
 
+
         if (TOC_DOT_PATTERN.matcher(trimmed).matches()) {
+            System.out.println(trimmed);
             return true;
         }
 
@@ -183,8 +186,13 @@ public class ItextTocExtractor implements TocExtractor {
         String prevText = lastLine.getTextContent().trim();
         if (prevText.endsWith(".") || prevText.endsWith("?") || prevText.endsWith("!") || prevText.endsWith(":")) return false;
         String nextText = nextLine.getTextContent().trim();
-        if (nextText.isEmpty()) return false;
-        return !Character.isUpperCase(nextText.charAt(0));
+        if (nextText.isEmpty() || NUMBERING_PATTERN.matcher(nextText).matches()) return false;
+
+        if (!Character.isLowerCase(nextText.charAt(0))) {
+            return prevText.length() <= 60;
+        }
+
+        return true;
     }
 
     @Override
