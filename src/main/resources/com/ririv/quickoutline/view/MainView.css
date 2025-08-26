@@ -9,6 +9,7 @@
 
 #filepathTF{
     /*去除边框*/
+    -fx-border-width: 0;
     -fx-background-color: transparent;
     -fx-background-radius: 0;
     -fx-prompt-text-fill: rgba(150, 150, 150, 0.9);
@@ -24,24 +25,16 @@
 #offsetTF{
     -fx-border-width: 0 0 1 0; /* 只在底部添加边框 */
     -fx-border-color: #909090; /* 下划线颜色 */
-
+    -fx-border-radius: 0;
 }
 
 
 #offsetTF:hover {
-    /*-fx-background-color:*/
-    /*        #909090,*/
-    /*        #FFFFFF;*/
-    -fx-border-width: 0 0 1 0; /* 只在底部添加边框 */
     -fx-border-color: black; /* 下划线颜色 */
 }
 
 /*聚焦，聚焦并悬浮*/
 #offsetTF:focused, #offsetTF:focused:hover {
-    /*-fx-background-color:*/
-    /*        #0093EF,*/
-    /*        #FFFFFF;*/
-    -fx-border-width: 0 0 1 0; /* 只在底部添加边框 */
     -fx-border-color: #0093EF; /* 下划线颜色 */
 }
 
