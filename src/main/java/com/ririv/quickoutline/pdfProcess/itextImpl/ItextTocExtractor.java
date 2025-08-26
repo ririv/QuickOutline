@@ -6,7 +6,6 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfCanvasProcessor;
 import com.ririv.quickoutline.pdfProcess.TocExtractor;
 import com.ririv.quickoutline.pdfProcess.itextImpl.model.LineWithMetadata;
-import com.ririv.quickoutline.pdfProcess.itextImpl.model.Style;
 import com.ririv.quickoutline.pdfProcess.itextImpl.model.TextBlock;
 import com.ririv.quickoutline.pdfProcess.itextImpl.model.TextChunk;
 import org.slf4j.Logger;
@@ -14,9 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -25,8 +22,6 @@ import static com.ririv.quickoutline.pdfProcess.itextImpl.model.TextChunk.conver
 public class ItextTocExtractor implements TocExtractor {
 
     private static final Logger log = LoggerFactory.getLogger(ItextTocExtractor.class);
-    private static final Pattern TOC_DOT_PATTERN = Pattern.compile(".*([.]\\s*|\\s{2,}){4,}\\s*\\d+\\s*$");
-    private static final Pattern TOC_NUMERIC_END_PATTERN = Pattern.compile("^(.*[^\\d])\\s+(\\d+)\\s*$");
     private static final Pattern NUMBERING_PATTERN = Pattern.compile("^\\s*([\\d.]+|[A-Za-z][.]|[IVXLCDM]+[.)]).*\s*$");
 
     private final PdfDocument pdfDoc;
@@ -50,62 +45,13 @@ public class ItextTocExtractor implements TocExtractor {
         pdfDoc.close();
         
         List<TextBlock> allBlocks = aggregateLinesIntoBlocks(allLines);
-        return recognizeTocPages(allBlocks);
-    }
-
-    private List<String> recognizeTocPages(List<TextBlock> allBlocks) {
-        if (allBlocks.isEmpty()) return new ArrayList<>();
         
-        Style dominantStyle = findDominantStyle(allBlocks);
-
-        Map<Integer, List<TextBlock>> blocksByPage = allBlocks.stream()
-                .collect(Collectors.groupingBy(b -> b.getPrimaryLine().getPageNum()));
-
-        List<String> tocPageContents = new ArrayList<>();
-
-        for (Map.Entry<Integer, List<TextBlock>> entry : blocksByPage.entrySet()) {
-            List<TextBlock> tocBlocks = getPotentialTocBlocks(entry.getValue(), dominantStyle);
-            if (!tocBlocks.isEmpty()) {
-                for (TextBlock block : tocBlocks) {
-                    tocPageContents.add(reconstructBlockWithSpaces(block));
-                }
-            }
-        }
-        return tocPageContents;
-    }
-
-    private List<TextBlock> getPotentialTocBlocks(List<TextBlock> pageBlocks, Style dominantStyle) {
-        List<TextBlock> tocCandidates = new ArrayList<>();
-        for (TextBlock block : pageBlocks) {
-            if (isTocLikeBlock(block, dominantStyle)) {
-                tocCandidates.add(block);
-            }
-        }
-        // If a page has enough TOC-like blocks, we consider all candidates from that page valid.
-        if (tocCandidates.size() >= 3) {
-            return tocCandidates;
-        }
-        return Collections.emptyList();
-    }
-
-    private boolean isTocLikeBlock(TextBlock block, Style dominantStyle) {
-        String trimmed = block.getText().trim();
-        if (trimmed.length() > 150 || trimmed.length() < 3) {
-            return false;
-        }
-
-
-        if (TOC_DOT_PATTERN.matcher(trimmed).matches()) {
-            System.out.println(trimmed);
-            return true;
-        }
-
-        if (TOC_NUMERIC_END_PATTERN.matcher(trimmed).matches()) {
-            boolean isAbnormal = block.getPrimaryStyle().getFontSize() > dominantStyle.getFontSize() + 0.5 && trimmed.length() < 80;
-            return isAbnormal && !trimmed.endsWith(".");
-        }
-
-        return false;
+        TocAnalyser tocAnalyser = new TocAnalyser();
+        List<TextBlock> tocBlocks = tocAnalyser.analyze(allBlocks);
+        
+        return tocBlocks.stream()
+                .map(this::reconstructBlockWithSpaces)
+                .collect(Collectors.toList());
     }
 
     private String reconstructBlockWithSpaces(TextBlock block) {
@@ -145,16 +91,6 @@ public class ItextTocExtractor implements TocExtractor {
             }
         }
         return textBuilder.toString();
-    }
-
-    private Style findDominantStyle(List<TextBlock> allBlocks) {
-        return allBlocks.stream()
-                .map(TextBlock::getPrimaryStyle)
-                .collect(Collectors.groupingBy(s -> s, Collectors.counting()))
-                .entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse(new Style("Default", 10f));
     }
 
     private List<TextBlock> aggregateLinesIntoBlocks(List<LineWithMetadata> lines) {
@@ -205,9 +141,8 @@ public class ItextTocExtractor implements TocExtractor {
                 List<LineWithMetadata> lines = convertChunksToLines(strategy.getTextChunks(), pdfDoc.getPage(i), pdfDoc);
                 List<TextBlock> blocks = aggregateLinesIntoBlocks(lines);
                 
-                // Now process blocks to find TOC entries and reconstruct them
-                Style dominantStyle = findDominantStyle(blocks);
-                List<TextBlock> tocBlocks = getPotentialTocBlocks(blocks, dominantStyle);
+                TocAnalyser tocAnalyser = new TocAnalyser();
+                List<TextBlock> tocBlocks = tocAnalyser.analyze(blocks);
 
                 for (TextBlock block : tocBlocks) {
                     tocPages.add(reconstructBlockWithSpaces(block));
