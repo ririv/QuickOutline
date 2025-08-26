@@ -50,4 +50,42 @@ public class TextBlock {
         if (lines.isEmpty()) return 0.0;
         return lines.stream().mapToDouble(LineWithMetadata::getSkew).average().orElse(0.0);
     }
+
+    public String reconstructBlockWithSpaces() {
+        StringBuilder textBuilder = new StringBuilder();
+        for (int lineIdx = 0; lineIdx < lines.size(); lineIdx++) {
+            LineWithMetadata line = lines.get(lineIdx);
+            List<TextChunk> chunks = line.getChunks();
+
+            if (chunks == null || chunks.isEmpty()) {
+                textBuilder.append(line.getTextContent());
+                continue;
+            }
+
+            TextChunk firstChunk = chunks.get(0);
+            textBuilder.append(firstChunk.getText());
+
+            for (int i = 1; i < chunks.size(); i++) {
+                TextChunk prev = chunks.get(i - 1);
+                TextChunk curr = chunks.get(i);
+
+                float spaceWidth = prev.getSingleSpaceWidth();
+                if (spaceWidth <= 0) {
+                    spaceWidth = prev.getFontSize() * 0.25f;
+                }
+                float gap = curr.getX() - (prev.getX() + prev.getWidth());
+
+                if (gap > spaceWidth * 5) {
+                    textBuilder.append("     ");
+                } else if (gap > spaceWidth * 0.3f) {
+                    textBuilder.append(" ");
+                }
+                textBuilder.append(curr.getText());
+            }
+            if (lineIdx < lines.size() - 1) {
+                textBuilder.append("\n");
+            }
+        }
+        return textBuilder.toString();
+    }
 }

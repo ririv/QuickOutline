@@ -1,13 +1,11 @@
 package com.ririv.quickoutline.pdfProcess.itextImpl;
 
 import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfPage;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfCanvasProcessor;
 import com.ririv.quickoutline.pdfProcess.TocExtractor;
 import com.ririv.quickoutline.pdfProcess.itextImpl.model.LineWithMetadata;
 import com.ririv.quickoutline.pdfProcess.itextImpl.model.TextBlock;
-import com.ririv.quickoutline.pdfProcess.itextImpl.model.TextChunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,47 +48,8 @@ public class ItextTocExtractor implements TocExtractor {
         List<TextBlock> tocBlocks = tocAnalyser.analyze(allBlocks);
         
         return tocBlocks.stream()
-                .map(this::reconstructBlockWithSpaces)
+                .map(TextBlock::reconstructBlockWithSpaces)
                 .collect(Collectors.toList());
-    }
-
-    private String reconstructBlockWithSpaces(TextBlock block) {
-        StringBuilder textBuilder = new StringBuilder();
-        List<LineWithMetadata> lines = block.getLines();
-
-        for (int lineIdx = 0; lineIdx < lines.size(); lineIdx++) {
-            LineWithMetadata line = lines.get(lineIdx);
-            List<TextChunk> chunks = line.getChunks();
-
-            if (chunks == null || chunks.isEmpty()) {
-                textBuilder.append(line.getTextContent());
-            }
-
-            TextChunk firstChunk = chunks.get(0);
-            textBuilder.append(firstChunk.getText());
-
-            for (int i = 1; i < chunks.size(); i++) {
-                TextChunk prev = chunks.get(i - 1);
-                TextChunk curr = chunks.get(i);
-
-                float spaceWidth = prev.getSingleSpaceWidth();
-                if (spaceWidth <= 0) {
-                    spaceWidth = prev.getFontSize() * 0.25f;
-                }
-                float gap = curr.getX() - (prev.getX() + prev.getWidth());
-
-                if (gap > spaceWidth * 5) { // Large gap, likely between title and page number
-                    textBuilder.append("     "); // Insert a fixed "tab" (5 spaces)
-                } else if (gap > spaceWidth * 0.3f) { // Small gap, likely between words
-                    textBuilder.append(" ");
-                }
-                textBuilder.append(curr.getText());
-            }
-            if (lineIdx < lines.size() - 1) {
-                textBuilder.append("\n"); // Add newline between lines of a block
-            }
-        }
-        return textBuilder.toString();
     }
 
     private List<TextBlock> aggregateLinesIntoBlocks(List<LineWithMetadata> lines) {
@@ -145,7 +104,7 @@ public class ItextTocExtractor implements TocExtractor {
                 List<TextBlock> tocBlocks = tocAnalyser.analyze(blocks);
 
                 for (TextBlock block : tocBlocks) {
-                    tocPages.add(reconstructBlockWithSpaces(block));
+                    tocPages.add(block.reconstructBlockWithSpaces());
                 }
 
             } catch (Exception e) {
