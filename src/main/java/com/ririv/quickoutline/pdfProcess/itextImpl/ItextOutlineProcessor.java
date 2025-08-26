@@ -176,39 +176,43 @@ public class ItextOutlineProcessor implements OutlineProcessor {
             throw new NoOutlineException();
         }
 
-        Bookmark rootBookmark = new Bookmark("root", null, 0);
-        processPdfOutlines(outlines.getAllChildren(), rootBookmark, pdfDocument, offset);
+        Bookmark rootBookmark = Bookmark.createRoot();
+        PdfNameTree nameTree = pdfDocument.getCatalog().getNameTree(PdfName.Dests);
+        processPdfOutlines(outlines.getAllChildren(), rootBookmark, pdfDocument, nameTree, offset, 1);
 
         pdfDocument.close();
         return rootBookmark;
     }
 
-    private void processPdfOutlines(java.util.List<PdfOutline> pdfOutlines, Bookmark parentBookmark, PdfDocument pdfDocument, int offset) {
-        if (pdfOutlines == null) {
+    private Integer getPageNumber(PdfOutline outline, PdfDocument pdfDocument, PdfNameTree nameTree) {
+        PdfDestination destination = outline.getDestination();
+        if (destination == null) {
+            return null;
+        }
+        PdfObject destinationObject = destination.getDestinationPage(nameTree);
+        if (destinationObject != null && destinationObject.isDictionary()) {
+            return pdfDocument.getPageNumber((PdfDictionary) destinationObject);
+        }
+        return null;
+    }
+
+    private void processPdfOutlines(java.util.List<PdfOutline> pdfOutlines, Bookmark parentBookmark, PdfDocument pdfDocument, PdfNameTree nameTree, int offset, int level) {
+        if (pdfOutlines == null || pdfOutlines.isEmpty()) {
             return;
         }
 
         for (PdfOutline pdfOutline : pdfOutlines) {
             String title = pdfOutline.getTitle();
-            Integer pageNum = null;
+            Integer pageNumber = getPageNumber(pdfOutline, pdfDocument, nameTree);
 
-            PdfDestination destination = pdfOutline.getDestination();
-            if (destination != null) {
-                // Retrieve the page number from the destination
-                // This can be complex depending on the destination type
-                // For simplicity, we handle explicit destinations here.
-                PdfObject pageObject = destination.getDestinationPage(pdfDocument.getCatalog().getNameTree(PdfName.Dests));
-                if (pageObject instanceof PdfDictionary) {
-                    int pageIndex = pdfDocument.getPageNumber((PdfDictionary) pageObject);
-                    pageNum = pageIndex + offset; // iText page index is 1-based
-                }
-            }
+            Integer finalPageNum = (pageNumber != null) ? pageNumber + offset : null;
 
-            Bookmark newBookmark = new Bookmark(title, pageNum, 0); // Level will be set later
+            Bookmark newBookmark = new Bookmark(title, finalPageNum, level);
+
             parentBookmark.addChild(newBookmark);
 
-            // Recursively process children
-            processPdfOutlines(pdfOutline.getAllChildren(), newBookmark, pdfDocument, offset);
+            // process the children of the current outline
+            processPdfOutlines(pdfOutline.getAllChildren(), newBookmark, pdfDocument, nameTree, offset, level + 1);
         }
     }
 
