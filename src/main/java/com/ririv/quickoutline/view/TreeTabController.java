@@ -28,6 +28,8 @@ public class TreeTabController {
     private final AppEventBus eventBus;
     private final BookmarkSettingsState bookmarkSettingsState;
     private final Map<String, TreeItem<Bookmark>> itemCache = new HashMap<>();
+    private MenuItem promoteMenuItem;
+    private MenuItem demoteMenuItem;
 
     @Inject
     public TreeTabController(AppEventBus eventBus, BookmarkSettingsState bookmarkSettingsState) {
@@ -98,12 +100,20 @@ public class TreeTabController {
         addChildItem.setOnAction(event -> addBookmark(true));
         MenuItem deleteItem = new MenuItem(bundle.getString("contextMenu.deleteBookmark"));
         deleteItem.setOnAction(event -> deleteSelectedBookmark());
-        contextMenu.getItems().addAll(addSiblingItem, addChildItem, new SeparatorMenuItem(), deleteItem);
+
+        promoteMenuItem = new MenuItem(bundle.getString("contextMenu.promote"));
+        promoteMenuItem.setOnAction(event -> promoteSelection());
+        demoteMenuItem = new MenuItem(bundle.getString("contextMenu.demote"));
+        demoteMenuItem.setOnAction(event -> demoteSelection());
+
+        contextMenu.getItems().addAll(addSiblingItem, addChildItem, new SeparatorMenuItem(), deleteItem, new SeparatorMenuItem(), promoteMenuItem, demoteMenuItem);
+
 
         treeTableView.setRowFactory(tv -> {
             TreeTableRow<Bookmark> row = new TreeTableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getButton() == MouseButton.SECONDARY && !row.isEmpty()) {
+                    updateContextMenuStatus(row.getTreeItem());
                     contextMenu.show(row, event.getScreenX(), event.getScreenY());
                 } else {
                     contextMenu.hide();
@@ -141,12 +151,12 @@ public class TreeTabController {
                     if (draggedItemUI != null && targetItemUI != null && draggedItemUI != targetItemUI) {
                         Bookmark draggedBookmark = draggedItemUI.getValue();
                         Bookmark targetBookmark = targetItemUI.getValue();
-                        
+
                         draggedBookmark.getOwnerList().remove(draggedBookmark);
-                        Bookmark newParentBookmark = targetBookmark.getParent();
+                        Bookmark newParentBookmark = targetItemUI.getParent().getValue();
                         int targetIndex = newParentBookmark.getChildren().indexOf(targetBookmark);
                         newParentBookmark.addChild(targetIndex + 1, draggedBookmark);
-                        
+
                         treeTableView.getSelectionModel().select(draggedItemUI);
                         success = true;
                     }
@@ -157,6 +167,63 @@ public class TreeTabController {
             return row;
         });
     }
+
+    private void updateContextMenuStatus(TreeItem<Bookmark> selectedItem) {
+        if (selectedItem == null) {
+            promoteMenuItem.setDisable(true);
+            demoteMenuItem.setDisable(true);
+            return;
+        }
+        TreeItem<Bookmark> parent = selectedItem.getParent();
+        promoteMenuItem.setDisable(parent == null || parent == treeTableView.getRoot());
+
+        if (parent != null) {
+            int index = parent.getChildren().indexOf(selectedItem);
+            demoteMenuItem.setDisable(index == 0);
+        } else {
+            demoteMenuItem.setDisable(true);
+        }
+    }
+
+    private void promoteSelection() {
+        TreeItem<Bookmark> itemToPromote = treeTableView.getSelectionModel().getSelectedItem();
+        if (itemToPromote == null) return;
+        TreeItem<Bookmark> parent = itemToPromote.getParent();
+        if (parent == null || parent == treeTableView.getRoot()) return;
+        TreeItem<Bookmark> grandParent = parent.getParent();
+        if (grandParent == null) return;
+
+        Bookmark bookmarkToPromote = itemToPromote.getValue();
+        Bookmark oldParentBookmark = parent.getValue();
+        Bookmark newParentBookmark = grandParent.getValue();
+
+        oldParentBookmark.getChildren().remove(bookmarkToPromote);
+        int parentIndex = newParentBookmark.getChildren().indexOf(oldParentBookmark);
+        newParentBookmark.addChild(parentIndex + 1, bookmarkToPromote);
+
+        eventBus.publish(new BookmarksChangedEvent(bookmarkSettingsState.getRootBookmark()));
+    }
+
+    private void demoteSelection() {
+        TreeItem<Bookmark> itemToDemote = treeTableView.getSelectionModel().getSelectedItem();
+        if (itemToDemote == null) return;
+        TreeItem<Bookmark> parent = itemToDemote.getParent();
+        if (parent == null) return;
+        int currentIndex = parent.getChildren().indexOf(itemToDemote);
+        if (currentIndex < 1) return;
+
+        TreeItem<Bookmark> newParentItem = parent.getChildren().get(currentIndex - 1);
+
+        Bookmark bookmarkToDemote = itemToDemote.getValue();
+        Bookmark oldParentBookmark = parent.getValue();
+        Bookmark newParentBookmark = newParentItem.getValue();
+
+        oldParentBookmark.getChildren().remove(bookmarkToDemote);
+        newParentBookmark.addChild(bookmarkToDemote);
+
+        eventBus.publish(new BookmarksChangedEvent(bookmarkSettingsState.getRootBookmark()));
+    }
+
 
     private void addBookmark(boolean asChild) {
         TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
