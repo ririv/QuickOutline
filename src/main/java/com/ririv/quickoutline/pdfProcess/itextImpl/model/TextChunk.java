@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// 词元
 public class TextChunk {
     private final String text;
     private final String fontName;

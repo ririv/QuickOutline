@@ -4,6 +4,7 @@ import com.itextpdf.kernel.geom.Rectangle;
 
 import java.util.List;
 
+// 视觉上的“行”
 public class LineWithMetadata {
     private final String textContent;
     private final float x;
