@@ -199,14 +199,20 @@ public class TreeTabController {
 
                     if (placeholderIndex != -1) {
                         // Case 1: Dropped on a placeholder line
-                        draggedBookmark.getSiblingsList().remove(draggedBookmark);
+                        Bookmark oldParent = draggedBookmark.getParent();
+                        if (oldParent != null) {
+                            oldParent.getChildren().remove(draggedBookmark);
+                        }
                         parentOfPlaceholder.addChild(placeholderIndex, draggedBookmark);
                         success = true;
                     } else {
                         // Case 2: Dropped on a node to make it a child
                         TreeItem<Bookmark> targetItemUI = row.getTreeItem();
                         if (draggedItemUI != null && targetItemUI != null && draggedItemUI != targetItemUI) {
-                            draggedBookmark.getSiblingsList().remove(draggedBookmark);
+                            Bookmark oldParent = draggedBookmark.getParent();
+                            if (oldParent != null) {
+                                oldParent.getChildren().remove(draggedBookmark);
+                            }
                             Bookmark newParentBookmark = targetItemUI.getValue();
                             newParentBookmark.addChild(draggedBookmark);
                             targetItemUI.setExpanded(true);
