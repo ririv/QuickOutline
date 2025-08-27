@@ -69,7 +69,7 @@ public class TextProcessor {
         List<String> lineList = new ArrayList<>();
         String[] lines = text.split("\\n");
         for (String line : lines) {
-            if (line.matches("^"+ StringConstants.OneSpaceRegex +"*"+"$")) continue; //空行跳过
+            if (line.matches("^"+ StringConstants.ONE_SPACE_REGEX +"*"+"$")) continue; //空行跳过
             line = normalize(line);
             lineList.add(line);
         }
@@ -79,7 +79,7 @@ public class TextProcessor {
     //注意顺序
     private static String normalize(String line) {
         String newLine = line
-                .replaceAll(StringConstants.OneSpaceRegex, StringConstants.OneNormSpace) //; //规范空格，将所有单个空白统一，换成单个空格
+                .replaceAll(StringConstants.ONE_SPACE_REGEX, StringConstants.NORM_SPACE) //; //规范空格，将所有单个空白统一，换成单个空格
                 .replaceAll(" ?\\. ?| ?． ?", ".")//规范"."
                 .replaceAll("�","") //去掉奇怪的字符
                 .stripTrailing(); //去尾部空格。虽然不去也没关系，因为匹配中我也考虑了

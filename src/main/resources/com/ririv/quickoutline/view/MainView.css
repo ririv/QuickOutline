@@ -97,3 +97,26 @@
     -fx-font-weight: bold;
     -fx-text-fill: #9198a1;
 }
+
+/* --- Drag and Drop Styles --- */
+
+.tree-table-row-cell {
+    -fx-background-color: transparent;
+}
+
+.drop-hint-child {
+    -fx-background-color: -fx-accent-transparent; /* A semi-transparent highlight */
+}
+
+.placeholder-row {
+    -fx-min-height: 2px;
+    -fx-pref-height: 2px;
+    -fx-max-height: 2px;
+    -fx-background-color: -fx-accent;
+}
+
+.placeholder-row .tree-table-cell {
+    -fx-text-fill: transparent;
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}

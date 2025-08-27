@@ -2,11 +2,11 @@ package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
-import com.ririv.quickoutline.event.BookmarksChangedEvent;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTreeTableCell;
 import javafx.scene.input.ClipboardContent;
@@ -43,6 +43,9 @@ public class TreeTabController {
         titleColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.9));
         offsetPageColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.1));
         setupRowFactory();
+
+        // Cleanup placeholder on drag exit
+        treeTableView.setOnDragExited(event -> removePlaceholder());
 
         bookmarkSettingsState.rootBookmarkProperty().addListener((obs, oldRoot, newRoot) -> {
             if (newRoot == null) {
@@ -110,7 +113,17 @@ public class TreeTabController {
 
 
         treeTableView.setRowFactory(tv -> {
-            TreeTableRow<Bookmark> row = new TreeTableRow<>();
+            TreeTableRow<Bookmark> row = new TreeTableRow<>() {
+                @Override
+                protected void updateItem(Bookmark item, boolean empty) {
+                    super.updateItem(item, empty);
+                    getStyleClass().remove("placeholder-row");
+                    if (!empty && item == PLACEHOLDER) {
+                        getStyleClass().add("placeholder-row");
+                    }
+                }
+            };
+
             row.setOnMouseClicked(event -> {
                 if (event.getButton() == MouseButton.SECONDARY && !row.isEmpty()) {
                     updateContextMenuStatus(row.getTreeItem());
@@ -121,12 +134,14 @@ public class TreeTabController {
             });
 
             row.setOnDragDetected(event -> {
-                if (!row.isEmpty()) {
+                if (!row.isEmpty() && row.getItem() != PLACEHOLDER) {
                     Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
                     db.setDragView(row.snapshot(null, null));
                     ClipboardContent content = new ClipboardContent();
-                    content.putString(row.getItem().getId());
+                    content.putString(row.getTreeItem().getValue().getId());
                     db.setContent(content);
+                    // Crucial for cleanup: remove placeholder when drag is done, no matter how it ends.
+                    row.setOnDragDone(e -> removePlaceholder());
                     event.consume();
                 }
             });
@@ -137,6 +152,19 @@ public class TreeTabController {
                     TreeItem<Bookmark> draggedItem = findTreeItemById(db.getString());
                     if (draggedItem != null && !isChildOrSelf(draggedItem, row.getTreeItem())) {
                         event.acceptTransferModes(TransferMode.MOVE);
+
+                        // Placeholder logic
+                        removePlaceholder();
+                        row.getStyleClass().removeAll("drop-hint-child");
+
+                        final double dropZoneHeight = row.getHeight() * 0.25;
+                        if (event.getY() < dropZoneHeight) {
+                            addPlaceholder(row.getTreeItem(), true); // Insert before
+                        } else if (event.getY() > row.getHeight() - dropZoneHeight) {
+                            addPlaceholder(row.getTreeItem(), false); // Insert after
+                        } else {
+                            row.getStyleClass().add("drop-hint-child");
+                        }
                     }
                 }
                 event.consume();
@@ -147,18 +175,45 @@ public class TreeTabController {
                 boolean success = false;
                 if (db.hasString() && !row.isEmpty()) {
                     TreeItem<Bookmark> draggedItemUI = findTreeItemById(db.getString());
-                    TreeItem<Bookmark> targetItemUI = row.getTreeItem();
-                    if (draggedItemUI != null && targetItemUI != null && draggedItemUI != targetItemUI) {
-                        Bookmark draggedBookmark = draggedItemUI.getValue();
-                        Bookmark targetBookmark = targetItemUI.getValue();
+                    Bookmark draggedBookmark = draggedItemUI.getValue();
 
-                        draggedBookmark.getOwnerList().remove(draggedBookmark);
-                        Bookmark newParentBookmark = targetItemUI.getParent().getValue();
-                        int targetIndex = newParentBookmark.getChildren().indexOf(targetBookmark);
-                        newParentBookmark.addChild(targetIndex + 1, draggedBookmark);
+                    // Find placeholder index
+                    int placeholderIndex = -1;
+                    Bookmark parentOfPlaceholder = null;
+                    java.util.List<Bookmark> allNodes = bookmarkSettingsState.getRootBookmark().flattenToList();
+                    allNodes.add(0, bookmarkSettingsState.getRootBookmark()); // Add root to the list to check its children
 
-                        treeTableView.getSelectionModel().select(draggedItemUI);
+                    for (Bookmark parentCand : allNodes) {
+                        int idx = parentCand.getChildren().indexOf(PLACEHOLDER);
+                        if (idx != -1) {
+                            placeholderIndex = idx;
+                            parentOfPlaceholder = parentCand;
+                            break;
+                        }
+                    }
+
+                    removePlaceholder();
+
+                    if (placeholderIndex != -1) {
+                        // Case 1: Dropped on a placeholder line
+                        draggedBookmark.getSiblingsList().remove(draggedBookmark);
+                        parentOfPlaceholder.addChild(placeholderIndex, draggedBookmark);
                         success = true;
+                    } else {
+                        // Case 2: Dropped on a node to make it a child
+                        TreeItem<Bookmark> targetItemUI = row.getTreeItem();
+                        if (draggedItemUI != null && targetItemUI != null && draggedItemUI != targetItemUI) {
+                            draggedBookmark.getSiblingsList().remove(draggedBookmark);
+                            Bookmark newParentBookmark = targetItemUI.getValue();
+                            newParentBookmark.addChild(draggedBookmark);
+                            targetItemUI.setExpanded(true);
+                            success = true;
+                        }
+                    }
+
+                    if(success) {
+//                        bookmarkSettingsState.getRootBookmark().updateLevelByStructureLevel();
+                        treeTableView.refresh();
                     }
                 }
                 event.setDropCompleted(success);
@@ -168,8 +223,41 @@ public class TreeTabController {
         });
     }
 
+    private static final Bookmark PLACEHOLDER = new Bookmark("---placeholder---", null, -1);
+
+    
+
+    private void addPlaceholder(TreeItem<Bookmark> targetItem, boolean before) {
+        if (targetItem == null) return;
+        Bookmark targetBookmark = targetItem.getValue();
+        if (targetBookmark == PLACEHOLDER) return;
+
+        Bookmark parentBookmark = targetItem.getParent().getValue();
+        if (parentBookmark == null) return; // Should not happen for non-root items
+
+        ObservableList<Bookmark> siblings = parentBookmark.getChildren();
+        int targetIndex = siblings.indexOf(targetBookmark);
+
+        if (before) {
+            siblings.add(targetIndex, PLACEHOLDER);
+        } else {
+            siblings.add(targetIndex + 1, PLACEHOLDER);
+        }
+    }
+
+    private void removePlaceholder() {
+        // Search the entire tree for the placeholder and remove it.
+        if (bookmarkSettingsState.getRootBookmark() == null) return;
+        java.util.List<Bookmark> allNodes = bookmarkSettingsState.getRootBookmark().flattenToList();
+        for (Bookmark node : allNodes) {
+            node.getChildren().remove(PLACEHOLDER);
+        }
+        // Also check the root's direct children, as genLinearList might not include the root itself.
+        bookmarkSettingsState.getRootBookmark().getChildren().remove(PLACEHOLDER);
+    }
+
     private void updateContextMenuStatus(TreeItem<Bookmark> selectedItem) {
-        if (selectedItem == null) {
+        if (selectedItem == null || selectedItem.getValue() == PLACEHOLDER) {
             promoteMenuItem.setDisable(true);
             demoteMenuItem.setDisable(true);
             return;
@@ -178,7 +266,7 @@ public class TreeTabController {
         promoteMenuItem.setDisable(parent == null || parent == treeTableView.getRoot());
 
         if (parent != null) {
-            int index = parent.getChildren().indexOf(selectedItem);
+            int index = parent.getChildren().indexOf(selectedItem.getValue());
             demoteMenuItem.setDisable(index == 0);
         } else {
             demoteMenuItem.setDisable(true);
@@ -201,7 +289,8 @@ public class TreeTabController {
         int parentIndex = newParentBookmark.getChildren().indexOf(oldParentBookmark);
         newParentBookmark.addChild(parentIndex + 1, bookmarkToPromote);
 
-        eventBus.publish(new BookmarksChangedEvent(bookmarkSettingsState.getRootBookmark()));
+//        bookmarkSettingsState.getRootBookmark().updateLevelByStructureLevel();
+        treeTableView.refresh();
     }
 
     private void demoteSelection() {
@@ -209,7 +298,7 @@ public class TreeTabController {
         if (itemToDemote == null) return;
         TreeItem<Bookmark> parent = itemToDemote.getParent();
         if (parent == null) return;
-        int currentIndex = parent.getChildren().indexOf(itemToDemote);
+        int currentIndex = parent.getChildren().indexOf(itemToDemote.getValue());
         if (currentIndex < 1) return;
 
         TreeItem<Bookmark> newParentItem = parent.getChildren().get(currentIndex - 1);
@@ -221,7 +310,8 @@ public class TreeTabController {
         oldParentBookmark.getChildren().remove(bookmarkToDemote);
         newParentBookmark.addChild(bookmarkToDemote);
 
-        eventBus.publish(new BookmarksChangedEvent(bookmarkSettingsState.getRootBookmark()));
+//        bookmarkSettingsState.getRootBookmark().updateLevelByStructureLevel();
+        treeTableView.refresh();
     }
 
 
@@ -236,13 +326,13 @@ public class TreeTabController {
             rootBookmark.addChild(newBookmark);
         } else if (asChild) {
             Bookmark parentBookmark = selectedItem.getValue();
-            newBookmark = new Bookmark("New Child", null, parentBookmark.getLevelByStructure() + 1);
+            newBookmark = new Bookmark("New Child", null, parentBookmark.calculateLevelByStructure() + 1);
             parentBookmark.addChild(newBookmark);
         } else {
             Bookmark parentBookmark = selectedItem.getParent().getValue();
             Bookmark siblingBookmark = selectedItem.getValue();
             int index = parentBookmark.getChildren().indexOf(siblingBookmark);
-            newBookmark = new Bookmark("New Sibling", null, siblingBookmark.getLevelByStructure());
+            newBookmark = new Bookmark("New Sibling", null, siblingBookmark.calculateLevelByStructure());
             parentBookmark.addChild(index + 1, newBookmark);
         }
     }
@@ -266,6 +356,7 @@ public class TreeTabController {
     }
 
     private boolean isChildOrSelf(TreeItem<Bookmark> draggedItem, TreeItem<Bookmark> targetItem) {
+        if (targetItem.getValue() == PLACEHOLDER) return true; // Prevent dropping onto placeholder
         TreeItem<Bookmark> temp = targetItem;
         while (temp != null) {
             if (temp == draggedItem) return true;
@@ -286,7 +377,7 @@ public class TreeTabController {
     public String getContents() {
         Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
         if (rootBookmark != null) {
-            return rootBookmark.toTreeText();
+            return rootBookmark.toOutlineString();
         }
         return "";
     }

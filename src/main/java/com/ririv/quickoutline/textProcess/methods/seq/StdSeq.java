@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.ririv.quickoutline.textProcess.StringConstants.TwoNormSpace;
+import static com.ririv.quickoutline.textProcess.StringConstants.TWO_NORM_SPACE;
 
 
 /*
@@ -29,7 +29,7 @@ public class StdSeq implements parser,Seq {
         Matcher matcher = stdPattern.matcher(line);
         if (matcher.find()) {
             String seq = matcher.group(2) != null ? matcher.group(2) : "";
-            String titleWithSeq = (seq + TwoNormSpace + matcher.group(4)).trim();
+            String titleWithSeq = (seq + TWO_NORM_SPACE + matcher.group(4)).trim();
             Integer pageNum;
 
             if (matcher.group(5) != null) { //页码

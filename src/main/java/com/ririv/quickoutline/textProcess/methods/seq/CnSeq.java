@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.ririv.quickoutline.textProcess.StringConstants.OneNormSpace;
-import static com.ririv.quickoutline.textProcess.StringConstants.TwoNormSpace;
+import static com.ririv.quickoutline.textProcess.StringConstants.NORM_SPACE;
+import static com.ririv.quickoutline.textProcess.StringConstants.TWO_NORM_SPACE;
 
 
 
@@ -36,9 +36,9 @@ public class CnSeq implements parser,Seq {
         Matcher matcher = cnPattern.matcher(line);
         if (matcher.find()) {
             String rawSeq = matcher.group(2) != null ? matcher.group(2) : ""; //原seq字符串
-            rawSeq = rawSeq.replaceAll(OneNormSpace, "");
+            rawSeq = rawSeq.replaceAll(NORM_SPACE, "");
             String seq = standardizeSeq(rawSeq); //检测到的seq
-            String titleWithSeq = (rawSeq + TwoNormSpace + matcher.group(4)).trim();
+            String titleWithSeq = (rawSeq + TWO_NORM_SPACE + matcher.group(4)).trim();
             Integer pageNum;
 
             if (matcher.group(5) != null) { //页码

@@ -40,7 +40,7 @@ public class PdfOutlineService {
     //先经过text生成bookmark，在将bookmark转化为text
     public String autoFormat(String text) {
         Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, 0, Method.SEQ);
-        return rootBookmark.toTreeText();
+        return rootBookmark.toOutlineString();
     }
 
     public Bookmark convertTextToBookmarkTreeByMethod(String text, int offset, Method method) {

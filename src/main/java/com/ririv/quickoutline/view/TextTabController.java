@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.AutoToggleToIndentEvent;
 import com.ririv.quickoutline.event.BookmarksChangedEvent;
-import com.ririv.quickoutline.event.ReconstructTreeEvent;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.textProcess.methods.Method;
@@ -17,8 +16,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.*;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -71,7 +68,7 @@ public class TextTabController {
 
         // Subscribe to BookmarksChangedEvent
         eventBus.subscribe(BookmarksChangedEvent.class, event ->
-                Platform.runLater(() -> contentsTextArea.setText(event.getRootBookmark().toTreeText())));
+                Platform.runLater(() -> contentsTextArea.setText(event.getRootBookmark().toOutlineString())));
 
         // 设置处理键盘事件
         contentsTextArea.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabKeyPress);

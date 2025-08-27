@@ -127,7 +127,7 @@ public class BookmarkTabController {
     private void resetContentsByTree() {
         Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
         if (rootBookmark != null) {
-            textTabController.setContents(rootBookmark.toTreeText());
+            textTabController.setContents(rootBookmark.toOutlineString());
         }
     }
 
@@ -168,7 +168,7 @@ public class BookmarkTabController {
             Bookmark rootBookmark = pdfOutlineService.getOutlineAsBookmark(currentFileState.getSrcFile().toString(), 0);
             if (rootBookmark != null) {
                 bookmarkSettingsState.setRootBookmark(rootBookmark);
-                textTabController.setContents(rootBookmark.toTreeText());
+                textTabController.setContents(rootBookmark.toOutlineString());
             }
         } catch (NoOutlineException e) {
             e.printStackTrace();
@@ -214,7 +214,7 @@ public class BookmarkTabController {
                 return;
             }
 
-            rootBookmark.updateLevelByStructureLevel();
+//            rootBookmark.updateLevelByStructureLevel();
             pdfOutlineService.setOutline(rootBookmark, srcFilePath, destFilePath, viewScaleType);
 
         } catch (BookmarkFormatException e) {
