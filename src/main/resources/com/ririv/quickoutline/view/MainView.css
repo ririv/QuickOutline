@@ -2,6 +2,8 @@
 
 *{
     -my-color-divding-line: #dfdfdf;
+    -my-accent-color: -el-color-primary;
+    -my-accent-color-transparent: rgba(64, 158, 255, 0.3); /* 主色的30%透明版本 */
     -icon-size-tab: 20px;
     -icon-size-bottom-menu: 18px;
 }
@@ -105,14 +107,14 @@
 }
 
 .drop-hint-child {
-    -fx-background-color: -fx-accent-transparent; /* A semi-transparent highlight */
+    -fx-background-color: -my-accent-color-transparent; /* A semi-transparent highlight */
 }
 
 .placeholder-row {
     -fx-min-height: 2px;
     -fx-pref-height: 2px;
     -fx-max-height: 2px;
-    -fx-background-color: -fx-accent;
+    -fx-background-color: -my-accent-color;
 }
 
 .placeholder-row .tree-table-cell {

@@ -146,6 +146,8 @@ public class TreeTabController {
                 }
             });
 
+            row.setOnDragExited(event -> row.getStyleClass().removeAll("drop-hint-child"));
+
             row.setOnDragOver(event -> {
                 Dragboard db = event.getDragboard();
                 if (event.getGestureSource() != row && db.hasString() && !row.isEmpty()) {
@@ -155,12 +157,13 @@ public class TreeTabController {
 
                         // Placeholder logic
                         removePlaceholder();
-                        row.getStyleClass().removeAll("drop-hint-child");
 
                         final double dropZoneHeight = row.getHeight() * 0.25;
                         if (event.getY() < dropZoneHeight) {
+                            row.getStyleClass().removeAll("drop-hint-child");
                             addPlaceholder(row.getTreeItem(), true); // Insert before
                         } else if (event.getY() > row.getHeight() - dropZoneHeight) {
+                            row.getStyleClass().removeAll("drop-hint-child");
                             addPlaceholder(row.getTreeItem(), false); // Insert after
                         } else {
                             row.getStyleClass().add("drop-hint-child");
