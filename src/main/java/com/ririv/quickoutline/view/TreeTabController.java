@@ -1,21 +1,18 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.ObservableList;
+import javafx.geometry.Point2D;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTreeTableCell;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.TransferMode;
+import javafx.scene.input.*;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -23,17 +20,20 @@ public class TreeTabController {
     public TreeTableView<Bookmark> treeTableView;
     public TreeTableColumn<Bookmark, String> titleColumn;
     public TreeTableColumn<Bookmark, String> offsetPageColumn;
+    public StackPane rootPane; // The root pane from FXML
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
-    private final AppEventBus eventBus;
     private final BookmarkSettingsState bookmarkSettingsState;
-    private final Map<String, TreeItem<Bookmark>> itemCache = new HashMap<>();
     private MenuItem promoteMenuItem;
     private MenuItem demoteMenuItem;
 
+    // --- Drag and Drop Fields ---
+    private static final DataFormat DRAGGED_BOOKMARK_FORMAT = new DataFormat("application/x-java-bookmark");
+    private TreeItem<Bookmark> draggedItem;
+    private final Region dropHintLine = new Region();
+
     @Inject
-    public TreeTabController(AppEventBus eventBus, BookmarkSettingsState bookmarkSettingsState) {
-        this.eventBus = eventBus;
+    public TreeTabController(BookmarkSettingsState bookmarkSettingsState) {
         this.bookmarkSettingsState = bookmarkSettingsState;
     }
 
@@ -43,6 +43,7 @@ public class TreeTabController {
         titleColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.9));
         offsetPageColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.1));
         setupRowFactory();
+        setupDragAndDropHint();
 
         bookmarkSettingsState.rootBookmarkProperty().addListener((obs, oldRoot, newRoot) -> {
             if (newRoot == null) {
@@ -60,9 +61,7 @@ public class TreeTabController {
             });
 
             titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
-            titleColumn.setOnEditCommit(event -> {
-                event.getRowValue().getValue().setTitle(event.getNewValue());
-            });
+            titleColumn.setOnEditCommit(event -> event.getRowValue().getValue().setTitle(event.getNewValue()));
 
             offsetPageColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
             offsetPageColumn.setOnEditCommit(event -> {
@@ -75,11 +74,14 @@ public class TreeTabController {
 
             treeTableView.setShowRoot(false);
             treeTableView.setRoot(rootItem);
-            treeTableView.refresh();
         });
     }
 
-    
+    private void setupDragAndDropHint() {
+        dropHintLine.setManaged(false);
+        dropHintLine.getStyleClass().add("drop-hint-line");
+        rootPane.getChildren().add(dropHintLine);
+    }
 
     private void setupRowFactory() {
         ContextMenu contextMenu = new ContextMenu();
@@ -97,7 +99,6 @@ public class TreeTabController {
 
         contextMenu.getItems().addAll(addSiblingItem, addChildItem, new SeparatorMenuItem(), deleteItem, new SeparatorMenuItem(), promoteMenuItem, demoteMenuItem);
 
-
         treeTableView.setRowFactory(tv -> {
             TreeTableRow<Bookmark> row = new TreeTableRow<>();
 
@@ -110,11 +111,113 @@ public class TreeTabController {
                 }
             });
 
+            // --- Drag and Drop Implementation ---
+
+            row.setOnDragDetected(event -> {
+                if (!row.isEmpty()) {
+                    draggedItem = row.getTreeItem();
+                    Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
+                    db.setDragView(row.snapshot(null, null));
+                    ClipboardContent content = new ClipboardContent();
+                    content.put(DRAGGED_BOOKMARK_FORMAT, draggedItem.getValue().getId());
+                    db.setContent(content);
+                    event.consume();
+                }
+            });
+
+            row.setOnDragOver(event -> {
+                Dragboard db = event.getDragboard();
+                if (db.hasContent(DRAGGED_BOOKMARK_FORMAT) && draggedItem != null) {
+                    TreeItem<Bookmark> targetItem = row.getTreeItem();
+                    if (draggedItem != targetItem && !isChild(draggedItem, targetItem)) {
+                        event.acceptTransferModes(TransferMode.MOVE);
+                        updateDropHints(row, event.getY());
+                    }
+                }
+                event.consume();
+            });
+
+            row.setOnDragExited(event -> clearDropHints(row));
+
+            row.setOnDragDropped(event -> {
+                Dragboard db = event.getDragboard();
+                boolean success = false;
+                if (db.hasContent(DRAGGED_BOOKMARK_FORMAT)) {
+                    TreeItem<Bookmark> targetItem = row.getTreeItem();
+                    Bookmark draggedBookmark = draggedItem.getValue();
+                    Bookmark targetBookmark = targetItem.getValue();
+
+                    DropZone zone = getDropZone(row, event.getY());
+
+                    if (zone == DropZone.CHILD) {
+                        draggedBookmark.getParent().getChildren().remove(draggedBookmark);
+                        targetBookmark.addChild(draggedBookmark);
+                        targetItem.setExpanded(true);
+                        success = true;
+                    } else {
+                        Bookmark newParent = targetItem.getParent().getValue();
+                        int targetIndex = newParent.getChildren().indexOf(targetBookmark);
+                        if (zone == DropZone.BELOW) {
+                            targetIndex++;
+                        }
+                        draggedBookmark.getParent().getChildren().remove(draggedBookmark);
+                        newParent.addChild(targetIndex, draggedBookmark);
+                        success = true;
+                    }
+                }
+                event.setDropCompleted(success);
+                clearDropHints(row);
+                draggedItem = null;
+                event.consume();
+            });
+
             return row;
         });
     }
 
-    
+    private void updateDropHints(TreeTableRow<Bookmark> row, double y) {
+        clearDropHints(row);
+        DropZone zone = getDropZone(row, y);
+        if (zone == DropZone.CHILD) {
+            row.getStyleClass().add("drop-hint-child");
+        } else {
+            Point2D sceneCoordinates = row.localToScene(0, 0);
+            double lineY = (zone == DropZone.ABOVE) ? sceneCoordinates.getY() : sceneCoordinates.getY() + row.getHeight();
+            dropHintLine.setLayoutX(sceneCoordinates.getX());
+            dropHintLine.setLayoutY(lineY - dropHintLine.getHeight() / 2);
+            dropHintLine.setPrefWidth(row.getWidth());
+            dropHintLine.setVisible(true);
+        }
+    }
+
+    private void clearDropHints(TreeTableRow<Bookmark> row) {
+        row.getStyleClass().removeAll("drop-hint-child", "drop-hint-above", "drop-hint-below");
+        dropHintLine.setVisible(false);
+    }
+
+    private DropZone getDropZone(TreeTableRow<Bookmark> row, double y) {
+        final double dropZoneHeight = row.getHeight() * 0.25;
+        if (y < dropZoneHeight) {
+            return DropZone.ABOVE;
+        } else if (y > row.getHeight() - dropZoneHeight) {
+            return DropZone.BELOW;
+        } else {
+            return DropZone.CHILD;
+        }
+    }
+
+    private boolean isChild(TreeItem<Bookmark> potentialParent, TreeItem<Bookmark> potentialChild) {
+        TreeItem<Bookmark> parent = potentialChild.getParent();
+        while (parent != null) {
+            if (parent.equals(potentialParent)) {
+                return true;
+            }
+            parent = parent.getParent();
+        }
+        return false;
+    }
+
+    private enum DropZone {ABOVE, BELOW, CHILD}
 
     private void updateContextMenuStatus(TreeItem<Bookmark> selectedItem) {
         if (selectedItem == null) {
@@ -148,9 +251,6 @@ public class TreeTabController {
         oldParentBookmark.getChildren().remove(bookmarkToPromote);
         int parentIndex = newParentBookmark.getChildren().indexOf(oldParentBookmark);
         newParentBookmark.addChild(parentIndex + 1, bookmarkToPromote);
-
-//        bookmarkSettingsState.getRootBookmark().updateLevelByStructureLevel();
-        treeTableView.refresh();
     }
 
     private void demoteSelection() {
@@ -169,11 +269,7 @@ public class TreeTabController {
 
         oldParentBookmark.getChildren().remove(bookmarkToDemote);
         newParentBookmark.addChild(bookmarkToDemote);
-
-//        bookmarkSettingsState.getRootBookmark().updateLevelByStructureLevel();
-        treeTableView.refresh();
     }
-
 
     private void addBookmark(boolean asChild) {
         TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
@@ -186,13 +282,13 @@ public class TreeTabController {
             rootBookmark.addChild(newBookmark);
         } else if (asChild) {
             Bookmark parentBookmark = selectedItem.getValue();
-            newBookmark = new Bookmark("New Child", null, parentBookmark.calculateLevelByStructure() + 1);
+            newBookmark = new Bookmark("New Child", null, parentBookmark.getLevel() + 1);
             parentBookmark.addChild(newBookmark);
         } else {
             Bookmark parentBookmark = selectedItem.getParent().getValue();
             Bookmark siblingBookmark = selectedItem.getValue();
             int index = parentBookmark.getChildren().indexOf(siblingBookmark);
-            newBookmark = new Bookmark("New Sibling", null, siblingBookmark.calculateLevelByStructure());
+            newBookmark = new Bookmark("New Sibling", null, siblingBookmark.getLevel());
             parentBookmark.addChild(index + 1, newBookmark);
         }
     }
@@ -211,8 +307,6 @@ public class TreeTabController {
         }
     }
 
-    
-
     private void expandAllNodes(TreeItem<?> item) {
         if (item != null) {
             item.setExpanded(true);
@@ -229,5 +323,4 @@ public class TreeTabController {
         }
         return "";
     }
-    
 }

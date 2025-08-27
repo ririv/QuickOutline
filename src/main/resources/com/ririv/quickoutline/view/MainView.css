@@ -110,15 +110,17 @@
     -fx-background-color: -my-accent-color-transparent; /* A semi-transparent highlight */
 }
 
-.placeholder-row {
-    -fx-min-height: 2px;
-    -fx-pref-height: 2px;
-    -fx-max-height: 2px;
-    -fx-background-color: -my-accent-color;
+.drop-hint-above {
+    -fx-border-color: -my-accent-color;
+    -fx-border-width: 2px 0 0 0;
 }
 
-.placeholder-row .tree-table-cell {
-    -fx-text-fill: transparent;
-    -fx-background-color: transparent;
-    -fx-border-width: 0;
+.drop-hint-below {
+    -fx-border-color: -my-accent-color;
+    -fx-border-width: 0 0 2px 0;
+}
+
+.drop-hint-line {
+    -fx-background-color: -my-accent-color;
+    -fx-pref-height: 2px;
 }
