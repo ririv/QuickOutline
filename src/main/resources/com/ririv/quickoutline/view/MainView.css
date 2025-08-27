@@ -100,27 +100,4 @@
     -fx-text-fill: #9198a1;
 }
 
-/* --- Drag and Drop Styles --- */
 
-.tree-table-row-cell {
-    -fx-background-color: transparent;
-}
-
-.drop-hint-child {
-    -fx-background-color: -my-accent-color-transparent; /* A semi-transparent highlight */
-}
-
-.drop-hint-above {
-    -fx-border-color: -my-accent-color;
-    -fx-border-width: 2px 0 0 0;
-}
-
-.drop-hint-below {
-    -fx-border-color: -my-accent-color;
-    -fx-border-width: 0 0 2px 0;
-}
-
-.drop-hint-line {
-    -fx-background-color: -my-accent-color;
-    -fx-pref-height: 2px;
-}
