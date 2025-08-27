@@ -65,7 +65,7 @@ Part I  监督学习  25
         System.out.println(srcFilePath);
         OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
         Bookmark bookmark = outlineProcessor.getOutlineAsBookmark(srcFilePath, offset);
-        String text = bookmark.toTreeText();
+        String text = bookmark.toOutlineString();
         System.out.println(text);
     }
 
