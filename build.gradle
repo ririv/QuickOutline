@@ -51,10 +51,8 @@ application{
 
 def itextVersion = '9.2.0'
 
-// compile 不要用了，已经废弃了
 // 不能下载请配置gradle代理
 dependencies {
-//    implementation "com.itextpdf:itext-core:${itextVersion}"
 
     // 使用该依赖打包会出现 错误: 当前不支持已签名模块化 JAR ..\QuickOutline\build\jlinkbase\jlinkjars\bcpkix-jdk18on-1.78.jar,
 //    https://stackoverflow.com/questions/50597926/signed-modular-jar-with-crypto-provider-cannot-be-linked-into-run-time-image
@@ -97,7 +95,13 @@ repositories {
 }
 
 //传递版本号给Java程序，将在System.System.getProperty("app.version")获取
-def args = ['-Dapp.version=' + project.version]
+def args = [
+    '-Dapp.version=' + project.version,
+    // 屏蔽iText的字形缺失警告
+    '-Dorg.slf4j.simpleLogger.log.com.itextpdf.kernel.font.PdfType1Font=error',
+    // 屏蔽PDFBox的字形缺失警告
+    '-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox.rendering.GlyphCache=error'
+]
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -105,15 +109,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 
-//tasks.register('generateVersionProperties') {
-//    doFirst {
-//        def propertiesFile = new File(project.layout.buildDirectory.asFile.get(), "resources${File.separator}version.properties")
-//        propertiesFile.text = "version=${version}"
-//    }
-//}
-//
-//processResources.dependsOn(generateVersionProperties)  // 确保在资源处理之前生成version.properties
-//
 
 // 仅对application中的run任务有效，对build中任务无效
 run {
