@@ -10,21 +10,21 @@ public class PdfTocExtractorService {
 
    public String extract(String pdfPath){
        try {
-              TocExtractor tocExtractor = new ItextTocExtractor(pdfPath);
-              return String.join("\n", tocExtractor.extract());
-         } catch (IOException e) {
-              e.printStackTrace();
-              return "";
+           TocExtractor tocExtractor = new ItextTocExtractor(pdfPath);
+           return String.join("\n", tocExtractor.extract());
+       } catch (Exception e) { // Catch broader exceptions during processing
+           e.printStackTrace();
+           return "";
        }
    }
    public String extract(String pdfPath, int startPageNum, int endPageNum){
-         try {
-              TocExtractor tocExtractor = new ItextTocExtractor(pdfPath);
-             return String.join("\n", tocExtractor.extract(startPageNum, endPageNum));
-            } catch (IOException e) {
-              e.printStackTrace();
-              return "";
-         }
+       try {
+           TocExtractor tocExtractor = new ItextTocExtractor(pdfPath);
+           return String.join("\n", tocExtractor.extract(startPageNum, endPageNum));
+       } catch (Exception e) { // Catch broader exceptions during processing
+           e.printStackTrace();
+           return "";
+       }
    }
 
 }
