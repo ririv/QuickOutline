@@ -293,20 +293,23 @@
 
 /* --- States --- */
 
+/* Hover on Unselected */
 .radio-button:hover .radio {
     -fx-border-color: -el-color-primary;
 }
+.radio-button:hover .text {
+    -fx-fill: -el-color-primary;
+}
 
+/* Selected */
 .radio-button:selected .radio {
     -fx-border-color: -el-color-primary;
 }
-
 .radio-button:selected .dot {
-    -fx-background-color: -el-color-primary; /* Visible when selected */
+    -fx-background-color: -el-color-primary;
 }
-
 .radio-button:selected .text {
-    -fx-fill: -el-color-primary;
+    -fx-fill: -el-color-default-text; /* Text remains black when selected */
 }
 
 /* Hover on Selected */
@@ -317,9 +320,8 @@
     -fx-background-color: -el-color-primary-pressed;
 }
 .radio-button:selected:hover .text {
-    -fx-fill: -el-color-primary-pressed;
+    -fx-fill: -el-color-primary-pressed; /* Text color matches dot color on hover */
 }
-
 
 /* Disabled State */
 .radio-button:disabled .radio {
