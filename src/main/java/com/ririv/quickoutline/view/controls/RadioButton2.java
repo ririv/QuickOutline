@@ -1,8 +1,8 @@
 package com.ririv.quickoutline.view.controls;
 
-import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleButton;
 
-public class RadioButton2 extends RadioButton {
+public class RadioButton2 extends ToggleButton {
 
     public RadioButton2() {
         super();

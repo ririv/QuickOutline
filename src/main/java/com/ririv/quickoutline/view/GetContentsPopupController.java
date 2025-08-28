@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -29,6 +30,9 @@ public class GetContentsPopupController extends StackPane {
 
     @FXML
     private Button extractTocBtn;
+
+    @FXML
+    private ToggleGroup myToggleGroup;
 
     @Inject
     public GetContentsPopupController(AppEventBus eventBus, PdfTocExtractorService pdfTocExtractorService) {
@@ -51,6 +55,13 @@ public class GetContentsPopupController extends StackPane {
     public void initialize() {
         extractTocBtn.setOnAction(event -> {
             eventBus.post(new ExtractTocEvent());
+        });
+
+        // Add a listener to the ToggleGroup to prevent deselection
+        myToggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle == null) {
+                myToggleGroup.selectToggle(oldToggle);
+            }
         });
     }
 }

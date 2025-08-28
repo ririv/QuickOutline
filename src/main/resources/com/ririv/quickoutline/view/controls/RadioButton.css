@@ -10,30 +10,21 @@
     -fx-background-radius: 6;
 }
 
-.radio-button-style > .radio,
-.radio-button-style > .radio > .dot {
-    -fx-pref-width: 0;
-    -fx-pref-height: 0;
-    -fx-padding: 0;
-    -fx-margin: 0;
-}
-
 .radio-button-style:hover {
-    -fx-border-color: -el-color-primary;
     -fx-text-fill: -el-color-primary;
 }
 
 .radio-button-style:selected {
-    -fx-background-color: -el-color-primary;
-    -fx-text-fill: white;
-    -fx-border-color: -el-color-primary;
+    -fx-background-color: -el-color-default-active-bg;
+    -fx-text-fill: -el-color-primary;
+    -fx-border-color: -el-color-plain-primary-border;
     -fx-z-index: 1;
 }
 
 .radio-button-style:selected:hover {
-     -fx-background-color: -el-color-primary-pressed;
-     -fx-border-color: -el-color-primary-pressed;
-     -fx-text-fill: white;
+     -fx-background-color: -el-color-default-active-bg;
+     -fx-border-color: -el-color-plain-primary-border;
+     -fx-text-fill: -el-color-primary;
 }
 
 /* --- Manual Grouping Styles --- */
