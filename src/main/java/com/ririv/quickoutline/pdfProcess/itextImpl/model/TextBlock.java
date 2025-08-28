@@ -12,7 +12,7 @@ public class TextBlock {
     private String cachedText = null;
     private CharacterPattern charPattern = null;
 
-    private static final Pattern NUMBERING_PATTERN = Pattern.compile("^\\s*([\\d.]+|[A-Za-z][.]|[IVXLCDM]+[.)]).*\s*$");
+    private static final Pattern NUMBERING_PATTERN = Pattern.compile("^\\s*([\\d.]+|[A-Za-z][.]|[IVXLCDM]+[.)]).*\\s*$");
 
 
     public TextBlock(LineWithMetadata initialLine) { addLine(initialLine); }

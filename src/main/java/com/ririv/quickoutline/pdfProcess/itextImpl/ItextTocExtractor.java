@@ -33,9 +33,10 @@ public class ItextTocExtractor implements TocExtractor {
             try {
                 MetadataTextExtractionStrategy strategy = new MetadataTextExtractionStrategy();
                 new PdfCanvasProcessor(strategy).processPageContent(pdfDoc.getPage(i));
-                allLines.addAll(convertChunksToLines(strategy.getTextChunks(), pdfDoc.getPage(i), pdfDoc));
+                List<LineWithMetadata> lines = convertChunksToLines(strategy.getTextChunks(), pdfDoc.getPage(i), pdfDoc);
+                allLines.addAll(lines);
             } catch (Exception e) {
-                log.error("Error processing page " + i, e);
+                log.error("Error processing page {}", i, e);
             }
         }
         pdfDoc.close();
@@ -52,25 +53,26 @@ public class ItextTocExtractor implements TocExtractor {
 
     @Override
     public List<String> extract(int startPageNum, int endPageNum) {
-        List<String> tocPages = new ArrayList<>();
+        List<String> tocBlocksWithSpaces = new ArrayList<>();
+        TocAnalyser tocAnalyser = new TocAnalyser();
         for (int i = startPageNum; i <= endPageNum; i++) {
             try {
                 MetadataTextExtractionStrategy strategy = new MetadataTextExtractionStrategy();
                 new PdfCanvasProcessor(strategy).processPageContent(pdfDoc.getPage(i));
+
                 List<LineWithMetadata> lines = convertChunksToLines(strategy.getTextChunks(), pdfDoc.getPage(i), pdfDoc);
                 List<TextBlock> blocks = TextBlock.aggregateLinesIntoBlocks(lines);
-                
-                TocAnalyser tocAnalyser = new TocAnalyser();
                 List<TextBlock> tocBlocks = tocAnalyser.analyze(blocks);
 
                 for (TextBlock block : tocBlocks) {
-                    tocPages.add(block.reconstructBlockWithSpaces());
+                    tocBlocksWithSpaces.add(block.reconstructBlockWithSpaces());
                 }
 
             } catch (Exception e) {
-                log.error("Error processing page " + i, e);
+                log.error("Error processing page {}", i, e);
             }
         }
-        return tocPages;
+        pdfDoc.close();
+        return tocBlocksWithSpaces;
     }
 }
