@@ -269,24 +269,72 @@
 
 
 
-/*这段的样式参考javafx默认样式（modena.css）和官方文档 来修改*/
-.radio-button .radio {
-    -fx-border-color: #000;
-    /*必须设置*/
-    -fx-border-radius: 15px;
-    -fx-background-color: white;
-    -fx-padding: 0.333333em;
+/* --- RadioButton Style --- */
+.radio-button .text {
+    -fx-fill: -el-color-default-text; /* Text color for the label */
+    -fx-padding: 0 0 0 5px; /* Space between radio and text */
 }
+
+.radio-button .radio {
+    -fx-border-width: 1.5px;
+    -fx-border-color: -el-color-default-border;
+    -fx-background-color: -el-color-default-bg;
+    -fx-background-insets: 0;
+    -fx-border-radius: 100; /* Make it a circle */
+    -fx-padding: 4px; /* Controls the size of the circle */
+}
+
+.radio-button .dot {
+    -fx-background-color: transparent; /* Invisible when not selected */
+    -fx-background-insets: 0;
+    -fx-padding: 4px; /* Size of the dot */
+    -fx-shape: "M 0,0 A 1,1 0 1 1 0,-0.001 Z"; /* Make it a circle shape */
+}
+
+/* --- States --- */
 
 .radio-button:hover .radio {
     -fx-border-color: -el-color-primary;
 }
 
-/*dot的颜色是第二个，第一个会发生偏移*/
-.radio-button:selected:hover > .radio > .dot {
-    -fx-background-color: transparent, #003cff;
-    /*-fx-background-insets: 1 0 -1 0, 0;*/
+.radio-button:selected .radio {
+    -fx-border-color: -el-color-primary;
 }
+
+.radio-button:selected .dot {
+    -fx-background-color: -el-color-primary; /* Visible when selected */
+}
+
+.radio-button:selected .text {
+    -fx-fill: -el-color-primary;
+}
+
+/* Hover on Selected */
+.radio-button:selected:hover .radio {
+    -fx-border-color: -el-color-primary-pressed;
+}
+.radio-button:selected:hover .dot {
+    -fx-background-color: -el-color-primary-pressed;
+}
+.radio-button:selected:hover .text {
+    -fx-fill: -el-color-primary-pressed;
+}
+
+
+/* Disabled State */
+.radio-button:disabled .radio {
+    -fx-border-color: #d9d9d9;
+    -fx-background-color: #f5f5f5;
+}
+
+.radio-button:disabled .dot {
+    -fx-background-color: #b5b5b5;
+}
+
+.radio-button:disabled .text {
+    -fx-fill: #b5b5b5;
+}
+
 
 
 
