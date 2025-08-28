@@ -109,20 +109,20 @@ public class BookmarkBottomPaneController {
 
     @FXML
     private void getContentsBtnAction(ActionEvent event) {
-        eventBus.publish(new GetContentsEvent());
+        eventBus.post(new GetContentsEvent());
     }
 
     @FXML
     private void setContentsBtnAction(ActionEvent event) {
         ViewScaleType selectedType = setContentsPopupController.getSelectedViewScaleType();
-        eventBus.publish(new SetContentsEvent(selectedType));
+        eventBus.post(new SetContentsEvent(selectedType));
     }
 
     
 
     @FXML
     public void deleteBtnAction(ActionEvent event) {
-        eventBus.publish(new DeleteContentsEvent());
+        eventBus.post(new DeleteContentsEvent());
     }
 
     
@@ -133,11 +133,11 @@ public class BookmarkBottomPaneController {
         if (btn == switchToTreeEditViewBtn) {
             switchToTreeEditViewBtn.setVisible(false);
             switchToTextEditViewBtn.setVisible(true);
-            eventBus.publish(new SwitchBookmarkViewEvent(SwitchBookmarkViewEvent.View.TEXT));
+            eventBus.post(new SwitchBookmarkViewEvent(SwitchBookmarkViewEvent.View.TEXT));
         } else if (btn == switchToTextEditViewBtn) {
             switchToTreeEditViewBtn.setVisible(true);
             switchToTextEditViewBtn.setVisible(false);
-            eventBus.publish(new SwitchBookmarkViewEvent(SwitchBookmarkViewEvent.View.TREE));
+            eventBus.post(new SwitchBookmarkViewEvent(SwitchBookmarkViewEvent.View.TREE));
         }
     }
 }

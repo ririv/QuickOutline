@@ -78,8 +78,8 @@ dependencies {
 
     // Guice for Dependency Injection
     implementation 'com.google.inject:guice:7.0.0'
-    // Force Guava version to 32.0.1-jre to fix CVE-2023-2976                                                  │
-    implementation 'com.google.guava:guava:32.0.1-jre'
+    // Force Guava to a newer version to fix CVE-2023-2976                                                  │
+    implementation 'com.google.guava:guava:33.2.1-jre'
     implementation 'jakarta.inject:jakarta.inject-api:2.0.1'
     implementation("com.openai:openai-java:3.1.2")
     

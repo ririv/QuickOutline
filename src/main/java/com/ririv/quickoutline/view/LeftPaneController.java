@@ -53,13 +53,13 @@ public class LeftPaneController {
             }
 
             if (newValue == bookmarkTabBtn) {
-                eventBus.publish(new SwitchTabEvent(FnTab.bookmark));
+                eventBus.post(new SwitchTabEvent(FnTab.bookmark));
             } else if (newValue == tocGeneratorTabBtn) {
-                eventBus.publish(new SwitchTabEvent(FnTab.tocGenerator));
+                eventBus.post(new SwitchTabEvent(FnTab.tocGenerator));
             } else if (newValue == labelTabBtn) {
-                eventBus.publish(new SwitchTabEvent(FnTab.label));
+                eventBus.post(new SwitchTabEvent(FnTab.label));
             } else if (newValue == previewTabBtn) {
-                eventBus.publish(new SwitchTabEvent(FnTab.preview));
+                eventBus.post(new SwitchTabEvent(FnTab.preview));
             }
         });
     }

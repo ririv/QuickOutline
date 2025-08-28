@@ -23,6 +23,7 @@ module quickoutline {
     requires org.checkerframework.checker.qual;
     requires openai.java.core;
     requires openai.java.client.okhttp;
+    requires com.google.common;
 //    requires org.bouncycastle.util;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
@@ -45,11 +46,11 @@ module quickoutline {
     opens com.ririv.quickoutline.pdfProcess.itextImpl to com.google.guice;
     opens com.ririv.quickoutline.pdfProcess to com.google.guice;
     opens com.ririv.quickoutline.di to com.google.guice;
+    opens com.ririv.quickoutline.event to com.google.guice;
     exports com.ririv.quickoutline.view.controls.select;
     opens com.ririv.quickoutline.view.controls.select to javafx.fxml, javafx.graphics;
     exports com.ririv.quickoutline.view.controls.message;
     opens com.ririv.quickoutline.view.controls.message to javafx.fxml, javafx.graphics;
     exports com.ririv.quickoutline.pdfProcess.itextImpl.model;
     opens com.ririv.quickoutline.pdfProcess.itextImpl.model to com.google.guice;
-
 }

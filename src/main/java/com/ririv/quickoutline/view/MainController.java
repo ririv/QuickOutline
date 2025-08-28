@@ -1,8 +1,11 @@
 package com.ririv.quickoutline.view;
 
+import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
-import com.ririv.quickoutline.event.*;
+import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.event.ShowMessageEvent;
 import com.ririv.quickoutline.event.ShowSuccessDialogEvent;
+import com.ririv.quickoutline.event.SwitchTabEvent;
 import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.utils.LocalizationManager;
@@ -14,7 +17,11 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextField;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
@@ -48,15 +55,8 @@ public class MainController {
     public MessageContainer messageManager;
     public BorderPane leftPane;
 
-    
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
-
-    @Inject
-    public MainController(CurrentFileState currentFileState, AppEventBus eventBus) {
-        this.currentFileState = currentFileState;
-        this.eventBus = eventBus;
-    }
 
     @FXML
     private Node bookmarkTabView;
@@ -75,12 +75,17 @@ public class MainController {
 
     private final ObjectProperty<FnTab> currentTabProperty = new SimpleObjectProperty<>(FnTab.bookmark);
 
+    @Inject
+    public MainController(CurrentFileState currentFileState, AppEventBus eventBus) {
+        this.currentFileState = currentFileState;
+        this.eventBus = eventBus;
+        // 1. 注册自身为订阅者
+        this.eventBus.register(this);
+    }
+
     @FXML
     public void initialize() {
-        // Register event listeners
-        eventBus.subscribe(SwitchTabEvent.class, event -> currentTabProperty.set(event.targetTab));
-        eventBus.subscribe(ShowMessageEvent.class, event -> messageManager.showMessage(event.message, event.messageType));
-        eventBus.subscribe(ShowSuccessDialogEvent.class, this::handleShowSuccessDialog);
+        // 2. 旧的 subscribe 调用已被移除
 
         // Bind tab visibility to currentTabProperty
         bookmarkTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.bookmark));
@@ -142,8 +147,19 @@ public class MainController {
         }
     }
 
+    // 3. 创建新的、带 @Subscribe 注解的方法
+    @Subscribe
+    public void onSwitchTab(SwitchTabEvent event) {
+        currentTabProperty.set(event.targetTab);
+    }
 
-    private void handleShowSuccessDialog(ShowSuccessDialogEvent event) {
+    @Subscribe
+    public void onShowMessage(ShowMessageEvent event) {
+        messageManager.showMessage(event.message, event.messageType);
+    }
+
+    @Subscribe
+    public void onShowSuccessDialog(ShowSuccessDialogEvent event) {
         ButtonType openDirAndSelectFileButtonType = new ButtonType(bundle.getString("btnType.openFileLocation"), ButtonBar.ButtonData.OK_DONE);
         ButtonType openFileButtonType = new ButtonType(bundle.getString("btnType.openFile"), ButtonBar.ButtonData.OK_DONE);
         var result = showAlert(Alert.AlertType.INFORMATION,

@@ -25,7 +25,7 @@ public class AppModule extends AbstractModule {
         bind(PdfTocPageGeneratorService.class).in(Scopes.SINGLETON);
         bind(GetContentsPopupController.class).in(Scopes.SINGLETON);
         bind(SetContentsPopupController.class).in(Scopes.SINGLETON);
-        bind(AppEventBus.class).toInstance(AppEventBus.getInstance());
+        bind(AppEventBus.class).in(Scopes.SINGLETON);
         bind(PdfTocExtractorService.class).in(Scopes.SINGLETON);
         bind(BookmarkTabController.class).in(Scopes.SINGLETON);
         bind(BookmarkBottomPaneController.class).in(Scopes.SINGLETON);

@@ -34,7 +34,7 @@ public class TocGeneratorTabController {
     @FXML
     void generateTocPageAction(ActionEvent event) {
         if (currentFileState.getSrcFile() == null) {
-            eventBus.publish(new ShowMessageEvent(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING));
+            eventBus.post(new ShowMessageEvent(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING));
             return;
         }
 
@@ -43,15 +43,15 @@ public class TocGeneratorTabController {
         Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
 
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
-            eventBus.publish(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));
+            eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));
             return;
         }
 
         try {
             pdfTocPageGeneratorService.createTocPage(srcFile, destFile, rootBookmark.getChildren());
-            eventBus.publish(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS));
+            eventBus.post(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {
-            eventBus.publish(new ShowMessageEvent("Failed to generate TOC page: " + e.getMessage(), Message.MessageType.ERROR));
+            eventBus.post(new ShowMessageEvent("Failed to generate TOC page: " + e.getMessage(), Message.MessageType.ERROR));
             e.printStackTrace();
         }
     }

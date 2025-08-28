@@ -74,13 +74,13 @@ public class PageLabelController {
     void addRule() {
         try {
             if (fromPageTextField.getText().isEmpty()) {
-                appEventBus.publish(new ShowMessageEvent("输入无效，'起始页' 字段不能为空。", Message.MessageType.ERROR));
+                appEventBus.post(new ShowMessageEvent("输入无效，'起始页' 字段不能为空。", Message.MessageType.ERROR));
                 return;
             }
             int fromPage = Integer.parseInt(fromPageTextField.getText());
 
             if (fromPage <= 0) {
-                appEventBus.publish(new ShowMessageEvent("输入无效，页码必须是正数。", Message.MessageType.ERROR));
+                appEventBus.post(new ShowMessageEvent("输入无效，页码必须是正数。", Message.MessageType.ERROR));
                 return;
             }
 
@@ -89,7 +89,7 @@ public class PageLabelController {
             if (!startTextField.getText().isEmpty()) {
                 start = Integer.parseInt(startTextField.getText());
                 if (start < 1) {
-                    appEventBus.publish(new ShowMessageEvent("输入无效，起始数字必须大于或等于 1。", Message.MessageType.ERROR));
+                    appEventBus.post(new ShowMessageEvent("输入无效，起始数字必须大于或等于 1。", Message.MessageType.ERROR));
                     return;
                 }
             }
@@ -107,7 +107,7 @@ public class PageLabelController {
             startTextField.clear();
 
         } catch (NumberFormatException e) {
-            appEventBus.publish(new ShowMessageEvent("输入无效，请在页码和起始数字字段中输入有效的数字。", Message.MessageType.ERROR));
+            appEventBus.post(new ShowMessageEvent("输入无效，请在页码和起始数字字段中输入有效的数字。", Message.MessageType.ERROR));
         }
     }
 
@@ -140,7 +140,7 @@ public class PageLabelController {
     @FXML
     void apply() {
         if (fileService.getSrcFile() == null) {
-            appEventBus.publish(new ShowMessageEvent("请先选择一个PDF文件", Message.MessageType.WARNING));
+            appEventBus.post(new ShowMessageEvent("请先选择一个PDF文件", Message.MessageType.WARNING));
             return;
         }
 
@@ -170,9 +170,9 @@ public class PageLabelController {
         String destFilePath = fileService.getDestFile().toString();
         try {
             pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
-            appEventBus.publish(new ShowMessageEvent("页码标签已成功应用。", Message.MessageType.SUCCESS));
+            appEventBus.post(new ShowMessageEvent("页码标签已成功应用。", Message.MessageType.SUCCESS));
         } catch (IOException e) {
-            appEventBus.publish(new ShowMessageEvent("应用页码标签失败: " + "e.getMessage()", Message.MessageType.ERROR));
+            appEventBus.post(new ShowMessageEvent("应用页码标签失败: " + "e.getMessage()", Message.MessageType.ERROR));
             throw new RuntimeException(e);
         }
     }

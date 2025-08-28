@@ -1,40 +1,39 @@
 package com.ririv.quickoutline.event;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
+import com.google.common.eventbus.EventBus;
+import jakarta.inject.Singleton;
 
+/**
+ * A Guice-managed singleton wrapper for the Guava EventBus.
+ * This allows the rest of the application to use a consistent, injectable event bus
+ * while leveraging the power and safety of Guava's implementation.
+ */
+@Singleton
 public class AppEventBus {
 
-    private static final AppEventBus INSTANCE = new AppEventBus();
-    private final Map<Class<?>, List<Consumer<?>>> subscribers = new HashMap<>();
+    private final EventBus guavaEventBus = new EventBus("QuickOutline-EventBus");
 
-    private AppEventBus() {}
-
-    public static AppEventBus getInstance() {
-        return INSTANCE;
+    /**
+     * Registers all subscriber methods on the given object.
+     * @param object The object whose subscriber methods should be registered.
+     */
+    public void register(Object object) {
+        guavaEventBus.register(object);
     }
 
-    public <T> void subscribe(Class<T> eventType, Consumer<T> subscriber) {
-        subscribers.computeIfAbsent(eventType, k -> new ArrayList<>()).add(subscriber);
+    /**
+     * Unregisters all subscriber methods on the given object.
+     * @param object The object whose subscriber methods should be unregistered.
+     */
+    public void unregister(Object object) {
+        guavaEventBus.unregister(object);
     }
 
-    public <T> void unsubscribe(Class<T> eventType, Consumer<T> subscriber) {
-        List<Consumer<?>> eventSubscribers = subscribers.get(eventType);
-        if (eventSubscribers != null) {
-            eventSubscribers.remove(subscriber);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> void publish(T event) {
-        List<Consumer<?>> eventSubscribers = subscribers.get(event.getClass());
-        if (eventSubscribers != null) {
-            for (Consumer<?> subscriber : new ArrayList<>(eventSubscribers)) {
-                ((Consumer<T>) subscriber).accept(event);
-            }
-        }
+    /**
+     * Posts an event to all registered subscribers.
+     * @param event The event to post.
+     */
+    public void post(Object event) {
+        guavaEventBus.post(event);
     }
 }

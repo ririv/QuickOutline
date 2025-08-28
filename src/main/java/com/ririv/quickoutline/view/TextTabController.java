@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view;
 
+import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.AutoToggleToIndentEvent;
@@ -7,21 +8,20 @@ import com.ririv.quickoutline.event.BookmarksChangedEvent;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.textProcess.methods.Method;
-import com.ririv.quickoutline.utils.*;
+import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.utils.OsDesktopUtil;
+import com.ririv.quickoutline.utils.Pair;
 import com.ririv.quickoutline.view.controls.Remind;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import org.slf4j.Logger;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -58,25 +58,30 @@ public class TextTabController {
     public TextTabController(PdfOutlineService pdfOutlineService, AppEventBus eventBus) {
         this.pdfOutlineService = pdfOutlineService;
         this.eventBus = eventBus;
+        this.eventBus.register(this);
     }
 
     public void initialize() {
         seqRBtn.setUserData(Method.SEQ);
         indentRBtn.setUserData(Method.INDENT);
         seqRBtn.setSelected(true);
-        eventBus.subscribe(AutoToggleToIndentEvent.class, event -> autoToggleToIndentMethod());
 
-        // Subscribe to BookmarksChangedEvent
-        eventBus.subscribe(BookmarksChangedEvent.class, event ->
-                Platform.runLater(() -> contentsTextArea.setText(event.getRootBookmark().toOutlineString())));
-
-        // 设置处理键盘事件
         contentsTextArea.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabKeyPress);
 
         if (OsDesktopUtil.isMacOS()) {
             externalEditorBtn.setVisible(false);
             externalEditorBtn.setManaged(false);
         }
+    }
+
+    @Subscribe
+    public void onAutoToggleToIndent(AutoToggleToIndentEvent event) {
+        autoToggleToIndentMethod();
+    }
+
+    @Subscribe
+    public void onBookmarksChanged(BookmarksChangedEvent event) {
+        Platform.runLater(() -> contentsTextArea.setText(event.getRootBookmark().toOutlineString()));
     }
 
     private void handleTabKeyPress(KeyEvent event) {
@@ -223,7 +228,7 @@ public class TextTabController {
     private void autoFormatBtnAction(ActionEvent event) {
         contentsTextArea.setText(pdfOutlineService.autoFormat(contentsTextArea.getText()));
         syncWithExternalEditorService.writeTemp(contentsTextArea.getText());
-        eventBus.publish(new AutoToggleToIndentEvent());
+        eventBus.post(new AutoToggleToIndentEvent());
     }
 
     private int getLineStartPos(TextArea textArea, int lineNumber) {

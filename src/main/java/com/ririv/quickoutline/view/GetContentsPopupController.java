@@ -50,7 +50,7 @@ public class GetContentsPopupController extends StackPane {
 
     public void initialize() {
         extractTocBtn.setOnAction(event -> {
-            eventBus.publish(new ExtractTocEvent());
+            eventBus.post(new ExtractTocEvent());
         });
     }
 }
