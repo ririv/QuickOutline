@@ -26,23 +26,9 @@ public class GetContentsPopupController extends StackPane {
     private final AppEventBus eventBus;
     private final PdfTocExtractorService pdfTocExtractorService;
 
-    public HBox pageNumRangeLayout;
-
-    @FXML
-    private Switch autoRecognizeSwitch;
-
-    @FXML
-    private TextField startTF;
-
-    @FXML
-    private TextField endTF;
 
     @FXML
     private Button extractTocBtn;
-
-    private int backspaceCount = 0;
-
-    private final BooleanProperty autoRecognize = new SimpleBooleanProperty(true);
 
     @Inject
     public GetContentsPopupController(AppEventBus eventBus, PdfTocExtractorService pdfTocExtractorService) {
@@ -63,47 +49,8 @@ public class GetContentsPopupController extends StackPane {
     }
 
     public void initialize() {
-        autoRecognize.bind(autoRecognizeSwitch.valueProperty());
-        pageNumRangeLayout.disableProperty().bind(autoRecognizeSwitch.valueProperty());
-
-        startTF.addEventFilter(KeyEvent.KEY_TYPED, event -> {
-            if (!"0123456789".contains(event.getCharacter())) {
-                event.consume();
-            }
-        });
-
-        endTF.addEventFilter(KeyEvent.KEY_TYPED, event -> {
-            if (!"0123456789".contains(event.getCharacter())) {
-                event.consume();
-            }
-        });
-
-        endTF.focusTraversableProperty().bind(startTF.focusedProperty());
-
-        endTF.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (endTF.getText().isEmpty()){
-                if (event.getCode() == KeyCode.BACK_SPACE) {
-                    backspaceCount++;
-                    if (backspaceCount == 2) {
-                        startTF.requestFocus();
-                        backspaceCount = 0;
-                    }
-                }
-            }
-        });
-
         extractTocBtn.setOnAction(event -> {
-            Integer startPage = null;
-            Integer endPage = null;
-            if (!autoRecognize.get()) {
-                if (startTF.getText().isEmpty() || endTF.getText().isEmpty()) {
-                    // Maybe publish a ShowMessageEvent here in the future
-                    return;
-                }
-                startPage = Integer.parseInt(startTF.getText());
-                endPage = Integer.parseInt(endTF.getText());
-            }
-            eventBus.publish(new ExtractTocEvent(startPage, endPage));
+            eventBus.publish(new ExtractTocEvent());
         });
     }
 }

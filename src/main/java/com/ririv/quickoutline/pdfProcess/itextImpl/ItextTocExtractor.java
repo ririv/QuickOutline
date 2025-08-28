@@ -41,8 +41,7 @@ public class ItextTocExtractor implements TocExtractor {
         }
     }
 
-    @Override
-    public List<String> extract(int startPageNum, int endPageNum) {
+    private List<String> extract(int startPageNum, int endPageNum) {
         int numThreads = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 

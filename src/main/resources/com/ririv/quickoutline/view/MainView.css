@@ -1,4 +1,6 @@
 @import "colors.css";
+@import "BasicControls.css";
+@import "svg.css";
 
 *{
     -my-color-divding-line: #dfdfdf;
@@ -98,6 +100,11 @@
     -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-text-fill: #9198a1;
+}
+
+
+.view-scale-button-padding{
+    -fx-padding: 0;
 }
 
 

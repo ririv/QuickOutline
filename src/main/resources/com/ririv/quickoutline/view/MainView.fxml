@@ -7,7 +7,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <StackPane xmlns:fx="http://javafx.com/fxml" fx:id="root"
-           stylesheets="@MainView.css,@BasicControls.css,@svg.css"
+           stylesheets="@MainView.css"
            xmlns="http://javafx.com/javafx"
            fx:controller="com.ririv.quickoutline.view.MainController">
     <BorderPane

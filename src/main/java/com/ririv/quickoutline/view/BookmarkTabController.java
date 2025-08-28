@@ -94,12 +94,7 @@ public class BookmarkTabController {
             eventBus.publish(new ShowMessageEvent(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING));
             return;
         }
-        String contents;
-        if (event.startPage == null || event.endPage == null) {
-            contents = pdfTocExtractorService.extract(srcFile.toString());
-        } else {
-            contents = pdfTocExtractorService.extract(srcFile.toString(), event.startPage, event.endPage);
-        }
+        String contents = pdfTocExtractorService.extract(srcFile.toString());
         textTabController.setContents(contents);
         reconstructTreeByContents();
     }
