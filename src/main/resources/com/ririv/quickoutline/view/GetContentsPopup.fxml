@@ -1,10 +1,41 @@
 <?import com.ririv.quickoutline.view.controls.Switch?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+
+<?import com.ririv.quickoutline.view.controls.Switch?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import com.ririv.quickoutline.view.controls.RadioButton2?>
+<?import java.lang.String?>
 <fx:root type="javafx.scene.layout.StackPane" xmlns:fx="http://javafx.com/fxml"
          stylesheets="@MainView.css">
     <VBox spacing="10" alignment="CENTER_LEFT">
         <Label styleClass="title" text="%getContentsPopup.title" />
+
+        <HBox alignment="CENTER" spacing="0" styleClass="radio-button-group">
+            <fx:define>
+                <ToggleGroup fx:id="myToggleGroup" />
+            </fx:define>
+            <children>
+                <RadioButton2 text="Option A" toggleGroup="$myToggleGroup" selected="true">
+                    <styleClass>
+                        <String fx:value="first-in-group" />
+                    </styleClass>
+                </RadioButton2>
+                <RadioButton2 text="Option B" toggleGroup="$myToggleGroup">
+                    <styleClass>
+                        <String fx:value="middle-in-group" />
+                    </styleClass>
+                </RadioButton2>
+                <RadioButton2 text="Option C" toggleGroup="$myToggleGroup">
+                    <styleClass>
+                        <String fx:value="last-in-group" />
+                    </styleClass>
+                </RadioButton2>
+            </children>
+        </HBox>
+
         <HBox>
             <HBox HBox.hgrow="ALWAYS" /> <!--两端对齐-->
             <Button fx:id="extractTocBtn" styleClass="my-button, default-button" text="%extractTocBtn.text"
@@ -12,3 +43,4 @@
         </HBox>
     </VBox>
 </fx:root>
+
