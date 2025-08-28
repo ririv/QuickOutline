@@ -53,4 +53,6 @@ module quickoutline {
     opens com.ririv.quickoutline.view.controls.message to javafx.fxml, javafx.graphics;
     exports com.ririv.quickoutline.pdfProcess.itextImpl.model;
     opens com.ririv.quickoutline.pdfProcess.itextImpl.model to com.google.guice;
+    exports com.ririv.quickoutline.view.controls.radioButton2;
+    opens com.ririv.quickoutline.view.controls.radioButton2 to javafx.fxml, javafx.graphics;
 }

@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.controls;
+package com.ririv.quickoutline.view.controls.radioButton2;
 
 import javafx.scene.control.ToggleButton;
 
@@ -16,7 +16,7 @@ public class RadioButton2 extends ToggleButton {
 
     private void initialize() {
         getStyleClass().add("radio-button-style");
-        String css = getClass().getResource("RadioButton.css").toExternalForm();
+        String css = getClass().getResource("RadioButton2.css").toExternalForm();
         if (!getStylesheets().contains(css)) {
             getStylesheets().add(css);
         }

@@ -15,7 +15,7 @@
 }
 
 .radio-button-style:selected {
-    -fx-background-color: -el-color-default-active-bg;
+    -fx-background-color: transparent;
     -fx-text-fill: -el-color-primary;
     -fx-border-color: -el-color-plain-primary-border;
     -fx-z-index: 1;
