@@ -9,6 +9,6 @@
     <padding>
         <Insets top="5" right="5" bottom="5" left="5" />
     </padding>
-    <ImageView fx:id="thumbnailImageView" fitHeight="150" fitWidth="100" pickOnBounds="true" preserveRatio="true" />
+    <ImageView fx:id="thumbnailImageView" fitHeight="225" fitWidth="150" pickOnBounds="true" preserveRatio="true" />
     <Label fx:id="pageLabel" text="Label" />
 </fx:root>
