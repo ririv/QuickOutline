@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -85,7 +86,7 @@ public class PopupCard extends Popup {
 
     public PopupCard(Parent content) {
         this.contentNode = content;
-        this.contentNode.getStylesheets().add(getClass().getResource("PopupCard.css").toExternalForm());
+        this.contentNode.getStylesheets().add(Objects.requireNonNull(getClass().getResource("PopupCard.css")).toExternalForm());
         this.contentNode.getStyleClass().add("card");
         this.getContent().add(this.contentNode);
         this.setAutoHide(true); // 点击外部时自动隐藏
@@ -99,6 +100,7 @@ public class PopupCard extends Popup {
 
     /**
      * 将弹窗逻辑附加到目标节点上。这是使用此组件的主要入口。
+     *
      * @param node 目标节点
      */
     public void attachTo(Node node) {
@@ -112,6 +114,7 @@ public class PopupCard extends Popup {
 
     /**
      * 设置一个或多个触发器类型。
+     *
      * @param types 一个或多个TriggerType
      */
     public void setTriggers(TriggerType... types) {
@@ -173,7 +176,7 @@ public class PopupCard extends Popup {
 
         // 检查是否满足任何一个立即显示的触发条件
         boolean shouldShowInstantly = (triggers.contains(TriggerType.CTRL_ON_ENTER) && event.isShortcutDown()) ||
-                                      triggers.contains(TriggerType.INSTANT_ON_HOVER);
+                triggers.contains(TriggerType.INSTANT_ON_HOVER);
 
         if (shouldShowInstantly) {
             display();

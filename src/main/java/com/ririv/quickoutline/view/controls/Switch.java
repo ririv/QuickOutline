@@ -17,6 +17,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
+import java.util.Objects;
+
 // 修改自 https://stackoverflow.com/questions/73036432/animate-custom-switch-button/73043801#73043801
 public class Switch extends HBox {
     private static final double TRACK_WIDTH = 40;
@@ -51,7 +53,7 @@ public class Switch extends HBox {
 
     public Switch() {
         // construct switch UI
-        getStylesheets().add(getClass().getResource("Switch.css").toExternalForm());
+        getStylesheets().add(Objects.requireNonNull(getClass().getResource("Switch.css")).toExternalForm());
         getStyleClass().add("switch");
 
 //        Rectangle track = new Rectangle(TRACK_WIDTH, TRACK_HEIGHT);

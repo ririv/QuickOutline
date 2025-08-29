@@ -10,6 +10,7 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class Message extends StackPane {
 
@@ -37,7 +38,7 @@ public class Message extends StackPane {
         }
 
         // 设置外部 CSS 样式
-        getStylesheets().add(getClass().getResource("Message.css").toExternalForm());  // 加载外部 CSS
+        getStylesheets().add(Objects.requireNonNull(getClass().getResource("Message.css")).toExternalForm());  // 加载外部 CSS
         getStyleClass().add("message"); // 添加 message 样式类
 
 

@@ -12,6 +12,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 
+import java.util.Objects;
+
 public class StyledSelectSkin<T> extends SkinBase<StyledSelect<T>> {
 
     private final BorderPane box;
@@ -77,7 +79,7 @@ public class StyledSelectSkin<T> extends SkinBase<StyledSelect<T>> {
             StackPane root = new StackPane(itemsContainer);
             root.getStyleClass().add("select-popup");
 
-            String cssPath = control.getClass().getResource("StyledSelect.css").toExternalForm();
+            String cssPath = Objects.requireNonNull(control.getClass().getResource("StyledSelect.css")).toExternalForm();
             if (cssPath != null) {
                 root.getStylesheets().add(cssPath);
             }

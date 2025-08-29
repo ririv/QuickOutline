@@ -9,6 +9,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 
+import java.util.Objects;
+
 //<Button>
 //<graphic>
 //    <StackPane>
@@ -30,7 +32,7 @@ public class SplitButton extends HBox {
 
     public SplitButton() {
         // 设置样式类
-        getStylesheets().add(getClass().getResource("SplitButton.css").toExternalForm());  // 加载外部 CSS
+        getStylesheets().add(Objects.requireNonNull(getClass().getResource("SplitButton.css")).toExternalForm());  // 加载外部 CSS
 
         this.getStyleClass().add("split-button");
         mainButton.getStyleClass().add("main-button");

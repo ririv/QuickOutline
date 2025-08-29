@@ -27,7 +27,7 @@ public class MyAlert extends Alert {
 
         // 获取 DialogPane
         DialogPane dialogPane = this.getDialogPane();
-        dialogPane.getStylesheets().add(getClass().getResource("BasicControls.css").toExternalForm());
+        dialogPane.getStylesheets().add(Objects.requireNonNull(getClass().getResource("BasicControls.css")).toExternalForm());
         for (var button: buttons){
             switch (button.getButtonData()){
                 case OK_DONE -> dialogPane.lookupButton(button).getStyleClass().addAll("my-button", "text-button-lightbg", "text-button-primary");
