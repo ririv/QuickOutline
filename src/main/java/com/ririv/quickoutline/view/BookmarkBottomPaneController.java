@@ -101,10 +101,14 @@ public class BookmarkBottomPaneController {
 
         // Initialize popups once
         getContentsPopup = new PopupCard(getContentsPopupController);
-        setContentsPopup = new PopupCard(setContentsPopupController);
+        getContentsPopup.setTriggerMode(PopupCard.TriggerMode.INSTANT_ON_HOVER);
+        getContentsPopup.setPosition(PopupCard.PopupPosition.TOP_CENTER);
+        getContentsPopup.attachTo(getContentsBtn);
 
-        getContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, getContentsPopup::showEventHandler);
-        setContentsBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, setContentsPopup::showEventHandler);
+        setContentsPopup = new PopupCard(setContentsPopupController);
+        setContentsPopup.setTriggerMode(PopupCard.TriggerMode.INSTANT_ON_HOVER);
+        setContentsPopup.setPosition(PopupCard.PopupPosition.TOP_CENTER);
+        setContentsPopup.attachTo(setContentsBtn);
     }
 
     @FXML
