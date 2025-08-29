@@ -6,11 +6,13 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Rectangle;
 
 import java.io.IOException;
 
 public class ThumbnailViewController extends VBox {
+
+    private static final double BASE_WIDTH = 150;
+    private static final double BASE_HEIGHT = 225;
 
     @FXML
     private ImageView thumbnailImageView;
@@ -32,22 +34,13 @@ public class ThumbnailViewController extends VBox {
 
     @FXML
     public void initialize() {
-        Rectangle clip = new Rectangle();
-        clip.setArcWidth(15);
-        clip.setArcHeight(15);
+        // Set base size
+        thumbnailImageView.setFitWidth(BASE_WIDTH);
+        thumbnailImageView.setFitHeight(BASE_HEIGHT);
 
-        // Listen for bounds changes to apply the clip and update container height.
+        // Listener to dynamically update the VBox container's height.
         thumbnailImageView.boundsInLocalProperty().addListener((obs, oldBounds, newBounds) -> {
             if (newBounds.getWidth() > 0 && newBounds.getHeight() > 0) {
-                // 1. Apply the clip to the ImageView.
-                if (thumbnailImageView.getClip() == null) {
-                    thumbnailImageView.setClip(clip);
-                }
-                clip.setWidth(newBounds.getWidth());
-                clip.setHeight(newBounds.getHeight());
-
-                // 2. Dynamically set the preferred height of this VBox container.
-                // This ensures the parent TilePane allocates the correct space, preventing clipping.
                 double labelHeight = 20; // Estimate label height
                 double totalHeight = newBounds.getHeight() + getSpacing() + getPadding().getTop() + getPadding().getBottom() + labelHeight;
                 setPrefHeight(totalHeight);
@@ -55,11 +48,12 @@ public class ThumbnailViewController extends VBox {
         });
     }
 
+    public void setScale(double scale) {
+        thumbnailImageView.setFitWidth(BASE_WIDTH * scale);
+        thumbnailImageView.setFitHeight(BASE_HEIGHT * scale);
+    }
+
     public void setThumbnailImage(Image image) {
-        // When the image is cleared, also remove the clip to prevent issues.
-        if (image == null) {
-            thumbnailImageView.setClip(null);
-        }
         thumbnailImageView.setImage(image);
     }
 
@@ -67,4 +61,3 @@ public class ThumbnailViewController extends VBox {
         pageLabel.setText(label);
     }
 }
-

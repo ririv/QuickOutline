@@ -6,7 +6,9 @@ import com.ririv.quickoutline.state.CurrentFileState;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.TilePane;
 
 import java.io.File;
@@ -19,6 +21,8 @@ public class ThumbnailPaneController {
     private static final int BATCH_SIZE = 20; // Number of thumbnails to load at a time
 
     @FXML
+    private Slider zoomSlider;
+    @FXML
     private ScrollPane scrollPane;
     @FXML
     private TilePane thumbnailTilePane;
@@ -29,6 +33,7 @@ public class ThumbnailPaneController {
     private ExecutorService thumbnailRenderExecutor;
     private int currentPageIndex = 0;
     private boolean isLoading = false;
+    private double currentScale = 1.0;
 
     @Inject
     public ThumbnailPaneController(CurrentFileState currentFileState) {
@@ -50,6 +55,15 @@ public class ThumbnailPaneController {
         scrollPane.vvalueProperty().addListener((obs, oldValue, newValue) -> {
             if (newValue.doubleValue() >= 0.98 && !isLoading) {
                 loadMoreThumbnails();
+            }
+        });
+
+        zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            currentScale = newVal.doubleValue();
+            for (Node node : thumbnailTilePane.getChildren()) {
+                if (node instanceof ThumbnailViewController) {
+                    ((ThumbnailViewController) node).setScale(currentScale);
+                }
             }
         });
     }
@@ -93,6 +107,7 @@ public class ThumbnailPaneController {
         for (int i = currentPageIndex; i < limit; i++) {
             final int pageIndex = i;
             ThumbnailViewController thumbnailView = new ThumbnailViewController();
+            thumbnailView.setScale(currentScale); // Apply current scale to new thumbnails
             thumbnailView.setPageLabel("第 " + (pageIndex + 1) + " 页");
             thumbnailTilePane.getChildren().add(thumbnailView);
 
@@ -135,6 +150,9 @@ public class ThumbnailPaneController {
         }
         currentPageIndex = 0;
         isLoading = false;
+        // Reset slider and scale on file change
+        zoomSlider.setValue(1.0);
+        currentScale = 1.0;
     }
 }
 
