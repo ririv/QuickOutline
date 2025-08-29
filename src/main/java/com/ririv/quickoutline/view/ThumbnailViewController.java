@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
@@ -32,6 +33,7 @@ public class ThumbnailViewController extends VBox {
     private int pageIndex; // Store the page index to re-render high-res image
     private PdfPreview pdfPreviewInstance; // Store the PdfPreview instance
     private String[] pageLabels; // Store the page labels array
+    private int totalPages; // Store total pages
     private ExecutorService previewRenderExecutor = Executors.newSingleThreadExecutor(); // Executor for high-res rendering
 
     public ThumbnailViewController() {
@@ -72,7 +74,7 @@ public class ThumbnailViewController extends VBox {
         imagePopupCard.setHideDelay(Duration.millis(1));
 
         // 4. Attach its hover logic to this thumbnail component
-        imagePopupCard.attachTo(this);
+        imagePopupCard.attachTo(thumbnailImageView);
     }
 
     public void setScale(double scale) {
@@ -85,6 +87,7 @@ public class ThumbnailViewController extends VBox {
         this.pageIndex = pageIndex;
         this.pdfPreviewInstance = pdfPreview;
         this.pageLabels = pageLabels;
+        this.totalPages = pdfPreview.getPageCount(); // Get total pages
         this.thumbnailImageView.setImage(image);
 
         // Asynchronously render high-res image for popup
@@ -105,16 +108,22 @@ public class ThumbnailViewController extends VBox {
     }
 
     private void updatePageLabel() {
+        String displayLabel = "";
         if (pageLabels != null && pageIndex < pageLabels.length) {
             String labelText = pageLabels[pageIndex];
             if (labelText != null && !labelText.isEmpty()) {
-                pageLabel.setText(labelText);
+                displayLabel = labelText;
             } else {
-                pageLabel.setText("第 " + (pageIndex + 1) + " 页");
+                displayLabel = "第 " + (pageIndex + 1) + " 页";
             }
         } else {
-            pageLabel.setText("第 " + (pageIndex + 1) + " 页");
+            displayLabel = "第 " + (pageIndex + 1) + " 页";
         }
+        pageLabel.setText(displayLabel);
+
+        // Add Tooltip
+        Tooltip tooltip = new Tooltip("页面" + (pageIndex + 1) + "/" + totalPages);
+        pageLabel.setTooltip(tooltip);
     }
 
     public void setPageLabel(String label) {
