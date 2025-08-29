@@ -48,7 +48,9 @@ public class StyledSelectSkin<T> extends SkinBase<StyledSelect<T>> {
         }, getSkinnable().valueProperty()));
 
         control.setOnMouseClicked(event -> {
-            if (!popup.isShowing()) {
+            if (popup.isShowing()) {
+                popup.hide();
+            } else {
                 popup.buildContent();
                 popup.show(control);
             }

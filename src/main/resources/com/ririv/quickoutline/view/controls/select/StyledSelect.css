@@ -41,14 +41,14 @@
 
 .styled-select .arrow {
     -fx-background-color: #BFBFBF;
-    -fx-shape: "M52.337 283.827c-31.269 30.396-31.269 79.721 0 110.194l403.211 391.718c31.325 30.382 82.114 30.382 113.378 0l403.197-391.718c31.325-30.466 31.325-79.793 0-110.194-31.28-30.449-82.058-30.449-113.393 0l-346.497 336.64-346.457-336.639c-31.325-30.448-82.105-30.448-113.445 0v0z";
+    -fx-shape: "M104.704 685.248a64 64 0 0 0 90.496 0L512 368.448l316.8 316.8a64 64 0 0 0 90.496-90.496L557.248 232.704a64 64 0 0 0-90.496 0L104.704 594.752a64 64 0 0 0 0 90.496z";
     /* MODIFIED: Adjusted size to match the shape's aspect ratio and prevent distortion */
     -fx-min-width: 10px;
-    -fx-min-height: 10px;
+    -fx-min-height: 8px;
     -fx-max-width: 10px;
-    -fx-max-height: 10px;
+    -fx-max-height: 8px;
 
-    -fx-rotate: 0;
+    -fx-rotate: 180;
 }
 
 .styled-select:hover .arrow {
