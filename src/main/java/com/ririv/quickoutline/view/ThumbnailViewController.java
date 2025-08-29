@@ -36,17 +36,21 @@ public class ThumbnailViewController extends VBox {
         clip.setArcWidth(15);
         clip.setArcHeight(15);
 
-        // Listen for bounds changes to apply the clip.
+        // Listen for bounds changes to apply the clip and update container height.
         thumbnailImageView.boundsInLocalProperty().addListener((obs, oldBounds, newBounds) -> {
-            // Only apply the clip when the ImageView has valid, non-zero bounds.
             if (newBounds.getWidth() > 0 && newBounds.getHeight() > 0) {
-                // Set the clip on the ImageView if it hasn't been set already.
+                // 1. Apply the clip to the ImageView.
                 if (thumbnailImageView.getClip() == null) {
                     thumbnailImageView.setClip(clip);
                 }
-                // Update the clip's size to match the new bounds.
                 clip.setWidth(newBounds.getWidth());
                 clip.setHeight(newBounds.getHeight());
+
+                // 2. Dynamically set the preferred height of this VBox container.
+                // This ensures the parent TilePane allocates the correct space, preventing clipping.
+                double labelHeight = 20; // Estimate label height
+                double totalHeight = newBounds.getHeight() + getSpacing() + getPadding().getTop() + getPadding().getBottom() + labelHeight;
+                setPrefHeight(totalHeight);
             }
         });
     }
