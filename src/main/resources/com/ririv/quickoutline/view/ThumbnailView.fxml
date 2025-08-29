@@ -5,7 +5,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root type="javafx.scene.layout.VBox" alignment="CENTER" spacing="5" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root type="javafx.scene.layout.VBox" alignment="CENTER" spacing="5" prefHeight="265" xmlns:fx="http://javafx.com/fxml/1">
     <padding>
         <Insets top="5" right="5" bottom="5" left="5" />
     </padding>
