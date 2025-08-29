@@ -4,6 +4,7 @@ import javafx.animation.PauseTransition;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Popup;
 import javafx.util.Duration;
@@ -36,8 +37,8 @@ import java.util.Set;
  *   PopupCard card = new PopupCard(popupContent);
  *
  *   // 3. 配置行为 (可选)
- *   card.setTriggers(PopupCard.TriggerType.DELAYED_ON_HOVER); // 设置为延迟显示
- *   card.setPosition(PopupCard.PopupPosition.RIGHT_OF); // 设置位置
+ *   card.setTriggers(PopupCard.TriggerType.DELAYED_ON_HOVER, PopupCard.TriggerType.CTRL_WHILE_HOVER);
+ *   card.setPosition(PopupCard.PopupPosition.RIGHT_OF);
  *   card.setHideDelay(Duration.millis(1)); // 设置为准立即隐藏
  *
  *   // 4. 将其附加到一个触发节点上
@@ -68,9 +69,10 @@ public class PopupCard extends Popup {
      * 触发器类型枚举
      */
     public enum TriggerType {
-        INSTANT_ON_HOVER, // 悬浮时立即显示
-        DELAYED_ON_HOVER, // 悬浮一段时间后延迟显示
-        CTRL_ON_HOVER     // 按住Ctrl(Command)并悬浮时立即显示
+        INSTANT_ON_HOVER,   // 悬浮时立即显示
+        DELAYED_ON_HOVER,   // 悬浮一段时间后延迟显示
+        CTRL_ON_ENTER,      // 按住Ctrl(Command)并进入时立即显示
+        CTRL_WHILE_HOVER    // 悬浮时按下Ctrl(Command)立即显示
     }
 
     /**
@@ -101,10 +103,11 @@ public class PopupCard extends Popup {
      */
     public void attachTo(Node node) {
         this.ownerNode = node;
-        // 核心逻辑：为目标节点和弹窗内容本身都添加鼠标事件监听
-        // 这样可以确保鼠标在两者之间移动时，弹窗不会意外消失
+        // 核心逻辑：为目标节点和弹窗内容本身都添加鼠标悬浮监听，以确保鼠标在两者之间移动时弹窗不会意外消失
         addHoverListeners(this.ownerNode);
         addHoverListeners(this.contentNode);
+        // 为解决焦点问题，键盘事件必须监听在更高层的Scene上
+        addSceneKeyListener(this.ownerNode);
     }
 
     /**
@@ -136,10 +139,31 @@ public class PopupCard extends Popup {
     }
 
     /**
+     * 为目标节点所在的场景添加全局键盘事件监听器。
+     * 使用场景属性监听器来确保即使节点稍后才被添加到场景中，也能成功注册事件。
+     */
+    private void addSceneKeyListener(Node node) {
+        // 监听场景变化，确保在节点加入场景后能正确添加/移除键盘监听
+        node.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (oldScene != null) {
+                oldScene.removeEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyPressed);
+            }
+            if (newScene != null) {
+                newScene.addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyPressed);
+            }
+        });
+
+        // 如果节点已在场景中，立即添加监听器
+        if (node.getScene() != null) {
+            node.getScene().addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyPressed);
+        }
+    }
+
+    /**
      * 处理鼠标进入事件（进入触发节点或弹窗内容时调用）
      */
     private void handleMouseEntered(MouseEvent event) {
-        // 核心：立刻停止任何待隐藏的计划
+        // 核心：立刻停止任何待隐藏的计划，这是避免闪烁的关键
         stopHideTimer();
 
         // 如果弹窗已显示，或“显示”计划已在进行中，则无需任何操作
@@ -148,7 +172,7 @@ public class PopupCard extends Popup {
         }
 
         // 检查是否满足任何一个立即显示的触发条件
-        boolean shouldShowInstantly = (triggers.contains(TriggerType.CTRL_ON_HOVER) && event.isShortcutDown()) ||
+        boolean shouldShowInstantly = (triggers.contains(TriggerType.CTRL_ON_ENTER) && event.isShortcutDown()) ||
                                       triggers.contains(TriggerType.INSTANT_ON_HOVER);
 
         if (shouldShowInstantly) {
@@ -168,6 +192,19 @@ public class PopupCard extends Popup {
         stopShowTimer();
         // 并启动“延迟隐藏”计划
         hideAfterDelay();
+    }
+
+    /**
+     * 处理全局键盘按下事件
+     */
+    private void handleKeyPressed(KeyEvent event) {
+        if (isShowing()) return;
+
+        // 检查触发器、快捷键，并用 node.isHover() 确保鼠标确实在目标节点上
+        if (triggers.contains(TriggerType.CTRL_WHILE_HOVER) && event.isShortcutDown() && ownerNode != null && ownerNode.isHover()) {
+            stopAllTimers();
+            display();
+        }
     }
 
     /**
@@ -206,5 +243,10 @@ public class PopupCard extends Popup {
 
     private void stopHideTimer() {
         hideTimer.stop();
+    }
+
+    private void stopAllTimers() {
+        stopShowTimer();
+        stopHideTimer();
     }
 }

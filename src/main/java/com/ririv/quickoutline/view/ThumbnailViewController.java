@@ -60,7 +60,7 @@ public class ThumbnailViewController extends VBox {
         // 3. Create and configure the PopupCard
         PopupCard imagePopupCard = new PopupCard(popupContentWrapper);
         imagePopupCard.setPosition(PopupCard.PopupPosition.RIGHT_OF);
-        imagePopupCard.setTriggers(PopupCard.TriggerType.DELAYED_ON_HOVER, PopupCard.TriggerType.CTRL_ON_HOVER);
+        imagePopupCard.setTriggers(PopupCard.TriggerType.DELAYED_ON_HOVER, PopupCard.TriggerType.CTRL_ON_ENTER, PopupCard.TriggerType.CTRL_WHILE_HOVER);
         imagePopupCard.setHideDelay(Duration.millis(1));
 
         // 4. Attach its hover logic to this thumbnail component
