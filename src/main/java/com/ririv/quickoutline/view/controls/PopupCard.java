@@ -12,7 +12,37 @@ import org.slf4j.LoggerFactory;
 
 /**
  * 一个功能强大且可配置的弹出卡片组件。
- * 支持立即显示或延迟显示，并能处理鼠标在触发节点和弹窗内容之间的移动，避免意外关闭。
+ *
+ * <p><b>设计理念:</b></p>
+ * <p>
+ * 此类的设计遵循“关注点分离”原则，将“要显示的内容”与“触发显示它的节点”分离开来。
+ * </p>
+ * <ul>
+ *   <li><b>内容 (Content):</b> 在构造函数中传入 ({@code new PopupCard(content)})，它定义了弹窗内部应该显示什么。</li>
+ *   <li><b>触发器 (Trigger):</b> 通过 {@link #attachTo(Node)} 方法附加，它定义了哪个UI节点将负责触发弹窗的显示和隐藏。</li>
+ * </ul>
+ *
+ * <p><b>基本用法:</b></p>
+ * <pre>{@code
+ *   // 1. 创建弹窗要显示的内容
+ *   Label popupContent = new Label("这是一个弹窗！");
+ *   popupContent.setPadding(new Insets(10));
+ *
+ *   // 2. 创建 PopupCard 实例
+ *   PopupCard card = new PopupCard(popupContent);
+ *
+ *   // 3. 配置行为 (可选)
+ *   card.setTriggerMode(PopupCard.TriggerMode.DELAYED_ON_HOVER); // 设置为延迟显示
+ *   card.setPosition(PopupCard.PopupPosition.RIGHT_OF); // 设置位置
+ *
+ *   // 4. 将其附加到一个触发节点上
+ *   Button myButton = new Button("悬浮在我上面");
+ *   card.attachTo(myButton);
+ * }</pre>
+ *
+ * @see #attachTo(Node)
+ * @see #setTriggerMode(TriggerMode)
+ * @see #setPosition(PopupPosition)
  */
 public class PopupCard extends Popup {
     private static final Logger logger = LoggerFactory.getLogger(PopupCard.class);
