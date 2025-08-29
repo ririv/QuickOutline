@@ -7,6 +7,8 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 
+import java.util.Objects;
+
 public class StyledSelect<T> extends Control {
 
     private final ObservableList<T> items = FXCollections.observableArrayList();
@@ -14,6 +16,8 @@ public class StyledSelect<T> extends Control {
 
     public StyledSelect() {
         getStyleClass().add("styled-select");
+        // Load the CSS file directly within the control
+        getStylesheets().add(Objects.requireNonNull(getClass().getResource("StyledSelect.css")).toExternalForm());
     }
 
     @Override
