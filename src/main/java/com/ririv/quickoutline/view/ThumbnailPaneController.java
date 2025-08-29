@@ -115,18 +115,12 @@ public class ThumbnailPaneController {
             
             thumbnailRenderExecutor.submit(() -> {
                 try {
-                    if (Thread.currentThread().isInterrupted()) return;
-
+                    // Pass pageIndex and currentPreview to setThumbnailImage
                     currentPreview.renderThumbnail(pageIndex, image -> {
-                        Platform.runLater(() -> thumbnailView.setThumbnailImage(image));
+                        Platform.runLater(() -> thumbnailView.setThumbnailImage(image, pageIndex, currentPreview));
                     });
-
-                } catch (Exception e) {
-                    if (!(e instanceof InterruptedException || e.getCause() instanceof InterruptedException)) {
-                        Platform.runLater(() -> {
-                            thumbnailView.setPageLabel("页面 " + (pageIndex + 1) + " 加载失败");
-                        });
-                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             });
         }
@@ -155,4 +149,3 @@ public class ThumbnailPaneController {
         currentScale = 1.0;
     }
 }
-

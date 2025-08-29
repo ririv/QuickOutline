@@ -1,6 +1,8 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.pdfProcess.PdfPreview;
 import com.ririv.quickoutline.view.controls.PopupCard;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -11,6 +13,8 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ThumbnailViewController extends VBox {
 
@@ -23,8 +27,11 @@ public class ThumbnailViewController extends VBox {
     @FXML
     private Label pageLabel;
 
-    private Image originalImage;
+    private Image originalImage; // This is the low-res image for the thumbnail
     private ImageView popupImageView; // The content for the popup
+    private int pageIndex; // Store the page index to re-render high-res image
+    private PdfPreview pdfPreviewInstance; // Store the PdfPreview instance
+    private ExecutorService previewRenderExecutor = Executors.newSingleThreadExecutor(); // Executor for high-res rendering
 
     public ThumbnailViewController() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ThumbnailView.fxml"));
@@ -72,13 +79,23 @@ public class ThumbnailViewController extends VBox {
         thumbnailImageView.setFitHeight(BASE_HEIGHT * scale);
     }
 
-    public void setThumbnailImage(Image image) {
+    public void setThumbnailImage(Image image, int pageIndex, PdfPreview pdfPreview) {
         this.originalImage = image;
+        this.pageIndex = pageIndex;
+        this.pdfPreviewInstance = pdfPreview;
         this.thumbnailImageView.setImage(image);
 
-        // Also set the image for the popup view so it's ready when shown
-        if (popupImageView != null) {
-            popupImageView.setImage(originalImage);
+        // Asynchronously render high-res image for popup
+        if (popupImageView != null && pdfPreviewInstance != null) {
+            previewRenderExecutor.submit(() -> {
+                try {
+                    pdfPreviewInstance.renderPreviewImage(pageIndex, highResImage -> {
+                        Platform.runLater(() -> popupImageView.setImage(highResImage));
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 

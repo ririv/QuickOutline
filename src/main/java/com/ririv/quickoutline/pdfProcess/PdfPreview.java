@@ -60,6 +60,7 @@ public class PdfPreview implements AutoCloseable {
     }
 
     private static final float THUMBNAIL_DPI = 72; // DPI for thumbnails
+    private static final float PREVIEW_DPI = 300; // DPI for high-resolution previews
 
     /**
      * Renders a specific page of the PDF to a JavaFX Image and passes it to a callback.
@@ -81,6 +82,17 @@ public class PdfPreview implements AutoCloseable {
      */
     public void renderThumbnail(int pageIndex, java.util.function.Consumer<Image> callback) throws IOException {
         renderPage(pageIndex, THUMBNAIL_DPI, callback);
+    }
+
+    /**
+     * Renders a high-resolution preview image for a specific page and passes it to a callback.
+     *
+     * @param pageIndex The 0-based index of the page to render.
+     * @param callback  The callback to be executed with the rendered Image.
+     * @throws IOException if there is an error rendering the page.
+     */
+    public void renderPreviewImage(int pageIndex, java.util.function.Consumer<Image> callback) throws IOException {
+        renderPage(pageIndex, PREVIEW_DPI, callback);
     }
 
     /**
