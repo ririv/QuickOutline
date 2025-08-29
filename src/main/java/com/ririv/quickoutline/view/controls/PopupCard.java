@@ -10,6 +10,10 @@ import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * 一个功能强大且可配置的弹出卡片组件。
  *
@@ -32,8 +36,9 @@ import org.slf4j.LoggerFactory;
  *   PopupCard card = new PopupCard(popupContent);
  *
  *   // 3. 配置行为 (可选)
- *   card.setTriggerMode(PopupCard.TriggerMode.DELAYED_ON_HOVER); // 设置为延迟显示
+ *   card.setTriggers(PopupCard.TriggerType.DELAYED_ON_HOVER); // 设置为延迟显示
  *   card.setPosition(PopupCard.PopupPosition.RIGHT_OF); // 设置位置
+ *   card.setHideDelay(Duration.millis(1)); // 设置为准立即隐藏
  *
  *   // 4. 将其附加到一个触发节点上
  *   Button myButton = new Button("悬浮在我上面");
@@ -41,28 +46,31 @@ import org.slf4j.LoggerFactory;
  * }</pre>
  *
  * @see #attachTo(Node)
- * @see #setTriggerMode(TriggerMode)
+ * @see #setTriggers(TriggerType...)
  * @see #setPosition(PopupPosition)
  */
 public class PopupCard extends Popup {
     private static final Logger logger = LoggerFactory.getLogger(PopupCard.class);
 
-    // 定时器
+    //--- 核心属性 ---
+    private final Parent contentNode; // 弹窗显示的内容节点
+    private Node ownerNode;           // 触发此弹窗的UI节点
+
+    //--- 行为配置 ---
+    private final Set<TriggerType> triggers = new HashSet<>(); // 激活的触发器集合
+    private PopupPosition position = PopupPosition.TOP_CENTER;   // 弹出位置
+
+    //--- 内部状态与计时器 ---
     private final PauseTransition showTimer; // 控制延迟显示的计时器
     private final PauseTransition hideTimer; // 控制延迟隐藏的计时器
 
-    // 属性
-    private final Parent contentNode; // 弹窗显示的内容
-    private Node ownerNode; // 触发此弹窗的节点
-    private TriggerMode triggerMode = TriggerMode.INSTANT_ON_HOVER; // 默认触发模式
-    private PopupPosition position = PopupPosition.TOP_CENTER;   // 默认弹出位置
-
     /**
-     * 触发模式枚举
+     * 触发器类型枚举
      */
-    public enum TriggerMode {
+    public enum TriggerType {
         INSTANT_ON_HOVER, // 悬浮时立即显示
-        DELAYED_ON_HOVER  // 悬浮一段时间后延迟显示
+        DELAYED_ON_HOVER, // 悬浮一段时间后延迟显示
+        CTRL_ON_HOVER     // 按住Ctrl(Command)并悬浮时立即显示
     }
 
     /**
@@ -88,8 +96,7 @@ public class PopupCard extends Popup {
     // --- 公共API ---
 
     /**
-     * 将弹窗逻辑附加到目标节点上。
-     * 这是使用此组件的主要入口。
+     * 将弹窗逻辑附加到目标节点上。这是使用此组件的主要入口。
      * @param node 目标节点
      */
     public void attachTo(Node node) {
@@ -100,8 +107,13 @@ public class PopupCard extends Popup {
         addHoverListeners(this.contentNode);
     }
 
-    public void setTriggerMode(TriggerMode mode) {
-        this.triggerMode = mode;
+    /**
+     * 设置一个或多个触发器类型。
+     * @param types 一个或多个TriggerType
+     */
+    public void setTriggers(TriggerType... types) {
+        this.triggers.clear();
+        this.triggers.addAll(Arrays.asList(types));
     }
 
     public void setPosition(PopupPosition position) {
@@ -119,12 +131,15 @@ public class PopupCard extends Popup {
     // --- 私有方法 ---
 
     private void addHoverListeners(Node node) {
-        node.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> handleMouseEntered());
-        node.addEventHandler(MouseEvent.MOUSE_EXITED, e -> handleMouseExited());
+        node.addEventHandler(MouseEvent.MOUSE_ENTERED, this::handleMouseEntered);
+        node.addEventHandler(MouseEvent.MOUSE_EXITED, this::handleMouseExited);
     }
 
-    private void handleMouseEntered() {
-        // 鼠标进入时，最主要的操作是取消任何将要执行的“隐藏”计划
+    /**
+     * 处理鼠标进入事件（进入触发节点或弹窗内容时调用）
+     */
+    private void handleMouseEntered(MouseEvent event) {
+        // 核心：立刻停止任何待隐藏的计划
         stopHideTimer();
 
         // 如果弹窗已显示，或“显示”计划已在进行中，则无需任何操作
@@ -132,30 +147,39 @@ public class PopupCard extends Popup {
             return;
         }
 
-        // 根据不同的模式，执行显示逻辑
-        if (triggerMode == TriggerMode.DELAYED_ON_HOVER) {
+        // 检查是否满足任何一个立即显示的触发条件
+        boolean shouldShowInstantly = (triggers.contains(TriggerType.CTRL_ON_HOVER) && event.isShortcutDown()) ||
+                                      triggers.contains(TriggerType.INSTANT_ON_HOVER);
+
+        if (shouldShowInstantly) {
+            display();
+        } else if (triggers.contains(TriggerType.DELAYED_ON_HOVER)) {
+            // 如果是延迟显示模式，则启动显示计时器
             showTimer.setOnFinished(e -> display());
             showTimer.playFromStart();
-        } else { // INSTANT_ON_HOVER
-            display();
         }
     }
 
-    private void handleMouseExited() {
-        // 鼠标移出时，取消任何将要执行的“显示”计划
+    /**
+     * 处理鼠标移出事件（移出触发节点或弹窗内容时调用）
+     */
+    private void handleMouseExited(MouseEvent event) {
+        // 核心：立刻停止任何待显示的计划
         stopShowTimer();
-        // 并启动“隐藏”计划
+        // 并启动“延迟隐藏”计划
         hideAfterDelay();
     }
 
+    /**
+     * 执行显示和定位的核心逻辑
+     */
     private void display() {
         if (isShowing() || ownerNode == null) return;
 
-        // 使用 setOnShown 来确保在弹窗完成渲染、尺寸已知后，再进行定位
+        // 技巧：使用 setOnShown 来确保在弹窗完成渲染、尺寸已知后，再进行定位
         this.setOnShown(e -> {
             Bounds nodeBounds = ownerNode.localToScreen(ownerNode.getBoundsInLocal());
             double x, y;
-
             if (position == PopupPosition.TOP_CENTER) {
                 x = nodeBounds.getCenterX() - this.getWidth() / 2;
                 y = nodeBounds.getMinY() - this.getHeight() - 5;
@@ -167,6 +191,7 @@ public class PopupCard extends Popup {
             this.setY(y);
         });
 
+        // 调用父类的show方法来显示窗口
         super.show(ownerNode.getScene().getWindow());
     }
 

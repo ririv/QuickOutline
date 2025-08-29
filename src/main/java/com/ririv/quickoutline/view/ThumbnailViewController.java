@@ -8,6 +8,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 import java.io.IOException;
 
@@ -58,8 +59,9 @@ public class ThumbnailViewController extends VBox {
 
         // 3. Create and configure the PopupCard
         PopupCard imagePopupCard = new PopupCard(popupContentWrapper);
-        imagePopupCard.setTriggerMode(PopupCard.TriggerMode.DELAYED_ON_HOVER);
         imagePopupCard.setPosition(PopupCard.PopupPosition.RIGHT_OF);
+        imagePopupCard.setTriggers(PopupCard.TriggerType.DELAYED_ON_HOVER, PopupCard.TriggerType.CTRL_ON_HOVER);
+        imagePopupCard.setHideDelay(Duration.millis(1));
 
         // 4. Attach its hover logic to this thumbnail component
         imagePopupCard.attachTo(this);

@@ -99,15 +99,16 @@ public class BookmarkBottomPaneController {
 
         offsetTF.setTextFormatter(new TextFormatter<>(integerFilter));
 
-        // Initialize popups once
+        // Setup for getContentsBtn
         getContentsPopup = new PopupCard(getContentsPopupController);
-        getContentsPopup.setTriggerMode(PopupCard.TriggerMode.INSTANT_ON_HOVER);
         getContentsPopup.setPosition(PopupCard.PopupPosition.TOP_CENTER);
+        getContentsPopup.setTriggers(PopupCard.TriggerType.INSTANT_ON_HOVER);
         getContentsPopup.attachTo(getContentsBtn);
 
+        // Setup for setContentsBtn
         setContentsPopup = new PopupCard(setContentsPopupController);
-        setContentsPopup.setTriggerMode(PopupCard.TriggerMode.INSTANT_ON_HOVER);
         setContentsPopup.setPosition(PopupCard.PopupPosition.TOP_CENTER);
+        setContentsPopup.setTriggers(PopupCard.TriggerType.INSTANT_ON_HOVER);
         setContentsPopup.attachTo(setContentsBtn);
     }
 

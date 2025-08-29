@@ -28,7 +28,7 @@
 
 -   `PopupCard(Parent content)`: 构造函数，传入弹窗要显示的内容。
 -   `attachTo(Node node)`: 将弹窗的触发逻辑附加到指定的节点上。
--   `setTriggerMode(TriggerMode mode)`: 设置触发模式（立即/延迟）。
+-   `setTriggers(TriggerMode mode)`: 设置触发模式（立即/延迟）。
 -   `setPosition(PopupPosition position)`: 设置弹出位置（上方/右侧）。
 -   `setShowDelay(Duration duration)`: 设置显示延迟时间。
 -   `setHideDelay(Duration duration)`: 设置隐藏延迟时间。
@@ -47,7 +47,7 @@ popupContent.setPadding(new Insets(20));
 PopupCard card = new PopupCard(popupContent);
 
 // 4. 配置其行为
-card.setTriggerMode(PopupCard.TriggerMode.DELAYED_ON_HOVER);
+card.setTriggers(PopupCard.TriggerMode.DELAYED_ON_HOVER);
 card.setPosition(PopupCard.PopupPosition.RIGHT_OF);
 card.setShowDelay(Duration.seconds(2));
 
