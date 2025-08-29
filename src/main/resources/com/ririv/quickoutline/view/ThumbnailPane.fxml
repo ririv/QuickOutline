@@ -16,7 +16,7 @@
 
     <HBox alignment="CENTER_LEFT" spacing="10">
         <Label text="%zoom"/>
-        <Slider fx:id="zoomSlider" max="2.0" min="0.5" value="1.0" HBox.hgrow="ALWAYS"/>
+        <Slider fx:id="zoomSlider" max="3.0" min="0.5" value="1.0" HBox.hgrow="ALWAYS"/>
     </HBox>
 
     <ScrollPane fx:id="scrollPane" fitToWidth="true" VBox.vgrow="ALWAYS">
