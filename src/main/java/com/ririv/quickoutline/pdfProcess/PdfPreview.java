@@ -59,31 +59,47 @@ public class PdfPreview implements AutoCloseable {
         return document.getNumberOfPages();
     }
 
+    private static final float THUMBNAIL_DPI = 72; // DPI for thumbnails
+
     /**
-     * Renders a specific page of the PDF to a JavaFX Image.
+     * Renders a specific page of the PDF to a JavaFX Image and passes it to a callback.
      *
      * @param pageIndex The 0-based index of the page to render.
-     * @return A JavaFX Image of the rendered page.
+     * @param callback  The callback to be executed with the rendered Image.
      * @throws IOException if there is an error rendering the page.
      */
-    public Image renderPage(int pageIndex) throws IOException {
-        return renderPage(pageIndex, DEFAULT_DPI);
+    public void renderPage(int pageIndex, java.util.function.Consumer<Image> callback) throws IOException {
+        renderPage(pageIndex, DEFAULT_DPI, callback);
     }
 
     /**
-     * Renders a specific page of the PDF to a JavaFX Image with a specific DPI.
+     * Renders a thumbnail for a specific page and passes it to a callback.
+     *
+     * @param pageIndex The 0-based index of the page to render.
+     * @param callback  The callback to be executed with the rendered Image.
+     * @throws IOException if there is an error rendering the page.
+     */
+    public void renderThumbnail(int pageIndex, java.util.function.Consumer<Image> callback) throws IOException {
+        renderPage(pageIndex, THUMBNAIL_DPI, callback);
+    }
+
+    /**
+     * Renders a specific page of the PDF to a JavaFX Image with a specific DPI and passes it to a callback.
      *
      * @param pageIndex The 0-based index of the page to render.
      * @param dpi The resolution (dots per inch) for rendering.
-     * @return A JavaFX Image of the rendered page.
+     * @param callback  The callback to be executed with the rendered Image.
      * @throws IOException if there is an error rendering the page.
      */
-    public Image renderPage(int pageIndex, float dpi) throws IOException {
+    public void renderPage(int pageIndex, float dpi, java.util.function.Consumer<Image> callback) throws IOException {
         if (pageIndex < 0 || pageIndex >= getPageCount()) {
             throw new IllegalArgumentException("Page index " + pageIndex + " is out of bounds.");
         }
         BufferedImage bufferedImage = renderer.renderImageWithDPI(pageIndex, dpi);
-        return SwingFXUtils.toFXImage(bufferedImage, null);
+        Image image = SwingFXUtils.toFXImage(bufferedImage, null);
+        if (callback != null) {
+            callback.accept(image);
+        }
     }
 
 

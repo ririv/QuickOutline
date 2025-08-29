@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.TilePane?>
+
+<ScrollPane fx:id="scrollPane" fitToWidth="true" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.ririv.quickoutline.view.ThumbnailPaneController">
+    <content>
+        <TilePane fx:id="thumbnailTilePane" hgap="10" vgap="10" prefColumns="3" />
+    </content>
+</ScrollPane>

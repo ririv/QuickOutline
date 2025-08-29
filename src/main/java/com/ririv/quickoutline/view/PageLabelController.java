@@ -52,6 +52,9 @@ public class PageLabelController {
     private final VBox ruleVBox = new VBox(5);
     private final AppEventBus appEventBus;
 
+    @FXML
+    private ThumbnailPaneController thumbnailPaneController; // Injected by FXML loader
+
     @Inject
     public PageLabelController(PdfPageLabelService pdfPageLabelService, CurrentFileState fileService, AppEventBus appEventBus) {
         this.pdfPageLabelService = pdfPageLabelService;

@@ -82,8 +82,11 @@ public class PdfPreviewController {
         }
 
         try {
-            imageView.setImage(pdfPreview.renderPage(index));
-            currentPageIndex = index;
+            pdfPreview.renderPage(index, image -> {
+                imageView.setImage(image);
+                currentPageIndex = index;
+                updateControls(); // Must update controls after image is set
+            });
         } catch (IOException e) {
             e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -91,8 +94,7 @@ public class PdfPreviewController {
             alert.setHeaderText("无法渲染PDF页面");
             alert.setContentText("渲染页面 " + (index + 1) + " 时发生错误:\n" + e.getMessage());
             alert.showAndWait();
-        } finally {
-            updateControls();
+            updateControls(); // Also update controls on error
         }
     }
 

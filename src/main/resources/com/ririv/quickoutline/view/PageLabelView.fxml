@@ -4,54 +4,63 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.ririv.quickoutline.view.ThumbnailPaneController?>
 
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.ririv.quickoutline.view.PageLabelController"
            stylesheets="@BasicControls.css, @MainView.css, @controls/select/StyledSelect.css">
-    <BorderPane>
-        <padding>
-            <Insets bottom="15" left="15" right="15" top="15"/>
-        </padding>
-        <center>
-            <VBox spacing="15">
-                <GridPane hgap="10" vgap="15">
-                    <columnConstraints>
-                        <ColumnConstraints halignment="RIGHT" minWidth="80"/>
-                        <ColumnConstraints hgrow="ALWAYS"/>
-                    </columnConstraints>
-                    <Label text="%pageLabel.style" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                    <StyledSelect fx:id="numberingStyleChoiceBox" maxWidth="Infinity"
-                                  GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                    <Label text="%pageLabel.prefix" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                    <TextField fx:id="prefixTextField" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+    <SplitPane dividerPositions="0.66">
+        <!-- Left Pane -->
+        <BorderPane>
+            <padding>
+                <Insets bottom="15" left="15" right="15" top="15"/>
+            </padding>
+            <center>
+                <VBox spacing="15">
+                    <GridPane hgap="10" vgap="15">
+                        <columnConstraints>
+                            <ColumnConstraints halignment="RIGHT" minWidth="80"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        <Label text="%pageLabel.style" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <StyledSelect fx:id="numberingStyleChoiceBox" maxWidth="Infinity"
+                                      GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                    <Label text="%pageLabel.startNumber" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                    <TextField fx:id="startTextField" promptText="%pageLabel.startNumber.prompt" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        <Label text="%pageLabel.prefix" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <TextField fx:id="prefixTextField" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                    <Label text="%pageLabel.startPage" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                    <TextField fx:id="fromPageTextField" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                </GridPane>
+                        <Label text="%pageLabel.startNumber" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <TextField fx:id="startTextField" promptText="%pageLabel.startNumber.prompt" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 
-                <HBox alignment="CENTER">
-                    <Button onAction="#addRule" prefWidth="120.0" text="%pageLabel.addRuleBtn" styleClass="my-button, plain-button-primary"/>
+                        <Label text="%pageLabel.startPage" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                        <TextField fx:id="fromPageTextField" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                    </GridPane>
+
+                    <HBox alignment="CENTER">
+                        <Button onAction="#addRule" prefWidth="120.0" text="%pageLabel.addRuleBtn" styleClass="my-button, plain-button-primary"/>
+                    </HBox>
+
+                    <Separator/>
+
+                    <Label text="%pageLabel.ruleList" styleClass="title"/>
+                    <ScrollPane fx:id="labelRuleListLayout" fitToWidth="true" prefHeight="200" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </center>
+            <bottom>
+                <HBox alignment="CENTER" spacing="10">
+                    <padding>
+                        <Insets top="15"/>
+                    </padding>
+                    <Button defaultButton="true" onAction="#apply" prefWidth="120.0"
+                            styleClass="my-button,plain-button-important" text="%setPageLabelBtn.text"/>
                 </HBox>
+            </bottom>
+        </BorderPane>
 
-                <Separator/>
+        <!-- Right Pane (Thumbnail Preview) -->
+        <fx:include source="ThumbnailPane.fxml" fx:id="thumbnailPane" />
 
-                <Label text="%pageLabel.ruleList" styleClass="title"/>
-                <ScrollPane fx:id="labelRuleListLayout" fitToWidth="true" prefHeight="200" VBox.vgrow="ALWAYS"/>
-            </VBox>
-        </center>
-        <bottom>
-            <HBox alignment="CENTER" spacing="10">
-                <padding>
-                    <Insets top="15"/>
-                </padding>
-                <Button defaultButton="true" onAction="#apply" prefWidth="120.0"
-                        styleClass="my-button,plain-button-important" text="%setPageLabelBtn.text"/>
-            </HBox>
-        </bottom>
-    </BorderPane>
+    </SplitPane>
 </StackPane>
