@@ -7,6 +7,7 @@ import com.ririv.quickoutline.event.ShowMessageEvent;
 import com.ririv.quickoutline.event.ShowSuccessDialogEvent;
 import com.ririv.quickoutline.event.SwitchTabEvent;
 import com.ririv.quickoutline.exception.EncryptedPdfException;
+import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.state.CurrentFileState;
 import com.ririv.quickoutline.utils.LocalizationManager;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
@@ -48,6 +49,8 @@ public class MainController {
     // Child controllers
     public LeftPaneController leftPaneController;
     public PdfPreviewController pdfPreviewTabViewController;
+    public PageLabelController pageLabelController; // Inject PageLabelController
+    public ThumbnailPaneController thumbnailPaneController; // Inject ThumbnailPaneController
 
     @FXML
     private BookmarkBottomPaneController bookmarkBottomPaneController;
@@ -56,6 +59,7 @@ public class MainController {
     public BorderPane leftPane;
 
     private final CurrentFileState currentFileState;
+    private final PdfPageLabelService pdfPageLabelService; // Inject PdfPageLabelService
     private final AppEventBus eventBus;
 
     @FXML
@@ -76,8 +80,9 @@ public class MainController {
     private final ObjectProperty<FnTab> currentTabProperty = new SimpleObjectProperty<>(FnTab.bookmark);
 
     @Inject
-    public MainController(CurrentFileState currentFileState, AppEventBus eventBus) {
+    public MainController(CurrentFileState currentFileState, PdfPageLabelService pdfPageLabelService, AppEventBus eventBus) {
         this.currentFileState = currentFileState;
+        this.pdfPageLabelService = pdfPageLabelService;
         this.eventBus = eventBus;
         // 1. 注册自身为订阅者
         this.eventBus.register(this);
@@ -136,6 +141,9 @@ public class MainController {
 
         try {
             currentFileState.setSrcFile(newFilePath);
+            // 获取页码标签并传递给缩略图控制器
+            String[] pageLabels = pdfPageLabelService.getPageLabels(newFilePath.toString());
+            thumbnailPaneController.setCurrentPageLabels(pageLabels);
         } catch (java.io.IOException e) { // Catch standard IO Exception
             messageManager.showMessage(bundle.getString("message.cannotOpenDoc") + e.getMessage(), Message.MessageType.ERROR);
         } catch (EncryptedPdfException e) {

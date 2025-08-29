@@ -15,4 +15,7 @@ public class PdfPageLabelService {
         pageLabelSetter.setPageLabels(srcFilePath, destFilePath, labelList);
     }
 
+    public String[] getPageLabels(String string) throws IOException {
+        return pageLabelSetter.getPageLabels(string);
+    }
 }

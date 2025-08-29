@@ -31,6 +31,7 @@ public class ThumbnailViewController extends VBox {
     private ImageView popupImageView; // The content for the popup
     private int pageIndex; // Store the page index to re-render high-res image
     private PdfPreview pdfPreviewInstance; // Store the PdfPreview instance
+    private String[] pageLabels; // Store the page labels array
     private ExecutorService previewRenderExecutor = Executors.newSingleThreadExecutor(); // Executor for high-res rendering
 
     public ThumbnailViewController() {
@@ -79,10 +80,11 @@ public class ThumbnailViewController extends VBox {
         thumbnailImageView.setFitHeight(BASE_HEIGHT * scale);
     }
 
-    public void setThumbnailImage(Image image, int pageIndex, PdfPreview pdfPreview) {
+    public void setThumbnailImage(Image image, int pageIndex, PdfPreview pdfPreview, String[] pageLabels) {
         this.originalImage = image;
         this.pageIndex = pageIndex;
         this.pdfPreviewInstance = pdfPreview;
+        this.pageLabels = pageLabels;
         this.thumbnailImageView.setImage(image);
 
         // Asynchronously render high-res image for popup
@@ -97,9 +99,27 @@ public class ThumbnailViewController extends VBox {
                 }
             });
         }
+
+        // Update page label with PageLabelService
+        updatePageLabel();
+    }
+
+    private void updatePageLabel() {
+        if (pageLabels != null && pageIndex < pageLabels.length) {
+            String labelText = pageLabels[pageIndex];
+            if (labelText != null && !labelText.isEmpty()) {
+                pageLabel.setText(labelText);
+            } else {
+                pageLabel.setText("第 " + (pageIndex + 1) + " 页");
+            }
+        } else {
+            pageLabel.setText("第 " + (pageIndex + 1) + " 页");
+        }
     }
 
     public void setPageLabel(String label) {
+        // This method is now deprecated, updatePageLabel() should be used instead.
+        // Keeping it for compatibility if other parts of the code still call it.
         pageLabel.setText(label);
     }
 }

@@ -2,6 +2,7 @@ package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PdfPreview;
+import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.state.CurrentFileState;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -28,7 +29,9 @@ public class ThumbnailPaneController {
     private TilePane thumbnailTilePane;
 
     private final CurrentFileState currentFileState;
+    private final PdfPageLabelService pdfPageLabelService; // Inject PdfPageLabelService
     private PdfPreview currentPreview;
+    private String[] currentPageLabels; // Store the page labels array
     private ExecutorService fileLoadExecutor = Executors.newSingleThreadExecutor();
     private ExecutorService thumbnailRenderExecutor;
     private int currentPageIndex = 0;
@@ -36,8 +39,9 @@ public class ThumbnailPaneController {
     private double currentScale = 1.0;
 
     @Inject
-    public ThumbnailPaneController(CurrentFileState currentFileState) {
+    public ThumbnailPaneController(CurrentFileState currentFileState, PdfPageLabelService pdfPageLabelService) {
         this.currentFileState = currentFileState;
+        this.pdfPageLabelService = pdfPageLabelService;
     }
 
     @FXML
@@ -74,26 +78,34 @@ public class ThumbnailPaneController {
         Task<PdfPreview> loadFileTask = new Task<>() {
             @Override
             protected PdfPreview call() throws Exception {
-                // This is the slow part, running in the background
                 return new PdfPreview(pdfFile);
             }
         };
 
         loadFileTask.setOnSucceeded(event -> {
-            // This runs on the FX thread after the task is successful
             currentPreview = loadFileTask.getValue();
+            // 获取页码标签
+            try {
+                currentPageLabels = pdfPageLabelService.getPageLabels(currentFileState.getSrcFile().toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+                currentPageLabels = null; // Fallback to default numbering
+            }
             thumbnailRenderExecutor = Executors.newSingleThreadExecutor();
             currentPageIndex = 0;
             loadMoreThumbnails(); // Load the first batch
         });
 
         loadFileTask.setOnFailed(event -> {
-            // Handle exceptions during PDF loading
             loadFileTask.getException().printStackTrace();
             reset();
         });
 
         fileLoadExecutor.submit(loadFileTask);
+    }
+
+    public void setCurrentPageLabels(String[] pageLabels) {
+        this.currentPageLabels = pageLabels;
     }
 
     private void loadMoreThumbnails() {
@@ -108,16 +120,14 @@ public class ThumbnailPaneController {
             final int pageIndex = i;
             ThumbnailViewController thumbnailView = new ThumbnailViewController();
             thumbnailView.setScale(currentScale); // Apply current scale to new thumbnails
-            thumbnailView.setPageLabel("第 " + (pageIndex + 1) + " 页");
             thumbnailTilePane.getChildren().add(thumbnailView);
 
             if (thumbnailRenderExecutor == null || thumbnailRenderExecutor.isShutdown()) return;
             
             thumbnailRenderExecutor.submit(() -> {
                 try {
-                    // Pass pageIndex and currentPreview to setThumbnailImage
                     currentPreview.renderThumbnail(pageIndex, image -> {
-                        Platform.runLater(() -> thumbnailView.setThumbnailImage(image, pageIndex, currentPreview));
+                        Platform.runLater(() -> thumbnailView.setThumbnailImage(image, pageIndex, currentPreview, currentPageLabels));
                     });
                 } catch (IOException e) {
                     e.printStackTrace();
