@@ -1,0 +1,21 @@
+.styled-slider .track {
+    -fx-background-color: #f0f0f0; /* 轨道的浅灰色背景 */
+    -fx-background-radius: 3;
+    -fx-pref-height: 4px;
+}
+
+.styled-slider .colored-track {
+    -fx-background-color: -el-color-primary; /* 主题色 */
+    -fx-background-radius: 3;
+}
+
+.styled-slider .thumb {
+    -fx-background-color: white;
+    -fx-border-color: -el-color-primary;
+    -fx-border-width: 2px;
+    -fx-shape: "M 0,0 A 1,1 0 1 1 0,-0.001 Z"; /* 强制圆形 */
+}
+
+.styled-slider:hover .thumb {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);
+}

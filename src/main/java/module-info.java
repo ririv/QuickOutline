@@ -5,7 +5,7 @@ module quickoutline {
 //    requires javafx.web;
 //    requires java.validation;
     requires javafx.swing;
-    requires org.slf4j; //必须添加，否则会出现找不到 Exception java.lang.NoClassDefFoundError: org/slf4j/LoggerFactory
+    requires org.slf4j;
     requires org.apache.commons.logging;
 
     requires kernel;
@@ -16,7 +16,7 @@ module quickoutline {
 //    requires bouncy.castle.adapter;
 //    requires bouncy.castle.connector;
 //    requires org.bouncycastle.provider;
-    requires org.bouncycastle.pkix; //加密的PDF必须添加
+    requires org.bouncycastle.pkix;
     requires org.apache.pdfbox;
     requires com.google.guice;
     requires jakarta.inject;
@@ -28,7 +28,7 @@ module quickoutline {
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
     opens com.ririv.quickoutline.service to com.google.guice;
-    opens com.ririv.quickoutline.state to com.google.guice; //由于FXML使用反射访问controller
+    opens com.ririv.quickoutline.state to com.google.guice;
     opens com.ririv.quickoutline.view.controls to javafx.fxml, javafx.graphics;
 
     exports com.ririv.quickoutline.view;
@@ -55,4 +55,6 @@ module quickoutline {
     opens com.ririv.quickoutline.pdfProcess.itextImpl.model to com.google.guice;
     exports com.ririv.quickoutline.view.controls.radioButton2;
     opens com.ririv.quickoutline.view.controls.radioButton2 to javafx.fxml, javafx.graphics;
+    exports com.ririv.quickoutline.view.controls.slider;
+    opens com.ririv.quickoutline.view.controls.slider to javafx.fxml, javafx.graphics;
 }
