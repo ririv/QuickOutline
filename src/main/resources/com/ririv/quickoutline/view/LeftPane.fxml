@@ -41,7 +41,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-size-tab, label-icon" />
+                        <Region styleClass="icon, icon-size-tab, page-number-icon" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
