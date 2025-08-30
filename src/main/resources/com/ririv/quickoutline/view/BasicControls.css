@@ -19,10 +19,9 @@
     -fx-text-fill: #333333;
 }
 
-/*bug：鼠标悬浮移出后滚动条会消失*/
-/*.text-area:hover {*/
-/*    -fx-border-color: -el-color-primary;*/
-/*}*/
+.text-area:hover {
+    -fx-border-color: -el-color-primary;
+}
 
 .text-area:focused {
     -fx-background-color: transparent;
@@ -35,61 +34,50 @@
 }
 
 
-/* 去除滚动条背景色，只保留滑块 */
+/* 滚动条 */
 
-.scroll-bar {
-    -fx-background-color: transparent; /* 移除背景色 */
+/* 滚动条轨道和背景 */
+.scroll-bar:horizontal, .scroll-bar:vertical {
+    -fx-background-color: transparent; /* 轨道背景设为透明 */
 }
 
-/* 去除滚动条的轨道背景色 */
-.scroll-bar .track {
-    -fx-background-color: transparent; /* 透明轨道 */
-    -fx-background-radius: 10px;    /* 圆角效果 */
-    -fx-border-radius: 10px;        /* 边框圆角 */
-}
-
-/* 设置滚动条滑块的颜色 */
+/* 滚动条滑块 */
 .scroll-bar .thumb {
-    -fx-background-color: #888888; /* 滑块的颜色 */
-    -fx-background-radius: 10px;    /* 圆角效果 */
-    -fx-border-radius: 10px;        /* 边框圆角 */
+    -fx-background-color: rgba(0, 0, 0, 0.3); /* 半透明的滑块颜色 */
+    -fx-background-insets: 2; /* 滑块的内边距，使其看起来更细 */
+    -fx-background-radius: 4; /* 滑块的圆角 */
 }
 
-/* 当滑块悬停时，改变其颜色 */
+/* 鼠标悬浮在滑块上时 */
 .scroll-bar .thumb:hover {
-    -fx-background-color: #555555; /* 悬停时的颜色 */
+    -fx-background-color: rgba(0, 0, 0, 0.5); /* 颜色加深，提供反馈 */
 }
 
-/* 设置水平滚动条 */
-.scroll-bar:horizontal {
-    -fx-pref-height: 10px; /* 设置水平滚动条的高度 */
-}
-
-/* 设置垂直滚动条 */
+/* 垂直滚动条的宽度 */
 .scroll-bar:vertical {
-    -fx-pref-width: 10px; /* 设置垂直滚动条的宽度 */
+    -fx-pref-width: 10; /* 宽度增加到10px */
 }
 
-/* 去掉滚动条的增量和减量箭头按钮 */
-/* 箭头按钮的区域要设为0，否则占位*/
-.scroll-bar .increment-button, /* 增量箭头按钮（右、下） */
-.scroll-bar .decrement-button { /* 减量箭头按钮（左、上） */
-    -fx-background-color: transparent; /* 设置透明背景 */
-    -fx-background-insets: 0; /* 清空背景 */
-    -fx-background-radius: 0; /* 清空圆角 */
-    -fx-pref-width: 0; /* 宽度设置为 0 */
-    -fx-pref-height: 0; /* 高度设置为 0 */
+/* 水平滚动条的高度 */
+.scroll-bar:horizontal {
+    -fx-pref-height: 10; /* 高度增加到10px */
 }
 
-
-/* 箭头图标设置不可见*/
-.scroll-bar,
-.scroll-bar .decrement-arrow,
-.scroll-bar .increment-arrow {
-    visibility: hidden;
+/* 隐藏两端的箭头按钮 */
+.scroll-bar .increment-button, .scroll-bar .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
 }
 
-.scroll-pane>.corner{
+/* 隐藏箭头的图形 */
+.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
+    -fx-shape: " "; /* 将形状设置为空，使其不可见 */
+    -fx-padding: 0;
+}
+
+/* 隐藏ScrollPane右下角的边角 */
+.scroll-pane > .corner {
     -fx-background-color: transparent;
 }
 
