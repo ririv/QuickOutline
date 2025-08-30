@@ -1,21 +1,106 @@
+/* StyledSlider.css - 现代化风格 */
+
+/* --- Main Slider Container --- */
+.styled-slider {
+    -fx-padding: 8px 0;
+    -fx-cursor: hand;
+}
+
+.styled-slider:disabled {
+    -fx-opacity: 0.6;
+    -fx-cursor: default;
+}
+
+/* --- Track Styles --- */
 .styled-slider .track {
-    -fx-background-color: #f0f0f0; /* 轨道的浅灰色背景 */
-    -fx-background-radius: 3;
-    -fx-pref-height: 4px;
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 2px;
+    -fx-border-radius: 2px;
+    -fx-cursor: hand;
 }
 
+.styled-slider:disabled .track {
+    -fx-background-color: #f5f5f5;
+    -fx-cursor: default;
+}
+
+/* --- Colored Track (Progress) Styles --- */
 .styled-slider .colored-track {
-    -fx-background-color: -el-color-primary; /* 主题色 */
-    -fx-background-radius: 3;
+    -fx-background-color: #409eff;
+    -fx-background-radius: 2px;
+    -fx-border-radius: 2px;
 }
 
+.styled-slider:disabled .colored-track {
+    -fx-background-color: #c1c1c1;
+}
+
+/* --- Thumb (Handle) Styles --- */
 .styled-slider .thumb {
     -fx-background-color: white;
-    -fx-border-color: -el-color-primary;
+    -fx-border-color: #409eff;
     -fx-border-width: 2px;
-    -fx-shape: "M 0,0 A 1,1 0 1 1 0,-0.001 Z"; /* 强制圆形 */
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 4, 0, 0, 1);
 }
 
-.styled-slider:hover .thumb {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);
+.styled-slider .thumb:hover,
+.styled-slider .thumb.hover {
+    -fx-border-color: #409eff;
+    -fx-border-width: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(64,158,255,0.3), 8, 0, 0, 2);
+    /* 移除缩放效果 */
+}
+
+.styled-slider .thumb:pressed,
+.styled-slider .thumb.pressed {
+    -fx-border-color: rgb(51.2, 126.4, 204);
+    -fx-border-width: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(64,158,255,0.4), 10, 0, 0, 2);
+    /* 移除缩放效果 */
+}
+
+.styled-slider:disabled .thumb {
+    -fx-background-color: white;
+    -fx-border-color: #c1c1c1;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 2, 0, 0, 1);
+    -fx-cursor: default;
+}
+
+/* --- Focus Styles --- */
+.styled-slider:focused {
+    -fx-background-color: transparent;
+}
+
+.styled-slider:focused .thumb {
+    -fx-border-color: #409eff;
+    -fx-effect: dropshadow(gaussian, rgba(64,158,255,0.3), 8, 0, 0, 2);
+}
+
+/* --- Custom Colors for Different States --- */
+.styled-slider.success .colored-track {
+    -fx-background-color: #52c41a;
+}
+
+.styled-slider.success .thumb {
+    -fx-border-color: #52c41a;
+}
+
+.styled-slider.warning .colored-track {
+    -fx-background-color: #faad14;
+}
+
+.styled-slider.warning .thumb {
+    -fx-border-color: #faad14;
+}
+
+.styled-slider.error .colored-track {
+    -fx-background-color: #f56c6c;
+}
+
+.styled-slider.error .thumb {
+    -fx-border-color: #f56c6c;
 }
