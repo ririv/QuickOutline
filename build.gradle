@@ -101,7 +101,9 @@ def args = [
     // 屏蔽iText的字形缺失警告
     '-Dorg.slf4j.simpleLogger.log.com.itextpdf.kernel.font.PdfType1Font=error',
     // 屏蔽PDFBox的字形缺失警告
-    '-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox.rendering.GlyphCache=error'
+    '-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox.rendering.GlyphCache=error',
+    // 屏蔽PDFBox fontbox的字符串命令警告
+    '-Dorg.slf4j.simpleLogger.log.org.apache.fontbox.cff.Type1CharString=error'
 ]
 
 tasks.withType(JavaCompile).configureEach {
