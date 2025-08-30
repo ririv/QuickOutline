@@ -10,7 +10,7 @@
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.ririv.quickoutline.view.PageLabelController">
 
-    <SplitPane dividerPositions="0.75">
+    <SplitPane dividerPositions="0.75" style="-fx-background-color: white;">
         <!-- Left Pane -->
         <BorderPane>
             <padding>
