@@ -11,18 +11,18 @@
 
 /* 自定义编辑器样式 */
 .editable-tree-table-cell-editor {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-border-width: 0;
-    -fx-background-insets: 0;
-    -fx-padding: 0;
-    -fx-font-size: inherit;
-    -fx-font-family: inherit;
-    -fx-text-fill: inherit;
+    -fx-background-color: transparent !important;
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0 !important;
+    -fx-background-insets: 0 !important;
+    -fx-padding: 0 !important;
+    -fx-font-size: inherit !important;
+    -fx-font-family: inherit !important;
+    -fx-text-fill: inherit !important;
     /* 确保编辑器与单元格高度一致 */
-    -fx-pref-height: 20px;
-    -fx-max-height: 20px;
-    -fx-min-height: 20px;
+    -fx-pref-height: 20px !important;
+    -fx-max-height: 20px !important;
+    -fx-min-height: 20px !important;
 }
 
 /* 编辑器聚焦状态样式 */

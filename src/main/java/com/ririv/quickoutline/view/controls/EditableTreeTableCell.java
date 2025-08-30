@@ -129,20 +129,6 @@ public class EditableTreeTableCell<S, T> extends TreeTableCell<S, T> {
         // 设置样式类，使其与普通显示保持一致
         textField.getStyleClass().addAll("editable-tree-table-cell-editor");
         
-        // 移除默认的边框和背景，保持与单元格一致的外观
-        textField.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-border-color: transparent;" +
-            "-fx-border-width: 0;" +
-            "-fx-background-insets: 0;" +
-            "-fx-padding: 0;" +
-            "-fx-font-size: inherit;" +
-            "-fx-font-family: inherit;" +
-            "-fx-pref-height: 20px;" +
-            "-fx-max-height: 20px;" +
-            "-fx-min-height: 20px;"
-        );
-        
         // 键盘事件处理
         textField.setOnKeyPressed(this::onKeyPressed);
         
