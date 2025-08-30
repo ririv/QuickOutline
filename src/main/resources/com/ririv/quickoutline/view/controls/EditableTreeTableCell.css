@@ -1,0 +1,97 @@
+/* EditableTreeTableCell 专用样式文件 */
+/* 解决TreeTableView编辑时UI不一致性问题 */
+
+/* 自定义EditableTreeTableCell基础样式 */
+.editable-tree-table-cell {
+    -fx-padding: 2px 5px 2px 5px;
+    -fx-pref-height: 24px;
+    -fx-min-height: 24px;
+    -fx-max-height: 24px;
+}
+
+/* 自定义编辑器样式 */
+.editable-tree-table-cell-editor {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-font-size: inherit;
+    -fx-font-family: inherit;
+    -fx-text-fill: inherit;
+    /* 确保编辑器与单元格高度一致 */
+    -fx-pref-height: 20px;
+    -fx-max-height: 20px;
+    -fx-min-height: 20px;
+}
+
+/* 编辑器聚焦状态样式 */
+.editable-tree-table-cell-editor:focused {
+    -fx-background-color: rgba(100, 149, 237, 0.1);
+    -fx-border-color: rgba(100, 149, 237, 0.5);
+    -fx-border-width: 1px;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    /* 焦点状态也要保持固定高度 */
+    -fx-pref-height: 20px;
+    -fx-max-height: 20px;
+    -fx-min-height: 20px;
+}
+
+/* 防止TreeTableCell在编辑时改变大小 */
+.tree-table-view .tree-table-cell {
+    -fx-pref-height: 24px;
+    -fx-min-height: 24px;
+    -fx-max-height: 24px;
+}
+
+.tree-table-view .tree-table-cell:editing {
+    -fx-padding: 2px 5px 2px 5px;
+    -fx-pref-height: 24px;
+    -fx-min-height: 24px;
+    -fx-max-height: 24px;
+}
+
+/* 确保编辑状态下文本字段不会放大整个单元格 */
+.tree-table-view .tree-table-cell .text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-pref-height: 20px;
+    -fx-max-height: 20px;
+    -fx-min-height: 20px;
+}
+
+.tree-table-view .tree-table-cell .text-field:focused {
+    -fx-background-color: rgba(100, 149, 237, 0.08);
+    -fx-border-color: rgba(100, 149, 237, 0.3);
+    -fx-border-width: 1px;
+    -fx-border-radius: 1px;
+    -fx-background-radius: 1px;
+    -fx-pref-height: 20px;
+    -fx-max-height: 20px;
+    -fx-min-height: 20px;
+}
+
+/* 强制所有TreeTableView行保持固定高度 */
+.tree-table-view .tree-table-row-cell {
+    -fx-cell-size: 24px;
+    -fx-pref-height: 24px;
+    -fx-min-height: 24px;
+    -fx-max-height: 24px;
+}
+
+/* 确保编辑时行高度不变 */
+.tree-table-view .tree-table-row-cell:editing {
+    -fx-cell-size: 24px;
+    -fx-pref-height: 24px;
+    -fx-min-height: 24px;
+    -fx-max-height: 24px;
+}
+
+/* 强制固定行高的最终保险 */
+.editable-tree-table-view {
+    -fx-fixed-cell-size: 24px;
+}

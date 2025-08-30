@@ -4,12 +4,12 @@ import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.controls.EditableTreeTableCell;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.scene.AccessibleAttribute;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.TextFieldTreeTableCell;
 import javafx.scene.input.MouseButton;
+import javafx.util.StringConverter;
 
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -32,6 +32,10 @@ public class TreeTabController {
     public void initialize() {
         treeTableView.setEditable(true);
         treeTableView.setColumnResizePolicy(TreeTableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        
+        // 为使用EditableTreeTableCell的TreeTableView添加专用样式类
+        treeTableView.getStyleClass().add("editable-tree-table-view");
+        
         titleColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.9));
         offsetPageColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.1));
         setupRowFactory();
@@ -51,14 +55,17 @@ public class TreeTabController {
                 return new SimpleStringProperty(pageNumStr);
             });
 
-            titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+            titleColumn.setCellFactory(EditableTreeTableCell.forTreeTableColumn());
             titleColumn.setOnEditCommit(event -> event.getRowValue().getValue().setTitle(event.getNewValue()));
 
-            offsetPageColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+            offsetPageColumn.setCellFactory(EditableTreeTableCell.forTreeTableColumn());
             offsetPageColumn.setOnEditCommit(event -> {
+                String newValue = event.getNewValue();
                 try {
-                    event.getRowValue().getValue().setOffsetPageNum(Integer.parseInt(event.getNewValue()));
+                    Integer pageNum = newValue.isEmpty() ? null : Integer.valueOf(newValue);
+                    event.getRowValue().getValue().setOffsetPageNum(pageNum);
                 } catch (NumberFormatException e) {
+                    // 如果转换失败，刷新显示原值
                     treeTableView.refresh();
                 }
             });
