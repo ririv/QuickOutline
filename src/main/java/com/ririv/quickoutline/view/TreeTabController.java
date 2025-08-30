@@ -4,7 +4,9 @@ import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.utils.LocalizationManager;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.AccessibleAttribute;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTreeTableCell;
 import javafx.scene.input.MouseButton;
@@ -108,7 +110,7 @@ public class TreeTabController {
         promoteMenuItem.setDisable(parent == null || parent == treeTableView.getRoot());
 
         if (parent != null) {
-            int index = parent.getChildren().indexOf(selectedItem.getValue());
+            int index = parent.getChildren().indexOf(selectedItem);
             demoteMenuItem.setDisable(index == 0);
         } else {
             demoteMenuItem.setDisable(true);
@@ -127,9 +129,13 @@ public class TreeTabController {
         Bookmark oldParentBookmark = parent.getValue();
         Bookmark newParentBookmark = grandParent.getValue();
 
+        // 修改数据模型
         oldParentBookmark.getChildren().remove(bookmarkToPromote);
         int parentIndex = newParentBookmark.getChildren().indexOf(oldParentBookmark);
         newParentBookmark.addChild(parentIndex + 1, bookmarkToPromote);
+        
+        // 刷新树视图显示
+        refreshTreeView();
     }
 
     private void demoteSelection() {
@@ -137,7 +143,7 @@ public class TreeTabController {
         if (itemToDemote == null) return;
         TreeItem<Bookmark> parent = itemToDemote.getParent();
         if (parent == null) return;
-        int currentIndex = parent.getChildren().indexOf(itemToDemote.getValue());
+        int currentIndex = parent.getChildren().indexOf(itemToDemote);
         if (currentIndex < 1) return;
 
         TreeItem<Bookmark> newParentItem = parent.getChildren().get(currentIndex - 1);
@@ -146,8 +152,12 @@ public class TreeTabController {
         Bookmark oldParentBookmark = parent.getValue();
         Bookmark newParentBookmark = newParentItem.getValue();
 
+        // 修改数据模型
         oldParentBookmark.getChildren().remove(bookmarkToDemote);
         newParentBookmark.addChild(bookmarkToDemote);
+        
+        // 刷新树视图显示
+        refreshTreeView();
     }
 
     private void addBookmark(boolean asChild) {
@@ -184,6 +194,74 @@ public class TreeTabController {
             Bookmark bookmarkToRemove = selectedItem.getValue();
             parentBookmark.getChildren().remove(bookmarkToRemove);
         }
+    }
+
+    // 添加刷新树视图的辅助方法
+    private void refreshTreeView() {
+        Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
+        if (rootBookmark != null) {
+            // 保存当前状态
+            TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
+            int selectedRowIndex = treeTableView.getSelectionModel().getSelectedIndex();
+            
+            // 使用轻量级刷新，避免重建整个树
+            Platform.runLater(() -> {
+                // 刷新TreeTableView的数据显示
+                treeTableView.refresh();
+                
+                // 恢复选择状态（优先使用行索引）
+                if (selectedRowIndex >= 0 && selectedRowIndex < treeTableView.getExpandedItemCount()) {
+                    treeTableView.getSelectionModel().select(selectedRowIndex);
+                    treeTableView.getFocusModel().focus(selectedRowIndex);
+                } else if (selectedItem != null) {
+                    // 如果行索引无效，尝试按Bookmark查找
+                    restoreSelectionWithoutScroll(selectedItem.getValue());
+                }
+            });
+        }
+    }
+    
+    // 递归刷新TreeItem及其子项
+    private void refreshTreeItem(TreeItem<Bookmark> item) {
+        if (item != null) {
+            // 刷新当前项
+            item.setValue(item.getValue()); // 触发值变化事件
+            // 递归刷新子项
+            for (TreeItem<Bookmark> child : item.getChildren()) {
+                refreshTreeItem(child);
+            }
+        }
+    }
+    
+    // 尝试恢复选择状态（不自动滚动）
+    private void restoreSelectionWithoutScroll(Bookmark targetBookmark) {
+        if (targetBookmark == null) return;
+        
+        TreeItem<Bookmark> rootItem = treeTableView.getRoot();
+        TreeItem<Bookmark> foundItem = findTreeItem(rootItem, targetBookmark);
+        if (foundItem != null) {
+            // 只恢复选择，不滚动
+            treeTableView.getSelectionModel().select(foundItem);
+            treeTableView.getFocusModel().focus(treeTableView.getRow(foundItem));
+        }
+    }
+    
+    // 在树中查找特定的Bookmark对应的TreeItem
+    private TreeItem<Bookmark> findTreeItem(TreeItem<Bookmark> parent, Bookmark target) {
+        if (parent == null || target == null) return null;
+        
+        if (parent.getValue() == target) {
+            return parent;
+        }
+        
+        for (TreeItem<Bookmark> child : parent.getChildren()) {
+            TreeItem<Bookmark> result = findTreeItem(child, target);
+            if (result != null) {
+                return result;
+            }
+        }
+        
+        return null;
     }
 
     private void expandAllNodes(TreeItem<?> item) {
