@@ -46,15 +46,6 @@ public class MainController {
     public Button browseFileBtn;
     public StackPane root;
 
-    // Child controllers
-    public LeftPaneController leftPaneController;
-    public PdfPreviewController pdfPreviewTabViewController;
-    public PageLabelController pageLabelController; // Inject PageLabelController
-    public ThumbnailPaneController thumbnailPaneController; // Inject ThumbnailPaneController
-
-    @FXML
-    private BookmarkBottomPaneController bookmarkBottomPaneController;
-
     public MessageContainer messageManager;
     public BorderPane leftPane;
 
@@ -64,8 +55,6 @@ public class MainController {
 
     @FXML
     private Node bookmarkTabView;
-    @FXML
-    private BookmarkTabController bookmarkTabViewController;
     @FXML
     private Node tocGeneratorTabView;
     @FXML
@@ -141,9 +130,8 @@ public class MainController {
 
         try {
             currentFileState.setSrcFile(newFilePath);
-            // 获取页码标签并传递给缩略图控制器
-            String[] pageLabels = pdfPageLabelService.getPageLabels(newFilePath.toString());
-            thumbnailPaneController.setCurrentPageLabels(pageLabels);
+            // 页码标签会由ThumbnailPaneController在监听到状态变化时自动获取和更新
+            // 不需要在此处手动调用，符合响应式设计原则
         } catch (java.io.IOException e) { // Catch standard IO Exception
             messageManager.showMessage(bundle.getString("message.cannotOpenDoc") + e.getMessage(), Message.MessageType.ERROR);
         } catch (EncryptedPdfException e) {
