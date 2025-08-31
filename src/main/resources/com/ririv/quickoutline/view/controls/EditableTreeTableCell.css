@@ -12,7 +12,7 @@
 }
 
 /* 自定义编辑器样式 */
-.editable-tree-table-cell-editor {
+.tree-table-cell .editable-tree-table-cell-editor {
     -fx-background-color: transparent !important;
     -fx-border-color: transparent !important;
     -fx-border-width: 0 !important;
@@ -28,7 +28,7 @@
 }
 
 /* 编辑器聚焦状态样式 */
-.editable-tree-table-cell-editor:focused {
+.tree-table-cell .editable-tree-table-cell-editor:focused {
     -fx-background-color: rgba(100, 149, 237, 0.1);
     -fx-border-color: rgba(100, 149, 237, 0.5);
     -fx-border-width: 1px;

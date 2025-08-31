@@ -28,13 +28,13 @@
                                       GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
                         <Label text="%pageLabel.prefix" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextField fx:id="prefixTextField" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        <TextField fx:id="prefixTextField" styleClass="input" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
                         <Label text="%pageLabel.startNumber" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                        <TextField fx:id="startTextField" promptText="%pageLabel.startNumber.prompt" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        <TextField fx:id="startTextField" promptText="%pageLabel.startNumber.prompt" styleClass="input" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 
                         <Label text="%pageLabel.startPage" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                        <TextField fx:id="fromPageTextField" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                        <TextField fx:id="fromPageTextField" styleClass="input" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
                     </GridPane>
 
                     <HBox alignment="CENTER">
