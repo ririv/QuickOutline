@@ -52,6 +52,7 @@ public class PageLabelController {
     private final CurrentFileState fileService;
     private final VBox ruleVBox = new VBox(5);
     private final AppEventBus appEventBus;
+    private List<String> originalPageLabels;
 
     @FXML
     private ThumbnailPaneController thumbnailPaneController; // Injected by FXML loader
@@ -72,6 +73,19 @@ public class PageLabelController {
         if (numberingStyleChoiceBox.getValue() == null) {
             numberingStyleChoiceBox.setValue(STYLE_DECIMAL);
         }
+
+        fileService.srcFileProperty().addListener((obs, oldFile, newFile) -> {
+            if (newFile != null) {
+                try {
+                    originalPageLabels = java.util.Arrays.asList(pdfPageLabelService.getPageLabels(newFile.toString()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    originalPageLabels = null;
+                }
+            } else {
+                originalPageLabels = null;
+            }
+        });
     }
 
     @FXML
@@ -82,6 +96,13 @@ public class PageLabelController {
                 return;
             }
             int fromPage = Integer.parseInt(fromPageTextField.getText());
+
+            for (PageLabelRule existingRule : pageLabelRules) {
+                if (existingRule.fromPage() == fromPage) {
+                    appEventBus.post(new ShowMessageEvent("输入无效，已存在相同起始页的规则。", Message.MessageType.ERROR));
+                    return;
+                }
+            }
 
             if (fromPage <= 0) {
                 appEventBus.post(new ShowMessageEvent("输入无效，页码必须是正数。", Message.MessageType.ERROR));
@@ -146,6 +167,14 @@ public class PageLabelController {
         if (fileService.getSrcFile() == null) {
             return;
         }
+
+        if (pageLabelRules.isEmpty()) {
+            if (originalPageLabels != null) {
+                appEventBus.post(new PageLabelsChangedEvent(originalPageLabels));
+            }
+            return;
+        }
+
         int totalPages;
         try {
             totalPages = pdfPageLabelService.getPageLabels(fileService.getSrcFile().toString()).length;
