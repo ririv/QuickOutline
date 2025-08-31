@@ -33,7 +33,7 @@ public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingS
 
     }
 
-    public void setPageLabels(String srcFilePath, String destFilePath, List<PageLabel> labelList) throws IOException {
+    public String[] setPageLabels(String srcFilePath, String destFilePath, List<PageLabel> labelList) throws IOException {
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
 
         // 不从第一页开始设置页码标签，则后面的规则会失效。
@@ -57,6 +57,7 @@ public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingS
             }
         }
         pdfDoc.close();
+        return getPageLabels(destFilePath);
     }
 
     @Override

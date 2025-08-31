@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface PageLabelSetter<T> {
 
-    void setPageLabels(String srcFilePath, String destFilePath, List<PageLabel> labelList) throws IOException;
+    String[] setPageLabels(String srcFilePath, String destFilePath, List<PageLabel> labelList) throws IOException;
 
     String[] getPageLabels(String srcFilePath) throws IOException;
 

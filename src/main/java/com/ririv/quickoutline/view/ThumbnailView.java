@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ThumbnailViewController extends VBox {
+public class ThumbnailView extends VBox {
 
     private static final double BASE_WIDTH = 150;
     private static final double BASE_HEIGHT = 225;
@@ -36,7 +36,7 @@ public class ThumbnailViewController extends VBox {
     private int totalPages; // Store total pages
     private ExecutorService previewRenderExecutor = Executors.newSingleThreadExecutor(); // Executor for high-res rendering
 
-    public ThumbnailViewController() {
+    public ThumbnailView() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ThumbnailView.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -107,6 +107,11 @@ public class ThumbnailViewController extends VBox {
         updatePageLabel();
     }
 
+    public void updatePageLabel(String[] pageLabels) {
+        this.pageLabels = pageLabels;
+        updatePageLabel();
+    }
+
     private void updatePageLabel() {
         String displayLabel = "";
         if (pageLabels != null && pageIndex < pageLabels.length) {
@@ -126,9 +131,5 @@ public class ThumbnailViewController extends VBox {
         pageLabel.setTooltip(tooltip);
     }
 
-    public void setPageLabel(String label) {
-        // This method is now deprecated, updatePageLabel() should be used instead.
-        // Keeping it for compatibility if other parts of the code still call it.
-        pageLabel.setText(label);
-    }
+    
 }

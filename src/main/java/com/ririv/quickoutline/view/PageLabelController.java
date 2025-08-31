@@ -2,6 +2,7 @@ package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.event.PageLabelsChangedEvent;
 import com.ririv.quickoutline.event.ShowMessageEvent;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.service.PdfPageLabelService;
@@ -104,6 +105,7 @@ public class PageLabelController {
             pageLabelRules.add(rule);
 
             addRuleToView(rule);
+            simulate();
 
             fromPageTextField.clear();
             prefixTextField.clear();
@@ -133,10 +135,32 @@ public class PageLabelController {
         deleteButton.setOnAction(event -> {
             pageLabelRules.remove(rule);
             ruleVBox.getChildren().remove(ruleBox);
+            simulate();
         });
 
         ruleBox.getChildren().addAll(ruleLabel, deleteButton);
         ruleVBox.getChildren().add(ruleBox);
+    }
+
+    private void simulate() {
+        if (fileService.getSrcFile() == null) {
+            return;
+        }
+        int totalPages;
+        try {
+            totalPages = pdfPageLabelService.getPageLabels(fileService.getSrcFile().toString()).length;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        List<PageLabel> pageLabels = new ArrayList<>();
+        for (PageLabelRule rule : pageLabelRules) {
+            pageLabels.add(new PageLabel(rule.fromPage(), rule.style(), rule.prefix(), rule.start()));
+        }
+
+        List<String> simulatedLabels = pdfPageLabelService.simulatePageLabels(pageLabels, totalPages);
+        appEventBus.post(new PageLabelsChangedEvent(simulatedLabels));
     }
 
 
@@ -172,7 +196,8 @@ public class PageLabelController {
         String srcFilePath = fileService.getSrcFile().toString();
         String destFilePath = fileService.getDestFile().toString();
         try {
-            pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
+            String[] pageLabels = pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
+            appEventBus.post(new PageLabelsChangedEvent(java.util.Arrays.asList(pageLabels)));
             appEventBus.post(new ShowMessageEvent("页码标签已成功应用。", Message.MessageType.SUCCESS));
         } catch (IOException e) {
             appEventBus.post(new ShowMessageEvent("应用页码标签失败: " + "e.getMessage()", Message.MessageType.ERROR));

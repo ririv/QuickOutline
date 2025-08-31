@@ -17,6 +17,10 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.google.common.eventbus.Subscribe;
+import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.event.PageLabelsChangedEvent;
+
 public class ThumbnailPaneController {
 
     private static final int BATCH_SIZE = 20; // Number of thumbnails to load at a time
@@ -30,6 +34,7 @@ public class ThumbnailPaneController {
 
     private final CurrentFileState currentFileState;
     private final PdfPageLabelService pdfPageLabelService; // Inject PdfPageLabelService
+    private final AppEventBus appEventBus;
     private PdfPreview currentPreview;
     private String[] currentPageLabels; // Store the page labels array
     private ExecutorService fileLoadExecutor = Executors.newSingleThreadExecutor();
@@ -39,9 +44,11 @@ public class ThumbnailPaneController {
     private double currentScale = 1.0;
 
     @Inject
-    public ThumbnailPaneController(CurrentFileState currentFileState, PdfPageLabelService pdfPageLabelService) {
+    public ThumbnailPaneController(CurrentFileState currentFileState, PdfPageLabelService pdfPageLabelService, AppEventBus appEventBus) {
         this.currentFileState = currentFileState;
         this.pdfPageLabelService = pdfPageLabelService;
+        this.appEventBus = appEventBus;
+        this.appEventBus.register(this);
     }
 
     @FXML
@@ -65,8 +72,20 @@ public class ThumbnailPaneController {
         zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             currentScale = newVal.doubleValue();
             for (Node node : thumbnailTilePane.getChildren()) {
-                if (node instanceof ThumbnailViewController) {
-                    ((ThumbnailViewController) node).setScale(currentScale);
+                if (node instanceof ThumbnailView) {
+                    ((ThumbnailView) node).setScale(currentScale);
+                }
+            }
+        });
+    }
+
+    @Subscribe
+    public void onPageLabelsChanged(PageLabelsChangedEvent event) {
+        Platform.runLater(() -> {
+            currentPageLabels = event.getPageLabels().toArray(new String[0]);
+            for (Node node : thumbnailTilePane.getChildren()) {
+                if (node instanceof ThumbnailView) {
+                    ((ThumbnailView) node).updatePageLabel(currentPageLabels);
                 }
             }
         });
@@ -118,7 +137,7 @@ public class ThumbnailPaneController {
 
         for (int i = currentPageIndex; i < limit; i++) {
             final int pageIndex = i;
-            ThumbnailViewController thumbnailView = new ThumbnailViewController();
+            ThumbnailView thumbnailView = new ThumbnailView();
             thumbnailView.setScale(currentScale); // Apply current scale to new thumbnails
             thumbnailTilePane.getChildren().add(thumbnailView);
 
