@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.MessageContainer
 import com.ririv.quickoutline.view.controls.rememberMessageContainerState
+import com.ririv.quickoutline.view.controls.StyledTextField
 import org.koin.java.KoinJavaComponent.inject
 
 @Composable
@@ -23,8 +24,12 @@ fun MainView() {
         // Top Pane
         Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF2F2F2))) {
             Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                // TODO: Replace with StyledTextField
-                Text("File Path", modifier = Modifier.weight(1f))
+                StyledTextField(
+                    value = bookmarkViewModel.filePath,
+                    onValueChange = { bookmarkViewModel.filePath = it },
+                    placeholder = { Text(stringResource("filepathTF.prompt")) },
+                    modifier = Modifier.weight(1f)
+                )
                 Text("O")
             }
             Divider(color = Color(0xFFDFDFDF), thickness = 1.dp)

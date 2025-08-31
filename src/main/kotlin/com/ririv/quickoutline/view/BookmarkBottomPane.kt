@@ -21,10 +21,10 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, onSwitchView: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        StyledButton(onClick = { viewModel.deleteBookmark() }, text = "D", type = ButtonType.PLAIN_IMPORTANT)
-        StyledButton(onClick = { /* TODO: Implement Get Contents */ }, text = "Get Contents", type = ButtonType.PLAIN_PRIMARY, modifier = Modifier.weight(1f))
-        StyledButton(onClick = { /* TODO: Implement Set Contents */ }, text = "Set Contents", type = ButtonType.PLAIN_IMPORTANT, modifier = Modifier.weight(1f))
-        StyledTextField(value = offset, onValueChange = { offset = it }, placeholder = { Text("Offset") }, modifier = Modifier.weight(1f))
-        StyledButton(onClick = onSwitchView, text = "Switch View", modifier = Modifier.weight(1f))
+        StyledButton(onClick = { viewModel.deleteBookmark() }, text = stringResource("bookmarkTab.deleteBtn.tooltip"), type = ButtonType.PLAIN_IMPORTANT)
+        StyledButton(onClick = { /* TODO: Implement Get Contents */ }, text = stringResource("bookmarkTab.getContentsBtn.text"), type = ButtonType.PLAIN_PRIMARY, modifier = Modifier.weight(1f))
+        StyledButton(onClick = { /* TODO: Implement Set Contents */ }, text = stringResource("bookmarkTab.setContentsBtn.text"), type = ButtonType.PLAIN_IMPORTANT, modifier = Modifier.weight(1f))
+        StyledTextField(value = offset, onValueChange = { offset = it }, placeholder = { Text(stringResource("bookmarkTab.offsetTF.prompt")) }, modifier = Modifier.weight(1f))
+        StyledButton(onClick = onSwitchView, text = stringResource("bookmarkTab.switchEditViewBtn.text"), modifier = Modifier.weight(1f))
     }
 }

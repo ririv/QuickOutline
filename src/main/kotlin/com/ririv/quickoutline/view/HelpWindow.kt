@@ -17,9 +17,9 @@ import java.net.URI
 @Composable
 fun HelpWindow() {
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("Version: 2.2.0")
+        Text(stringResource("app.title"))
         Row {
-            Text("Usage: ")
+            Text(stringResource("helpWindow.usage"))
             Text(
                 text = "@Github",
                 color = Color.Blue,
@@ -31,9 +31,9 @@ fun HelpWindow() {
                 }
             )
         }
-        Text("Dependencies: iText (AGPL license)")
+        Text(stringResource("helpWindow.dependenciesText"))
         Row {
-            Text("Source: ")
+            Text(stringResource("helpWindow.source"))
             Text(
                 text = "GitHub",
                 color = Color.Blue,
@@ -46,9 +46,9 @@ fun HelpWindow() {
             )
         }
         Row {
-            Text("By: ")
+            Text(stringResource("helpWindow.by"))
             Text(
-                text = "Ririv",
+                text = stringResource("helpWindow.author"),
                 color = Color.Blue,
                 textDecoration = TextDecoration.Underline,
                 modifier = Modifier.pointerInput(Unit) {

@@ -28,8 +28,8 @@ fun BookmarkTree(
                 .border(width = 1.dp, color = Color(0xFFD1D1D1))
                 .padding(8.dp)
         ) {
-            Text("Title", modifier = Modifier.weight(1f), color = Color(0xFF888888))
-            Text("Offset Page", modifier = Modifier.width(100.dp), color = Color(0xFF888888))
+            Text(stringResource("titleColumn.text"), modifier = Modifier.weight(1f), color = Color(0xFF888888))
+            Text(stringResource("offsetPageColumn.text"), modifier = Modifier.width(100.dp), color = Color(0xFF888888))
         }
         LazyColumn {
             items(flattenedBookmarks) { bookmark ->

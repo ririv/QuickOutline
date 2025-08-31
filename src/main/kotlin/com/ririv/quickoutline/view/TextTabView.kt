@@ -25,7 +25,7 @@ fun TextTabView(bookmarks: List<Bookmark>, onTextChange: (String) -> Unit) {
             value = text,
             onValueChange = onTextChange,
             modifier = Modifier.weight(1f).fillMaxHeight(),
-            placeholder = { Text("Enter your text here...") },
+            placeholder = { Text(stringResource("contentsTextArea.prompt")) },
             singleLine = false
         )
         Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color(0xFFDFDFDF)))
@@ -35,10 +35,12 @@ fun TextTabView(bookmarks: List<Bookmark>, onTextChange: (String) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             StyledButton(onClick = { /* TODO: Implement VSCode button */ }, text = "VSCode", type = ButtonType.PLAIN_PRIMARY)
-            StyledButton(onClick = { /* TODO: Implement Auto Format button */ }, text = "Auto Format", type = ButtonType.PLAIN_PRIMARY)
-            Text("Tip: ...")
+            StyledButton(onClick = { /* TODO: Implement Auto Format button */ }, text = stringResource("autoFormatBtn.text"), type = ButtonType.PLAIN_PRIMARY)
+            Text(stringResource("Tip.text1"))
+            Text(stringResource("Tip.text2"))
+            Text(stringResource("Tip.text3"))
             RadioButton2Group(
-                items = listOf("seq", "indent"),
+                items = listOf(stringResource("bookmarkTab.seqRBtn.text"), stringResource("bookmarkTab.indentRBtn.text")),
                 selectedItem = selectedMethod,
                 onItemSelected = { selectedMethod = it }
             )

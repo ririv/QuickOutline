@@ -33,7 +33,7 @@ fun PageLabelTabView() {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Numbering Style:", modifier = Modifier.width(80.dp))
+                    Text(stringResource("pageLabel.style"), modifier = Modifier.width(80.dp))
                     ExposedDropdownMenuBox(
                         expanded = expanded,
                         onExpandedChange = { expanded = !expanded }
@@ -59,7 +59,7 @@ fun PageLabelTabView() {
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Prefix:", modifier = Modifier.width(80.dp))
+                    Text(stringResource("pageLabel.prefix"), modifier = Modifier.width(80.dp))
                     StyledTextField(
                         value = viewModel.prefix,
                         onValueChange = { viewModel.prefix = it },
@@ -67,35 +67,35 @@ fun PageLabelTabView() {
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Start Number:", modifier = Modifier.width(80.dp))
+                    Text(stringResource("pageLabel.startNumber"), modifier = Modifier.width(80.dp))
                     StyledTextField(
                         value = viewModel.startNumber,
                         onValueChange = { viewModel.startNumber = it },
-                        placeholder = { Text("e.g. 1") }
+                        placeholder = { Text(stringResource("pageLabel.startNumber.prompt")) }
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("From Page:", modifier = Modifier.width(80.dp))
+                    Text(stringResource("pageLabel.startPage"), modifier = Modifier.width(80.dp))
                     StyledTextField(
                         value = viewModel.fromPage,
                         onValueChange = { viewModel.fromPage = it },
-                        placeholder = { Text("e.g. 1") }
+                        placeholder = null
                     )
                 }
             }
 
-            StyledButton(onClick = { viewModel.addRule() }, text = "Add Rule", type = ButtonType.PLAIN_PRIMARY)
+            StyledButton(onClick = { viewModel.addRule() }, text = stringResource("pageLabel.addRuleBtn"), type = ButtonType.PLAIN_PRIMARY)
 
             Divider()
 
-            Text("Rules:", fontWeight = FontWeight.Bold, color = Color(0xFF9198A1))
+            Text(stringResource("pageLabel.ruleList"), fontWeight = FontWeight.Bold, color = Color(0xFF9198A1))
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(viewModel.rules) { rule ->
                     Text("Page ${rule.pageNum}: Style=${rule.numberingStyle}, Prefix='${rule.labelPrefix}', Start=${rule.firstPage}", modifier = Modifier.padding(vertical = 4.dp))
                 }
             }
 
-            StyledButton(onClick = { viewModel.setPageLabels() }, text = "Set Page Labels", type = ButtonType.PLAIN_IMPORTANT)
+            StyledButton(onClick = { viewModel.setPageLabels() }, text = stringResource("setPageLabelBtn.text"), type = ButtonType.PLAIN_IMPORTANT)
         }
         Column(modifier = Modifier.weight(0.25f)) {
             ThumbnailPane()

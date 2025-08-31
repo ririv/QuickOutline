@@ -27,33 +27,33 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
     ) {
         StyledButton(
             onClick = { onTabSelected(0) },
-            text = "Bookmark",
+            text = stringResource("leftPane.bookmarkTabBtn"),
             type = if (selectedTab == 0) ButtonType.PLAIN_PRIMARY else ButtonType.DEFAULT
         )
         StyledButton(
             onClick = { onTabSelected(2) },
-            text = "Page Label",
+            text = stringResource("leftPane.labelTabBtn"),
             type = if (selectedTab == 2) ButtonType.PLAIN_PRIMARY else ButtonType.DEFAULT
         )
         StyledButton(
             onClick = { onTabSelected(1) },
-            text = "TOC Gen",
+            text = stringResource("leftPane.tocGeneratorTabBtn"),
             type = if (selectedTab == 1) ButtonType.PLAIN_PRIMARY else ButtonType.DEFAULT
         )
         StyledButton(
             onClick = { onTabSelected(3) },
-            text = "Preview",
+            text = stringResource("leftPane.previewTabBtn"),
             type = if (selectedTab == 3) ButtonType.PLAIN_PRIMARY else ButtonType.DEFAULT
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
-        StyledButton(onClick = { /* TODO: Implement settings */ }, text = "Settings")
-        StyledButton(onClick = { showHelpWindow = true }, text = "Help")
+        StyledButton(onClick = { /* TODO: Implement settings */ }, text = stringResource("leftPane.settingBtn"))
+        StyledButton(onClick = { showHelpWindow = true }, text = stringResource("leftPane.helpBtn"))
     }
 
     if (showHelpWindow) {
-        Window(onCloseRequest = { showHelpWindow = false }, title = "Help") {
+        Window(onCloseRequest = { showHelpWindow = false }, title = stringResource("helpWindow.title")) {
             HelpWindow()
         }
     }
