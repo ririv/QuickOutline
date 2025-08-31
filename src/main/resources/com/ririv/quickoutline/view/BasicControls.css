@@ -245,7 +245,7 @@
 /* 选择状态的样式 */
 /*https://stackoverflow.com/questions/21707178/javafx-how-to-set-selected-row-text-color-in-not-focused-tableview*/
 .tree-table-view .cell:selected {
-    -fx-background-color: #c6dafc;  /* 设置选中时的背景颜色 */
+    -fx-background-color: transparent;  /* 设置选中时的背景颜色 */
     -fx-text-background-color: black;
 }
 

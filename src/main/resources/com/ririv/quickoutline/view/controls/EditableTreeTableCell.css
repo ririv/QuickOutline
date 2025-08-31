@@ -47,12 +47,13 @@
     -fx-max-height: 24px;
 }
 
-.tree-table-view .tree-table-cell:editing {
-    -fx-padding: 2px 5px 2px 5px;
-    -fx-pref-height: 24px;
-    -fx-min-height: 24px;
-    -fx-max-height: 24px;
-}
+/*可能多余，其他平台（除macos）未测试*/
+/*.tree-table-view .tree-table-cell:editing {*/
+/*    -fx-padding: 2px 5px 2px 5px;*/
+/*    -fx-pref-height: 24px;*/
+/*    -fx-min-height: 24px;*/
+/*    -fx-max-height: 24px;*/
+/*}*/
 
 
 
