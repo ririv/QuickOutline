@@ -41,7 +41,12 @@
         <FlowPane>
             <Text>By </Text>
             <Hyperlink onMouseClicked="#browseHelpOnMyPage" text="%helpWindow.author"></Hyperlink>
-            <Text fill="#fd5656">🌺</Text>
+<!--            <Text fill="#fd5656">🌺</Text>-->
+            <Label styleClass="graph-button" >
+                <graphic>
+                    <Region styleClass="icon,xiaohongshu-icon" prefWidth="15" prefHeight="15"/>
+                </graphic>
+            </Label>
         </FlowPane>
     </FlowPane>
 

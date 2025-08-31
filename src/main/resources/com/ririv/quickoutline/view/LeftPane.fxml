@@ -24,17 +24,6 @@
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="tocGeneratorTabBtn" toggleGroup="$tabToggleGroup"
-                              styleClass="graph-button, graph-toggle-button" >
-                    <padding>
-                        <Insets topRightBottomLeft="3.0"/>
-                    </padding>
-                    <graphic>
-                        <Region styleClass="icon, icon-size-tab, toc-icon" />
-                    </graphic>
-                </ToggleButton>
-            </GraphButtonWrapper>
-            <GraphButtonWrapper>
                 <ToggleButton fx:id="labelTabBtn" toggleGroup="$tabToggleGroup"
                               styleClass="graph-button, graph-toggle-button" >
                     <padding>
@@ -46,7 +35,18 @@
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="previewTabBtn" toggleGroup="$tabToggleGroup"
+                <ToggleButton fx:id="tocGeneratorTabBtn" visible="false"  toggleGroup="$tabToggleGroup"
+                              styleClass="graph-button, graph-toggle-button" >
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <Region styleClass="icon, icon-size-tab, toc-icon" />
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+            <GraphButtonWrapper>
+                <ToggleButton fx:id="previewTabBtn" visible="false" toggleGroup="$tabToggleGroup"
                               styleClass="graph-button, graph-toggle-button">
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>
