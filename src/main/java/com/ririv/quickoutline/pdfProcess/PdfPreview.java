@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Manages loading a PDF document and rendering its pages as images.
@@ -25,7 +24,7 @@ public class PdfPreview implements AutoCloseable {
 
     private final PDDocument document;
     private final PDFRenderer renderer;
-    private final ReentrantLock renderLock = new ReentrantLock();
+    private final Object renderLock = new Object();
     private static final float DEFAULT_DPI = 150; // Default DPI for rendering
 
     /**
@@ -107,14 +106,11 @@ public class PdfPreview implements AutoCloseable {
         if (pageIndex < 0 || pageIndex >= getPageCount()) {
             throw new IllegalArgumentException("Page index " + pageIndex + " is out of bounds.");
         }
-        renderLock.lock();
-        try {
+        synchronized (renderLock) {
             BufferedImage bufferedImage = renderer.renderImageWithDPI(pageIndex, dpi);
             if (callback != null) {
                 callback.accept(bufferedImage);
             }
-        } finally {
-            renderLock.unlock();
         }
     }
 
@@ -122,11 +118,8 @@ public class PdfPreview implements AutoCloseable {
         if (pageIndex < 0 || pageIndex >= getPageCount()) {
             throw new IllegalArgumentException("Page index " + pageIndex + " is out of bounds.");
         }
-        renderLock.lock();
-        try {
+        synchronized (renderLock) {
             return renderer.renderImageWithDPI(pageIndex, dpi);
-        } finally {
-            renderLock.unlock();
         }
     }
 
