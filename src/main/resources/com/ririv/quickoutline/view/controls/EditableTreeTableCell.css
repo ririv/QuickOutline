@@ -54,28 +54,7 @@
     -fx-max-height: 24px;
 }
 
-/* 确保编辑状态下文本字段不会放大整个单元格 */
-.tree-table-view .tree-table-cell .text-field {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-border-width: 0;
-    -fx-background-insets: 0;
-    -fx-padding: 0;
-    -fx-pref-height: 20px;
-    -fx-max-height: 20px;
-    -fx-min-height: 20px;
-}
 
-.tree-table-view .tree-table-cell .text-field:focused {
-    -fx-background-color: rgba(100, 149, 237, 0.08);
-    -fx-border-color: rgba(100, 149, 237, 0.3);
-    -fx-border-width: 1px;
-    -fx-border-radius: 1px;
-    -fx-background-radius: 1px;
-    -fx-pref-height: 20px;
-    -fx-max-height: 20px;
-    -fx-min-height: 20px;
-}
 
 /* 强制所有TreeTableView行保持固定高度 */
 .tree-table-view .tree-table-row-cell {
