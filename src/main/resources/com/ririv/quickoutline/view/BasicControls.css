@@ -392,3 +392,9 @@
     -fx-border-color: -el-color-primary;
 }
 
+
+
+.split-pane > .split-pane-divider {
+    -fx-padding: 2;
+    -fx-background-color: -my-color-divding-line;
+}
