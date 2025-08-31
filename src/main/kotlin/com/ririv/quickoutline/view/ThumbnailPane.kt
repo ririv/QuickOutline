@@ -21,11 +21,8 @@ import org.koin.java.KoinJavaComponent.inject
 @Composable
 fun ThumbnailPane() {
     val viewModel: ThumbnailViewModel by inject(ThumbnailViewModel::class.java)
+    val thumbnails by remember(viewModel) { derivedStateOf { viewModel.thumbnails } }
     var zoom by remember { mutableStateOf(1f) }
-
-    LaunchedEffect(Unit) {
-        viewModel.loadThumbnails()
-    }
 
     Column(modifier = Modifier.padding(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -42,7 +39,7 @@ fun ThumbnailPane() {
             )
         }
         LazyVerticalGrid(columns = GridCells.Adaptive(100.dp)) {
-            items(viewModel.thumbnails) { thumbnail ->
+            items(thumbnails) { thumbnail ->
                 Image(
                     bitmap = thumbnail.toComposeImageBitmap(),
                     contentDescription = null

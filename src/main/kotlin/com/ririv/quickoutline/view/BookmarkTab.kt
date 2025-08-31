@@ -15,13 +15,14 @@ import org.koin.java.KoinJavaComponent.inject
 fun BookmarkTab() {
     val viewModel: BookmarkViewModel by inject(BookmarkViewModel::class.java)
     var showTreeView by remember { mutableStateOf(false) }
+    val rootBookmark by viewModel.bookmarks.collectAsState()
 
     Column {
         Box(modifier = Modifier.weight(1f)) {
             if (showTreeView) {
-                TreeTabView(viewModel.bookmarks, viewModel.selectedBookmark, onBookmarkSelected = { viewModel.selectedBookmark = it })
+                TreeTabView(rootBookmark?.children ?: emptyList(), viewModel.selectedBookmark, onBookmarkSelected = { viewModel.selectedBookmark = it })
             } else {
-                TextTabView(viewModel.bookmarks) { viewModel.updateBookmarksFromText(it) }
+                TextTabView(rootBookmark?.children ?: emptyList()) { viewModel.updateBookmarksFromText(it) }
             }
         }
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFDFDFDF)))

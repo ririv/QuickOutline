@@ -17,14 +17,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.ririv.quickoutline.state.BookmarkSettingsState
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
 import com.ririv.quickoutline.view.theme.NoRippleTheme
+import org.koin.java.KoinJavaComponent.getKoin
 
 @Composable
 fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSwitchView: () -> Unit) {
-    var offset by remember { mutableStateOf("") }
+    val bookmarkSettingsState: BookmarkSettingsState = getKoin().get()
+    val offset by bookmarkSettingsState.offset.collectAsState()
 
     Row(
         modifier = Modifier.padding(10.dp),
@@ -76,8 +79,10 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
             modifier = Modifier.weight(1f)
         )
         StyledTextField(
-            value = offset,
-            onValueChange = { offset = it },
+            value = offset?.toString() ?: "",
+            onValueChange = {
+                bookmarkSettingsState.setOffset(it.toIntOrNull())
+            },
             placeholder = { Text(stringResource("bookmarkTab.offsetTF.prompt")) },
             modifier = Modifier.weight(1f)
         )

@@ -41,6 +41,7 @@ def itextVersion = '9.2.0'
 // 不能下载请配置gradle代理
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
 
     // 使用该依赖打包会出现 错误: 当前不支持已签名模块化 JAR ..\QuickOutline\build\jlinkbase\jlinkjars\bcpkix-jdk18on-1.78.jar,
 //    https://stackoverflow.com/questions/50597926/signed-modular-jar-with-crypto-provider-cannot-be-linked-into-run-time-image

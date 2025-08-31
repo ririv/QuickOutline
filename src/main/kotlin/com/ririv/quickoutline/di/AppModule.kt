@@ -22,7 +22,7 @@ val appModule = module {
     single { BookmarkSettingsState() }
     single { SharedViewModel(get()) }
     single { PdfPageLabelService() }
-    factory { BookmarkViewModel(get(), get()) }
+    factory { BookmarkViewModel(get(), get(), get()) }
     factory { TocGeneratorViewModel(get(), get()) }
     factory { LeftPaneViewModel() }
     factory { PageLabelViewModel(get(), get()) }
