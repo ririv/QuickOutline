@@ -13,9 +13,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun RadioButton2Group(items: List<String>, selectedItem: String, onItemSelected: (String) -> Unit) {
-    Row {
-        items.forEachIndexed { index, item ->
+fun <T> RadioButton2Group(
+    items: List<Pair<String, T>>,
+    selectedItem: T,
+    onItemSelected: (T) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier) {
+        items.forEachIndexed { index, (text, value) ->
             val shape = when (index) {
                 0 -> RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp)
                 items.size - 1 -> RoundedCornerShape(topEnd = 6.dp, bottomEnd = 6.dp)
@@ -23,16 +28,16 @@ fun RadioButton2Group(items: List<String>, selectedItem: String, onItemSelected:
             }
 
             OutlinedButton(
-                onClick = { onItemSelected(item) },
+                onClick = { onItemSelected(value) },
                 shape = shape,
                 border = BorderStroke(1.dp, Color(0xFF409EFF)),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    backgroundColor = if (selectedItem == item) Color(0xFF409EFF) else Color.Transparent,
-                    contentColor = if (selectedItem == item) Color.White else Color(0xFF409EFF)
+                    backgroundColor = if (selectedItem == value) Color(0xFF409EFF) else Color.Transparent,
+                    contentColor = if (selectedItem == value) Color.White else Color(0xFF409EFF)
                 ),
                 modifier = if (index > 0) Modifier.offset(x = (-1).dp) else Modifier
             ) {
-                Text(item)
+                Text(text)
             }
         }
     }
