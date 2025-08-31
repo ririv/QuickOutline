@@ -13,12 +13,23 @@ class TocGeneratorViewModel(
     private val sharedViewModel: SharedViewModel
 ) {
     var generatedToc by mutableStateOf("")
+    var isGenerating by mutableStateOf(false)
+    var status by mutableStateOf("")
 
     fun generateToc() {
         CoroutineScope(Dispatchers.IO).launch {
-            val filePath = sharedViewModel.currentFileState.srcFile?.toString() ?: return@launch
-            val toc = pdfTocExtractorService.extract(filePath)
-            generatedToc = toc
+            isGenerating = true
+            status = "Generating..."
+            try {
+                val filePath = sharedViewModel.currentFileState.srcFile?.toString() ?: return@launch
+                val toc = pdfTocExtractorService.extract(filePath)
+                generatedToc = toc
+                status = "Generated successfully."
+            } catch (e: Exception) {
+                status = "Error: ${e.message}"
+            } finally {
+                isGenerating = false
+            }
         }
     }
 }

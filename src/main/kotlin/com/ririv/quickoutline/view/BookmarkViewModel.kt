@@ -18,9 +18,10 @@ class BookmarkViewModel(
 ) {
     var bookmarks by mutableStateOf<List<Bookmark>>(emptyList())
     var selectedBookmark by mutableStateOf<Bookmark?>(null)
+    var filePath by mutableStateOf("")
     private var rootBookmark: Bookmark? = null
 
-    fun openPdf(filePath: String) {
+    fun openPdf() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 sharedViewModel.currentFileState.setSrcFile(java.io.File(filePath).toPath())

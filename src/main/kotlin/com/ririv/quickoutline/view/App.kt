@@ -1,7 +1,5 @@
 package com.ririv.quickoutline.view
 
-import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.ririv.quickoutline.di.appModule
@@ -13,7 +11,7 @@ fun main() = application {
     }
 
     Window(onCloseRequest = ::exitApplication) {
-        MaterialTheme {
+        QuickOutlineTheme {
             MainView()
         }
     }

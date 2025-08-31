@@ -1,26 +1,45 @@
 package com.ririv.quickoutline.view
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.Button
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.ririv.quickoutline.view.controls.ButtonType
+import com.ririv.quickoutline.view.controls.StyledButton
+import com.ririv.quickoutline.view.controls.StyledTextField
 import org.koin.java.KoinJavaComponent.inject
 
 @Composable
 fun TocGeneratorTab() {
     val viewModel: TocGeneratorViewModel by inject(TocGeneratorViewModel::class.java)
 
-    Column {
-        Button(onClick = {
-            viewModel.generateToc()
-        }) {
-            Text("Generate TOC")
+    Column(modifier = Modifier.padding(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StyledButton(
+                onClick = { viewModel.generateToc() },
+                text = "Generate TOC",
+                type = ButtonType.PLAIN_PRIMARY
+            )
+            if (viewModel.isGenerating) {
+                Text("Generating...")
+            }
         }
-        TextField(
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(viewModel.status)
+        Spacer(modifier = Modifier.height(8.dp))
+        StyledTextField(
             value = viewModel.generatedToc,
             onValueChange = { viewModel.generatedToc = it },
-            label = { Text("Generated TOC") }
+            placeholder = { Text("Generated TOC") },
+            modifier = Modifier.fillMaxWidth().weight(1f)
         )
     }
 }

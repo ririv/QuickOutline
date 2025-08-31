@@ -1,18 +1,105 @@
 package com.ririv.quickoutline.view
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.TextField
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.ririv.quickoutline.pdfProcess.PageLabel
+import com.ririv.quickoutline.view.controls.ButtonType
+import com.ririv.quickoutline.view.controls.StyledButton
+import com.ririv.quickoutline.view.controls.StyledTextField
 import org.koin.java.KoinJavaComponent.inject
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PageLabelTabView() {
     val viewModel: PageLabelViewModel by inject(PageLabelViewModel::class.java)
+    var expanded by remember { mutableStateOf(false) }
 
-    TextField(
-        value = viewModel.pageLabels,
-        onValueChange = { viewModel.pageLabels = it },
-        modifier = Modifier.fillMaxSize()
-    )
+    LaunchedEffect(Unit) {
+        viewModel.loadPageLabels()
+    }
+
+    Row(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.weight(0.75f).padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(15.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Numbering Style:", modifier = Modifier.width(80.dp))
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
+                        StyledTextField(
+                            value = viewModel.numberingStyle.name,
+                            onValueChange = {},
+                            placeholder = null
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            PageLabel.PageLabelNumberingStyle.values().forEach { style ->
+                                DropdownMenuItem(onClick = {
+                                    viewModel.numberingStyle = style
+                                    expanded = false
+                                }) {
+                                    Text(style.name)
+                                }
+                            }
+                        }
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Prefix:", modifier = Modifier.width(80.dp))
+                    StyledTextField(
+                        value = viewModel.prefix,
+                        onValueChange = { viewModel.prefix = it },
+                        placeholder = null
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Start Number:", modifier = Modifier.width(80.dp))
+                    StyledTextField(
+                        value = viewModel.startNumber,
+                        onValueChange = { viewModel.startNumber = it },
+                        placeholder = { Text("e.g. 1") }
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("From Page:", modifier = Modifier.width(80.dp))
+                    StyledTextField(
+                        value = viewModel.fromPage,
+                        onValueChange = { viewModel.fromPage = it },
+                        placeholder = { Text("e.g. 1") }
+                    )
+                }
+            }
+
+            StyledButton(onClick = { viewModel.addRule() }, text = "Add Rule", type = ButtonType.PLAIN_PRIMARY)
+
+            Divider()
+
+            Text("Rules:", fontWeight = FontWeight.Bold, color = Color(0xFF9198A1))
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(viewModel.rules) { rule ->
+                    Text("Page ${rule.pageNum}: Style=${rule.numberingStyle}, Prefix='${rule.labelPrefix}', Start=${rule.firstPage}", modifier = Modifier.padding(vertical = 4.dp))
+                }
+            }
+
+            StyledButton(onClick = { viewModel.setPageLabels() }, text = "Set Page Labels", type = ButtonType.PLAIN_IMPORTANT)
+        }
+        Column(modifier = Modifier.weight(0.25f)) {
+            ThumbnailPane()
+        }
+    }
 }
+
