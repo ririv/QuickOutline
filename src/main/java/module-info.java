@@ -21,8 +21,8 @@ module quickoutline {
     requires com.google.guice;
     requires jakarta.inject;
     requires org.checkerframework.checker.qual;
-    requires openai.java.core;
-    requires openai.java.client.okhttp;
+//    requires openai.java.core;
+//    requires openai.java.client.okhttp;
     requires com.google.common;
 //    requires org.bouncycastle.util;
 
