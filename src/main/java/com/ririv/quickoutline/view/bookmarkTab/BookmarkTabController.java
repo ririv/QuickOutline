@@ -171,7 +171,7 @@ public class BookmarkTabController {
             }
         } catch (NoOutlineException e) {
             e.printStackTrace();
-            eventBus.post(new ShowMessageEvent(bundle.getString("message.noBookmarks"), Message.MessageType.WARNING));
+            eventBus.post(new ShowMessageEvent(bundle.getString("message.noBookmarks"), Message.MessageType.INFO));
         }
     }
 

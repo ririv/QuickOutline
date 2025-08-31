@@ -62,11 +62,6 @@ public class PdfPreviewController {
 
         } catch (IOException e) {
             e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText("无法加载PDF文件");
-            alert.setContentText("加载文件时发生错误: " + pdfFile.getAbsolutePath() + "\n" + e.getMessage());
-            alert.showAndWait();
         }
     }
 

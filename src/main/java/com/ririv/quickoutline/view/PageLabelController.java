@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.PageLabelsChangedEvent;
 import com.ririv.quickoutline.event.ShowMessageEvent;
+import com.ririv.quickoutline.event.ShowSuccessDialogEvent;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.state.CurrentFileState;
@@ -227,7 +228,7 @@ public class PageLabelController {
         try {
             String[] pageLabels = pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
             appEventBus.post(new PageLabelsChangedEvent(java.util.Arrays.asList(pageLabels)));
-            appEventBus.post(new ShowMessageEvent("页码标签已成功应用。", Message.MessageType.SUCCESS));
+            appEventBus.post(new ShowSuccessDialogEvent());
         } catch (IOException e) {
             appEventBus.post(new ShowMessageEvent("应用页码标签失败: " + "e.getMessage()", Message.MessageType.ERROR));
             throw new RuntimeException(e);

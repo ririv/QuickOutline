@@ -76,7 +76,7 @@ public class MyAlert extends Alert {
         }
         else {
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
-                    "icon/SmileFace.png"
+                    "icon/success.png"
             )));
             this.setTitle("SUCCESS");
         }

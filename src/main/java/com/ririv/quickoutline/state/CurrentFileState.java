@@ -68,7 +68,7 @@ public class CurrentFileState {
         String ext = (dotIndex == -1) ? "" : srcFileName.substring(dotIndex);
 
         Path parentDir = srcFilePath.getParent();
-        String destFileName = nameWithoutExt + "_含目录" + ext;
+        String destFileName = nameWithoutExt + "_new" + ext;
         return parentDir.resolve(destFileName);
     }
 
