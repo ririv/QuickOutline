@@ -1,13 +1,14 @@
 package com.ririv.quickoutline.view
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +22,8 @@ import org.koin.java.KoinJavaComponent.inject
 @Composable
 fun ThumbnailPane() {
     val viewModel: ThumbnailViewModel by inject(ThumbnailViewModel::class.java)
-    val thumbnails by remember(viewModel) { derivedStateOf { viewModel.thumbnails } }
+    val thumbnails by remember { derivedStateOf { viewModel.thumbnails } }
+    val pageCount by remember { derivedStateOf { viewModel.pageCount } }
     var zoom by remember { mutableStateOf(1f) }
 
     Column(modifier = Modifier.padding(10.dp)) {
@@ -39,11 +41,19 @@ fun ThumbnailPane() {
             )
         }
         LazyVerticalGrid(columns = GridCells.Adaptive(100.dp)) {
-            items(thumbnails) { thumbnail ->
-                Image(
-                    bitmap = thumbnail.toComposeImageBitmap(),
-                    contentDescription = null
-                )
+            items(pageCount) { index ->
+                val thumbnail = thumbnails[index]
+                if (thumbnail != null) {
+                    Image(
+                        bitmap = thumbnail.toComposeImageBitmap(),
+                        contentDescription = null
+                    )
+                } else {
+                    Box(modifier = Modifier.size(100.dp).background(Color.Gray))
+                    LaunchedEffect(index) {
+                        viewModel.loadThumbnail(index)
+                    }
+                }
             }
         }
     }

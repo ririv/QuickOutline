@@ -111,6 +111,13 @@ public class PdfPreview implements AutoCloseable {
         }
     }
 
+    public BufferedImage renderImage(int pageIndex, float dpi) throws IOException {
+        if (pageIndex < 0 || pageIndex >= getPageCount()) {
+            throw new IllegalArgumentException("Page index " + pageIndex + " is out of bounds.");
+        }
+        return renderer.renderImageWithDPI(pageIndex, dpi);
+    }
+
 
     /**
      * Closes the underlying PDDocument to release resources.

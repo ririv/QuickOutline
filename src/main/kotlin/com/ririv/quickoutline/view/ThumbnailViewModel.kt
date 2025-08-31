@@ -14,28 +14,48 @@ import kotlinx.coroutines.withContext
 import java.awt.image.BufferedImage
 
 class ThumbnailViewModel(private val currentFileState: CurrentFileState) {
-    var thumbnails by mutableStateOf<List<BufferedImage>>(emptyList())
+    var thumbnails by mutableStateOf<Map<Int, BufferedImage>>(emptyMap())
+    var pageCount by mutableStateOf(0)
+    private var pdfPreview: PdfPreview? = null
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
             currentFileState.srcFile.collectLatest { path ->
+                pdfPreview?.close()
+                pdfPreview = null
+                thumbnails = emptyMap()
+                pageCount = 0
                 if (path != null) {
                     launch(Dispatchers.IO) {
-                        val file = path.toFile()
-                        val pdfPreview = PdfPreview(file)
-                        val pageCount = pdfPreview.pageCount
-                        val imageList = mutableListOf<BufferedImage>()
-                        for (i in 0 until pageCount) {
-                            pdfPreview.renderThumbnail(i) { image ->
-                                imageList.add(image)
+                        try {
+                            val preview = PdfPreview(path.toFile())
+                            pdfPreview = preview
+                            withContext(Dispatchers.Swing) {
+                                pageCount = preview.pageCount
                             }
-                        }
-                        withContext(Dispatchers.Swing) {
-                            thumbnails = imageList
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
                     }
-                } else {
-                    thumbnails = emptyList()
+                }
+            }
+        }
+    }
+
+    fun loadThumbnail(index: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            pdfPreview?.let { preview ->
+                if (thumbnails[index] == null) {
+                    try {
+                        val image = preview.renderImage(index, 72f) // Use the new synchronous method
+                        withContext(Dispatchers.Swing) {
+                            val newThumbnails = thumbnails.toMutableMap()
+                            newThumbnails[index] = image
+                            thumbnails = newThumbnails
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             }
         }

@@ -22,10 +22,6 @@ fun PageLabelTabView() {
     val viewModel: PageLabelViewModel by inject(PageLabelViewModel::class.java)
     var expanded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadPageLabels()
-    }
-
     Row(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.weight(0.75f).padding(15.dp),
@@ -102,4 +98,3 @@ fun PageLabelTabView() {
         }
     }
 }
-

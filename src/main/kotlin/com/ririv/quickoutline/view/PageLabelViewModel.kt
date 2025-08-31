@@ -8,7 +8,10 @@ import com.ririv.quickoutline.service.PdfPageLabelService
 import com.ririv.quickoutline.state.CurrentFileState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.swing.Swing
+import kotlinx.coroutines.withContext
 
 class PageLabelViewModel(
     private val pdfPageLabelService: PdfPageLabelService,
@@ -21,11 +24,26 @@ class PageLabelViewModel(
     var fromPage by mutableStateOf("1")
     var rules by mutableStateOf<List<PageLabel>>(emptyList())
 
-    fun loadPageLabels() {
+    init {
+        CoroutineScope(Dispatchers.Swing).launch {
+            currentFileState.srcFile.collectLatest { path ->
+                if (path != null) {
+                    loadPageLabels()
+                } else {
+                    pageLabels = ""
+                    rules = emptyList()
+                }
+            }
+        }
+    }
+
+    private fun loadPageLabels() {
         CoroutineScope(Dispatchers.IO).launch {
-            val filePath = currentFileState.srcFile?.toString() ?: return@launch
+            val filePath = currentFileState.srcFile.value?.toString() ?: return@launch
             val labels = pdfPageLabelService.getPageLabels(filePath)
-            pageLabels = labels.joinToString("\n")
+            withContext(Dispatchers.Swing) {
+                pageLabels = labels.joinToString("\n")
+            }
         }
     }
 
@@ -41,8 +59,8 @@ class PageLabelViewModel(
 
     fun setPageLabels() {
         CoroutineScope(Dispatchers.IO).launch {
-            val srcFilePath = currentFileState.srcFile?.toString() ?: return@launch
-            val destFilePath = currentFileState.destFile?.toString() ?: return@launch
+            val srcFilePath = currentFileState.srcFile.value?.toString() ?: return@launch
+            val destFilePath = currentFileState.destFile.value?.toString() ?: return@launch
             pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, rules)
         }
     }
