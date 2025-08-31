@@ -398,3 +398,15 @@
     -fx-padding: 2;
     -fx-background-color: -my-color-divding-line;
 }
+
+.scroll-pane, .scroll-pane:focused {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: #dcdcdc; /* 定义一个标准、统一的边框颜色 */
+    -fx-border-width: 1px;
+}
+
+
+
+
+
