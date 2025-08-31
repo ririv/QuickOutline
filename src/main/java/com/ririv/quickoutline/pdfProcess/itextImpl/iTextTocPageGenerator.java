@@ -1,6 +1,7 @@
 package com.ririv.quickoutline.pdfProcess.itextImpl;
 
 import com.itextpdf.io.font.PdfEncodings;
+import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -19,6 +20,8 @@ import com.itextpdf.layout.properties.TabAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,7 +30,7 @@ import java.util.Objects;
 
 public class iTextTocPageGenerator implements TocPageGenerator {
 
-    public static final String DEFAULT_FONT_PATH = Objects.requireNonNull(iTextTocPageGenerator.class.getResource("/fonts/MapleMono-CN-Regular.ttf")).toExternalForm();
+    private static final Logger log = LoggerFactory.getLogger(iTextTocPageGenerator.class);
 
     @Override
     public void generateAndInsertToc(String srcFilePath, String destFilePath, List<Bookmark> bookmarks) throws IOException {
@@ -35,7 +38,16 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         // 记录原始文档的页数
         int originalPageNum = pdfDoc.getNumberOfPages();
         Document doc = new Document(pdfDoc);
-        PdfFont font = PdfFontFactory.createFont(DEFAULT_FONT_PATH, PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
+
+        PdfFont font;
+        try {
+            String fontResourcePath = "/fonts/default.ttf";
+            String defaultFontPath = iTextTocPageGenerator.class.getResource(fontResourcePath).toExternalForm();
+            font = PdfFontFactory.createFont(defaultFontPath, PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
+        } catch (IOException | NullPointerException e) {
+            log.warn("未找到字体文件，错误信息：{}",e.getMessage());
+            font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
+        }
 
 
         // ======================= !!! FINAL, DEFINITIVE FIX !!! =======================
