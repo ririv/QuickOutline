@@ -13,6 +13,7 @@ import com.ririv.quickoutline.model.Bookmark
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.RadioButton2Group
 import com.ririv.quickoutline.view.controls.StyledButton
+import com.ririv.quickoutline.view.controls.StyledTextField
 
 @Composable
 fun TextTabView(bookmarks: List<Bookmark>, onTextChange: (String) -> Unit) {
@@ -20,10 +21,11 @@ fun TextTabView(bookmarks: List<Bookmark>, onTextChange: (String) -> Unit) {
     var selectedMethod by remember { mutableStateOf("seq") }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        TextField(
+        StyledTextField(
             value = text,
             onValueChange = onTextChange,
             modifier = Modifier.weight(1f).fillMaxHeight(),
+            placeholder = { Text("Enter your text here...") },
             singleLine = false
         )
         Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color(0xFFDFDFDF)))

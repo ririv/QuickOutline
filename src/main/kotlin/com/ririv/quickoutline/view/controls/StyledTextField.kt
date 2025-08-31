@@ -7,22 +7,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun StyledTextField(value: String, onValueChange: (String) -> Unit, placeholder: @Composable (() -> Unit)?, modifier: Modifier = Modifier) {
+fun StyledTextField(value: String, onValueChange: (String) -> Unit, placeholder: @Composable (() -> Unit)?, modifier: Modifier = Modifier, singleLine: Boolean = true) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    var isHovered by remember { mutableStateOf(false) }
 
-    val borderColor = if (isFocused) {
-        Color(0xFF409EFF)
-    } else {
-        Color(0xFFD9D9D9)
+    val borderColor = when {
+        isFocused -> Color(0xFF409EFF)
+        isHovered -> Color(0xFF409EFF)
+        else -> Color(0xFFD9D9D9)
     }
 
     TextField(
@@ -31,6 +34,8 @@ fun StyledTextField(value: String, onValueChange: (String) -> Unit, placeholder:
         placeholder = placeholder,
         modifier = modifier
             .fillMaxWidth()
+            .onPointerEvent(PointerEventType.Enter) { isHovered = true }
+            .onPointerEvent(PointerEventType.Exit) { isHovered = false }
             .border(
                 width = 1.dp,
                 color = borderColor,
@@ -42,6 +47,7 @@ fun StyledTextField(value: String, onValueChange: (String) -> Unit, placeholder:
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent
         ),
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
+        singleLine = singleLine
     )
 }
