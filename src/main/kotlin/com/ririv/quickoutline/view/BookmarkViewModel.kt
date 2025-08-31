@@ -1,51 +1,41 @@
 package com.ririv.quickoutline.view
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import com.ririv.quickoutline.exception.NoOutlineException
 import com.ririv.quickoutline.model.Bookmark
 import com.ririv.quickoutline.service.PdfOutlineService
-import com.ririv.quickoutline.state.BookmarkSettingsState
 import com.ririv.quickoutline.state.CurrentFileState
 import com.ririv.quickoutline.textProcess.TextProcessor
 import com.ririv.quickoutline.textProcess.methods.Method
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import kotlinx.coroutines.withContext
 
 class BookmarkViewModel(
     private val pdfOutlineService: PdfOutlineService,
-    private val currentFileState: CurrentFileState,
-    private val bookmarkSettingsState: BookmarkSettingsState
+    private val currentFileState: CurrentFileState
 ) {
-    val bookmarks = bookmarkSettingsState.rootBookmark
-    var selectedBookmark by mutableStateOf<Bookmark?>(null)
-    var filePath by mutableStateOf("")
+    private val _uiState = MutableStateFlow(BookmarkUiState())
+    val uiState: StateFlow<BookmarkUiState> = _uiState.asStateFlow()
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
             currentFileState.srcFile.collectLatest { path ->
-                filePath = path?.toString() ?: ""
+                _uiState.update { it.copy(filePath = path?.toString() ?: "") }
                 if (path != null) {
                     launch(Dispatchers.IO) {
-                        try {
-                            val newRootBookmark = pdfOutlineService.getOutlineAsBookmark(path.toString(), 0)
-                            withContext(Dispatchers.Swing) {
-                                bookmarkSettingsState.setRootBookmark(newRootBookmark)
-                            }
-                        } catch (e: NoOutlineException) {
-                            e.printStackTrace()
-                            withContext(Dispatchers.Swing) {
-                                bookmarkSettingsState.setRootBookmark(null)
-                            }
+                        val newRootBookmark = pdfOutlineService.getOutlineAsBookmark(path.toString(), 0)
+                        withContext(Dispatchers.Swing) {
+                            _uiState.update { it.copy(rootBookmark = newRootBookmark) }
                         }
                     }
                 } else {
-                    bookmarkSettingsState.setRootBookmark(null)
+                    _uiState.update { it.copy(rootBookmark = null) }
                 }
             }
         }
@@ -56,27 +46,35 @@ class BookmarkViewModel(
     }
 
     fun addBookmark(title: String) {
-        val newBookmark = Bookmark(title, 0, selectedBookmark?.level?.plus(1) ?: 1)
-        val parent = selectedBookmark ?: bookmarkSettingsState.rootBookmark.value ?: return
+        val parent = uiState.value.selectedBookmark ?: uiState.value.rootBookmark ?: return
+        val newBookmark = Bookmark(title, 0, parent.level + 1)
         parent.addChild(newBookmark)
-        // The view should observe the rootBookmark and update itself
+        _uiState.update { it.copy(recomposeTrigger = it.recomposeTrigger + 1) }
     }
 
     fun editBookmark(newTitle: String) {
-        selectedBookmark?.title = newTitle
-        // The view should observe the rootBookmark and update itself
+        uiState.value.selectedBookmark?.title = newTitle
+        _uiState.update { it.copy(recomposeTrigger = it.recomposeTrigger + 1) }
     }
 
     fun deleteBookmark() {
-        selectedBookmark?.let { bookmark ->
+        uiState.value.selectedBookmark?.let { bookmark ->
             bookmark.parent?.children?.remove(bookmark)
-            // The view should observe the rootBookmark and update itself
+            _uiState.update { it.copy(recomposeTrigger = it.recomposeTrigger + 1) }
         }
     }
 
     fun updateBookmarksFromText(text: String) {
         val textProcessor = TextProcessor()
         val newRootBookmark = textProcessor.process(text, 0, Method.SEQ)
-        bookmarkSettingsState.setRootBookmark(newRootBookmark)
+        _uiState.update { it.copy(rootBookmark = newRootBookmark) }
+    }
+
+    fun selectBookmark(bookmark: Bookmark?) {
+        _uiState.update { it.copy(selectedBookmark = bookmark) }
+    }
+
+    fun setOffset(offset: Int?) {
+        _uiState.update { it.copy(offset = offset) }
     }
 }

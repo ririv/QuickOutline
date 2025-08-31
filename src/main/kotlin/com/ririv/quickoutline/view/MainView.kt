@@ -25,13 +25,14 @@ fun MainView() {
     val bookmarkViewModel: BookmarkViewModel by inject(BookmarkViewModel::class.java)
     val messageContainerState = rememberMessageContainerState()
     var selectedTab by remember { mutableStateOf(0) }
+    val uiState by bookmarkViewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Top Pane
         Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF2F2F2))) {
             Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 TextField(
-                    value = bookmarkViewModel.filePath,
+                    value = uiState.filePath,
                     onValueChange = { },
                     enabled = false,
                     placeholder = { Text(stringResource("filepathTF.prompt")) },

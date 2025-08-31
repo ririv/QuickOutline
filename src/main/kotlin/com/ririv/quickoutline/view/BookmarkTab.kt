@@ -15,14 +15,24 @@ import org.koin.java.KoinJavaComponent.inject
 fun BookmarkTab() {
     val viewModel: BookmarkViewModel by inject(BookmarkViewModel::class.java)
     var showTreeView by remember { mutableStateOf(false) }
-    val rootBookmark by viewModel.bookmarks.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+
+    // This will trigger recomposition when the trigger changes
+    val recomposeTrigger = uiState.recomposeTrigger
 
     Column {
         Box(modifier = Modifier.weight(1f)) {
             if (showTreeView) {
-                TreeTabView(rootBookmark?.children ?: emptyList(), viewModel.selectedBookmark, onBookmarkSelected = { viewModel.selectedBookmark = it })
+                TreeTabView(
+                    bookmarks = uiState.rootBookmark?.children ?: emptyList(),
+                    selectedBookmark = uiState.selectedBookmark,
+                    onBookmarkSelected = { viewModel.selectBookmark(it) }
+                )
             } else {
-                TextTabView(rootBookmark?.children ?: emptyList()) { viewModel.updateBookmarksFromText(it) }
+                TextTabView(
+                    bookmarks = uiState.rootBookmark?.children ?: emptyList(),
+                    onTextChange = { viewModel.updateBookmarksFromText(it) }
+                )
             }
         }
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFDFDFDF)))

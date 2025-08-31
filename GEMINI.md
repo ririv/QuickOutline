@@ -19,7 +19,7 @@ QuickOutline is a cross-platform desktop application built with Java and JavaFX 
 我们目前已经实现了一部分，你需要继续
 
 ## 回答语言
-你可以使用英文思考，但必须使用简体中文回答
+请使用简体中文回答
 
 对于依赖的API调用，可以搜索官方文档
 

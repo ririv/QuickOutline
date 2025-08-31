@@ -7,7 +7,6 @@ import com.ririv.quickoutline.service.PdfOutlineService
 import com.ririv.quickoutline.service.PdfPageLabelService
 import com.ririv.quickoutline.service.PdfTocExtractorService
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService
-import com.ririv.quickoutline.state.BookmarkSettingsState
 import com.ririv.quickoutline.state.CurrentFileState
 import com.ririv.quickoutline.view.*
 import org.koin.dsl.module
@@ -19,10 +18,8 @@ val appModule = module {
     single { PdfTocPageGeneratorService(get()) }
     single { AppEventBus() }
     single { PdfTocExtractorService() }
-    single { BookmarkSettingsState() }
-    single { SharedViewModel(get()) }
     single { PdfPageLabelService() }
-    factory { BookmarkViewModel(get(), get(), get()) }
+    single { BookmarkViewModel(get(), get()) }
     factory { TocGeneratorViewModel(get(), get()) }
     factory { LeftPaneViewModel() }
     factory { PageLabelViewModel(get(), get()) }
