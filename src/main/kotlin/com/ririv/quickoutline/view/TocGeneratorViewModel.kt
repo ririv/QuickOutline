@@ -8,9 +8,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+import com.ririv.quickoutline.state.CurrentFileState
+
 class TocGeneratorViewModel(
     private val pdfTocExtractorService: PdfTocExtractorService,
-    private val sharedViewModel: SharedViewModel
+    private val currentFileState: CurrentFileState
 ) {
     var generatedToc by mutableStateOf("")
     var isGenerating by mutableStateOf(false)
@@ -21,7 +23,7 @@ class TocGeneratorViewModel(
             isGenerating = true
             status = "Generating..."
             try {
-                val filePath = sharedViewModel.currentFileState.srcFile?.toString() ?: return@launch
+                val filePath = currentFileState.srcFile?.toString() ?: return@launch
                 val toc = pdfTocExtractorService.extract(filePath)
                 generatedToc = toc
                 status = "Generated successfully."
