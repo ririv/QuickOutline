@@ -3,11 +3,14 @@ package com.ririv.quickoutline.view
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.MessageContainer
 import com.ririv.quickoutline.view.controls.rememberMessageContainerState
@@ -30,7 +33,14 @@ fun MainView() {
                     placeholder = { Text(stringResource("filepathTF.prompt")) },
                     modifier = Modifier.weight(1f)
                 )
-                Text("O")
+                IconButton(onClick = { /* TODO: Implement file chooser */ }) {
+                    Icon(
+                        painter = painterResource("drawable/open.svg"),
+                        contentDescription = "Open file",
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Gray
+                    )
+                }
             }
             Divider(color = Color(0xFFDFDFDF), thickness = 1.dp)
         }

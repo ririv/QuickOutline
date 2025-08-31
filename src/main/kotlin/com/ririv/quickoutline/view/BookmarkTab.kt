@@ -25,6 +25,6 @@ fun BookmarkTab() {
             }
         }
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFDFDFDF)))
-        BookmarkBottomPane(viewModel) { showTreeView = !showTreeView }
+        BookmarkBottomPane(viewModel, showTreeView) { showTreeView = !showTreeView }
     }
 }
