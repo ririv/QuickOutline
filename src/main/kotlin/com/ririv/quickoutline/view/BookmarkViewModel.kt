@@ -25,7 +25,8 @@ class BookmarkViewModel(
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.srcFile.collectLatest { path ->
+            currentFileState.uiState.collectLatest { fileUiState ->
+                val path = fileUiState.paths.source
                 _uiState.update { it.copy(filePath = path?.toString() ?: "") }
                 if (path != null) {
                     launch(Dispatchers.IO) {

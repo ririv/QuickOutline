@@ -23,7 +23,7 @@ class TocGeneratorViewModel(
             isGenerating = true
             status = "Generating..."
             try {
-                val filePath = currentFileState.srcFile?.toString() ?: return@launch
+                val filePath = currentFileState.uiState.value.paths.source?.toString() ?: return@launch
                 val toc = pdfTocExtractorService.extract(filePath)
                 generatedToc = toc
                 status = "Generated successfully."

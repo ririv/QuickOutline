@@ -4,40 +4,65 @@ import com.ririv.quickoutline.exception.EncryptedPdfException
 import com.ririv.quickoutline.service.PdfOutlineService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.io.IOException
 import java.nio.file.Path
 
+// 1. Data class to hold related state
+data class FilePaths(
+    val source: Path?,
+    val destination: Path?
+)
+
+// 2. Data class for the entire UI state managed by this class
+data class CurrentFileUiState(
+    val paths: FilePaths = FilePaths(null, null),
+    val error: String? = null
+)
+
 class CurrentFileState(private val pdfOutlineService: PdfOutlineService) {
 
-    private val _srcFile = MutableStateFlow<Path?>(null)
-    val srcFile = _srcFile.asStateFlow()
-
-    private val _destFile = MutableStateFlow<Path?>(null)
-    val destFile = _destFile.asStateFlow()
+    // 3. Single StateFlow for the UI state
+    private val _uiState = MutableStateFlow(CurrentFileUiState())
+    val uiState = _uiState.asStateFlow()
 
     fun setSrcFile(file: Path?) {
         if (file == null) {
             clear()
             return
         }
-        // Centralized validation
+
         try {
             pdfOutlineService.checkOpenFile(file.toString())
-            _srcFile.value = file
-            _destFile.value = calculateDestFilePath(file)
-        } catch (e: IOException) {
-            // handle exception
+            val destFile = calculateDestFilePath(file)
+            // Atomically update the state
+            _uiState.update {
+                it.copy(
+                    paths = FilePaths(source = file, destination = destFile),
+                    error = null
+                )
+            }
         } catch (e: EncryptedPdfException) {
-            // handle exception
+            _uiState.update {
+                it.copy(error = "文件已加密，无法打开。") // Example error message
+            }
         } catch (e: com.itextpdf.io.exceptions.IOException) {
-            // handle exception
+            _uiState.update {
+                it.copy(error = "文件已损坏或格式不正确。") // Example error message
+            }
+        } catch (e: IOException) {
+            _uiState.update {
+                it.copy(error = "无法读取文件: ${e.message}") // Example error message
+            }
         }
     }
 
-    private fun calculateDestFilePath(srcFilePath: Path?): Path? {
-        if (srcFilePath == null) {
-            return null
-        }
+    // Make this public so UI can dismiss the error
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
+
+    private fun calculateDestFilePath(srcFilePath: Path): Path {
         val srcFileName = srcFilePath.fileName.toString()
         val dotIndex = srcFileName.lastIndexOf(".")
         val nameWithoutExt = if (dotIndex == -1) srcFileName else srcFileName.substring(0, dotIndex)
@@ -49,7 +74,6 @@ class CurrentFileState(private val pdfOutlineService: PdfOutlineService) {
     }
 
     fun clear() {
-        _srcFile.value = null
-        _destFile.value = null
+        _uiState.value = CurrentFileUiState() // Reset to initial state
     }
 }

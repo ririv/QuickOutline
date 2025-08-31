@@ -20,7 +20,8 @@ class ThumbnailViewModel(private val currentFileState: CurrentFileState) {
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.srcFile.collectLatest { path ->
+            currentFileState.uiState.collectLatest { uiState ->
+                val path = uiState.paths.source
                 pdfPreview?.close()
                 pdfPreview = null
                 thumbnails = emptyMap()

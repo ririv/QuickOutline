@@ -26,8 +26,8 @@ class PageLabelViewModel(
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.srcFile.collectLatest { path ->
-                if (path != null) {
+            currentFileState.uiState.collectLatest { uiState ->
+                if (uiState.paths.source != null) {
                     loadPageLabels()
                 } else {
                     pageLabels = ""
@@ -39,7 +39,7 @@ class PageLabelViewModel(
 
     private fun loadPageLabels() {
         CoroutineScope(Dispatchers.IO).launch {
-            val filePath = currentFileState.srcFile.value?.toString() ?: return@launch
+            val filePath = currentFileState.uiState.value.paths.source?.toString() ?: return@launch
             val labels = pdfPageLabelService.getPageLabels(filePath)
             withContext(Dispatchers.Swing) {
                 pageLabels = labels.joinToString("\n")
@@ -59,8 +59,8 @@ class PageLabelViewModel(
 
     fun setPageLabels() {
         CoroutineScope(Dispatchers.IO).launch {
-            val srcFilePath = currentFileState.srcFile.value?.toString() ?: return@launch
-            val destFilePath = currentFileState.destFile.value?.toString() ?: return@launch
+            val srcFilePath = currentFileState.uiState.value.paths.source?.toString() ?: return@launch
+            val destFilePath = currentFileState.uiState.value.paths.destination?.toString() ?: return@launch
             pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, rules)
         }
     }
