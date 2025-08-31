@@ -1,11 +1,9 @@
 package com.ririv.quickoutline.event;
 
-import com.ririv.quickoutline.view.MainController;
-
 public class SwitchTabEvent {
-    public final MainController.FnTab targetTab;
+    public final String targetTab;
 
-    public  SwitchTabEvent(MainController.FnTab targetTab) {
+    public  SwitchTabEvent(String targetTab) {
         this.targetTab = targetTab;
     }
 }

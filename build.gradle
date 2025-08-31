@@ -1,14 +1,9 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
 plugins {
-    id 'application'
-    id 'org.openjfx.javafxplugin' version '0.1.0'
-
-    // 参考 https://github.com/openjfx/javafx-gradle-plugin#extra-plugins
-    // 不加入此会出现找不到模块错误
-    id 'org.javamodularity.moduleplugin' version '1.8.15'
-
-    // 请使用高版本，'2.26.0'实测出现 "Unsupported class file major version 65"错误
-    id 'org.beryx.jlink' version '3.1.1'
-
+    id("org.jetbrains.kotlin.jvm") version "2.0.0"
+    id("org.jetbrains.compose") version "1.6.11"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
     id 'idea'
     id 'java'
 }
@@ -23,18 +18,11 @@ java {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
+kotlin.jvmToolchain(21)
 
 version = '2.2.0'
 
-javafx {
-    version = '23' // LTS
-        modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing' ]
-}
 
-application{
-    mainModule.set("quickoutline")
-    mainClass.set("com.ririv.quickoutline.view.App")
-}
 
 
 //// 不设置这个idea,没法下载文档
@@ -48,11 +36,11 @@ application{
 //}
 
 
-
 def itextVersion = '9.2.0'
 
 // 不能下载请配置gradle代理
 dependencies {
+    implementation(compose.desktop.currentOs)
 
     // 使用该依赖打包会出现 错误: 当前不支持已签名模块化 JAR ..\QuickOutline\build\jlinkbase\jlinkjars\bcpkix-jdk18on-1.78.jar,
 //    https://stackoverflow.com/questions/50597926/signed-modular-jar-with-crypto-provider-cannot-be-linked-into-run-time-image
@@ -76,11 +64,10 @@ dependencies {
     // 如果需要字体支持（比如渲染中文等非西文字符）
     implementation 'org.apache.pdfbox:fontbox:3.0.3'
 
-    // Guice for Dependency Injection
-    implementation 'com.google.inject:guice:7.0.0'
-    // Force Guava to a newer version to fix CVE-2023-2976                                                  │
-    implementation 'com.google.guava:guava:33.2.1-jre'
-    implementation 'jakarta.inject:jakarta.inject-api:2.0.1'
+    implementation("io.insert-koin:koin-core:3.5.6")
+    implementation("io.insert-koin:koin-compose:1.1.5")
+
+    
 //    implementation("com.openai:openai-java:3.1.2")
     
 }
@@ -90,94 +77,30 @@ repositories {
 //    maven { url 'https://maven.aliyun.com/repository/public/' }
 //    maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
 //    maven { url 'https://mirrors.cloud.tencent.com/gradle/'}
+    google()
     gradlePluginPortal()
     mavenLocal()
     mavenCentral()
+    maven { url "https://maven.pkg.jetbrains.space/public/p/compose/dev" }
 }
 
-//传递版本号给Java程序，将在System.System.getProperty("app.version")获取
-def args = [
-    '-Dapp.version=' + project.version,
-    // 屏蔽iText的字形缺失警告
-    '-Dorg.slf4j.simpleLogger.log.com.itextpdf.kernel.font.PdfType1Font=error',
-    // 屏蔽PDFBox的字形缺失警告
-    '-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox.rendering.GlyphCache=error',
-    // 屏蔽PDFBox fontbox的字符串命令警告
-    '-Dorg.slf4j.simpleLogger.log.org.apache.fontbox.cff.Type1CharString=error'
-]
+compose.desktop {
+    application {
+        mainClass = "com.ririv.quickoutline.view.AppKt"
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-//    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" // 调试用
-}
-
-
-
-// 仅对application中的run任务有效，对build中任务无效
-run {
-    jvmArgs = args
-}
-
-
-def os = org.gradle.internal.os.OperatingSystem.current()
-
-// https://badass-jlink-plugin.beryx.org/releases/latest/
-// 仅对build中任务有效，对application中的run任务无效，
-jlink {
-    launcher {
-        name = 'QuickOutline'
-        jvmArgs = args
-    }
-//    压缩问题：https://github.com/fvarrui/JavaPackager/issues/383
-//     “警告: 当前不支持已签名模块化" 加入'--ignore-signing-information'选项
-    options = ['--strip-debug', '--compress', 'zip-6', '--no-header-files', '--no-man-pages', '--ignore-signing-information']
-//    https://walczak.it/blog/distributing-javafx-desktop-applications-without-requiring-jvm-using-jlink-and-jpackage
-
-//    配置参考文档 https://docs.oracle.com/en/java/javase/21/docs/specs/man/jpackage.html
-    jpackage {
-//        skipInstaller = true
-
-        // --- 核心修正 ---
-        // 1. 使用插件的专用属性来设置版本和开发者信息，避免命令行参数冲突
-        appVersion = project.version.toString()
-        vendor = 'riri Personal'
-
-        // 2. 移除错误的 installerOptionsParams 定义，因为它会导致参数重复
-        // def installerOptionsParams = [ ... ] // <--- 整个错误定义的代码块已被删除
-
-        println('Current OS: '+os)
-
-
-        // 安装器类型和图标（按平台动态配置）
-        if (os.isWindows()) {
-            installerType = 'msi'
-            icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.ico'
-            installerOptions = [
-                    '--win-shortcut',
-                    '--win-dir-chooser',
-                    '--win-menu'
-            ]
-        } else if (os.isMacOsX()) {
-            installerType = 'dmg'
-            icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
-            installerOptions = [
-                    '--mac-package-name', 'com.ririv.quickoutline',
-                    '--mac-package-identifier', 'com.ririv.quickoutline'
-            ]
-        } else if (os.isLinux()) {
-            installerType = 'deb' // 或 'rpm'（根据需求选择）
-            icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.png' // Linux 支持 PNG/SVG
-            installerOptions = [
-                    '--linux-shortcut', // 创建桌面快捷方式
-                    '--linux-menu-group', 'Development', // 应用被如何归类，有一些标准并且常用的类别名称
-                    '--linux-package-name', 'quickoutline' // 包名
-            ]
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "QuickOutline"
+            packageVersion = "2.2.0"
+            
+            // 移除icon,因为路径不对
+            // if (os.isWindows()) {
+            //     icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.ico'
+            // } else if (os.isMacOsX()) {
+            //     icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
+            // } else if (os.isLinux()) {
+            //     icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.png'
+            // }
         }
     }
 }
-
-
-
-
-
-

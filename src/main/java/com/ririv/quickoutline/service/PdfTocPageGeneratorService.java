@@ -1,6 +1,4 @@
 package com.ririv.quickoutline.service;
-
-import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 
@@ -11,7 +9,6 @@ public class PdfTocPageGeneratorService {
 
     private final TocPageGenerator tocPageGenerator;
 
-    @Inject
     public PdfTocPageGeneratorService(TocPageGenerator tocPageGenerator) {
         this.tocPageGenerator = tocPageGenerator;
     }

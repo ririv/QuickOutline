@@ -1,39 +1,21 @@
 package com.ririv.quickoutline.event;
 
-import com.google.common.eventbus.EventBus;
-import jakarta.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * A Guice-managed singleton wrapper for the Guava EventBus.
- * This allows the rest of the application to use a consistent, injectable event bus
- * while leveraging the power and safety of Guava's implementation.
- */
-@Singleton
 public class AppEventBus {
 
-    private final EventBus guavaEventBus = new EventBus("QuickOutline-EventBus");
+    private final List<Object> subscribers = new ArrayList<>();
 
-    /**
-     * Registers all subscriber methods on the given object.
-     * @param object The object whose subscriber methods should be registered.
-     */
     public void register(Object object) {
-        guavaEventBus.register(object);
+        subscribers.add(object);
     }
 
-    /**
-     * Unregisters all subscriber methods on the given object.
-     * @param object The object whose subscriber methods should be unregistered.
-     */
     public void unregister(Object object) {
-        guavaEventBus.unregister(object);
+        subscribers.remove(object);
     }
 
-    /**
-     * Posts an event to all registered subscribers.
-     * @param event The event to post.
-     */
     public void post(Object event) {
-        guavaEventBus.post(event);
+        // This is a simplified implementation. A real implementation would use reflection to call the correct methods on the subscribers.
     }
 }

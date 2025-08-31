@@ -1,0 +1,24 @@
+package com.ririv.quickoutline.view
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.ririv.quickoutline.service.PdfTocExtractorService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+class TocGeneratorViewModel(
+    private val pdfTocExtractorService: PdfTocExtractorService,
+    private val sharedViewModel: SharedViewModel
+) {
+    var generatedToc by mutableStateOf("")
+
+    fun generateToc() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val filePath = sharedViewModel.currentFileState.srcFile?.toString() ?: return@launch
+            val toc = pdfTocExtractorService.extract(filePath)
+            generatedToc = toc
+        }
+    }
+}

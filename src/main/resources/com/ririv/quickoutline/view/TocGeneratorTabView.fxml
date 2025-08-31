@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.layout.VBox?>
-
-<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController" alignment="CENTER" spacing="20">
-    <Button text="Generate TOC Page" onAction="#generateTocPageAction"/>
-</VBox>
