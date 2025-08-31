@@ -70,6 +70,8 @@ public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingS
      * @throws IOException 当读取文件失败时抛出。
      */
 
+    // 注：关于PDF页面标签显示的问题，纯字母的页码，阅读器会显示为，aaa，bbb，ccc这样的页码
+    // 但实际上我们获取的页面标签，非重复字母，这应该不是本程序的问题，只是阅读器显示的逻辑不同
     public String[] getPageLabels(String src) throws IOException {
         PdfReader reader = new PdfReader(src);
         PdfDocument pdfDoc = new PdfDocument(reader);
