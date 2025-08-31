@@ -6,80 +6,82 @@
 <?import javafx.geometry.Insets?>
 <?import com.ririv.quickoutline.view.controls.Remind?>
 <HBox
-      xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:id="root"
-      fx:controller="com.ririv.quickoutline.view.bookmarkTab.TextTabController">
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        fx:id="root"
+        fx:controller="com.ririv.quickoutline.view.bookmarkTab.TextTabController">
 
     <StackPane HBox.hgrow="ALWAYS">
 
         <TextArea fx:id="contentsTextArea" promptText="%contentsTextArea.prompt">
-<!--            这里去掉右边Pane的阴影效果了，改为分割线显示，所以不用了-->
-<!--         <StackPane.margin>-->
-<!--             设置右margin，防止右边sidebar的阴影效果挡住部分区域（比如右边挡住滚动条,能看到。但按不了）,并且消除了边框&ndash;&gt;-->
-<!--            <Insets left="2.0" />-->
-<!--         </StackPane.margin>-->
+            <!--            这里去掉右边Pane的阴影效果了，改为分割线显示，所以不用了-->
+            <!--         <StackPane.margin>-->
+            <!--             设置右margin，防止右边sidebar的阴影效果挡住部分区域（比如右边挡住滚动条,能看到。但按不了）,并且消除了边框&ndash;&gt;-->
+            <!--            <Insets left="2.0" />-->
+            <!--         </StackPane.margin>-->
         </TextArea>
 
         <Label fx:id="mask" textFill="gray" visible="false" text="%mask.text">
         </Label>
     </StackPane>
-    <Region styleClass="dividing-line-v" />
+    <Region styleClass="dividing-line-v"/>
     <AnchorPane>
 
-    <FlowPane alignment="CENTER" minWidth="135.0" orientation="VERTICAL" prefHeight="475.0" vgap="50"
-    AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
-    >
-        <Button fx:id="externalEditorBtn" onAction="#externalEditorBtnAction" styleClass="my-button,plain-button-primary" mnemonicParsing="false" prefWidth="75.0" text="VSCode" >
-            <tooltip >
-                <Tooltip text="%externalEditorBtn.tooltip"/>
-            </tooltip>
-        </Button>
-
-        <Button fx:id="autoFormatBtn" onAction="#autoFormatBtnAction" styleClass="my-button,plain-button-primary" mnemonicParsing="false" prefWidth="75.0" text="%autoFormatBtn.text">
-            <tooltip >
-                <Tooltip text="%autoFormatBtn.tooltip"/>
-            </tooltip>
-        </Button>
-        <Label />
-        <VBox prefWidth="80.0" GridPane.columnIndex="4">
-            <GridPane.margin>
-                <Insets left="35" right="20.0"/>
-            </GridPane.margin>
-
-            <fx:define>
-                <ToggleGroup fx:id="methodToggleGroup"/>
-            </fx:define>
-
-            <StackPane alignment="CENTER_LEFT">
-                <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
-                             text="%bookmarkTab.seqRBtn.text" >
-                    <StackPane.margin>
-                        <Insets topRightBottomLeft="5" />
-                    </StackPane.margin>
-                </RadioButton>
-                <Remind fx:id="seqRBtnRemind" />
-            </StackPane>
-            <StackPane alignment="CENTER_LEFT">
-                <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
-                             text="%bookmarkTab.indentRBtn.text">
-                    <StackPane.margin>
-                        <Insets topRightBottomLeft="5" />
-                    </StackPane.margin>
-                </RadioButton>
-                <Remind fx:id="indentRBtnRemind" />
-            </StackPane>
-        </VBox>
-
-    </FlowPane>
-        <VBox  alignment="TOP_CENTER" maxWidth="100"
-               AnchorPane.bottomAnchor="50" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
+        <VBox alignment="CENTER" minWidth="135.0" prefHeight="475.0" spacing="50"
+              AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
         >
-<!--            不写成一个Label是为了保证居中-->
-            <Label style="-fx-text-fill: #969696" text="%Tip.text1"/>
-            <Label style="-fx-text-fill: #969696" text="%Tip.text2"/>
-            <Label style="-fx-text-fill: #969696" text="%Tip.text3"/>
+            <Button fx:id="externalEditorBtn" onAction="#externalEditorBtnAction"
+                    styleClass="my-button,plain-button-primary" mnemonicParsing="false" prefWidth="75.0" text="VSCode">
+                <tooltip>
+                    <Tooltip text="%externalEditorBtn.tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button fx:id="autoFormatBtn" onAction="#autoFormatBtnAction" styleClass="my-button,plain-button-primary"
+                    mnemonicParsing="false" prefWidth="75.0" text="%autoFormatBtn.text">
+                <tooltip>
+                    <Tooltip text="%autoFormatBtn.tooltip"/>
+                </tooltip>
+            </Button>
+            <Label/>
+            <VBox alignment="TOP_CENTER" maxWidth="100"
+            >
+                <!--            不写成一个Label是为了保证居中-->
+                <Label style="-fx-text-fill: #969696" text="%Tip.text1"/>
+                <Label style="-fx-text-fill: #969696" text="%Tip.text2"/>
+                <Label style="-fx-text-fill: #969696" text="%Tip.text3"/>
+            </VBox>
         </VBox>
 
+<!--        必须包一层，否则Remind效果会平铺-->
+        <FlowPane alignment="CENTER" maxWidth="135" AnchorPane.bottomAnchor="30" AnchorPane.leftAnchor="0"
+                  AnchorPane.rightAnchor="0">
+            <VBox prefWidth="80.0">
+
+                <fx:define>
+                    <ToggleGroup fx:id="methodToggleGroup"/>
+                </fx:define>
+
+                <StackPane alignment="CENTER_LEFT">
+                    <RadioButton fx:id="seqRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                                 text="%bookmarkTab.seqRBtn.text">
+                        <StackPane.margin>
+                            <Insets topRightBottomLeft="5"/>
+                        </StackPane.margin>
+                    </RadioButton>
+                    <Remind fx:id="seqRBtnRemind"/>
+                </StackPane>
+                <StackPane alignment="CENTER_LEFT">
+                    <RadioButton fx:id="indentRBtn" toggleGroup="$methodToggleGroup" mnemonicParsing="false"
+                                 text="%bookmarkTab.indentRBtn.text">
+                        <StackPane.margin>
+                            <Insets topRightBottomLeft="5"/>
+                        </StackPane.margin>
+                    </RadioButton>
+                    <Remind fx:id="indentRBtnRemind"/>
+                </StackPane>
+            </VBox>
+
+        </FlowPane>
     </AnchorPane>
 </HBox>
