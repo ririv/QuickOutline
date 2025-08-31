@@ -1,21 +1,14 @@
-package com.ririv.quickoutline.view;
+package com.ririv.quickoutline.view.bookmarkTab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.AppEventBus;
 import com.ririv.quickoutline.event.ExtractTocEvent;
 import com.ririv.quickoutline.service.PdfTocExtractorService;
 import com.ririv.quickoutline.utils.LocalizationManager;
-import com.ririv.quickoutline.view.controls.Switch;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
 import java.io.IOException;

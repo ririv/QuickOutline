@@ -56,7 +56,7 @@
 <!-- -->
 <!--                </content>-->
 <!--            </Tab>-->
-                <fx:include fx:id="bookmarkTabView" source="BookmarkTab.fxml"/>
+                <fx:include fx:id="bookmarkTabView" source="bookmarkTab/BookmarkTab.fxml"/>
                 <fx:include fx:id="tocGeneratorTabView" visible="false" source="TocGeneratorTabView.fxml"/>
                 <fx:include fx:id="pageLabelTabView" visible="false" source="PageLabelView.fxml"/>
                 <fx:include fx:id="pdfPreviewTabView" source="PdfPreview.fxml" visible="false" />

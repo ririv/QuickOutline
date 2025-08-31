@@ -6,7 +6,7 @@
 <fx:root type="javafx.scene.layout.StackPane"
          xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
-         stylesheets="@MainView.css"
+         stylesheets="@../MainView.css"
          prefWidth="100.0">
 
     <VBox spacing="10">

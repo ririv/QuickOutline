@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view;
+package com.ririv.quickoutline.view.bookmarkTab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.event.*;
@@ -12,9 +12,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
-import javafx.util.converter.NumberStringConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

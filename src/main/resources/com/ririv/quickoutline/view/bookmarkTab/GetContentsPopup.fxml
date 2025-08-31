@@ -13,7 +13,7 @@
 <?import com.ririv.quickoutline.view.controls.radioButton2.RadioButton2?>
 <?import com.ririv.quickoutline.view.controls.radioButton2.RadioButton2Group?>
 <fx:root type="javafx.scene.layout.StackPane" xmlns:fx="http://javafx.com/fxml"
-         stylesheets="@MainView.css">
+         stylesheets="@../MainView.css">
     <VBox spacing="10" alignment="CENTER_LEFT">
         <Label styleClass="title" text="%getContentsPopup.title" />
 

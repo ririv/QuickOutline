@@ -1,15 +1,16 @@
-package com.ririv.quickoutline.view;
+package com.ririv.quickoutline.view.bookmarkTab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.state.BookmarkSettingsState;
 import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.MyAlert;
+import com.ririv.quickoutline.view.RecursiveTreeItem;
 import com.ririv.quickoutline.view.controls.EditableTreeTableCell;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
-import javafx.util.StringConverter;
 
 import java.util.Optional;
 import java.util.ResourceBundle;
