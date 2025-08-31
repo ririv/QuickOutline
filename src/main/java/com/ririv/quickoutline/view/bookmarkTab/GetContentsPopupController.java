@@ -1,13 +1,10 @@
 package com.ririv.quickoutline.view.bookmarkTab;
 
-import com.google.inject.Inject;
-import com.ririv.quickoutline.event.AppEventBus;
-import com.ririv.quickoutline.event.ExtractTocEvent;
-import com.ririv.quickoutline.service.PdfTocExtractorService;
 import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.controls.radioButton2.RadioButton2;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Button;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.StackPane;
 
@@ -17,21 +14,18 @@ import java.util.ResourceBundle;
 public class GetContentsPopupController extends StackPane {
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
-    private final AppEventBus eventBus;
-    private final PdfTocExtractorService pdfTocExtractorService;
-
-
-    @FXML
-    private Button extractTocBtn;
 
     @FXML
     private ToggleGroup myToggleGroup;
 
-    @Inject
-    public GetContentsPopupController(AppEventBus eventBus, PdfTocExtractorService pdfTocExtractorService) {
-        this.eventBus = eventBus;
-        this.pdfTocExtractorService = pdfTocExtractorService;
+    @FXML
+    public RadioButton2 bookmarkBtn;
 
+    @FXML
+    public RadioButton2 tocBtn;
+
+
+    public GetContentsPopupController() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
                 "GetContentsPopup.fxml"),
                 LocalizationManager.getResourceBundle()
@@ -46,15 +40,15 @@ public class GetContentsPopupController extends StackPane {
     }
 
     public void initialize() {
-        extractTocBtn.setOnAction(event -> {
-            eventBus.post(new ExtractTocEvent());
-        });
-
         // Add a listener to the ToggleGroup to prevent deselection
         myToggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
             if (newToggle == null) {
                 myToggleGroup.selectToggle(oldToggle);
             }
         });
+    }
+
+    public RadioButton2 getSelected() {
+        return (RadioButton2) myToggleGroup.getSelectedToggle();
     }
 }

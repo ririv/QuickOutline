@@ -112,7 +112,11 @@ public class BookmarkBottomPaneController {
 
     @FXML
     private void getContentsBtnAction(ActionEvent event) {
-        eventBus.post(new GetContentsEvent());
+        if (getContentsPopupController.getSelected() == getContentsPopupController.bookmarkBtn) {
+            eventBus.post(new GetContentsEvent());
+        } else if (getContentsPopupController.getSelected() == getContentsPopupController.tocBtn) {
+            eventBus.post(new ExtractTocEvent());
+        }
     }
 
     @FXML
