@@ -10,6 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.awt.image.BufferedImage
 
@@ -17,19 +19,24 @@ class ThumbnailViewModel(private val currentFileState: CurrentFileState) {
     var thumbnails by mutableStateOf<Map<Int, BufferedImage>>(emptyMap())
     var pageCount by mutableStateOf(0)
     private var pdfPreview: PdfPreview? = null
+    private val mutex = Mutex()
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
             currentFileState.srcFile.collectLatest { path ->
-                pdfPreview?.close()
-                pdfPreview = null
-                thumbnails = emptyMap()
-                pageCount = 0
+                mutex.withLock {
+                    pdfPreview?.close()
+                    pdfPreview = null
+                    thumbnails = emptyMap()
+                    pageCount = 0
+                }
                 if (path != null) {
                     launch(Dispatchers.IO) {
                         try {
                             val preview = PdfPreview(path.toFile())
-                            pdfPreview = preview
+                            mutex.withLock {
+                                pdfPreview = preview
+                            }
                             withContext(Dispatchers.Swing) {
                                 pageCount = preview.pageCount
                             }
@@ -44,17 +51,21 @@ class ThumbnailViewModel(private val currentFileState: CurrentFileState) {
 
     fun loadThumbnail(index: Int) {
         CoroutineScope(Dispatchers.IO).launch {
-            pdfPreview?.let { preview ->
-                if (thumbnails[index] == null) {
-                    try {
-                        val image = preview.renderImage(index, 72f) // Use the new synchronous method
-                        withContext(Dispatchers.Swing) {
-                            val newThumbnails = thumbnails.toMutableMap()
-                            newThumbnails[index] = image
-                            thumbnails = newThumbnails
+            if (thumbnails[index] == null) {
+                mutex.withLock {
+                    if (thumbnails[index] == null) {
+                        pdfPreview?.let { preview ->
+                            try {
+                                val image = preview.renderImage(index, 72f)
+                                withContext(Dispatchers.Swing) {
+                                    val newThumbnails = thumbnails.toMutableMap()
+                                    newThumbnails[index] = image
+                                    thumbnails = newThumbnails
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
                 }
             }
