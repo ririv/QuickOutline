@@ -124,13 +124,6 @@ def os = org.gradle.internal.os.OperatingSystem.current()
 // https://badass-jlink-plugin.beryx.org/releases/latest/
 // 仅对build中任务有效，对application中的run任务无效，
 jlink {
-
-    // https://stackoverflow.com/questions/56512064/gradle-jlink-plugin-fails-during-createmergedmodule-with-the-service-implementa
-    // 解决 错误: 服务实现没有默认的构造器: KotlinModule
-    mergedModule {
-        requires "java.xml"
-    }
-
     launcher {
         name = 'QuickOutline'
         jvmArgs = args
