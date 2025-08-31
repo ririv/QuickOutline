@@ -6,6 +6,8 @@ import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,8 +16,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.MessageContainer
 import com.ririv.quickoutline.view.controls.rememberMessageContainerState
-import com.ririv.quickoutline.view.controls.StyledTextField
 import org.koin.java.KoinJavaComponent.inject
+import java.awt.FileDialog
+import java.awt.Frame
 
 @Composable
 fun MainView() {
@@ -27,13 +30,30 @@ fun MainView() {
         // Top Pane
         Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF2F2F2))) {
             Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                StyledTextField(
+                TextField(
                     value = bookmarkViewModel.filePath,
-                    onValueChange = { bookmarkViewModel.filePath = it },
+                    onValueChange = { },
+                    enabled = false,
                     placeholder = { Text(stringResource("filepathTF.prompt")) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.textFieldColors(
+                        disabledTextColor = Color(100, 100, 100),
+                        backgroundColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    )
                 )
-                IconButton(onClick = { /* TODO: Implement file chooser */ }) {
+                IconButton(onClick = {
+                    val dialog = FileDialog(null as Frame?, "Select File to Open", FileDialog.LOAD)
+                    dialog.isVisible = true
+                    val file = dialog.file
+                    val dir = dialog.directory
+                    if (file != null && dir != null) {
+                        val path = dir + file
+                        bookmarkViewModel.openPdf(path)
+                    }
+                }) {
                     Icon(
                         painter = painterResource("drawable/open.svg"),
                         contentDescription = "Open file",

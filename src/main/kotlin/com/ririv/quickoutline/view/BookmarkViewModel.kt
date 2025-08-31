@@ -21,11 +21,12 @@ class BookmarkViewModel(
     var filePath by mutableStateOf("")
     private var rootBookmark: Bookmark? = null
 
-    fun openPdf() {
+    fun openPdf(path: String) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                sharedViewModel.currentFileState.setSrcFile(java.io.File(filePath).toPath())
-                rootBookmark = pdfOutlineService.getOutlineAsBookmark(filePath, 0)
+                filePath = path
+                sharedViewModel.currentFileState.setSrcFile(java.io.File(path).toPath())
+                rootBookmark = pdfOutlineService.getOutlineAsBookmark(path, 0)
                 bookmarks = rootBookmark?.children?.toMutableList() ?: mutableListOf()
             } catch (e: NoOutlineException) {
                 e.printStackTrace()
@@ -58,5 +59,3 @@ class BookmarkViewModel(
         bookmarks = rootBookmark?.children?.toMutableList() ?: mutableListOf()
     }
 }
-
-
