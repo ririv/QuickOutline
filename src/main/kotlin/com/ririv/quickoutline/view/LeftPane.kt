@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.rememberWindowState
 
 @Composable
 fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
@@ -94,7 +95,11 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
     }
 
     if (showHelpWindow) {
-        Window(onCloseRequest = { showHelpWindow = false }, title = "Help") {
+        Window(
+            onCloseRequest = { showHelpWindow = false },
+            title = "Help",
+            state = rememberWindowState(width = 400.dp, height = 300.dp)
+        ) {
             HelpWindow()
         }
     }
