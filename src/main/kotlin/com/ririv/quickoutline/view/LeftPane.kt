@@ -13,7 +13,6 @@ import androidx.compose.material.IconToggleButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.rememberWindowState
@@ -34,7 +33,7 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
             onCheckedChange = { onTabSelected(0) }
         ) {
             Icon(
-                painter = painterResource("drawable/bookmark.svg"),
+                painter = loadResourcePainter("drawable/bookmark.svg"),
                 contentDescription = "Bookmark",
                 modifier = Modifier.size(24.dp),
                 tint = if (selectedTab == 0) Color(0xFF409EFF) else Color.Gray
@@ -45,7 +44,7 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
             onCheckedChange = { onTabSelected(2) }
         ) {
             Icon(
-                painter = painterResource("drawable/页码-单路径.svg"),
+                painter = loadResourcePainter("drawable/页码-单路径.svg"),
                 contentDescription = "Label",
                 modifier = Modifier.size(24.dp),
                 tint = if (selectedTab == 2) Color(0xFF409EFF) else Color.Gray
@@ -56,7 +55,7 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
             onCheckedChange = { onTabSelected(1) }
         ) {
             Icon(
-                painter = painterResource("drawable/toc.svg"),
+                painter = loadResourcePainter("drawable/toc.svg"),
                 contentDescription = "TOC",
                 modifier = Modifier.size(24.dp),
                 tint = if (selectedTab == 1) Color(0xFF409EFF) else Color.Gray
@@ -67,7 +66,7 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
             onCheckedChange = { onTabSelected(3) }
         ) {
             Icon(
-                painter = painterResource("drawable/特色-风景.svg"),
+                painter = loadResourcePainter("drawable/特色-风景.svg"),
                 contentDescription = "Preview",
                 modifier = Modifier.size(24.dp),
                 tint = if (selectedTab == 3) Color(0xFF409EFF) else Color.Gray
@@ -78,7 +77,7 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
 
         IconButton(onClick = { /* TODO: Implement settings */ }) {
             Icon(
-                painter = painterResource("drawable/setting.svg"),
+                painter = loadResourcePainter("drawable/setting.svg"),
                 contentDescription = "Settings",
                 modifier = Modifier.size(24.dp),
                 tint = Color.Gray
@@ -86,7 +85,7 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
         }
         IconButton(onClick = { showHelpWindow = true }) {
             Icon(
-                painter = painterResource("drawable/help.svg"),
+                painter = loadResourcePainter("drawable/help.svg"),
                 contentDescription = "Help",
                 modifier = Modifier.size(24.dp),
                 tint = Color.Gray

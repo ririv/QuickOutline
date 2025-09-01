@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.utils.InfoUtil
@@ -51,7 +50,7 @@ fun HelpWindow() {
         // Source
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                painter = painterResource("drawable/github.svg"),
+                painter = loadResourcePainter("drawable/github.svg"),
                 contentDescription = "GitHub",
                 modifier = Modifier.size(16.dp),
                 tint = Color.Gray
@@ -72,7 +71,7 @@ fun HelpWindow() {
             )
             Spacer(Modifier.width(4.dp))
             Icon(
-                painter = painterResource("drawable/xiaohongshu.svg"),
+                painter = loadResourcePainter("drawable/xiaohongshu.svg"),
                 contentDescription = "Xiaohongshu",
                 modifier = Modifier.size(16.dp),
                 tint = Color(0xFFADADAD)

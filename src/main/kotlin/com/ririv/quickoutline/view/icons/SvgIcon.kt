@@ -4,7 +4,7 @@ import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import com.ririv.quickoutline.view.loadResourcePainter
 
 @Composable
 fun SvgIcon(
@@ -13,7 +13,7 @@ fun SvgIcon(
     tint: Color = Color.Unspecified
 ) {
     Icon(
-        painter = painterResource(resource),
+        painter = loadResourcePainter(resource),
         contentDescription = null,
         modifier = modifier,
         tint = tint

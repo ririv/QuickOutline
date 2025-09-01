@@ -1,0 +1,16 @@
+// 这个文件是解决 "Plugin not found" 错误的关键
+// 它告诉 Gradle 去哪里寻找插件本身
+//
+//pluginManagement {
+//    repositories {
+//        google()
+//        mavenCentral()
+//        gradlePluginPortal()
+//        maven {
+//            url 'https://maven.pkg.jetbrains.space/public/p/compose/dev'
+//        }
+//    }
+//}
+//
+//// 你的项目名称
+//rootProject.name = 'QuickOutline'

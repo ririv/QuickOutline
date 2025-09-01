@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
@@ -56,7 +55,7 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
             )
         ) {
             Icon(
-                painter = painterResource("drawable/delete.svg"),
+                painter = loadResourcePainter("drawable/delete.svg"),
                 contentDescription = "Delete",
                 modifier = Modifier.size(24.dp),
                 tint = deleteIconTint
@@ -92,7 +91,7 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
             )
         ) {
             Icon(
-                painter = painterResource(if (showTreeView) "drawable/text-edit.svg" else "drawable/tree-diagram.svg"),
+                painter = loadResourcePainter(if (showTreeView) "drawable/text-edit.svg" else "drawable/tree-diagram.svg"),
                 contentDescription = "Switch view",
                 modifier = Modifier.size(24.dp),
                 tint = switchIconTint

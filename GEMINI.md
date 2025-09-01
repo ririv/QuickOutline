@@ -13,7 +13,6 @@ QuickOutline is a cross-platform desktop application built with Java and JavaFX 
 - 对于javafx自定义的控件，其都为基本控件，你需要使用compose的基本控件代替
 - javafx的相关代码我们放到了根目录下的fx目录下，它虽然已经被git忽略，但你应该参考，你随时可以查阅
 - 你需要最大程度的的将重写后的UI与原有UI在视觉层面保持一致
-- 对于图标的载入，先试用占位符代替
 - 这是个桌面应用，你应该先考虑desktop，当然安卓的支持以后也会引入，但目前不是重点
 
 我们目前已经实现了一部分，你需要继续

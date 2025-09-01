@@ -9,6 +9,12 @@ plugins {
     id 'java'
 }
 
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "com.ririv.quickoutline.resources"
+    generateResClass = auto
+}
+
 //java {
 //    modularity.inferModulePath.set(false)
 //}
@@ -42,6 +48,7 @@ def itextVersion = '9.2.0'
 // 不能下载请配置gradle代理
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation(compose.components.resources)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
 
     // 使用该依赖打包会出现 错误: 当前不支持已签名模块化 JAR ..\QuickOutline\build\jlinkbase\jlinkjars\bcpkix-jdk18on-1.78.jar,
