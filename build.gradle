@@ -2,8 +2,9 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "2.0.0"
-    id("org.jetbrains.compose") version "1.6.11"
+    id("org.jetbrains.compose") version "1.8.2"
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
+
     id 'idea'
     id 'java'
 }
@@ -65,12 +66,14 @@ dependencies {
     // 如果需要字体支持（比如渲染中文等非西文字符）
     implementation 'org.apache.pdfbox:fontbox:3.0.3'
 
-    implementation("io.insert-koin:koin-core:3.5.6")
-    implementation("io.insert-koin:koin-compose:1.1.5")
+    def koin_version = "4.1.0"
+    implementation(platform("io.insert-koin:koin-bom:$koin_version"))
+    implementation("io.insert-koin:koin-core")
+    implementation("io.insert-koin:koin-compose")
 
-    
+
 //    implementation("com.openai:openai-java:3.1.2")
-    
+
 }
 
 repositories {
@@ -93,7 +96,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "QuickOutline"
             packageVersion = "2.2.0"
-            
+
             // 移除icon,因为路径不对
             // if (os.isWindows()) {
             //     icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.ico'

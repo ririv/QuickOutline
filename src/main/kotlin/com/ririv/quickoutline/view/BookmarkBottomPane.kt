@@ -1,16 +1,16 @@
 package com.ririv.quickoutline.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
-import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
-import com.ririv.quickoutline.view.theme.NoRippleTheme
 
 @Composable
 fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSwitchView: () -> Unit) {
@@ -49,18 +48,19 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
             else -> Color.Gray
         }
 
-        CompositionLocalProvider(LocalRippleTheme provides NoRippleTheme) {
-            IconButton(
+        Box(
+            modifier = Modifier.clickable(
                 onClick = { viewModel.deleteBookmark() },
+                indication = null,
                 interactionSource = deleteInteractionSource
-            ) {
-                Icon(
-                    painter = painterResource("drawable/delete.svg"),
-                    contentDescription = "Delete",
-                    modifier = Modifier.size(24.dp),
-                    tint = deleteIconTint
-                )
-            }
+            )
+        ) {
+            Icon(
+                painter = painterResource("drawable/delete.svg"),
+                contentDescription = "Delete",
+                modifier = Modifier.size(24.dp),
+                tint = deleteIconTint
+            )
         }
 
         StyledButton(
@@ -84,18 +84,19 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
             modifier = Modifier.weight(1f)
         )
 
-        CompositionLocalProvider(LocalRippleTheme provides NoRippleTheme) {
-            IconButton(
+        Box(
+            modifier = Modifier.clickable(
                 onClick = onSwitchView,
+                indication = null,
                 interactionSource = switchInteractionSource
-            ) {
-                Icon(
-                    painter = painterResource(if (showTreeView) "drawable/text-edit.svg" else "drawable/tree-diagram.svg"),
-                    contentDescription = "Switch view",
-                    modifier = Modifier.size(24.dp),
-                    tint = switchIconTint
-                )
-            }
+            )
+        ) {
+            Icon(
+                painter = painterResource(if (showTreeView) "drawable/text-edit.svg" else "drawable/tree-diagram.svg"),
+                contentDescription = "Switch view",
+                modifier = Modifier.size(24.dp),
+                tint = switchIconTint
+            )
         }
     }
 }
