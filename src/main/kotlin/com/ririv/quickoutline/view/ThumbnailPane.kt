@@ -1,32 +1,54 @@
 package com.ririv.quickoutline.view
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.StyledSlider
 import com.ririv.quickoutline.view.icons.SvgIcon
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import org.koin.java.KoinJavaComponent.inject
+
+private val BASE_WIDTH = 150.dp
+private val BASE_HEIGHT = 225.dp
 
 @Composable
 fun ThumbnailPane() {
     val viewModel: ThumbnailViewModel by inject(ThumbnailViewModel::class.java)
-    val thumbnails by remember { derivedStateOf { viewModel.thumbnails } }
-    val pageCount by remember { derivedStateOf { viewModel.pageCount } }
+    val thumbnails by viewModel::thumbnails
+    val itemsToRender = viewModel.itemsToRender
     var zoom by remember { mutableStateOf(1f) }
 
-    Column(modifier = Modifier.padding(10.dp)) {
+    val thumbnailWidth = remember(zoom) { BASE_WIDTH * zoom }
+    val thumbnailHeight = remember(zoom) { BASE_HEIGHT * zoom }
+
+    val gridState = rememberLazyGridState()
+
+    LaunchedEffect(gridState, itemsToRender) {
+        snapshotFlow { gridState.layoutInfo }
+            .map { it.visibleItemsInfo.lastOrNull()?.index }
+            .distinctUntilChanged()
+            .filterNotNull()
+            .collect { lastIndex ->
+                if (lastIndex >= itemsToRender.size - 5) {
+                    viewModel.loadMore()
+                }
+            }
+    }
+
+    Column(modifier = Modifier.padding(10.dp).fillMaxHeight()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             SvgIcon(
                 resource = "drawable/特色-风景.svg",
@@ -40,21 +62,37 @@ fun ThumbnailPane() {
                 tint = Color.Gray
             )
         }
-        LazyVerticalGrid(columns = GridCells.Adaptive(100.dp)) {
-            items(pageCount) { index ->
-                val thumbnail = thumbnails[index]
-                if (thumbnail != null) {
-                    Image(
-                        bitmap = thumbnail.toComposeImageBitmap(),
-                        contentDescription = null
-                    )
-                } else {
-                    Box(modifier = Modifier.size(100.dp).background(Color.Gray))
-                    LaunchedEffect(index) {
-                        viewModel.loadThumbnail(index)
+        Box(modifier = Modifier.weight(1f)) {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(thumbnailWidth),
+                state = gridState,
+            ) {
+                items(
+                    items = itemsToRender,
+                    key = { index -> index }
+                ) { index ->
+                    val thumbnail = thumbnails[index]
+                    if (thumbnail != null) {
+                        Image(
+                            bitmap = thumbnail,
+                            contentDescription = "Thumbnail for page ${index + 1}",
+                            modifier = Modifier.size(thumbnailWidth, thumbnailHeight)
+                        )
+                    } else {
+                        Box(modifier = Modifier.size(thumbnailWidth, thumbnailHeight).background(Color.LightGray))
+                        // Effect to load a single thumbnail when it becomes visible
+                        LaunchedEffect(index) {
+                            viewModel.loadThumbnail(index)
+                        }
                     }
                 }
             }
+            VerticalScrollbar(
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                adapter = rememberScrollbarAdapter(
+                    scrollState = gridState
+                )
+            )
         }
     }
 }
