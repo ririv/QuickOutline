@@ -84,6 +84,8 @@ fun ThumbnailPane() {
                         items = itemsToRender,
                         key = { index -> index }
                     ) { index ->
+                        // This DisposableEffect is the core of the cancellation logic.
+                        // It will call the cancellation function when the item leaves the composition.
                         DisposableEffect(index) {
                             onDispose {
                                 viewModel.cancelThumbnailJob(index)
@@ -97,11 +99,6 @@ fun ThumbnailPane() {
                         } else {
                             (index + 1).toString()
                         }
-
-                        val imageModifier = Modifier
-                            .size(thumbnailWidth, thumbnailHeight)
-                            .shadow(elevation = 3.dp, shape = RoundedCornerShape(4.dp))
-                            .clip(RoundedCornerShape(4.dp))
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             // The "photo paper" Box with the shadow
@@ -119,6 +116,7 @@ fun ThumbnailPane() {
                                     )
                                 } else {
                                     Box(modifier = Modifier.size(thumbnailWidth, thumbnailHeight).background(Color.LightGray))
+                                    // Load the thumbnail when the placeholder is composed
                                     LaunchedEffect(index) {
                                         viewModel.loadThumbnail(index)
                                     }
