@@ -9,12 +9,14 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ririv.quickoutline.view.controls.StyledSlider
 import com.ririv.quickoutline.view.icons.SvgIcon
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -31,6 +33,7 @@ fun ThumbnailPane() {
     val viewModel: ThumbnailViewModel by inject(ThumbnailViewModel::class.java)
     val thumbnails by viewModel::thumbnails
     val itemsToRender = viewModel.itemsToRender
+    val pageLabels by viewModel::pageLabels
     var zoom by remember { mutableStateOf(1f) }
 
     val thumbnailWidth = remember(zoom) { BASE_WIDTH * zoom }
@@ -71,25 +74,37 @@ fun ThumbnailPane() {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(columnCount),
                     state = gridState,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(
                         items = itemsToRender,
                         key = { index -> index }
                     ) { index ->
                         val thumbnail = thumbnails[index]
-                        if (thumbnail != null) {
-                            Image(
-                                bitmap = thumbnail,
-                                contentDescription = "Thumbnail for page ${index + 1}",
-                                modifier = Modifier.size(thumbnailWidth, thumbnailHeight),
-                                contentScale = ContentScale.Crop
-                            )
+
+                        val labelText = if (pageLabels.isNotEmpty() && index < pageLabels.size && pageLabels[index].isNotBlank()) {
+                            pageLabels[index]
                         } else {
-                            Box(modifier = Modifier.size(thumbnailWidth, thumbnailHeight).background(Color.LightGray))
-                            // Effect to load a single thumbnail when it becomes visible
-                            LaunchedEffect(index) {
-                                viewModel.loadThumbnail(index)
+                            (index + 1).toString()
+                        }
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (thumbnail != null) {
+                                Image(
+                                    bitmap = thumbnail,
+                                    contentDescription = "Thumbnail for page ${index + 1}",
+                                    modifier = Modifier.size(thumbnailWidth, thumbnailHeight),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(modifier = Modifier.size(thumbnailWidth, thumbnailHeight).background(Color.LightGray))
+                                LaunchedEffect(index) {
+                                    viewModel.loadThumbnail(index)
+                                }
                             }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = labelText, fontSize = 12.sp, color = Color.Gray)
                         }
                     }
                 }

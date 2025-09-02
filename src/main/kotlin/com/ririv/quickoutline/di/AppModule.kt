@@ -24,5 +24,5 @@ val appModule = module {
     factory { LeftPaneViewModel() }
     factory { PageLabelViewModel(get(), get()) }
     factory { PdfPreviewViewModel(get()) }
-    factory { ThumbnailViewModel(get()) }
+    factory { ThumbnailViewModel(get(), get()) }
 }
