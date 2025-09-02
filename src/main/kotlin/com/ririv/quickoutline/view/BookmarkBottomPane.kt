@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
@@ -75,10 +76,8 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
             modifier = Modifier.weight(1f)
         )
         StyledTextField(
-            value = uiState.offset?.toString() ?: "",
-            onValueChange = {
-                viewModel.setOffset(it.toIntOrNull())
-            },
+            value = uiState.offset,
+            onValueChange = { viewModel.setOffset(it) },
             placeholder = { Text(stringResource("bookmarkTab.offsetTF.prompt")) },
             modifier = Modifier.weight(1f)
         )

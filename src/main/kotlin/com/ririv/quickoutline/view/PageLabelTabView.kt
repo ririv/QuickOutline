@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.pdfProcess.PageLabel
 import com.ririv.quickoutline.view.controls.ButtonType
@@ -43,9 +44,10 @@ fun PageLabelTabView() {
                         onExpandedChange = { expanded = !expanded }
                     ) {
                         StyledTextField(
-                            value = viewModel.numberingStyle.name,
+                            value = TextFieldValue(viewModel.numberingStyle.name),
                             onValueChange = {},
-                            placeholder = null
+                            placeholder = null,
+                            singleLine = true
                         )
                         ExposedDropdownMenu(
                             expanded = expanded,
@@ -67,7 +69,8 @@ fun PageLabelTabView() {
                     StyledTextField(
                         value = viewModel.prefix,
                         onValueChange = { viewModel.prefix = it },
-                        placeholder = null
+                        placeholder = null,
+                        singleLine = true
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -75,7 +78,8 @@ fun PageLabelTabView() {
                     StyledTextField(
                         value = viewModel.startNumber,
                         onValueChange = { viewModel.startNumber = it },
-                        placeholder = { Text(stringResource("pageLabel.startNumber.prompt")) }
+                        placeholder = { Text(stringResource("pageLabel.startNumber.prompt")) },
+                        singleLine = true
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -83,7 +87,8 @@ fun PageLabelTabView() {
                     StyledTextField(
                         value = viewModel.fromPage,
                         onValueChange = { viewModel.fromPage = it },
-                        placeholder = null
+                        placeholder = null,
+                        singleLine = true
                     )
                 }
             }

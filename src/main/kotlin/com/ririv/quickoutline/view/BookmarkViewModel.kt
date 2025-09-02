@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.ririv.quickoutline.model.Bookmark
 import com.ririv.quickoutline.pdfProcess.ViewScaleType
 import com.ririv.quickoutline.service.PdfOutlineService
@@ -35,7 +36,7 @@ class BookmarkViewModel(
                 if (path != null) {
                     loadBookmarks()
                 } else {
-                    _uiState.update { it.copy(rootBookmark = null) }
+                    _uiState.update { it.copy(rootBookmark = null, offset = TextFieldValue(""), textInput = TextFieldValue("")) }
                 }
             }
         }
@@ -50,8 +51,9 @@ class BookmarkViewModel(
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val newRootBookmark = pdfOutlineService.getOutlineAsBookmark(path.toString(), 0)
+                val newText = newRootBookmark?.toOutlineString() ?: ""
                 withContext(Dispatchers.Swing) {
-                    _uiState.update { it.copy(rootBookmark = newRootBookmark) }
+                    _uiState.update { it.copy(rootBookmark = newRootBookmark, textInput = TextFieldValue(newText)) }
                     messageContainerState.showMessage("Bookmarks loaded successfully.", MessageType.SUCCESS)
                 }
             } catch (e: Exception) {
@@ -100,9 +102,13 @@ class BookmarkViewModel(
         }
     }
 
-    fun updateBookmarksFromText(text: String) {
+    fun onTextInputChange(newValue: TextFieldValue) {
+        // Update the text field value first to keep the UI responsive
+        _uiState.update { it.copy(textInput = newValue) }
+
+        // Then, process the text to update the bookmark tree structure
         val textProcessor = TextProcessor()
-        val newRootBookmark = textProcessor.process(text, 0, Method.SEQ)
+        val newRootBookmark = textProcessor.process(newValue.text, 0, Method.SEQ) // Assuming SEQ method for now
         _uiState.update { it.copy(rootBookmark = newRootBookmark) }
     }
 
@@ -110,7 +116,15 @@ class BookmarkViewModel(
         _uiState.update { it.copy(selectedBookmark = bookmark) }
     }
 
-    fun setOffset(offset: Int?) {
-        _uiState.update { it.copy(offset = offset) }
+    fun setOffset(offset: TextFieldValue) {
+        // Allow only numbers and a leading minus sign
+        val newText = offset.text.filterIndexed { index, char ->
+            char.isDigit() || (index == 0 && char == '-')
+        }
+        if (newText != offset.text) {
+            _uiState.update { it.copy(offset = offset.copy(text = newText)) }
+        } else {
+            _uiState.update { it.copy(offset = offset) }
+        }
     }
 }

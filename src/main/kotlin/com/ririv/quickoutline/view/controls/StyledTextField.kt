@@ -13,11 +13,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun StyledTextField(value: String, onValueChange: (String) -> Unit, placeholder: @Composable (() -> Unit)?, modifier: Modifier = Modifier, singleLine: Boolean = true) {
+fun StyledTextField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    placeholder: @Composable (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     var isHovered by remember { mutableStateOf(false) }

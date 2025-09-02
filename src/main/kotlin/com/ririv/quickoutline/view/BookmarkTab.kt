@@ -30,8 +30,8 @@ fun BookmarkTab() {
                 )
             } else {
                 TextTabView(
-                    bookmarks = uiState.rootBookmark?.children ?: emptyList(),
-                    onTextChange = { viewModel.updateBookmarksFromText(it) }
+                    value = uiState.textInput,
+                    onValueChange = { viewModel.onTextInputChange(it) }
                 )
             }
         }

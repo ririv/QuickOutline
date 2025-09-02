@@ -3,6 +3,7 @@ package com.ririv.quickoutline.view
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.TextFieldValue
 import com.ririv.quickoutline.pdfProcess.PageLabel
 import com.ririv.quickoutline.service.PdfPageLabelService
 import com.ririv.quickoutline.state.CurrentFileState
@@ -22,9 +23,9 @@ class PageLabelViewModel(
 ) {
     var pageLabels by mutableStateOf("")
     var numberingStyle by mutableStateOf(PageLabel.PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS)
-    var prefix by mutableStateOf("")
-    var startNumber by mutableStateOf("1")
-    var fromPage by mutableStateOf("1")
+    var prefix by mutableStateOf(TextFieldValue(""))
+    var startNumber by mutableStateOf(TextFieldValue("1"))
+    var fromPage by mutableStateOf(TextFieldValue("1"))
     var rules by mutableStateOf<List<PageLabel>>(emptyList())
 
     init {
@@ -56,7 +57,7 @@ class PageLabelViewModel(
             return
         }
         try {
-            val from = fromPage.toInt()
+            val from = fromPage.text.toInt()
             if (from <= 0) {
                 messageContainerState.showMessage("Page number must be positive.", MessageType.ERROR)
                 return
@@ -69,14 +70,14 @@ class PageLabelViewModel(
             val newRule = PageLabel(
                 from,
                 numberingStyle,
-                prefix,
-                startNumber.toInt()
+                prefix.text,
+                startNumber.text.toInt()
             )
             rules = (rules + newRule).sortedBy { it.pageNum }
             // Clear fields after adding
-            prefix = ""
-            startNumber = "1"
-            fromPage = "1"
+            prefix = TextFieldValue("")
+            startNumber = TextFieldValue("1")
+            fromPage = TextFieldValue("1")
         } catch (e: NumberFormatException) {
             messageContainerState.showMessage("Invalid number format.", MessageType.ERROR)
         }

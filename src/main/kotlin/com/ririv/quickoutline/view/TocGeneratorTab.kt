@@ -8,9 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
@@ -35,9 +36,14 @@ fun TocGeneratorTab() {
         Spacer(modifier = Modifier.height(8.dp))
         Text(viewModel.status)
         Spacer(modifier = Modifier.height(8.dp))
+
+        var tfv by remember(viewModel.generatedToc) { mutableStateOf(TextFieldValue(viewModel.generatedToc)) }
         StyledTextField(
-            value = viewModel.generatedToc,
-            onValueChange = { viewModel.generatedToc = it },
+            value = tfv,
+            onValueChange = { 
+                tfv = it
+                viewModel.generatedToc = it.text
+             },
             placeholder = { Text("Generated TOC") },
             modifier = Modifier.fillMaxWidth().weight(1f)
         )
