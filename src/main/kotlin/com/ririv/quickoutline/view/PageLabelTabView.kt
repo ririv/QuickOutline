@@ -1,8 +1,11 @@
 package com.ririv.quickoutline.view
 
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -85,10 +88,18 @@ fun PageLabelTabView() {
             Divider()
 
             Text(stringResource("pageLabel.ruleList"), fontWeight = FontWeight.Bold, color = Color(0xFF9198A1))
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(viewModel.rules) { rule ->
-                    Text("Page ${rule.pageNum}: Style=${rule.numberingStyle}, Prefix='${rule.labelPrefix}', Start=${rule.firstPage}", modifier = Modifier.padding(vertical = 4.dp))
+            
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                val state = rememberLazyListState()
+                LazyColumn(state = state, modifier = Modifier.fillMaxSize()) {
+                    items(viewModel.rules) { rule ->
+                        Text("Page ${rule.pageNum}: Style=${rule.numberingStyle}, Prefix='${rule.labelPrefix}', Start=${rule.firstPage}", modifier = Modifier.padding(vertical = 4.dp))
+                    }
                 }
+                VerticalScrollbar(
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    adapter = rememberScrollbarAdapter(scrollState = state)
+                )
             }
 
             StyledButton(onClick = { viewModel.setPageLabels() }, text = stringResource("setPageLabelBtn.text"), type = ButtonType.PLAIN_IMPORTANT)
