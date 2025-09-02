@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.StyledSlider
 import com.ririv.quickoutline.view.icons.SvgIcon
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.koin.java.KoinJavaComponent.inject
+import kotlin.math.max
 
 private val BASE_WIDTH = 150.dp
 private val BASE_HEIGHT = 225.dp
@@ -49,7 +51,7 @@ fun ThumbnailPane() {
     }
 
     Column(modifier = Modifier.padding(10.dp).fillMaxHeight()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp)) {
             SvgIcon(
                 resource = "drawable/特色-风景.svg",
                 modifier = Modifier.size(12.dp),
@@ -62,37 +64,42 @@ fun ThumbnailPane() {
                 tint = Color.Gray
             )
         }
-        Box(modifier = Modifier.weight(1f)) {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(thumbnailWidth),
-                state = gridState,
-            ) {
-                items(
-                    items = itemsToRender,
-                    key = { index -> index }
-                ) { index ->
-                    val thumbnail = thumbnails[index]
-                    if (thumbnail != null) {
-                        Image(
-                            bitmap = thumbnail,
-                            contentDescription = "Thumbnail for page ${index + 1}",
-                            modifier = Modifier.size(thumbnailWidth, thumbnailHeight)
-                        )
-                    } else {
-                        Box(modifier = Modifier.size(thumbnailWidth, thumbnailHeight).background(Color.LightGray))
-                        // Effect to load a single thumbnail when it becomes visible
-                        LaunchedEffect(index) {
-                            viewModel.loadThumbnail(index)
+        BoxWithConstraints(modifier = Modifier.weight(1f)) {
+            val columnCount = max(1, (maxWidth / thumbnailWidth).toInt())
+
+            Box {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(columnCount),
+                    state = gridState,
+                ) {
+                    items(
+                        items = itemsToRender,
+                        key = { index -> index }
+                    ) { index ->
+                        val thumbnail = thumbnails[index]
+                        if (thumbnail != null) {
+                            Image(
+                                bitmap = thumbnail,
+                                contentDescription = "Thumbnail for page ${index + 1}",
+                                modifier = Modifier.size(thumbnailWidth, thumbnailHeight),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(modifier = Modifier.size(thumbnailWidth, thumbnailHeight).background(Color.LightGray))
+                            // Effect to load a single thumbnail when it becomes visible
+                            LaunchedEffect(index) {
+                                viewModel.loadThumbnail(index)
+                            }
                         }
                     }
                 }
-            }
-            VerticalScrollbar(
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                adapter = rememberScrollbarAdapter(
-                    scrollState = gridState
+                VerticalScrollbar(
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    adapter = rememberScrollbarAdapter(
+                        scrollState = gridState
+                    )
                 )
-            )
+            }
         }
     }
 }
