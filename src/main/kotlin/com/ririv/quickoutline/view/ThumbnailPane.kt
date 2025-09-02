@@ -9,10 +9,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -68,14 +71,14 @@ fun ThumbnailPane() {
             )
         }
         BoxWithConstraints(modifier = Modifier.weight(1f)) {
-            val columnCount = max(1, (maxWidth / thumbnailWidth).toInt())
+            val columnCount = max(1, (maxWidth / (thumbnailWidth + 20.dp)).toInt())
 
             Box {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(columnCount),
                     state = gridState,
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(
                         items = itemsToRender,
@@ -90,20 +93,27 @@ fun ThumbnailPane() {
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            if (thumbnail != null) {
-                                Image(
-                                    bitmap = thumbnail,
-                                    contentDescription = "Thumbnail for page ${index + 1}",
-                                    modifier = Modifier.size(thumbnailWidth, thumbnailHeight),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Box(modifier = Modifier.size(thumbnailWidth, thumbnailHeight).background(Color.LightGray))
-                                LaunchedEffect(index) {
-                                    viewModel.loadThumbnail(index)
+                            // The "photo paper" Box with the shadow
+                            Box(
+                                modifier = Modifier
+                                    .shadow(elevation = 3.dp, shape = RoundedCornerShape(4.dp))
+                                    .background(Color.White, RoundedCornerShape(4.dp))
+                            ) {
+                                if (thumbnail != null) {
+                                    Image(
+                                        bitmap = thumbnail,
+                                        contentDescription = "Thumbnail for page ${index + 1}",
+                                        modifier = Modifier.size(thumbnailWidth, thumbnailHeight).clip(RoundedCornerShape(2.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Box(modifier = Modifier.size(thumbnailWidth, thumbnailHeight).background(Color.LightGray))
+                                    LaunchedEffect(index) {
+                                        viewModel.loadThumbnail(index)
+                                    }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(text = labelText, fontSize = 12.sp, color = Color.Gray)
                         }
                     }
