@@ -1,10 +1,12 @@
 package com.ririv.quickoutline.view.controls
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import java.util.UUID
 
 class MessageContainerState {
     val messages = mutableStateListOf<MessageData>()
@@ -14,13 +16,25 @@ class MessageContainerState {
     }
 }
 
-data class MessageData(val text: String, val type: MessageType)
+data class MessageData(
+    val text: String,
+    val type: MessageType,
+    val id: UUID = UUID.randomUUID() // Add a unique ID
+)
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MessageContainer(state: MessageContainerState, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        state.messages.forEach { messageData ->
-            Message(text = messageData.text, type = messageData.type) {
+    LazyColumn(modifier = modifier) { // Use LazyColumn
+        items(
+            items = state.messages,
+            key = { it.id } // Use the unique ID as the key
+        ) { messageData ->
+            Message(
+                text = messageData.text,
+                type = messageData.type,
+                modifier = Modifier.animateItem()
+            ) {
                 state.messages.remove(messageData)
             }
         }

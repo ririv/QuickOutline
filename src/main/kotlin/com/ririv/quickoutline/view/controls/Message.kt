@@ -15,7 +15,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
 enum class MessageType {
@@ -23,7 +25,7 @@ enum class MessageType {
 }
 
 @Composable
-fun Message(text: String, type: MessageType, onDismiss: () -> Unit) {
+fun Message(text: String, type: MessageType, modifier: Modifier = Modifier, onDismiss: () -> Unit) {
     val backgroundColor = when (type) {
         MessageType.SUCCESS -> Color(0xFFF0F9EB)
         MessageType.INFO -> Color(0xFFF4F4F5)
@@ -38,28 +40,37 @@ fun Message(text: String, type: MessageType, onDismiss: () -> Unit) {
         MessageType.ERROR -> Color(0xFFF56C6C)
     }
 
+    val iconText = when (type) {
+        MessageType.SUCCESS -> "✓"
+        MessageType.INFO -> "ⓘ"
+        MessageType.WARNING -> "⚠"
+        MessageType.ERROR -> "✗"
+    }
+
     val visible = remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         delay(3000)
         visible.value = false
-        delay(500)
+        delay(500) // wait for fade out animation to finish
         onDismiss()
     }
 
     androidx.compose.animation.AnimatedVisibility(
         visible = visible.value,
         enter = fadeIn(animationSpec = tween(500)),
-        exit = fadeOut(animationSpec = tween(500))
+        exit = fadeOut(animationSpec = tween(500)),
+        modifier = modifier
     ) {
         Card(
             modifier = Modifier.padding(8.dp),
             shape = RoundedCornerShape(6.dp),
             backgroundColor = backgroundColor,
-            contentColor = contentColor
+            contentColor = contentColor,
+            elevation = 4.dp
         ) {
             Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("I") // Icon placeholder
+                Text(text = iconText, color = contentColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Text(text, modifier = Modifier.padding(start = 10.dp))
             }
         }
