@@ -19,3 +19,5 @@ target
 .qoder/rules/
 
 /fx/
+/.kotlin/sessions/
+*.log
