@@ -21,7 +21,7 @@ val appModule = module {
     single { AppEventBus() }
     single { PdfTocExtractorService() }
     single { PdfPageLabelService() }
-    single { BookmarkViewModel(get(), get()) }
+    single { BookmarkViewModel(get(), get(), get()) }
     factory { TocGeneratorViewModel(get(), get()) }
     factory { LeftPaneViewModel() }
     factory { PageLabelViewModel(get(), get(), get()) }

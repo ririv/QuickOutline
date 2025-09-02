@@ -63,13 +63,13 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
         }
 
         StyledButton(
-            onClick = { /* TODO: Implement Get Contents */ },
+            onClick = { viewModel.loadBookmarks() },
             text = stringResource("bookmarkTab.getContentsBtn.text"),
             type = ButtonType.PLAIN_PRIMARY,
             modifier = Modifier.weight(1f)
         )
         StyledButton(
-            onClick = { /* TODO: Implement Set Contents */ },
+            onClick = { viewModel.saveBookmarks() },
             text = stringResource("bookmarkTab.setContentsBtn.text"),
             type = ButtonType.PLAIN_IMPORTANT,
             modifier = Modifier.weight(1f)
