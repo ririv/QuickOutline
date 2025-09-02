@@ -9,9 +9,11 @@ import com.ririv.quickoutline.service.PdfTocExtractorService
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService
 import com.ririv.quickoutline.state.CurrentFileState
 import com.ririv.quickoutline.view.*
+import com.ririv.quickoutline.view.controls.MessageContainerState
 import org.koin.dsl.module
 
 val appModule = module {
+    single { MessageContainerState() }
     single { CurrentFileState(get()) }
     single { PdfOutlineService() }
     single<TocPageGenerator> { iTextTocPageGenerator() }
@@ -22,7 +24,7 @@ val appModule = module {
     single { BookmarkViewModel(get(), get()) }
     factory { TocGeneratorViewModel(get(), get()) }
     factory { LeftPaneViewModel() }
-    factory { PageLabelViewModel(get(), get()) }
+    factory { PageLabelViewModel(get(), get(), get()) }
     factory { PdfPreviewViewModel(get()) }
     factory { ThumbnailViewModel(get(), get()) }
 }

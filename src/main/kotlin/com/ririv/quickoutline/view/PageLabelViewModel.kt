@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import com.ririv.quickoutline.pdfProcess.PageLabel
 import com.ririv.quickoutline.service.PdfPageLabelService
 import com.ririv.quickoutline.state.CurrentFileState
+import com.ririv.quickoutline.view.controls.MessageContainerState
+import com.ririv.quickoutline.view.controls.MessageType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -15,7 +17,8 @@ import kotlinx.coroutines.withContext
 
 class PageLabelViewModel(
     private val pdfPageLabelService: PdfPageLabelService,
-    private val currentFileState: CurrentFileState
+    private val currentFileState: CurrentFileState,
+    private val messageContainerState: MessageContainerState
 ) {
     var pageLabels by mutableStateOf("")
     var numberingStyle by mutableStateOf(PageLabel.PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS)
@@ -26,8 +29,8 @@ class PageLabelViewModel(
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.uiState.collectLatest {
-                if (it.paths.source != null) {
+            currentFileState.uiState.collectLatest { uiState ->
+                if (uiState.paths.source != null) {
                     loadPageLabels()
                 } else {
                     pageLabels = ""
@@ -48,13 +51,35 @@ class PageLabelViewModel(
     }
 
     fun addRule() {
-        val newRule = PageLabel(
-            fromPage.toInt(),
-            numberingStyle,
-            prefix,
-            startNumber.toInt()
-        )
-        rules = rules + newRule
+        if (currentFileState.uiState.value.paths.source == null) {
+            messageContainerState.showMessage("Please open a PDF file first.", MessageType.WARNING)
+            return
+        }
+        try {
+            val from = fromPage.toInt()
+            if (from <= 0) {
+                messageContainerState.showMessage("Page number must be positive.", MessageType.ERROR)
+                return
+            }
+            if (rules.any { it.pageNum == from }) {
+                messageContainerState.showMessage("A rule for this page already exists.", MessageType.ERROR)
+                return
+            }
+
+            val newRule = PageLabel(
+                from,
+                numberingStyle,
+                prefix,
+                startNumber.toInt()
+            )
+            rules = (rules + newRule).sortedBy { it.pageNum }
+            // Clear fields after adding
+            prefix = ""
+            startNumber = "1"
+            fromPage = "1"
+        } catch (e: NumberFormatException) {
+            messageContainerState.showMessage("Invalid number format.", MessageType.ERROR)
+        }
     }
 
     fun removeRule(rule: PageLabel) {
@@ -62,10 +87,23 @@ class PageLabelViewModel(
     }
 
     fun setPageLabels() {
+        if (currentFileState.uiState.value.paths.source == null) {
+            messageContainerState.showMessage("Please open a PDF file first.", MessageType.WARNING)
+            return
+        }
         CoroutineScope(Dispatchers.IO).launch {
-            val srcFilePath = currentFileState.uiState.value.paths.source?.toString() ?: return@launch
-            val destFilePath = currentFileState.uiState.value.paths.destination?.toString() ?: return@launch
-            pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, rules)
+            val srcFilePath = currentFileState.uiState.value.paths.source?.toString()!!
+            val destFilePath = currentFileState.uiState.value.paths.destination?.toString()!!
+            try {
+                pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, rules)
+                withContext(Dispatchers.Swing) {
+                    messageContainerState.showMessage("Page labels applied successfully!", MessageType.SUCCESS)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Swing) {
+                    messageContainerState.showMessage("Error applying page labels: ${e.message}", MessageType.ERROR)
+                }
+            }
         }
     }
 }
