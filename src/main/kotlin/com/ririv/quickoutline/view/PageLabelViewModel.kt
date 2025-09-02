@@ -26,8 +26,8 @@ class PageLabelViewModel(
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.uiState.collectLatest { uiState ->
-                if (uiState.paths.source != null) {
+            currentFileState.uiState.collectLatest {
+                if (it.paths.source != null) {
                     loadPageLabels()
                 } else {
                     pageLabels = ""
@@ -55,6 +55,10 @@ class PageLabelViewModel(
             startNumber.toInt()
         )
         rules = rules + newRule
+    }
+
+    fun removeRule(rule: PageLabel) {
+        rules = rules - rule
     }
 
     fun setPageLabels() {

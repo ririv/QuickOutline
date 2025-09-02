@@ -1,6 +1,10 @@
 package com.ririv.quickoutline.view
 
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +21,7 @@ import com.ririv.quickoutline.pdfProcess.PageLabel
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
+import com.ririv.quickoutline.view.icons.SvgIcon
 import org.koin.java.KoinJavaComponent.inject
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -88,12 +93,43 @@ fun PageLabelTabView() {
             Divider()
 
             Text(stringResource("pageLabel.ruleList"), fontWeight = FontWeight.Bold, color = Color(0xFF9198A1))
-            
+
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 val state = rememberLazyListState()
                 LazyColumn(state = state, modifier = Modifier.fillMaxSize()) {
                     items(viewModel.rules) { rule ->
-                        Text("Page ${rule.pageNum}: Style=${rule.numberingStyle}, Prefix='${rule.labelPrefix}', Start=${rule.firstPage}", modifier = Modifier.padding(vertical = 4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Page ${rule.pageNum}: Style=${rule.numberingStyle}, Prefix='${rule.labelPrefix}', Start=${rule.firstPage}",
+                                modifier = Modifier.weight(1f).padding(vertical = 4.dp)
+                            )
+                            val interactionSource = remember { MutableInteractionSource() }
+                            val isHovered by interactionSource.collectIsHoveredAsState()
+                            val isPressed by interactionSource.collectIsPressedAsState()
+
+                            val iconColor = when {
+                                isPressed -> Color(0xFFC45656) // Pressed red
+                                isHovered -> Color(0xFFF56C6C) // Hover red
+                                else -> Color.Gray
+                            }
+                            Box(
+                                modifier = Modifier.clickable(
+                                    onClick = { viewModel.removeRule(rule) },
+                                    interactionSource = interactionSource,
+                                    indication = null
+                                ).padding(8.dp)
+                            ) {
+                                SvgIcon(
+                                    resource = "drawable/删除.svg",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = iconColor
+                                )
+                            }
+                        }
                     }
                 }
                 VerticalScrollbar(
