@@ -84,6 +84,12 @@ fun ThumbnailPane() {
                         items = itemsToRender,
                         key = { index -> index }
                     ) { index ->
+                        DisposableEffect(index) {
+                            onDispose {
+                                viewModel.cancelThumbnailJob(index)
+                            }
+                        }
+
                         val thumbnail = thumbnails[index]
 
                         val labelText = if (pageLabels.isNotEmpty() && index < pageLabels.size && pageLabels[index].isNotBlank()) {
@@ -91,6 +97,11 @@ fun ThumbnailPane() {
                         } else {
                             (index + 1).toString()
                         }
+
+                        val imageModifier = Modifier
+                            .size(thumbnailWidth, thumbnailHeight)
+                            .shadow(elevation = 3.dp, shape = RoundedCornerShape(4.dp))
+                            .clip(RoundedCornerShape(4.dp))
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             // The "photo paper" Box with the shadow
