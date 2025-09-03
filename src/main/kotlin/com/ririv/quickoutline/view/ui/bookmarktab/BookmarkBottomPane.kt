@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.ui
+package com.ririv.quickoutline.view.ui.bookmarktab
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
+import com.ririv.quickoutline.view.ui.loadResourcePainter
+import com.ririv.quickoutline.view.ui.stringResource
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 
 @Composable

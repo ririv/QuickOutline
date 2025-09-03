@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.ui
+package com.ririv.quickoutline.view.ui.bookmarktab
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.model.Bookmark
+import com.ririv.quickoutline.view.ui.stringResource
 
 @Composable
 fun BookmarkTree(
