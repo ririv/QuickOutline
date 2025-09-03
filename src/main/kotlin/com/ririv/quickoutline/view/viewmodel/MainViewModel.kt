@@ -7,6 +7,7 @@ import com.ririv.quickoutline.view.state.FilePaths
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 
@@ -16,7 +17,12 @@ class MainViewModel(private val pdfOutlineService: PdfOutlineService) {
     private val _uiState = MutableStateFlow(CurrentFileUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun setSrcFile(file: Path?) {
+
+    fun openPdf(path: String) {
+        openPdf(File(path).toPath())
+    }
+
+    fun openPdf(file: Path?) {
         if (file == null) {
             clear()
             return
@@ -28,7 +34,7 @@ class MainViewModel(private val pdfOutlineService: PdfOutlineService) {
             // Atomically update the state
             _uiState.update {
                 it.copy(
-                    paths = FilePaths(source = file, destination = destFile),
+                    paths = FilePaths(src_file = file, dst_file = destFile),
                     error = null
                 )
             }

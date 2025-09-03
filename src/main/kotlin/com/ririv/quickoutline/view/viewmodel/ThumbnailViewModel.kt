@@ -34,7 +34,7 @@ class ThumbnailViewModel(
     init {
         CoroutineScope(Dispatchers.Swing).launch {
             mainViewModel.uiState.collectLatest { uiState ->
-                val path = uiState.paths.source
+                val path = uiState.paths.src_file
                 // Cancel all ongoing jobs before closing the preview
                 thumbnailJobs.values.forEach { it.cancel() }
                 thumbnailJobs.clear()

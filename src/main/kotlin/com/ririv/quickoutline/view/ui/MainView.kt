@@ -15,17 +15,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.MessageContainer
 import com.ririv.quickoutline.view.controls.MessageContainerState
-import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
+import com.ririv.quickoutline.view.viewmodel.MainViewModel
 import org.koin.java.KoinJavaComponent.inject
 import java.awt.FileDialog
 import java.awt.Frame
 
 @Composable
 fun MainView() {
-    val bookmarkViewModel: BookmarkViewModel by inject(BookmarkViewModel::class.java)
+//    val bookmarkViewModel: BookmarkViewModel by inject(BookmarkViewModel::class.java)
+    val mainViewModel: MainViewModel by inject(MainViewModel::class.java)
     val messageContainerState: MessageContainerState by inject(MessageContainerState::class.java)
     var selectedTab by remember { mutableStateOf(0) }
-    val uiState by bookmarkViewModel.uiState.collectAsState()
+    val uiState by mainViewModel.uiState.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) { // Use Box for layering
         // Main Content
@@ -34,7 +35,7 @@ fun MainView() {
             Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF2F2F2))) {
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     TextField(
-                        value = uiState.filePath,
+                        value = uiState.paths.src_file?.toString() ?: "",
                         onValueChange = { },
                         enabled = false,
                         placeholder = { Text(stringResource("filepathTF.prompt")) },
@@ -54,7 +55,7 @@ fun MainView() {
                         val dir = dialog.directory
                         if (file != null && dir != null) {
                             val path = dir + file
-                            bookmarkViewModel.openPdf(path)
+                            mainViewModel.openPdf(path)
                         }
                     }) {
                         Icon(

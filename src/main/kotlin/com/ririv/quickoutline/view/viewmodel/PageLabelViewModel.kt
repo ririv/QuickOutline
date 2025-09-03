@@ -30,7 +30,7 @@ class PageLabelViewModel(
     init {
         CoroutineScope(Dispatchers.Swing).launch {
             mainViewModel.uiState.collectLatest { uiState ->
-                if (uiState.paths.source != null) {
+                if (uiState.paths.src_file != null) {
                     loadPageLabels()
                 } else {
                     pageLabels = ""
@@ -42,7 +42,7 @@ class PageLabelViewModel(
 
     private fun loadPageLabels() {
         CoroutineScope(Dispatchers.IO).launch {
-            val filePath = mainViewModel.uiState.value.paths.source?.toString() ?: return@launch
+            val filePath = mainViewModel.uiState.value.paths.src_file?.toString() ?: return@launch
             val labels = pdfPageLabelService.getPageLabels(filePath)
             withContext(Dispatchers.Swing) {
                 pageLabels = labels.joinToString("\n")
@@ -51,7 +51,7 @@ class PageLabelViewModel(
     }
 
     fun addRule() {
-        if (mainViewModel.uiState.value.paths.source == null) {
+        if (mainViewModel.uiState.value.paths.src_file == null) {
             messageContainerState.showMessage("Please open a PDF file first.", MessageType.WARNING)
             return
         }
@@ -87,13 +87,13 @@ class PageLabelViewModel(
     }
 
     fun setPageLabels() {
-        if (mainViewModel.uiState.value.paths.source == null) {
+        if (mainViewModel.uiState.value.paths.src_file == null) {
             messageContainerState.showMessage("Please open a PDF file first.", MessageType.WARNING)
             return
         }
         CoroutineScope(Dispatchers.IO).launch {
-            val srcFilePath = mainViewModel.uiState.value.paths.source?.toString()!!
-            val destFilePath = mainViewModel.uiState.value.paths.destination?.toString()!!
+            val srcFilePath = mainViewModel.uiState.value.paths.src_file?.toString()!!
+            val destFilePath = mainViewModel.uiState.value.paths.dst_file?.toString()!!
             try {
                 pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, rules)
                 withContext(Dispatchers.Swing) {

@@ -18,7 +18,7 @@ class PdfPreviewViewModel(private val mainViewModel: MainViewModel) {
     init {
         CoroutineScope(Dispatchers.Swing).launch {
             mainViewModel.uiState.collectLatest { uiState ->
-                val path = uiState.paths.source
+                val path = uiState.paths.src_file
                 if (path != null) {
                     launch(Dispatchers.IO) {
                         val file = path.toFile()

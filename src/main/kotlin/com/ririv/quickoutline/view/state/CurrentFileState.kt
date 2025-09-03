@@ -3,8 +3,8 @@ package com.ririv.quickoutline.view.state
 import java.nio.file.Path
 
 data class FilePaths(
-    val source: Path?,
-    val destination: Path?
+    val src_file: Path?,
+    val dst_file: Path?
 )
 
 data class CurrentFileUiState(

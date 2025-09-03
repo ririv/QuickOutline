@@ -31,7 +31,7 @@ class BookmarkViewModel(
     init {
         CoroutineScope(Dispatchers.Swing).launch {
             mainViewModel.uiState.collectLatest { fileUiState ->
-                val path = fileUiState.paths.source
+                val path = fileUiState.paths.src_file
                 _uiState.update { it.copy(filePath = path?.toString() ?: "") }
                 if (path != null) {
                     loadBookmarks()
@@ -42,12 +42,9 @@ class BookmarkViewModel(
         }
     }
 
-    fun openPdf(path: String) {
-        mainViewModel.setSrcFile(java.io.File(path).toPath())
-    }
 
     fun loadBookmarks() {
-        val path = mainViewModel.uiState.value.paths.source ?: return
+        val path = mainViewModel.uiState.value.paths.src_file ?: return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val newRootBookmark = pdfOutlineService.getOutlineAsBookmark(path.toString(), 0)
@@ -66,8 +63,8 @@ class BookmarkViewModel(
 
     fun saveBookmarks() {
         val root = uiState.value.rootBookmark ?: return
-        val sourcePath = mainViewModel.uiState.value.paths.source?.toString() ?: return
-        val destPath = mainViewModel.uiState.value.paths.destination?.toString() ?: return
+        val sourcePath = mainViewModel.uiState.value.paths.src_file?.toString() ?: return
+        val destPath = mainViewModel.uiState.value.paths.dst_file?.toString() ?: return
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
