@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

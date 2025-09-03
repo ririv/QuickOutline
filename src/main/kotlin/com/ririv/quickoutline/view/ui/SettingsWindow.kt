@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding

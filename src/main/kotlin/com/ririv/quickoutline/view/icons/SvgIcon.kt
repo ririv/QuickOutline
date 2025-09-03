@@ -4,7 +4,7 @@ import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.ririv.quickoutline.view.loadResourcePainter
+import com.ririv.quickoutline.view.ui.loadResourcePainter
 
 @Composable
 fun SvgIcon(

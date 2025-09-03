@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.state
 
 import androidx.compose.ui.text.input.TextFieldValue
 import com.ririv.quickoutline.model.Bookmark

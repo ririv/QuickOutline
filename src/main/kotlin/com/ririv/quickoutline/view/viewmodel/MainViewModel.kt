@@ -2,23 +2,13 @@ package com.ririv.quickoutline.view.viewmodel
 
 import com.ririv.quickoutline.exception.EncryptedPdfException
 import com.ririv.quickoutline.service.PdfOutlineService
+import com.ririv.quickoutline.view.state.CurrentFileUiState
+import com.ririv.quickoutline.view.state.FilePaths
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.IOException
 import java.nio.file.Path
-
-// 1. Data class to hold related state
-data class FilePaths(
-    val source: Path?,
-    val destination: Path?
-)
-
-// 2. Data class for the entire UI state managed by this class
-data class CurrentFileUiState(
-    val paths: FilePaths = FilePaths(null, null),
-    val error: String? = null
-)
 
 class MainViewModel(private val pdfOutlineService: PdfOutlineService) {
 

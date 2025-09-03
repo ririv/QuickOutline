@@ -4,6 +4,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.ririv.quickoutline.di.appModule
 import com.ririv.quickoutline.view.theme.QuickOutlineTheme
+import com.ririv.quickoutline.view.ui.MainView
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 import org.koin.core.context.startKoin
 import org.koin.java.KoinJavaComponent.getKoin

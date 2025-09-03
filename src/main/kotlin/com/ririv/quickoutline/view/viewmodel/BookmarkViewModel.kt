@@ -6,7 +6,7 @@ import com.ririv.quickoutline.pdfProcess.ViewScaleType
 import com.ririv.quickoutline.service.PdfOutlineService
 import com.ririv.quickoutline.textProcess.TextProcessor
 import com.ririv.quickoutline.textProcess.methods.Method
-import com.ririv.quickoutline.view.BookmarkUiState
+import com.ririv.quickoutline.view.state.BookmarkUiState
 import com.ririv.quickoutline.view.controls.MessageContainerState
 import com.ririv.quickoutline.view.controls.MessageType
 import kotlinx.coroutines.CoroutineScope
