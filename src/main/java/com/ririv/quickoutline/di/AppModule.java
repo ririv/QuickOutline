@@ -11,7 +11,7 @@ import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
-import com.ririv.quickoutline.view.bookmarkTab.*;
+import com.ririv.quickoutline.view.bookmarktab.*;
 
 public class AppModule extends AbstractModule {
     @Override

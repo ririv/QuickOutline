@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.bookmarkTab;
+package com.ririv.quickoutline.view.bookmarktab;
 
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;

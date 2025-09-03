@@ -57,6 +57,6 @@ module quickoutline {
     opens com.ririv.quickoutline.view.controls.radioButton2 to javafx.fxml, javafx.graphics;
     exports com.ririv.quickoutline.view.controls.slider;
     opens com.ririv.quickoutline.view.controls.slider to javafx.fxml, javafx.graphics;
-    exports com.ririv.quickoutline.view.bookmarkTab;
-    opens com.ririv.quickoutline.view.bookmarkTab to com.google.guice, javafx.fxml, javafx.graphics;
+    exports com.ririv.quickoutline.view.bookmarktab;
+    opens com.ririv.quickoutline.view.bookmarktab to com.google.guice, javafx.fxml, javafx.graphics;
 }

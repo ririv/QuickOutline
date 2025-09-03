@@ -9,7 +9,7 @@
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
         fx:id="root"
-        fx:controller="com.ririv.quickoutline.view.bookmarkTab.TextTabController">
+        fx:controller="com.ririv.quickoutline.view.bookmarktab.TextTabController">
 
     <StackPane HBox.hgrow="ALWAYS">
 

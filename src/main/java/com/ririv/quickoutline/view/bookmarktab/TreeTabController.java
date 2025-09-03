@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.bookmarkTab;
+package com.ririv.quickoutline.view.bookmarktab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;

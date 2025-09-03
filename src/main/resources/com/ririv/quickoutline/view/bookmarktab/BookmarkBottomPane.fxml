@@ -6,7 +6,7 @@
 
 <!-- 根节点从 VBox 开始，并指定新的控制器 -->
 
-<VBox xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ririv.quickoutline.view.bookmarkTab.BookmarkBottomPaneController">
+<VBox xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ririv.quickoutline.view.bookmarktab.BookmarkBottomPaneController">
     <StackPane>
         <GridPane fx:id="outlineBottomPane">
             <StackPane.margin>

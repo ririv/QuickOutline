@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.bookmarkTab;
+package com.ririv.quickoutline.view.bookmarktab;
 
 import com.ririv.quickoutline.view.LocalizationManager;
 import com.ririv.quickoutline.view.controls.radioButton2.RadioButton2;
