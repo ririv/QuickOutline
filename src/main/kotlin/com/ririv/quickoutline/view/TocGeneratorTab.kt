@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
+import com.ririv.quickoutline.view.viewmodel.TocGeneratorViewModel
 import org.koin.java.KoinJavaComponent.inject
 
 @Composable

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ririv.quickoutline.view.controls.StyledSlider
 import com.ririv.quickoutline.view.icons.SvgIcon
+import com.ririv.quickoutline.view.viewmodel.ThumbnailViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map

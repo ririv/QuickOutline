@@ -1,12 +1,12 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.viewmodel
 
 import androidx.compose.ui.text.input.TextFieldValue
 import com.ririv.quickoutline.model.Bookmark
 import com.ririv.quickoutline.pdfProcess.ViewScaleType
 import com.ririv.quickoutline.service.PdfOutlineService
-import com.ririv.quickoutline.state.CurrentFileState
 import com.ririv.quickoutline.textProcess.TextProcessor
 import com.ririv.quickoutline.textProcess.methods.Method
+import com.ririv.quickoutline.view.BookmarkUiState
 import com.ririv.quickoutline.view.controls.MessageContainerState
 import com.ririv.quickoutline.view.controls.MessageType
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 
 class BookmarkViewModel(
     private val pdfOutlineService: PdfOutlineService,
-    private val currentFileState: CurrentFileState,
+    private val mainViewModel: MainViewModel,
     private val messageContainerState: MessageContainerState
 ) {
     private val _uiState = MutableStateFlow(BookmarkUiState())
@@ -30,7 +30,7 @@ class BookmarkViewModel(
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.uiState.collectLatest { fileUiState ->
+            mainViewModel.uiState.collectLatest { fileUiState ->
                 val path = fileUiState.paths.source
                 _uiState.update { it.copy(filePath = path?.toString() ?: "") }
                 if (path != null) {
@@ -43,11 +43,11 @@ class BookmarkViewModel(
     }
 
     fun openPdf(path: String) {
-        currentFileState.setSrcFile(java.io.File(path).toPath())
+        mainViewModel.setSrcFile(java.io.File(path).toPath())
     }
 
     fun loadBookmarks() {
-        val path = currentFileState.uiState.value.paths.source ?: return
+        val path = mainViewModel.uiState.value.paths.source ?: return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val newRootBookmark = pdfOutlineService.getOutlineAsBookmark(path.toString(), 0)
@@ -66,8 +66,8 @@ class BookmarkViewModel(
 
     fun saveBookmarks() {
         val root = uiState.value.rootBookmark ?: return
-        val sourcePath = currentFileState.uiState.value.paths.source?.toString() ?: return
-        val destPath = currentFileState.uiState.value.paths.destination?.toString() ?: return
+        val sourcePath = mainViewModel.uiState.value.paths.source?.toString() ?: return
+        val destPath = mainViewModel.uiState.value.paths.destination?.toString() ?: return
 
         CoroutineScope(Dispatchers.IO).launch {
             try {

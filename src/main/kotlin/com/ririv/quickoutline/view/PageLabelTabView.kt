@@ -23,6 +23,7 @@ import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
 import com.ririv.quickoutline.view.icons.SvgIcon
+import com.ririv.quickoutline.view.viewmodel.PageLabelViewModel
 import org.koin.java.KoinJavaComponent.inject
 
 @OptIn(ExperimentalMaterialApi::class)

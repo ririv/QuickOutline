@@ -1,10 +1,9 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.ririv.quickoutline.pdfProcess.PdfPreview
-import com.ririv.quickoutline.state.CurrentFileState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -13,12 +12,12 @@ import kotlinx.coroutines.swing.Swing
 import kotlinx.coroutines.withContext
 import java.awt.image.BufferedImage
 
-class PdfPreviewViewModel(private val currentFileState: CurrentFileState) {
+class PdfPreviewViewModel(private val mainViewModel: MainViewModel) {
     var images by mutableStateOf<List<BufferedImage>>(emptyList())
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.uiState.collectLatest { uiState ->
+            mainViewModel.uiState.collectLatest { uiState ->
                 val path = uiState.paths.source
                 if (path != null) {
                     launch(Dispatchers.IO) {

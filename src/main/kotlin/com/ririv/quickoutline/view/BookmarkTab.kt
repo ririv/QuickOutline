@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 import org.koin.java.KoinJavaComponent.inject
 
 @Composable

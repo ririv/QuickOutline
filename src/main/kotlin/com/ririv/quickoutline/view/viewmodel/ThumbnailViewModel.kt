@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.viewmodel
 
 import java.io.IOException
 
@@ -10,18 +10,14 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.ririv.quickoutline.pdfProcess.PdfPreview
 import com.ririv.quickoutline.service.PdfPageLabelService
-import com.ririv.quickoutline.state.CurrentFileState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.swing.Swing
-import java.awt.image.BufferedImage
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.min
 
-private const val BATCH_SIZE = 20
-
 class ThumbnailViewModel(
-    private val currentFileState: CurrentFileState,
+    private val mainViewModel: MainViewModel,
     private val pageLabelService: PdfPageLabelService
 ) {
     var thumbnails by mutableStateOf<Map<Int, ImageBitmap>>(emptyMap())
@@ -37,7 +33,7 @@ class ThumbnailViewModel(
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.uiState.collectLatest { uiState ->
+            mainViewModel.uiState.collectLatest { uiState ->
                 val path = uiState.paths.source
                 // Cancel all ongoing jobs before closing the preview
                 thumbnailJobs.values.forEach { it.cancel() }
@@ -118,5 +114,9 @@ class ThumbnailViewModel(
 
     fun cancelThumbnailJob(index: Int) {
         thumbnailJobs[index]?.cancel()
+    }
+
+    companion object {
+        private const val BATCH_SIZE = 20
     }
 }

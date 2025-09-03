@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.MessageContainer
 import com.ririv.quickoutline.view.controls.MessageContainerState
+import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 import org.koin.java.KoinJavaComponent.inject
 import java.awt.FileDialog
 import java.awt.Frame

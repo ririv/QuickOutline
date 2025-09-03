@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,11 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-import com.ririv.quickoutline.state.CurrentFileState
-
 class TocGeneratorViewModel(
     private val pdfTocExtractorService: PdfTocExtractorService,
-    private val currentFileState: CurrentFileState
+    private val mainViewModel: MainViewModel
 ) {
     var generatedToc by mutableStateOf("")
     var isGenerating by mutableStateOf(false)
@@ -23,7 +21,7 @@ class TocGeneratorViewModel(
             isGenerating = true
             status = "Generating..."
             try {
-                val filePath = currentFileState.uiState.value.paths.source?.toString() ?: return@launch
+                val filePath = mainViewModel.uiState.value.paths.source?.toString() ?: return@launch
                 val toc = pdfTocExtractorService.extract(filePath)
                 generatedToc = toc
                 status = "Generated successfully."

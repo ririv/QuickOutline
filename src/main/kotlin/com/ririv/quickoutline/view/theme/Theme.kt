@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.theme
 
 import androidx.compose.runtime.Composable
 

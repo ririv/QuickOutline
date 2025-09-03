@@ -3,10 +3,11 @@ package com.ririv.quickoutline.view
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.ririv.quickoutline.di.appModule
+import com.ririv.quickoutline.view.theme.QuickOutlineTheme
+import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 import org.koin.core.context.startKoin
 import org.koin.java.KoinJavaComponent.getKoin
 import java.awt.dnd.DropTarget
-import java.awt.dnd.DropTargetAdapter
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 

@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import com.ririv.quickoutline.view.viewmodel.PdfPreviewViewModel
 import org.koin.java.KoinJavaComponent.inject
 
 @Composable

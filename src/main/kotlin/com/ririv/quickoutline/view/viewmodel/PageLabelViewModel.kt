@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view
+package com.ririv.quickoutline.view.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import com.ririv.quickoutline.pdfProcess.PageLabel
 import com.ririv.quickoutline.service.PdfPageLabelService
-import com.ririv.quickoutline.state.CurrentFileState
 import com.ririv.quickoutline.view.controls.MessageContainerState
 import com.ririv.quickoutline.view.controls.MessageType
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +17,7 @@ import kotlinx.coroutines.withContext
 
 class PageLabelViewModel(
     private val pdfPageLabelService: PdfPageLabelService,
-    private val currentFileState: CurrentFileState,
+    private val mainViewModel: MainViewModel,
     private val messageContainerState: MessageContainerState
 ) {
     var pageLabels by mutableStateOf("")
@@ -30,7 +29,7 @@ class PageLabelViewModel(
 
     init {
         CoroutineScope(Dispatchers.Swing).launch {
-            currentFileState.uiState.collectLatest { uiState ->
+            mainViewModel.uiState.collectLatest { uiState ->
                 if (uiState.paths.source != null) {
                     loadPageLabels()
                 } else {
@@ -43,7 +42,7 @@ class PageLabelViewModel(
 
     private fun loadPageLabels() {
         CoroutineScope(Dispatchers.IO).launch {
-            val filePath = currentFileState.uiState.value.paths.source?.toString() ?: return@launch
+            val filePath = mainViewModel.uiState.value.paths.source?.toString() ?: return@launch
             val labels = pdfPageLabelService.getPageLabels(filePath)
             withContext(Dispatchers.Swing) {
                 pageLabels = labels.joinToString("\n")
@@ -52,7 +51,7 @@ class PageLabelViewModel(
     }
 
     fun addRule() {
-        if (currentFileState.uiState.value.paths.source == null) {
+        if (mainViewModel.uiState.value.paths.source == null) {
             messageContainerState.showMessage("Please open a PDF file first.", MessageType.WARNING)
             return
         }
@@ -88,13 +87,13 @@ class PageLabelViewModel(
     }
 
     fun setPageLabels() {
-        if (currentFileState.uiState.value.paths.source == null) {
+        if (mainViewModel.uiState.value.paths.source == null) {
             messageContainerState.showMessage("Please open a PDF file first.", MessageType.WARNING)
             return
         }
         CoroutineScope(Dispatchers.IO).launch {
-            val srcFilePath = currentFileState.uiState.value.paths.source?.toString()!!
-            val destFilePath = currentFileState.uiState.value.paths.destination?.toString()!!
+            val srcFilePath = mainViewModel.uiState.value.paths.source?.toString()!!
+            val destFilePath = mainViewModel.uiState.value.paths.destination?.toString()!!
             try {
                 pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, rules)
                 withContext(Dispatchers.Swing) {

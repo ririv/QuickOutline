@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.state
+package com.ririv.quickoutline.view.viewmodel
 
 import com.ririv.quickoutline.exception.EncryptedPdfException
 import com.ririv.quickoutline.service.PdfOutlineService
@@ -20,7 +20,7 @@ data class CurrentFileUiState(
     val error: String? = null
 )
 
-class CurrentFileState(private val pdfOutlineService: PdfOutlineService) {
+class MainViewModel(private val pdfOutlineService: PdfOutlineService) {
 
     // 3. Single StateFlow for the UI state
     private val _uiState = MutableStateFlow(CurrentFileUiState())
