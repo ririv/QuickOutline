@@ -10,6 +10,7 @@ import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEdi
 import com.ririv.quickoutline.view.controls.MessageContainerState
 import com.ririv.quickoutline.view.viewmodel.*
 import org.koin.dsl.module
+import org.koin.dsl.onClose
 
 val appModule = module {
     single { MessageContainerState() }
@@ -19,7 +20,7 @@ val appModule = module {
     single { PdfTocPageGeneratorService(get()) }
     single { PdfTocExtractorService() }
     single { PdfPageLabelService() }
-    single { SyncWithExternalEditorService() } // Add the service here
+    single { SyncWithExternalEditorService() } onClose { service -> service?.shutdown() } // Add service and its shutdown hook
     single { BookmarkViewModel(get(), get(), get(), get()) } // Updated dependencies
     factory { TocGeneratorViewModel(get(), get()) }
     factory { PageLabelViewModel(get(), get(), get()) }
