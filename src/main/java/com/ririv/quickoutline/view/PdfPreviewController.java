@@ -3,8 +3,11 @@ package com.ririv.quickoutline.view;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PdfPreview;
 import com.ririv.quickoutline.view.state.CurrentFileState;
+import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 import java.io.File;
@@ -76,7 +79,8 @@ public class PdfPreviewController {
         }
 
         try {
-            pdfPreview.renderPage(index, image -> {
+            pdfPreview.renderPage(index, bufferedImage -> {
+                Image image = SwingFXUtils.toFXImage(bufferedImage, null);
                 imageView.setImage(image);
                 currentPageIndex = index;
                 updateControls(); // Must update controls after image is set

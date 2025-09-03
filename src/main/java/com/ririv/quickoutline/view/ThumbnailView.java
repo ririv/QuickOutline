@@ -3,6 +3,7 @@ package com.ririv.quickoutline.view;
 import com.ririv.quickoutline.pdfProcess.PdfPreview;
 import com.ririv.quickoutline.view.controls.PopupCard;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -94,7 +95,8 @@ public class ThumbnailView extends VBox {
         if (popupImageView != null && pdfPreviewInstance != null) {
             previewRenderExecutor.submit(() -> {
                 try {
-                    pdfPreviewInstance.renderPreviewImage(pageIndex, highResImage -> {
+                    pdfPreviewInstance.renderPreviewImage(pageIndex, bufferedImage -> {
+                        Image highResImage = SwingFXUtils.toFXImage(bufferedImage, null);
                         Platform.runLater(() -> popupImageView.setImage(highResImage));
                     });
                 } catch (IOException e) {

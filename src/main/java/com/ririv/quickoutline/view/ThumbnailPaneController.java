@@ -6,10 +6,12 @@ import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
+import javafx.scene.image.Image;
 import javafx.scene.layout.TilePane;
 
 import java.io.File;
@@ -145,7 +147,8 @@ public class ThumbnailPaneController {
             
             thumbnailRenderExecutor.submit(() -> {
                 try {
-                    currentPreview.renderThumbnail(pageIndex, image -> {
+                    currentPreview.renderThumbnail(pageIndex, bufferedImage -> {
+                        Image image = SwingFXUtils.toFXImage(bufferedImage, null);
                         Platform.runLater(() -> thumbnailView.setThumbnailImage(image, pageIndex, currentPreview, currentPageLabels));
                     });
                 } catch (IOException e) {
