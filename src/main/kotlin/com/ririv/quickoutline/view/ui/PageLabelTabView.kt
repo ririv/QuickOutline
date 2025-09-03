@@ -94,7 +94,11 @@ fun PageLabelTabView() {
                 }
             }
 
-            StyledButton(onClick = { viewModel.addRule() }, text = stringResource("pageLabel.addRuleBtn"), type = ButtonType.PLAIN_PRIMARY)
+            StyledButton(
+                onClick = { viewModel.addRule() },
+                text = stringResource("pageLabel.addRuleBtn"),
+                type = ButtonType.PLAIN_PRIMARY
+            )
 
             Divider()
 
@@ -144,7 +148,11 @@ fun PageLabelTabView() {
                 )
             }
 
-            StyledButton(onClick = { viewModel.setPageLabels() }, text = stringResource("setPageLabelBtn.text"), type = ButtonType.PLAIN_IMPORTANT)
+            StyledButton(
+                onClick = { viewModel.setPageLabels() },
+                text = stringResource("setPageLabelBtn.text"),
+                type = ButtonType.PLAIN_IMPORTANT
+            )
         }
         Column(modifier = Modifier.weight(0.25f)) {
             ThumbnailPane()

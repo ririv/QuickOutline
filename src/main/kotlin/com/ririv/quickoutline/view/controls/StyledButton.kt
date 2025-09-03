@@ -24,7 +24,7 @@ enum class ButtonType {
 }
 
 @Composable
-fun StyledButton(onClick: () -> Unit, text: String, type: ButtonType = ButtonType.DEFAULT, modifier: Modifier = Modifier) {
+fun StyledButton(onClick: () -> Unit, text: String, type: ButtonType = ButtonType.DEFAULT, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isPressed by interactionSource.collectIsPressedAsState()

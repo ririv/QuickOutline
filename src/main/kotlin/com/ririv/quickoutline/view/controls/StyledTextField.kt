@@ -23,7 +23,8 @@ fun StyledTextField(
     onValueChange: (TextFieldValue) -> Unit,
     placeholder: @Composable (() -> Unit)?,
     modifier: Modifier = Modifier,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    enabled: Boolean = true
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -55,6 +56,7 @@ fun StyledTextField(
             disabledIndicatorColor = Color.Transparent
         ),
         interactionSource = interactionSource,
-        singleLine = singleLine
+        singleLine = singleLine,
+        enabled = enabled
     )
 }

@@ -19,51 +19,78 @@ import com.ririv.quickoutline.textProcess.methods.Method
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
+import com.ririv.quickoutline.view.ui.stringResource
 
 @Composable
 fun TextTabView(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     onAutoFormatClick: () -> Unit,
-    onVsCodeClick: () -> Unit
+    onVsCodeClick: () -> Unit,
+    isSyncingWithEditor: Boolean
 ) {
     var selectedMethod by remember { mutableStateOf(Method.SEQ) } // Use the enum
 
     Row(modifier = Modifier.fillMaxSize()) {
-        StyledTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.weight(1f).fillMaxHeight().onKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
-                    onValueChange(handleTab(value, event.isShiftPressed))
-                    true // Consume the event
-                } else {
-                    false // Do not consume
+        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            StyledTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.fillMaxSize().onKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
+                        onValueChange(handleTab(value, event.isShiftPressed))
+                        true // Consume the event
+                    } else {
+                        false // Do not consume
+                    }
+                },
+                placeholder = { Text(stringResource("contentsTextArea.prompt")) },
+                singleLine = false,
+                enabled = !isSyncingWithEditor
+            )
+            if (isSyncingWithEditor) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.1f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {}
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(stringResource("mask.text"), color = Color.White)
                 }
-            },
-            placeholder = { Text(stringResource("contentsTextArea.prompt")) },
-            singleLine = false
-        )
+            }
+        }
         Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color(0xFFDFDFDF)))
         Column(
             modifier = Modifier.width(135.dp).padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            StyledButton(onClick = onVsCodeClick, text = "VSCode", type = ButtonType.PLAIN_PRIMARY)
+            StyledButton(
+                onClick = onVsCodeClick,
+                text = if (isSyncingWithEditor) stringResource("btn.externalEditorConnected") else "VSCode",
+                type = ButtonType.PLAIN_PRIMARY,
+                enabled = !isSyncingWithEditor
+            )
             StyledButton(
                 onClick = onAutoFormatClick,
-                text = stringResource("autoFormatBtn.text"), type = ButtonType.PLAIN_PRIMARY)
+                text = stringResource("autoFormatBtn.text"),
+                type = ButtonType.PLAIN_PRIMARY
+            )
             Text(stringResource("Tip.text1"))
             Text(stringResource("Tip.text2"))
             Text(stringResource("Tip.text3"))
 
             val radioOptions = listOf(
-                stringResource("bookmarkTab.seqRBtn.text") to Method.SEQ,
-                stringResource("bookmarkTab.indentRBtn.text") to Method.INDENT
+                Method.SEQ,
+                Method.INDENT
             )
             Column {
-                radioOptions.forEach { (optionText, method) ->
+                radioOptions.forEach { method ->
                     val interactionSource = remember { MutableInteractionSource() }
                     val isHovered by interactionSource.collectIsHoveredAsState()
 
@@ -92,7 +119,10 @@ fun TextTabView(
                             )
                         )
                         Text(
-                            text = optionText,
+                            text = when (method) {
+                                Method.SEQ -> stringResource("bookmarkTab.seqRBtn.text")
+                                Method.INDENT -> stringResource("bookmarkTab.indentRBtn.text")
+                            },
                             color = textColor,
                             modifier = Modifier.padding(start = 8.dp)
                         )
