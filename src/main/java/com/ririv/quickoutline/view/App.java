@@ -3,6 +3,7 @@ package com.ririv.quickoutline.view;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.ririv.quickoutline.di.AppModule;
+import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -47,6 +48,16 @@ public class App extends Application {
             stage.setScene(scene);
             stage.show();
         }
+
+    @Override
+    public void stop() throws Exception {
+        // 获取 SyncWithExternalEditorService 实例并调用 shutdown
+        SyncWithExternalEditorService editorService = injector.getInstance(SyncWithExternalEditorService.class);
+        if (editorService != null) {
+            editorService.shutdown();
+        }
+        super.stop(); // 调用父类的 stop 方法
+    }
 
 
     public static void main(String[] args) {

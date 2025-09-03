@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import static com.ririv.quickoutline.utils.FileUtil.writeFile;
@@ -17,28 +19,21 @@ import static com.ririv.quickoutline.utils.FileUtil.writeFile;
 
 //整个程序每次运行时只会创建一次临时文件，避免多余
 public class SyncWithExternalEditorService {
-    File temp;
+    private final File temp;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(); // Use a managed executor
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(SyncWithExternalEditorService.class);
 
 
-    public SyncWithExternalEditorService() {
-        try {
-            // 若使用文件系统监视器FileSystems.getDefault().newWatchService()实现时，
-            // 未找到直接监视文件的方法，应先创建了一个文件夹进行包装
-            File tempParentDir = Files.createTempDirectory("contents").toFile();
-            temp = File.createTempFile("contents", ".txt", tempParentDir);//临时文件名系统会自动添加   一串数字，以避免重复名
+    public SyncWithExternalEditorService() throws IOException {
+        // Let constructor throw exception to be handled by DI framework or caller
+        File tempParentDir = Files.createTempDirectory("contents").toFile();
+        temp = File.createTempFile("contents", ".txt", tempParentDir);
 
-/*            程序运行结束, JVM终止时才真正调用删除
-            注意顺序，且两者都要删除    */
-            tempParentDir.deleteOnExit();
-            temp.deleteOnExit();
+        tempParentDir.deleteOnExit();
+        temp.deleteOnExit();
 
-            logger.debug("临时文件已创建: {}", temp.getName());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        logger.debug("临时文件已创建: {}", temp.getName());
     }
 
     public void exec(Pair<Integer,Integer> pos, Consumer<String> sync,
@@ -55,7 +50,8 @@ public class SyncWithExternalEditorService {
                 before.run();
 
                 fileWatcher.startWatching(temp, sync);
-                ExternalEditor externalEditor = new VscodeImpl(temp, pos.x(), pos.y());
+                // Handle potential null for pos
+                ExternalEditor externalEditor = new VscodeImpl(temp, pos != null ? pos.x() : 1, pos != null ? pos.y() : 1);
 
                 externalEditor.launch(sync);
 
@@ -68,12 +64,16 @@ public class SyncWithExternalEditorService {
                 after.run();
             }
         };
-        Thread t = new Thread(r);
-        t.start(); //线程执行完会自动销毁
+        executor.submit(r); // Submit the task to the executor
     }
 
     public void writeTemp(String contentsText) {
         writeFile(contentsText, temp);
+    }
+
+    public void shutdown() {
+        logger.info("Shutting down SyncWithExternalEditorService executor.");
+        executor.shutdownNow(); // Attempt to stop all actively executing tasks
     }
 
 }

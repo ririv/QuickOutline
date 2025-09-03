@@ -59,4 +59,5 @@ module quickoutline {
     opens com.ririv.quickoutline.view.controls.slider to javafx.fxml, javafx.graphics;
     exports com.ririv.quickoutline.view.bookmarktab;
     opens com.ririv.quickoutline.view.bookmarktab to com.google.guice, javafx.fxml, javafx.graphics;
+    opens com.ririv.quickoutline.service.syncWithExternelEditor to com.google.guice;
 }

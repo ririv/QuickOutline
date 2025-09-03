@@ -31,6 +31,7 @@ public class AppModule extends AbstractModule {
         bind(BookmarkTabController.class).in(Scopes.SINGLETON);
         bind(BookmarkBottomPaneController.class).in(Scopes.SINGLETON);
         bind(BookmarkSettingsState.class).in(Scopes.SINGLETON);
+        bind(com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService.class).in(Scopes.SINGLETON);
         
     }
 

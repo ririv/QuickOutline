@@ -36,8 +36,9 @@ public class TextTabController {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TextTabController.class);
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
-    private final SyncWithExternalEditorService syncWithExternalEditorService = new SyncWithExternalEditorService();
     private final PdfOutlineService pdfOutlineService;
+
+    private final SyncWithExternalEditorService syncWithExternalEditorService;
     private final AppEventBus eventBus;
 
     public TextArea contentsTextArea;
@@ -55,8 +56,11 @@ public class TextTabController {
     private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\t|\\s{1,4})");
 
     @Inject
-    public TextTabController(PdfOutlineService pdfOutlineService, AppEventBus eventBus) {
+    public TextTabController(PdfOutlineService pdfOutlineService,
+                             SyncWithExternalEditorService syncWithExternalEditorService,
+                             AppEventBus eventBus) {
         this.pdfOutlineService = pdfOutlineService;
+        this.syncWithExternalEditorService = syncWithExternalEditorService;
         this.eventBus = eventBus;
         this.eventBus.register(this);
     }
