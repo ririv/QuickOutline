@@ -1,6 +1,5 @@
 package com.ririv.quickoutline.service.syncWithExternelEditor;
 
-import com.ririv.quickoutline.exception.MyUncheckedExceptionHandler;
 import com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.ExternalEditor;
 import com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.VscodeImpl;
 import com.ririv.quickoutline.service.syncWithExternelEditor.watchFile.FileSystemsWatcherImpl;
@@ -52,24 +51,24 @@ public class SyncWithExternalEditorService {
             2. fileWatcher: watch文件是否修改并sync
 */
         Runnable r = () -> {
-            before.run();
+            try {
+                before.run();
 
-            fileWatcher.startWatching(temp, sync);
-            ExternalEditor externalEditor = new VscodeImpl(temp, pos.x(), pos.y());
+                fileWatcher.startWatching(temp, sync);
+                ExternalEditor externalEditor = new VscodeImpl(temp, pos.x(), pos.y());
 
-            externalEditor.launch(sync);
+                externalEditor.launch(sync);
 
-            fileWatcher.stopWatching();
-            after.run();
-
+            } catch (Exception e) {
+                logger.error("Error during external editor execution", e);
+                handleError.run();
+            } finally {
+                // This block guarantees cleanup, regardless of success or failure.
+                fileWatcher.stopWatching();
+                after.run();
+            }
         };
         Thread t = new Thread(r);
-        t.setUncaughtExceptionHandler(new MyUncheckedExceptionHandler(() -> {
-            fileWatcher.stopWatching();
-//            temp.deleteOnExit();
-            after.run();
-            handleError.run();
-        }));
         t.start(); //线程执行完会自动销毁
     }
 
