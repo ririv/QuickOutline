@@ -1,6 +1,5 @@
 package com.ririv.quickoutline.di
 
-import com.ririv.quickoutline.event.AppEventBus
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator
 import com.ririv.quickoutline.service.PdfOutlineService
@@ -17,7 +16,6 @@ val appModule = module {
     single { PdfOutlineService() }
     single<TocPageGenerator> { iTextTocPageGenerator() }
     single { PdfTocPageGeneratorService(get()) }
-    single { AppEventBus() }
     single { PdfTocExtractorService() }
     single { PdfPageLabelService() }
     single { BookmarkViewModel(get(), get(), get()) }
