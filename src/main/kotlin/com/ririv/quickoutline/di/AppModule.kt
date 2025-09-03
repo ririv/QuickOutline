@@ -20,7 +20,6 @@ val appModule = module {
     single { PdfPageLabelService() }
     single { BookmarkViewModel(get(), get(), get()) }
     factory { TocGeneratorViewModel(get(), get()) }
-    factory { LeftPaneViewModel() }
     factory { PageLabelViewModel(get(), get(), get()) }
     factory { PdfPreviewViewModel(get()) }
     factory { ThumbnailViewModel(get(), get()) }
