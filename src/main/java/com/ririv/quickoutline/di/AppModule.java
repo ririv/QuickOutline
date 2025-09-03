@@ -2,13 +2,13 @@ package com.ririv.quickoutline.di;
 
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.PdfTocExtractorService;
-import com.ririv.quickoutline.state.CurrentFileState;
-import com.ririv.quickoutline.state.BookmarkSettingsState;
+import com.ririv.quickoutline.view.state.CurrentFileState;
+import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.*;
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
-import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.view.event.AppEventBus;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.ririv.quickoutline.view.bookmarkTab.*;

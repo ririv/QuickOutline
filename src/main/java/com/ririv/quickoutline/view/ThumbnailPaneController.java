@@ -3,7 +3,7 @@ package com.ririv.quickoutline.view;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PdfPreview;
 import com.ririv.quickoutline.service.PdfPageLabelService;
-import com.ririv.quickoutline.state.CurrentFileState;
+import com.ririv.quickoutline.view.state.CurrentFileState;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -18,8 +18,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.google.common.eventbus.Subscribe;
-import com.ririv.quickoutline.event.AppEventBus;
-import com.ririv.quickoutline.event.PageLabelsChangedEvent;
+import com.ririv.quickoutline.view.event.AppEventBus;
+import com.ririv.quickoutline.view.event.PageLabelsChangedEvent;
 
 public class ThumbnailPaneController {
 

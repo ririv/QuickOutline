@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.state;
+package com.ririv.quickoutline.view.state;
 
 import com.ririv.quickoutline.model.Bookmark;
 import javafx.beans.property.IntegerProperty;

@@ -2,13 +2,13 @@ package com.ririv.quickoutline.view.bookmarkTab;
 
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
-import com.ririv.quickoutline.event.AppEventBus;
-import com.ririv.quickoutline.event.AutoToggleToIndentEvent;
-import com.ririv.quickoutline.event.BookmarksChangedEvent;
+import com.ririv.quickoutline.view.event.AppEventBus;
+import com.ririv.quickoutline.view.event.AutoToggleToIndentEvent;
+import com.ririv.quickoutline.view.event.BookmarksChangedEvent;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.textProcess.methods.Method;
-import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.LocalizationManager;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
 import com.ririv.quickoutline.utils.Pair;
 import com.ririv.quickoutline.view.controls.Remind;

@@ -2,8 +2,8 @@ package com.ririv.quickoutline.view.bookmarkTab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.state.BookmarkSettingsState;
-import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.state.BookmarkSettingsState;
+import com.ririv.quickoutline.view.LocalizationManager;
 import com.ririv.quickoutline.view.MyAlert;
 import com.ririv.quickoutline.view.RecursiveTreeItem;
 import com.ririv.quickoutline.view.controls.EditableTreeTableCell;

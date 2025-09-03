@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.state;
+package com.ririv.quickoutline.view.state;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.exception.EncryptedPdfException;

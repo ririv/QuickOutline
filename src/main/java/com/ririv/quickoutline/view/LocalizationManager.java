@@ -1,5 +1,6 @@
-package com.ririv.quickoutline.utils;
+package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.utils.BindText;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;

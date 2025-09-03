@@ -1,9 +1,8 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.event.AppEventBus;
-import com.ririv.quickoutline.event.SwitchTabEvent;
-import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.event.AppEventBus;
+import com.ririv.quickoutline.view.event.SwitchTabEvent;
 import com.ririv.quickoutline.view.MainController.FnTab;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

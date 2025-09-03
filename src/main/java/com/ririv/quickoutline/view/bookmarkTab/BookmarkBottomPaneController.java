@@ -1,12 +1,12 @@
 package com.ririv.quickoutline.view.bookmarkTab;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.event.*;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
-import com.ririv.quickoutline.state.BookmarkSettingsState;
-import com.ririv.quickoutline.state.CurrentFileState;
-import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.state.BookmarkSettingsState;
+import com.ririv.quickoutline.view.state.CurrentFileState;
+import com.ririv.quickoutline.view.LocalizationManager;
 import com.ririv.quickoutline.view.controls.PopupCard;
+import com.ririv.quickoutline.view.event.*;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

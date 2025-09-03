@@ -3,7 +3,6 @@ package com.ririv.quickoutline.view;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.ririv.quickoutline.di.AppModule;
-import com.ririv.quickoutline.utils.LocalizationManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,8 +11,6 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.URL;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.ResourceBundle;
 

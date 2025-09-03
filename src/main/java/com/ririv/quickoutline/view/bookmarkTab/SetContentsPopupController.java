@@ -1,9 +1,9 @@
 package com.ririv.quickoutline.view.bookmarkTab;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.event.AppEventBus;
+import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
-import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.LocalizationManager;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;

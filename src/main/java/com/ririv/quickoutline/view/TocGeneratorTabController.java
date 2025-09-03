@@ -1,13 +1,12 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.event.AppEventBus;
-import com.ririv.quickoutline.event.ShowMessageEvent;
+import com.ririv.quickoutline.view.event.AppEventBus;
+import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.state.BookmarkSettingsState;
+import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
-import com.ririv.quickoutline.state.CurrentFileState;
-import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.state.CurrentFileState;
 import com.ririv.quickoutline.view.controls.message.Message;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

@@ -2,14 +2,13 @@ package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PdfPreview;
-import com.ririv.quickoutline.state.CurrentFileState;
+import com.ririv.quickoutline.view.state.CurrentFileState;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 
 public class PdfPreviewController {
 

@@ -1,10 +1,9 @@
 package com.ririv.quickoutline.view.bookmarkTab;
 
-import com.ririv.quickoutline.utils.LocalizationManager;
+import com.ririv.quickoutline.view.LocalizationManager;
 import com.ririv.quickoutline.view.controls.radioButton2.RadioButton2;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.StackPane;
 

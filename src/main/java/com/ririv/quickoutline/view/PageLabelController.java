@@ -1,13 +1,13 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.event.AppEventBus;
-import com.ririv.quickoutline.event.PageLabelsChangedEvent;
-import com.ririv.quickoutline.event.ShowMessageEvent;
-import com.ririv.quickoutline.event.ShowSuccessDialogEvent;
+import com.ririv.quickoutline.view.event.AppEventBus;
+import com.ririv.quickoutline.view.event.PageLabelsChangedEvent;
+import com.ririv.quickoutline.view.event.ShowMessageEvent;
+import com.ririv.quickoutline.view.event.ShowSuccessDialogEvent;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.service.PdfPageLabelService;
-import com.ririv.quickoutline.state.CurrentFileState;
+import com.ririv.quickoutline.view.state.CurrentFileState;
 import com.ririv.quickoutline.view.controls.select.StyledSelect;
 import com.ririv.quickoutline.view.controls.message.Message;
 import javafx.collections.FXCollections;

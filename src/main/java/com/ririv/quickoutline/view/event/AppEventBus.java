@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.event;
+package com.ririv.quickoutline.view.event;
 
 import com.google.common.eventbus.EventBus;
 import jakarta.inject.Singleton;
