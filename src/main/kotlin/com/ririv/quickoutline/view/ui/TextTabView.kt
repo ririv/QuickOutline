@@ -21,7 +21,12 @@ import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
 
 @Composable
-fun TextTabView(value: TextFieldValue, onValueChange: (TextFieldValue) -> Unit) {
+fun TextTabView(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    onAutoFormatClick: () -> Unit,
+    onVsCodeClick: () -> Unit
+) {
     var selectedMethod by remember { mutableStateOf(Method.SEQ) } // Use the enum
 
     Row(modifier = Modifier.fillMaxSize()) {
@@ -45,8 +50,10 @@ fun TextTabView(value: TextFieldValue, onValueChange: (TextFieldValue) -> Unit) 
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            StyledButton(onClick = { /* TODO: Implement VSCode button */ }, text = "VSCode", type = ButtonType.PLAIN_PRIMARY)
-            StyledButton(onClick = { /* TODO: Implement Auto Format button */ }, text = stringResource("autoFormatBtn.text"), type = ButtonType.PLAIN_PRIMARY)
+            StyledButton(onClick = onVsCodeClick, text = "VSCode", type = ButtonType.PLAIN_PRIMARY)
+            StyledButton(
+                onClick = onAutoFormatClick,
+                text = stringResource("autoFormatBtn.text"), type = ButtonType.PLAIN_PRIMARY)
             Text(stringResource("Tip.text1"))
             Text(stringResource("Tip.text2"))
             Text(stringResource("Tip.text3"))

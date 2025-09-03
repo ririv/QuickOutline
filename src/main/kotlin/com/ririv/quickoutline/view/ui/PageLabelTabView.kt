@@ -54,7 +54,7 @@ fun PageLabelTabView() {
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            PageLabel.PageLabelNumberingStyle.values().forEach { style ->
+                            PageLabel.PageLabelNumberingStyle.entries.forEach { style ->
                                 DropdownMenuItem(onClick = {
                                     viewModel.numberingStyle = style
                                     expanded = false

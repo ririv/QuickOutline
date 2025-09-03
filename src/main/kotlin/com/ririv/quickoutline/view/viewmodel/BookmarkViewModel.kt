@@ -4,6 +4,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import com.ririv.quickoutline.model.Bookmark
 import com.ririv.quickoutline.pdfProcess.ViewScaleType
 import com.ririv.quickoutline.service.PdfOutlineService
+import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService
 import com.ririv.quickoutline.textProcess.TextProcessor
 import com.ririv.quickoutline.textProcess.methods.Method
 import com.ririv.quickoutline.view.state.BookmarkUiState
@@ -23,7 +24,8 @@ import kotlinx.coroutines.withContext
 class BookmarkViewModel(
     private val pdfOutlineService: PdfOutlineService,
     private val mainViewModel: MainViewModel,
-    private val messageContainerState: MessageContainerState
+    private val messageContainerState: MessageContainerState,
+    private val syncWithExternalEditorService: SyncWithExternalEditorService
 ) {
     private val _uiState = MutableStateFlow(BookmarkUiState())
     val uiState: StateFlow<BookmarkUiState> = _uiState.asStateFlow()
@@ -123,5 +125,34 @@ class BookmarkViewModel(
         } else {
             _uiState.update { it.copy(offset = offset) }
         }
+    }
+
+    fun syncWithExternalEditor() {
+        // Use the injected service
+        syncWithExternalEditorService.exec(
+            null, // coordinates are not used in the new implementation
+            { fileText -> // onFileChanged
+                _uiState.update { it.copy(textInput = TextFieldValue(fileText)) }
+            },
+            { // onSyncStart
+                syncWithExternalEditorService.writeTemp(uiState.value.textInput.text)
+                _uiState.update { it.copy(isSyncingWithEditor = true) }
+            },
+            { // onSyncEnd
+                _uiState.update { it.copy(isSyncingWithEditor = false) }
+            },
+            { // onVSCodeNotFound
+                messageContainerState.showMessage(
+                    "VSCode not found. Please install it and ensure it's in your system's PATH.",
+                    MessageType.WARNING
+                )
+            }
+        )
+    }
+
+    fun autoFormat() {
+        val currentText = uiState.value.textInput.text
+        val formattedText = pdfOutlineService.autoFormat(currentText)
+        _uiState.update { it.copy(textInput = TextFieldValue(formattedText)) }
     }
 }

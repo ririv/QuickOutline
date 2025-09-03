@@ -6,8 +6,9 @@ import com.ririv.quickoutline.model.Bookmark
 data class BookmarkUiState(
     val rootBookmark: Bookmark? = null,
     val selectedBookmark: Bookmark? = null,
+    val textInput: TextFieldValue = TextFieldValue(),
+    val offset: TextFieldValue = TextFieldValue(),
     val filePath: String = "",
-    val offset: TextFieldValue = TextFieldValue(""),
-    val textInput: TextFieldValue = TextFieldValue(""),
+    val isSyncingWithEditor: Boolean = false, // Add this state
     val recomposeTrigger: Int = 0
 )

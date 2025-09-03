@@ -34,7 +34,9 @@ fun BookmarkTab() {
             } else {
                 TextTabView(
                     value = uiState.textInput,
-                    onValueChange = { viewModel.onTextInputChange(it) }
+                    onValueChange = { viewModel.onTextInputChange(it) },
+                    onAutoFormatClick = { viewModel.autoFormat() },
+                    onVsCodeClick = { viewModel.syncWithExternalEditor() }
                 )
             }
         }
