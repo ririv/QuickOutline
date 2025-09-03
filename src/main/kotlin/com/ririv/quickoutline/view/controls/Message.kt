@@ -67,7 +67,7 @@ fun Message(text: String, type: MessageType, modifier: Modifier = Modifier, onDi
             shape = RoundedCornerShape(6.dp),
             backgroundColor = backgroundColor,
             contentColor = contentColor,
-            elevation = 4.dp
+//            elevation = 4.dp // Set elevation to 0.dp to remove shadow
         ) {
             Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(text = iconText, color = contentColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
