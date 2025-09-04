@@ -49,7 +49,7 @@ fun StyledButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
-        interactionSource = interactionSource,
+//        interactionSource = interactionSource,
         border = BorderStroke(1.dp, colors.borderColor),
         shape = RoundedCornerShape(4.dp),
         colors = ButtonDefaults.outlinedButtonColors(
