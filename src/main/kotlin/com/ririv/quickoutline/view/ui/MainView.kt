@@ -1,6 +1,10 @@
 package com.ririv.quickoutline.view.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
@@ -11,6 +15,7 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.MessageContainer
@@ -20,6 +25,11 @@ import com.ririv.quickoutline.view.viewmodel.MainViewModel
 import org.koin.java.KoinJavaComponent.inject
 import java.awt.FileDialog
 import java.awt.Frame
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
+import java.io.File
+import java.net.URI
+import java.net.URL
 
 @Composable
 fun MainView() {
@@ -29,7 +39,80 @@ fun MainView() {
     var selectedTab by remember { mutableStateOf(0) }
     val uiState by mainViewModel.uiState.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) { // Use Box for layering
+    // Compose 原生 DnD：在根容器接收外部拖拽（Finder 等）
+    // 仅提取第一个 .pdf 并打开，带简单去重防止重复打开
+    val lastOpenedPath = remember { mutableStateOf("") }
+
+    // 工具：解析 text/uri-list
+    fun parseUriList(text: String): List<File> =
+        text.lineSequence()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.startsWith("#") }
+            .mapNotNull { runCatching { URI(it) }.getOrNull() }
+            .filter { it.scheme == "file" }
+            .mapNotNull { runCatching { File(it) }.getOrNull() }
+            .toList()
+
+    // 工具：从 Transferable 提取第一个 PDF 文件
+    fun extractPdf(t: Transferable): File? {
+        val uriListFlavor = DataFlavor("text/uri-list;class=java.lang.String")
+        val javaUrlFlavor = DataFlavor("application/x-java-url; class=java.net.URL")
+
+        if (t.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            val data = t.getTransferData(DataFlavor.javaFileListFlavor)
+            if (data is List<*>) {
+                val f = data.firstOrNull { it is File && (it as File).extension.equals("pdf", true) } as? File
+                if (f != null) return f
+            }
+        }
+        if (t.isDataFlavorSupported(javaUrlFlavor)) {
+            val url = runCatching { t.getTransferData(javaUrlFlavor) as? URL }.getOrNull()
+            val f = url?.let { runCatching { File(it.toURI()) }.getOrNull() }
+            if (f != null && f.extension.equals("pdf", true)) return f
+        }
+        if (t.isDataFlavorSupported(uriListFlavor)) {
+            val s = runCatching { t.getTransferData(uriListFlavor) as? String }.getOrNull()
+            val files = s?.let { parseUriList(it) } ?: emptyList()
+            val f = files.firstOrNull { it.extension.equals("pdf", true) }
+            if (f != null) return f
+        }
+        if (t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            val s = runCatching { t.getTransferData(DataFlavor.stringFlavor) as? String }.getOrNull()
+            if (!s.isNullOrBlank()) {
+                val filesFromUris = parseUriList(s)
+                val f1 = filesFromUris.firstOrNull { it.extension.equals("pdf", true) }
+                if (f1 != null) return f1
+                val f2 = s.lineSequence()
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() && !it.startsWith("#") }
+                    .map { File(it) }
+                    .firstOrNull { it.extension.equals("pdf", true) && it.exists() }
+                if (f2 != null) return f2
+            }
+        }
+        return null
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    val dndModifier = Modifier.dragAndDropTarget(
+        // 桌面端：直接接受，后续在 onDrop 中解析并过滤
+        shouldStartDragAndDrop = { _: DragAndDropEvent -> true },
+        target = object : DragAndDropTarget {
+            override fun onDrop(event: DragAndDropEvent): Boolean {
+                val t = event.awtTransferable ?: return false
+                val pdf = extractPdf(t) ?: return false
+                val path = pdf.absolutePath
+                if (lastOpenedPath.value == path) return true
+                println("[DnD][Compose] opening PDF: $path")
+                lastOpenedPath.value = path
+                // 直接调用 ViewModel，与按钮一致
+                mainViewModel.openPdf(path)
+                return true
+            }
+        }
+    )
+
+    Box(modifier = Modifier.fillMaxSize().then(dndModifier)) { // Use Box for layering
         // Main Content
         Column(modifier = Modifier.fillMaxSize()) {
             // Top Pane
