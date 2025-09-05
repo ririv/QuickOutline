@@ -36,14 +36,16 @@ fun TextTabView(
             StyledTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier.fillMaxSize().onKeyEvent { event ->
-                    if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
-                        onValueChange(handleTab(value, event.isShiftPressed))
-                        true // Consume the event
-                    } else {
-                        false // Do not consume
-                    }
-                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
+                            onValueChange(handleTab(value, event.isShiftPressed))
+                            true // Consume the event
+                        } else {
+                            false // Do not consume
+                        }
+                    },
                 placeholder = { Text(stringResource("contentsTextArea.prompt")) },
                 singleLine = false,
                 enabled = !isSyncingWithEditor
@@ -70,20 +72,27 @@ fun TextTabView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            StyledButton(
-                onClick = onVsCodeClick,
-                text = if (isSyncingWithEditor) stringResource("btn.externalEditorConnected") else "VSCode",
-                type = ButtonType.PLAIN_PRIMARY,
-                enabled = !isSyncingWithEditor
-            )
-            StyledButton(
-                onClick = onAutoFormatClick,
-                text = stringResource("autoFormatBtn.text"),
-                type = ButtonType.PLAIN_PRIMARY
-            )
-            Text(stringResource("Tip.text1"))
-            Text(stringResource("Tip.text2"))
-            Text(stringResource("Tip.text3"))
+            Box(modifier = Modifier.weight(1f)) {
+                StyledButton(
+
+                    onClick = onVsCodeClick,
+                    text = if (isSyncingWithEditor) stringResource("btn.externalEditorConnected") else "VSCode",
+                    type = ButtonType.PLAIN_PRIMARY,
+                    enabled = !isSyncingWithEditor
+                )
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                StyledButton(
+                    onClick = onAutoFormatClick,
+                    text = stringResource("autoFormatBtn.text"),
+                    type = ButtonType.PLAIN_PRIMARY
+                )
+            }
+            Column(modifier = Modifier.weight(1f).align(Alignment.CenterHorizontally)) {
+                Text(stringResource("Tip.text1"))
+                Text(stringResource("Tip.text2"))
+                Text(stringResource("Tip.text3"))
+            }
 
             val radioOptions = listOf(
                 Method.SEQ,
@@ -145,8 +154,7 @@ private fun handleTab(value: TextFieldValue, isShiftPressed: Boolean): TextField
     val lines = value.text.split('\n')
     val selectedLinesRange = getSelectedLines(value.text, selection.start, selection.end)
 
-    val newLines = lines.mapIndexed {
-        index, line ->
+    val newLines = lines.mapIndexed { index, line ->
         if (index >= selectedLinesRange.first && index <= selectedLinesRange.last) {
             if (isShiftPressed) {
                 line.removePrefix("\t").removePrefix("  ")
