@@ -5,7 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,11 +18,13 @@ import com.ririv.quickoutline.view.controls.PopupCard
 import com.ririv.quickoutline.view.controls.PopupPosition
 import com.ririv.quickoutline.view.controls.PopupTriggerType
 import com.ririv.quickoutline.view.controls.StyledButton
-import com.ririv.quickoutline.view.controls.StyledTextField
 import com.ririv.quickoutline.view.icons.SvgIcon
 import com.ririv.quickoutline.view.ui.loadResourcePainter
 import com.ririv.quickoutline.view.ui.stringResource
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 
 @Composable
 private fun SetContentsPopupContent(onSelect: (ViewScaleType) -> Unit) {
@@ -158,11 +160,16 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
             }
         }
 
-        StyledTextField(
+        TextField(
             value = uiState.offset,
             onValueChange = { viewModel.setOffset(it) },
             placeholder = { Text(stringResource("bookmarkTab.offsetTF.prompt")) },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
         Box(

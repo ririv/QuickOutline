@@ -135,15 +135,17 @@ class BookmarkViewModel(
         _uiState.update { it.copy(selectedBookmark = bookmark) }
     }
 
-    fun setOffset(offset: TextFieldValue) {
+    fun setOffset(offset: TextFieldValue?) {
         // Allow only numbers and a leading minus sign
-        val newText = offset.text.filterIndexed { index, char ->
+        val newText = offset?.text?.filterIndexed { index, char ->
             char.isDigit() || (index == 0 && char == '-')
         }
-        if (newText != offset.text) {
-            _uiState.update { it.copy(offset = offset.copy(text = newText)) }
-        } else {
-            _uiState.update { it.copy(offset = offset) }
+        if (offset != null) {
+            if (newText != offset.text) {
+                _uiState.update { newText?.let { it1 -> offset.copy(text = it1) }?.let { it2 -> it.copy(offset = it2) }!! }
+            } else {
+                _uiState.update { it.copy(offset = offset) }
+            }
         }
     }
 

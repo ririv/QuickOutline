@@ -6,8 +6,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Text
+import androidx.compose.material3.Card
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -65,8 +65,10 @@ fun Message(text: String, type: MessageType, modifier: Modifier = Modifier, onDi
         Card(
             modifier = Modifier.padding(8.dp),
             shape = RoundedCornerShape(6.dp),
-            backgroundColor = backgroundColor,
-            contentColor = contentColor,
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = backgroundColor,
+                contentColor = contentColor,
+            ),
 //            elevation = 4.dp // Set elevation to 0.dp to remove shadow
         ) {
             Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
