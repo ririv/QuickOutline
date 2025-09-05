@@ -21,7 +21,7 @@ val appModule = module {
     single { PdfTocExtractorService() }
     single { PdfPageLabelService() }
     single { SyncWithExternalEditorService() } onClose { service -> service?.shutdown() } // Add service and its shutdown hook
-    single { BookmarkViewModel(get(), get(), get(), get()) } // Updated dependencies
+    single { BookmarkViewModel(get(), get(), get(), get(), get()) } // Updated dependencies
     factory { TocGeneratorViewModel(get(), get()) }
     factory { PageLabelViewModel(get(), get(), get()) }
     factory { PdfPreviewViewModel(get()) }

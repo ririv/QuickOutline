@@ -21,11 +21,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import kotlinx.coroutines.withContext
 
+import com.ririv.quickoutline.service.PdfTocExtractorService
+
 class BookmarkViewModel(
     private val pdfOutlineService: PdfOutlineService,
     private val mainViewModel: MainViewModel,
     private val messageContainerState: MessageContainerState,
-    private val syncWithExternalEditorService: SyncWithExternalEditorService
+    private val syncWithExternalEditorService: SyncWithExternalEditorService,
+    private val pdfTocExtractorService: PdfTocExtractorService
 ) {
     private val _uiState = MutableStateFlow(BookmarkUiState())
     val uiState: StateFlow<BookmarkUiState> = _uiState.asStateFlow()
@@ -63,14 +66,31 @@ class BookmarkViewModel(
         }
     }
 
-    fun saveBookmarks() {
+    fun extractToc() {
+        val path = mainViewModel.uiState.value.paths.src_file ?: return
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val tocText = pdfTocExtractorService.extract(path.toString())
+                withContext(Dispatchers.Swing) {
+                    _uiState.update { it.copy(textInput = TextFieldValue(tocText)) }
+                    messageContainerState.showMessage("TOC extracted successfully.", MessageType.SUCCESS)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Swing) {
+                    messageContainerState.showMessage("Failed to extract TOC: ${e.message}", MessageType.ERROR)
+                }
+            }
+        }
+    }
+
+    fun saveBookmarks(viewScaleType: ViewScaleType) {
         val root = uiState.value.rootBookmark ?: return
         val sourcePath = mainViewModel.uiState.value.paths.src_file?.toString() ?: return
         val destPath = mainViewModel.uiState.value.paths.dst_file?.toString() ?: return
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                pdfOutlineService.setOutline(root, sourcePath, destPath, ViewScaleType.NONE)
+                pdfOutlineService.setOutline(root, sourcePath, destPath, viewScaleType)
                 withContext(Dispatchers.Swing) {
                     messageContainerState.showMessage("Bookmarks saved successfully!", MessageType.SUCCESS)
                 }
