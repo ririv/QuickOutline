@@ -9,8 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.ririv.quickoutline.view.ui.TextTabView
-import com.ririv.quickoutline.view.ui.TreeTabView
+import com.ririv.quickoutline.view.ui.TextSubView
+import com.ririv.quickoutline.view.ui.TreeSubView
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 import org.koin.java.KoinJavaComponent.inject
 
@@ -26,13 +26,13 @@ fun BookmarkTab() {
     Column {
         Box(modifier = Modifier.weight(1f)) {
             if (showTreeView) {
-                TreeTabView(
+                TreeSubView(
                     bookmarks = uiState.rootBookmark?.children ?: emptyList(),
                     selectedBookmark = uiState.selectedBookmark,
                     onBookmarkSelected = { viewModel.selectBookmark(it) }
                 )
             } else {
-                TextTabView(
+                TextSubView(
                     value = uiState.textInput,
                     onValueChange = { viewModel.onTextInputChange(it) },
                     onAutoFormatClick = { viewModel.autoFormat() },

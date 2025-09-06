@@ -5,7 +5,7 @@ import com.ririv.quickoutline.model.Bookmark
 import com.ririv.quickoutline.view.ui.bookmarktab.BookmarkTree
 
 @Composable
-fun TreeTabView(
+fun TreeSubView(
     bookmarks: List<Bookmark>,
     selectedBookmark: Bookmark?,
     onBookmarkSelected: (Bookmark) -> Unit

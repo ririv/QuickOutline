@@ -17,12 +17,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.textProcess.methods.Method
 import com.ririv.quickoutline.view.controls.ButtonType
+import com.ririv.quickoutline.view.controls.MultilineTextFieldWithTabSupport
 import com.ririv.quickoutline.view.controls.StyledButton
-import com.ririv.quickoutline.view.controls.StyledTextField
-import com.ririv.quickoutline.view.ui.stringResource
 
 @Composable
-fun TextTabView(
+fun TextSubView(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     onAutoFormatClick: () -> Unit,
@@ -33,19 +32,10 @@ fun TextTabView(
 
     Row(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-            StyledTextField(
+            MultilineTextFieldWithTabSupport(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onKeyEvent { event ->
-                        if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
-                            onValueChange(handleTab(value, event.isShiftPressed))
-                            true // Consume the event
-                        } else {
-                            false // Do not consume
-                        }
-                    },
+                modifier = Modifier.fillMaxSize(),
                 placeholder = { Text(stringResource("contentsTextArea.prompt")) },
                 singleLine = false,
                 enabled = !isSyncingWithEditor
@@ -140,37 +130,4 @@ fun TextTabView(
             }
         }
     }
-}
-
-private fun handleTab(value: TextFieldValue, isShiftPressed: Boolean): TextFieldValue {
-    val selection = value.selection
-    if (selection.collapsed) {
-        // No text selected, just insert a tab
-        if (isShiftPressed) return value // Or handle un-indenting a single line
-        val newText = value.text.substring(0, selection.start) + "\t" + value.text.substring(selection.start)
-        return value.copy(text = newText, selection = androidx.compose.ui.text.TextRange(selection.start + 1))
-    }
-
-    val lines = value.text.split('\n')
-    val selectedLinesRange = getSelectedLines(value.text, selection.start, selection.end)
-
-    val newLines = lines.mapIndexed { index, line ->
-        if (index >= selectedLinesRange.first && index <= selectedLinesRange.last) {
-            if (isShiftPressed) {
-                line.removePrefix("\t").removePrefix("  ")
-            } else {
-                "\t" + line
-            }
-        } else {
-            line
-        }
-    }
-
-    return value.copy(text = newLines.joinToString("\n"))
-}
-
-private fun getSelectedLines(text: String, start: Int, end: Int): IntRange {
-    val startLine = text.substring(0, start).count { it == '\n' }
-    val endLine = text.substring(0, end).count { it == '\n' }
-    return startLine..endLine
 }
