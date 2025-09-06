@@ -45,6 +45,7 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(compose.components.resources)
     implementation(compose.material3)
+    implementation(compose.materialIconsExtended)
     // ------------------- 核心修正 END ---------------------
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
