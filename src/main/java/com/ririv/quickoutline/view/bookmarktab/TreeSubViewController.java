@@ -2,6 +2,7 @@ package com.ririv.quickoutline.view.bookmarktab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.LocalizationManager;
 import com.ririv.quickoutline.view.MyAlert;
@@ -16,9 +17,9 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class TreeSubViewController {
-    public TreeTableView<Bookmark> treeTableView;
-    public TreeTableColumn<Bookmark, String> titleColumn;
-    public TreeTableColumn<Bookmark, String> offsetPageColumn;
+    public TreeTableView<BookmarkViewModel> treeTableView;
+    public TreeTableColumn<BookmarkViewModel, String> titleColumn;
+    public TreeTableColumn<BookmarkViewModel, String> offsetPageColumn;
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
     private final BookmarkSettingsState bookmarkSettingsState;
@@ -46,18 +47,18 @@ public class TreeSubViewController {
                 treeTableView.setRoot(null);
                 return;
             }
-            TreeItem<Bookmark> rootItem = new RecursiveTreeItem(newRoot);
+            BookmarkViewModel rootBookmarkViewModel = new BookmarkViewModel(newRoot);
+            TreeItem<BookmarkViewModel> rootItem = new RecursiveTreeItem(rootBookmarkViewModel);
             expandAllNodes(rootItem);
 
             titleColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getTitle()));
-            offsetPageColumn.setCellValueFactory(param -> {
-                String pageNumStr = param.getValue().getValue().getOffsetPageNum()
-                        .map(String::valueOf).orElse("");
-                return new SimpleStringProperty(pageNumStr);
-            });
+            offsetPageColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getOffsetPageNumAsString()));
 
             titleColumn.setCellFactory(EditableTreeTableCell.forTreeTableColumn());
-            titleColumn.setOnEditCommit(event -> event.getRowValue().getValue().setTitle(event.getNewValue()));
+            titleColumn.setOnEditCommit(event -> {
+                event.getRowValue().getValue().setTitle(event.getNewValue());
+                treeTableView.refresh();
+            });
 
             offsetPageColumn.setCellFactory(EditableTreeTableCell.forTreeTableColumn());
             offsetPageColumn.setOnEditCommit(event -> {
@@ -66,7 +67,6 @@ public class TreeSubViewController {
                     Integer pageNum = newValue.isEmpty() ? null : Integer.valueOf(newValue);
                     event.getRowValue().getValue().setOffsetPageNum(pageNum);
                 } catch (NumberFormatException e) {
-                    // 如果转换失败，刷新显示原值
                     treeTableView.refresh();
                 }
             });
@@ -93,8 +93,7 @@ public class TreeSubViewController {
         contextMenu.getItems().addAll(addSiblingItem, addChildItem, new SeparatorMenuItem(), deleteItem, new SeparatorMenuItem(), promoteMenuItem, demoteMenuItem);
 
         treeTableView.setRowFactory(tv -> {
-            TreeTableRow<Bookmark> row = new TreeTableRow<>();
-
+            TreeTableRow<BookmarkViewModel> row = new TreeTableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getButton() == MouseButton.SECONDARY && !row.isEmpty()) {
                     updateContextMenuStatus(row.getTreeItem());
@@ -103,18 +102,17 @@ public class TreeSubViewController {
                     contextMenu.hide();
                 }
             });
-
             return row;
         });
     }
 
-    private void updateContextMenuStatus(TreeItem<Bookmark> selectedItem) {
+    private void updateContextMenuStatus(TreeItem<BookmarkViewModel> selectedItem) {
         if (selectedItem == null) {
             promoteMenuItem.setDisable(true);
             demoteMenuItem.setDisable(true);
             return;
         }
-        TreeItem<Bookmark> parent = selectedItem.getParent();
+        TreeItem<BookmarkViewModel> parent = selectedItem.getParent();
         promoteMenuItem.setDisable(parent == null || parent == treeTableView.getRoot());
 
         if (parent != null) {
@@ -126,149 +124,133 @@ public class TreeSubViewController {
     }
 
     private void promoteSelection() {
-        TreeItem<Bookmark> itemToPromote = treeTableView.getSelectionModel().getSelectedItem();
+        TreeItem<BookmarkViewModel> itemToPromote = treeTableView.getSelectionModel().getSelectedItem();
         if (itemToPromote == null) return;
-        TreeItem<Bookmark> parent = itemToPromote.getParent();
-        if (parent == null || parent == treeTableView.getRoot()) return;
-        TreeItem<Bookmark> grandParent = parent.getParent();
-        if (grandParent == null) return;
+        TreeItem<BookmarkViewModel> parentItem = itemToPromote.getParent();
+        if (parentItem == null || parentItem == treeTableView.getRoot()) return;
+        TreeItem<BookmarkViewModel> grandParentItem = parentItem.getParent();
+        if (grandParentItem == null) return;
 
-        Bookmark bookmarkToPromote = itemToPromote.getValue();
-        Bookmark oldParentBookmark = parent.getValue();
-        Bookmark newParentBookmark = grandParent.getValue();
+        BookmarkViewModel bookmarkViewModelToPromote = itemToPromote.getValue();
+        BookmarkViewModel oldParentBookmarkViewModel = parentItem.getValue();
+        BookmarkViewModel newParentBookmarkViewModel = grandParentItem.getValue();
 
-        // 修改数据模型
-        oldParentBookmark.getChildren().remove(bookmarkToPromote);
-        int parentIndex = newParentBookmark.getChildren().indexOf(oldParentBookmark);
-        newParentBookmark.addChild(parentIndex + 1, bookmarkToPromote);
-        
-        // 刷新树视图显示
-        refreshTreeView();
+        int parentIndex = newParentBookmarkViewModel.getChildren().indexOf(oldParentBookmarkViewModel);
+
+        oldParentBookmarkViewModel.removeChild(bookmarkViewModelToPromote);
+        newParentBookmarkViewModel.addChild(parentIndex + 1, bookmarkViewModelToPromote.getModel());
     }
 
     private void demoteSelection() {
-        TreeItem<Bookmark> itemToDemote = treeTableView.getSelectionModel().getSelectedItem();
+        TreeItem<BookmarkViewModel> itemToDemote = treeTableView.getSelectionModel().getSelectedItem();
         if (itemToDemote == null) return;
-        TreeItem<Bookmark> parent = itemToDemote.getParent();
-        if (parent == null) return;
-        int currentIndex = parent.getChildren().indexOf(itemToDemote);
+        TreeItem<BookmarkViewModel> parentItem = itemToDemote.getParent();
+        if (parentItem == null) return;
+        int currentIndex = parentItem.getChildren().indexOf(itemToDemote);
         if (currentIndex < 1) return;
 
-        TreeItem<Bookmark> newParentItem = parent.getChildren().get(currentIndex - 1);
+        TreeItem<BookmarkViewModel> newParentItem = parentItem.getChildren().get(currentIndex - 1);
 
-        Bookmark bookmarkToDemote = itemToDemote.getValue();
-        Bookmark oldParentBookmark = parent.getValue();
-        Bookmark newParentBookmark = newParentItem.getValue();
+        BookmarkViewModel bookmarkViewModelToDemote = itemToDemote.getValue();
+        BookmarkViewModel oldParentBookmarkViewModel = parentItem.getValue();
+        BookmarkViewModel newParentBookmarkViewModel = newParentItem.getValue();
 
-        // 修改数据模型
-        oldParentBookmark.getChildren().remove(bookmarkToDemote);
-        newParentBookmark.addChild(bookmarkToDemote);
-        
-        // 刷新树视图显示
-        refreshTreeView();
+        oldParentBookmarkViewModel.removeChild(bookmarkViewModelToDemote);
+        newParentBookmarkViewModel.addChild(bookmarkViewModelToDemote.getModel());
     }
 
     private void addBookmark(boolean asChild) {
-        TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
+        TreeItem<BookmarkViewModel> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
         Bookmark newBookmark;
 
-        if (selectedItem == null) {
-            Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
-            if (rootBookmark == null) return; // Cannot add to a non-existent tree
+        if (selectedItem == null) { // Add to root
+            BookmarkViewModel rootBookmarkViewModel = treeTableView.getRoot().getValue();
+            if (rootBookmarkViewModel == null) return;
             newBookmark = new Bookmark("New Bookmark", null, 1);
-            rootBookmark.addChild(newBookmark);
-        } else if (asChild) {
-            Bookmark parentBookmark = selectedItem.getValue();
-            newBookmark = new Bookmark("New Child", null, parentBookmark.getLevel() + 1);
-            parentBookmark.addChild(newBookmark);
-        } else {
-            Bookmark parentBookmark = selectedItem.getParent().getValue();
-            Bookmark siblingBookmark = selectedItem.getValue();
-            int index = parentBookmark.getChildren().indexOf(siblingBookmark);
-            newBookmark = new Bookmark("New Sibling", null, siblingBookmark.getLevel());
-            parentBookmark.addChild(index + 1, newBookmark);
+            rootBookmarkViewModel.addChild(newBookmark);
+        } else if (asChild) { // Add as a child of selected
+            BookmarkViewModel parentBookmarkViewModel = selectedItem.getValue();
+            newBookmark = new Bookmark("New Child", null, parentBookmarkViewModel.getModel().getLevel() + 1);
+            parentBookmarkViewModel.addChild(newBookmark);
+            selectedItem.setExpanded(true);
+        } else { // Add as a sibling after selected
+            BookmarkViewModel parentBookmarkViewModel = selectedItem.getParent().getValue();
+            BookmarkViewModel siblingBookmarkViewModel = selectedItem.getValue();
+            int index = parentBookmarkViewModel.getChildren().indexOf(siblingBookmarkViewModel);
+            newBookmark = new Bookmark("New Sibling", null, siblingBookmarkViewModel.getModel().getLevel());
+            parentBookmarkViewModel.addChild(index + 1, newBookmark);
         }
     }
 
     private void deleteSelectedBookmark() {
-        TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
+        TreeItem<BookmarkViewModel> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
         if (selectedItem == null || selectedItem.getParent() == null) return;
 
         Optional<ButtonType> result = MyAlert.showAlert(Alert.AlertType.CONFIRMATION,
                 bundle.getString("alert.deleteConfirmation"), treeTableView.getScene().getWindow());
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            Bookmark parentBookmark = selectedItem.getParent().getValue();
-            Bookmark bookmarkToRemove = selectedItem.getValue();
-            parentBookmark.getChildren().remove(bookmarkToRemove);
+            BookmarkViewModel parentBookmarkViewModel = selectedItem.getParent().getValue();
+            BookmarkViewModel bookmarkViewModelToRemove = selectedItem.getValue();
+            parentBookmarkViewModel.removeChild(bookmarkViewModelToRemove);
         }
     }
 
-    // 添加刷新树视图的辅助方法
+    // --- Unused methods kept and adapted as per user request ---
+
     private void refreshTreeView() {
         Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
         if (rootBookmark != null) {
-            // 保存当前状态
-            TreeItem<Bookmark> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
+            TreeItem<BookmarkViewModel> selectedItem = treeTableView.getSelectionModel().getSelectedItem();
             int selectedRowIndex = treeTableView.getSelectionModel().getSelectedIndex();
-            
-            // 使用轻量级刷新，避免重建整个树
+
             Platform.runLater(() -> {
-                // 刷新TreeTableView的数据显示
                 treeTableView.refresh();
-                
-                // 恢复选择状态（优先使用行索引）
+
                 if (selectedRowIndex >= 0 && selectedRowIndex < treeTableView.getExpandedItemCount()) {
                     treeTableView.getSelectionModel().select(selectedRowIndex);
                     treeTableView.getFocusModel().focus(selectedRowIndex);
                 } else if (selectedItem != null) {
-                    // 如果行索引无效，尝试按Bookmark查找
                     restoreSelectionWithoutScroll(selectedItem.getValue());
                 }
             });
         }
     }
-    
-    // 递归刷新TreeItem及其子项
-    private void refreshTreeItem(TreeItem<Bookmark> item) {
+
+    private void refreshTreeItem(TreeItem<BookmarkViewModel> item) {
         if (item != null) {
-            // 刷新当前项
-            item.setValue(item.getValue()); // 触发值变化事件
-            // 递归刷新子项
-            for (TreeItem<Bookmark> child : item.getChildren()) {
+            item.setValue(item.getValue());
+            for (TreeItem<BookmarkViewModel> child : item.getChildren()) {
                 refreshTreeItem(child);
             }
         }
     }
-    
-    // 尝试恢复选择状态（不自动滚动）
-    private void restoreSelectionWithoutScroll(Bookmark targetBookmark) {
-        if (targetBookmark == null) return;
-        
-        TreeItem<Bookmark> rootItem = treeTableView.getRoot();
-        TreeItem<Bookmark> foundItem = findTreeItem(rootItem, targetBookmark);
+
+    private void restoreSelectionWithoutScroll(BookmarkViewModel targetBookmarkViewModel) {
+        if (targetBookmarkViewModel == null) return;
+
+        TreeItem<BookmarkViewModel> rootItem = treeTableView.getRoot();
+        TreeItem<BookmarkViewModel> foundItem = findTreeItem(rootItem, targetBookmarkViewModel);
         if (foundItem != null) {
-            // 只恢复选择，不滚动
             treeTableView.getSelectionModel().select(foundItem);
             treeTableView.getFocusModel().focus(treeTableView.getRow(foundItem));
         }
     }
-    
-    // 在树中查找特定的Bookmark对应的TreeItem
-    private TreeItem<Bookmark> findTreeItem(TreeItem<Bookmark> parent, Bookmark target) {
+
+    private TreeItem<BookmarkViewModel> findTreeItem(TreeItem<BookmarkViewModel> parent, BookmarkViewModel target) {
         if (parent == null || target == null) return null;
-        
+
         if (parent.getValue() == target) {
             return parent;
         }
-        
-        for (TreeItem<Bookmark> child : parent.getChildren()) {
-            TreeItem<Bookmark> result = findTreeItem(child, target);
+
+        for (TreeItem<BookmarkViewModel> child : parent.getChildren()) {
+            TreeItem<BookmarkViewModel> result = findTreeItem(child, target);
             if (result != null) {
                 return result;
             }
         }
-        
+
         return null;
     }
 

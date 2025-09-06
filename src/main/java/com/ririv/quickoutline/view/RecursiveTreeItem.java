@@ -1,27 +1,27 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel;
 import javafx.collections.ListChangeListener;
 import javafx.scene.control.TreeItem;
 
 import java.util.stream.Collectors;
 
-public class RecursiveTreeItem extends TreeItem<Bookmark> {
+public class RecursiveTreeItem extends TreeItem<BookmarkViewModel> {
 
-    public RecursiveTreeItem(Bookmark bookmark) {
-        super(bookmark);
+    public RecursiveTreeItem(BookmarkViewModel bookmarkViewModel) {
+        super(bookmarkViewModel);
 
-        // Add a listener to the children of the bookmark.
+        // Add a listener to the children of the bookmarkViewModel.
         // This listener will automatically update the TreeItem's children
-        // whenever the Bookmark's children change.
-        bookmark.getChildren().addListener((ListChangeListener<Bookmark>) c -> {
+        // whenever the BookmarkViewModel's children change.
+        bookmarkViewModel.getChildren().addListener((ListChangeListener<BookmarkViewModel>) c -> {
             while (c.next()) {
                 if (c.wasRemoved()) {
-                    // If bookmarks were removed from the model, remove the corresponding TreeItems from the UI.
+                    // If view models were removed, remove the corresponding TreeItems from the UI.
                     getChildren().removeIf(item -> c.getRemoved().contains(item.getValue()));
                 }
                 if (c.wasAdded()) {
-                    // If bookmarks were added to the model, create new RecursiveTreeItems for them
+                    // If view models were added, create new RecursiveTreeItems for them
                     // and add them to the UI at the correct index.
                     getChildren().addAll(c.getFrom(), c.getAddedSubList().stream()
                             .map(RecursiveTreeItem::new)
@@ -31,7 +31,7 @@ public class RecursiveTreeItem extends TreeItem<Bookmark> {
         });
 
         // Recursively build the initial tree structure for existing children
-        getChildren().setAll(bookmark.getChildren().stream()
+        getChildren().setAll(bookmarkViewModel.getChildren().stream()
                 .map(RecursiveTreeItem::new)
                 .collect(Collectors.toList()));
     }
