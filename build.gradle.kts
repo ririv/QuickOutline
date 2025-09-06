@@ -49,6 +49,10 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
 
+    // --- Kermit (用于新的 Kotlin 代码) ---
+    // Kermit 核心库
+    implementation("co.touchlab:kermit:2.0.3")
+
     implementation("com.itextpdf:bouncy-castle-adapter:${itextVersion}")
     implementation("com.itextpdf:kernel:${itextVersion}")
     implementation("com.itextpdf:io:${itextVersion}")
