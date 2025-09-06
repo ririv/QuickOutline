@@ -33,14 +33,14 @@ public class BookmarkTabController {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(BookmarkTabController.class);
 
     @FXML
-    private Pane textTab;
+    private Pane textSubView;
     @FXML
-    public TextTabController textTabController;
+    public TextSubViewController textSubViewController;
 
     @FXML
-    private Pane treeTab;
+    private Pane treeSubView;
     @FXML
-    public TreeTabController treeTabController;
+    public TreeSubViewController treeSubViewController;
 
     private final AppEventBus eventBus;
     private final PdfOutlineService pdfOutlineService;
@@ -100,41 +100,41 @@ public class BookmarkTabController {
             return;
         }
         String contents = pdfTocExtractorService.extract(srcFile.toString());
-        textTabController.setContents(contents);
+        textSubViewController.setContents(contents);
         reconstructTreeByContents();
     }
 
 
     public void initialize() {
         // Default to showing the tree tab
-        treeTab.setVisible(false);
-        textTab.setVisible(true);
+        treeSubView.setVisible(false);
+        textSubView.setVisible(true);
     }
 
     @Subscribe
     public void onSwitchBookmarkViewEvent(SwitchBookmarkViewEvent event) {
         if (event.getView() == SwitchBookmarkViewEvent.View.TEXT) { // Switching to Text View
             resetContentsByTree();
-            textTab.setVisible(true);
-            treeTab.setVisible(false);
+            textSubView.setVisible(true);
+            treeSubView.setVisible(false);
         } else { // Switching to Tree View
             reconstructTreeByContents();
-            treeTab.setVisible(true);
-            textTab.setVisible(false);
+            treeSubView.setVisible(true);
+            textSubView.setVisible(false);
         }
     }
 
     private void resetContentsByTree() {
         Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
         if (rootBookmark != null) {
-            textTabController.setContents(rootBookmark.toOutlineString());
+            textSubViewController.setContents(rootBookmark.toOutlineString());
         }
     }
 
     private void reconstructTreeByContents() {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(
-                textTabController.getContents(), 0,
-                textTabController.getSelectedMethod()
+                textSubViewController.getContents(), 0,
+                textSubViewController.getSelectedMethod()
         );
         bookmarkSettingsState.setRootBookmark(rootBookmark);
     }
@@ -142,7 +142,7 @@ public class BookmarkTabController {
     public void loadBookmarksFromPdf() {
         Bookmark currentBookmark = bookmarkSettingsState.getRootBookmark();
         boolean treeHasContent = currentBookmark != null && !currentBookmark.getChildren().isEmpty();
-        boolean textHasContent = !textTabController.getContents().isEmpty();
+        boolean textHasContent = !textSubViewController.getContents().isEmpty();
 
         if (treeHasContent || textHasContent) {
             ButtonType keepContentsTextBtnType = new ButtonType(bundle.getString("btnType.keepContents"), ButtonBar.ButtonData.OK_DONE);
@@ -151,7 +151,7 @@ public class BookmarkTabController {
             Optional<ButtonType> result = showAlert(
                     Alert.AlertType.CONFIRMATION,
                     bundle.getString("alert.unsavedConfirmation"),
-                    textTab.getScene().getWindow(),
+                    textSubView.getScene().getWindow(),
                     keepContentsTextBtnType, noKeepContentsTextBtnType, cancelBtnType);
             if (result.isPresent() && result.get() == cancelBtnType) {
                 return;
@@ -167,7 +167,7 @@ public class BookmarkTabController {
             Bookmark rootBookmark = pdfOutlineService.getOutlineAsBookmark(currentFileState.getSrcFile().toString(), 0);
             if (rootBookmark != null) {
                 bookmarkSettingsState.setRootBookmark(rootBookmark);
-                textTabController.setContents(rootBookmark.toOutlineString());
+                textSubViewController.setContents(rootBookmark.toOutlineString());
             }
         } catch (NoOutlineException e) {
             e.printStackTrace();
@@ -182,7 +182,7 @@ public class BookmarkTabController {
             return;
         }
 
-        if (textTab.isVisible()) {
+        if (textSubView.isVisible()) {
             reconstructTreeByContents();
         }
 

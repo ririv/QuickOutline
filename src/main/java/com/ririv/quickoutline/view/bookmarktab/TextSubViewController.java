@@ -32,8 +32,8 @@ import java.util.regex.Pattern;
 
 import static com.ririv.quickoutline.view.MyAlert.showAlert;
 
-public class TextTabController {
-    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TextTabController.class);
+public class TextSubViewController {
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TextSubViewController.class);
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
     private final PdfOutlineService pdfOutlineService;
@@ -56,9 +56,9 @@ public class TextTabController {
     private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\t|\\s{1,4})");
 
     @Inject
-    public TextTabController(PdfOutlineService pdfOutlineService,
-                             SyncWithExternalEditorService syncWithExternalEditorService,
-                             AppEventBus eventBus) {
+    public TextSubViewController(PdfOutlineService pdfOutlineService,
+                                 SyncWithExternalEditorService syncWithExternalEditorService,
+                                 AppEventBus eventBus) {
         this.pdfOutlineService = pdfOutlineService;
         this.syncWithExternalEditorService = syncWithExternalEditorService;
         this.eventBus = eventBus;

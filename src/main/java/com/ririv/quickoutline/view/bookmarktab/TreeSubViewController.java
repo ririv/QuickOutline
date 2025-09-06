@@ -15,7 +15,7 @@ import javafx.scene.input.MouseButton;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-public class TreeTabController {
+public class TreeSubViewController {
     public TreeTableView<Bookmark> treeTableView;
     public TreeTableColumn<Bookmark, String> titleColumn;
     public TreeTableColumn<Bookmark, String> offsetPageColumn;
@@ -26,7 +26,7 @@ public class TreeTabController {
     private MenuItem demoteMenuItem;
 
     @Inject
-    public TreeTabController(BookmarkSettingsState bookmarkSettingsState) {
+    public TreeSubViewController(BookmarkSettingsState bookmarkSettingsState) {
         this.bookmarkSettingsState = bookmarkSettingsState;
     }
 
