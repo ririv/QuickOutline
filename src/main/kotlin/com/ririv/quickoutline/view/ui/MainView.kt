@@ -6,12 +6,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -117,20 +115,24 @@ fun MainView() {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top Pane
             Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF2F2F2))) {
-                Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TextField(
-                        value = uiState.paths.src_file?.toString() ?: "",
-                        onValueChange = { },
-                        enabled = false,
-                        placeholder = { Text(stringResource("filepathTF.prompt")) },
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(30.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(modifier = Modifier.width(76.dp)) // Space for traffic lights
+                    if (uiState.paths.src_file != null) {
+                        Text(
+                        text = uiState.paths.src_file?.fileName?.toString() ?: "",
                         modifier = Modifier.weight(1f),
-                        colors = TextFieldDefaults.colors(
-                            disabledTextColor = Color(100, 100, 100),
-                            disabledContainerColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
+                        color = Color(100, 100, 100)
                         )
-                    )
+                    } else {
+                        Text(
+                            text = stringResource("filepathTF.prompt"),
+                            modifier = Modifier.weight(1f),
+                            color = Color(100, 100, 100, 120),
+                        )
+                    }
                     IconButton(onClick = {
                         val dialog = FileDialog(null as Frame?, "Select File to Open", FileDialog.LOAD)
                         dialog.isVisible = true
@@ -149,7 +151,7 @@ fun MainView() {
                         )
                     }
                 }
-                Divider(color = Color(0xFFDFDFDF), thickness = 1.dp)
+                HorizontalDivider(thickness = 1.dp, color = Color(0xFFDFDFDF))
             }
 
             // Main Content Row
