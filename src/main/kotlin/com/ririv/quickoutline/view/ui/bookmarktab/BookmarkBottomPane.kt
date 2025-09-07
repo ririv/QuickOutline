@@ -13,11 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.pdfProcess.ViewScaleType
-import com.ririv.quickoutline.view.controls.ButtonType
-import com.ririv.quickoutline.view.controls.PopupCard
-import com.ririv.quickoutline.view.controls.PopupPosition
-import com.ririv.quickoutline.view.controls.PopupTriggerType
-import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.icons.SvgIcon
 import com.ririv.quickoutline.view.ui.loadResourcePainter
 import com.ririv.quickoutline.view.ui.stringResource
@@ -25,6 +20,7 @@ import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import com.ririv.quickoutline.view.controls.*
 
 @Composable
 private fun SetContentsPopupContent(onSelect: (ViewScaleType) -> Unit) {
@@ -57,20 +53,26 @@ private fun GetContentsPopupContent(onSelect: (String) -> Unit) {
     Column(modifier = Modifier.padding(8.dp)) {
         Text("Source", fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = selected == "bookmark",
-                onClick = { selected = "bookmark"; onSelect("bookmark") }
-            )
-            Text("Bookmark")
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = selected == "toc",
-                onClick = { selected = "toc"; onSelect("toc") }
-            )
-            Text("TOC")
-        }
+
+        // 1. 定义你的选项列表
+        val options = listOf(
+            "书签" to "bookmark",
+            "目录" to "toc"
+        )
+
+        // 2. 创建一个状态来保存当前选中的项目，默认选中第一个
+        var selectedValue by remember { mutableStateOf("bookmark") }
+
+        // 3. 调用 RadioButtonGroup 组件
+        RadioButtonGroup(
+            items = options,
+            selectedItem = selectedValue,
+            onItemSelected = { newValue ->
+                // 当用户点击时，更新状态
+                selectedValue = newValue
+                println("用户选择了: $newValue")
+            }
+        )
     }
 }
 
