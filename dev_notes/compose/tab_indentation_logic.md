@@ -1,87 +1,34 @@
-package com.ririv.quickoutline.view.controls
+# Compose 多行文本框 Tab 缩进功能实现详解
 
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.*
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.*
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.dp
-import java.util.regex.Pattern
-import kotlin.math.max
-import kotlin.math.min
+**日期:** 2025年9月7日
 
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun MultilineTextFieldWithTabSupport(
-    value: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
-    modifier: Modifier = Modifier,
-    placeholder: @Composable (() -> Unit)? = null,
-    enabled: Boolean = true
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    val isHovered by interactionSource.collectIsHoveredAsState()
+## 1. 引言
 
-    val borderColor = when {
-        isFocused -> Color(0xFF409EFF)
-        isHovered -> Color(0xFF409EFF)
-        else -> Color.Transparent
-    }
+在开发富文本编辑器或代码编辑器时，一个基础且重要的功能是通过 `Tab` 键来增加代码缩进，以及通过 `Shift+Tab` 来减少缩进。这个功能需要处理各种复杂的边界情况，例如：没有文本选中、选中单行或多行、选中部分或整行等。本文档详细记录了在 Jetpack Compose 中，为一个多行 `TextField` 实现与 VS Code 编辑器行为一致的 Tab 缩进功能的全过程，包括最终的实现方案、遇到的挑战以及解决这些问题的迭代思路。
 
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(4.dp)
-            )
-            .hoverable(
-                interactionSource = interactionSource
-            )
-            .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
-                    val newValue = if (keyEvent.isShiftPressed) {
-                        removeIndent(value)
-                    } else {
-                        addIndent(value)
-                    }
-                    onValueChange(newValue)
-                    true
-                } else {
-                    false
-                }
-            },
-        colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = Color.White,
-            focusedContainerColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent
-        ),
-        interactionSource = interactionSource,
-        placeholder = placeholder,
-        singleLine = false,
-        enabled = enabled
-    )
-}
+## 2. 核心逻辑与最终实现
 
+我们的目标是模拟 VS Code 的缩进逻辑，其核心行为可以总结如下：
+
+- **增加缩进 (Tab)**
+  - **无选区**：在光标处插入一个 Tab 字符。
+  - **单行内部分选区**：用一个 Tab 字符替换选中的文本。
+  - **单行整行选区**：在该行行首添加一级缩进。
+  - **多行选区**：在所有被选中的行首各添加一级缩进。
+
+- **减少缩进 (Shift+Tab)**
+  - **无选区**：移除光标所在行的行首一级缩进。
+  - **有选区**：移除所有被选中行（无论部分或整行）的行首一级缩进。
+
+为了实现这一功能，我们为 Compose 的 `TextField` 添加了 `.onPreviewKeyEvent` 修饰符，以确保我们的自定义逻辑能在组件默认行为之前被触发和消费，防止冲突。
+
+### 最终代码实现
+
+以下是控制缩进逻辑的核心代码，包含了详尽的注释来解释各种情况的处理。
+
+```kotlin
 // 用于匹配行首缩进的正则表达式，可以是1个Tab或1-4个空格
-private val INDENT_PATTERN: Pattern = Pattern.compile("^(\\t|\\s{1,4})")
+private val INDENT_PATTERN: Pattern = Pattern.compile("^(\t|\s{1,4})")
 
 /**
  * 处理增加缩进的逻辑 (按下 Tab)
@@ -151,7 +98,7 @@ private fun removeIndent(value: TextFieldValue): TextFieldValue {
     val selection = value.selection
 
     var start = min(selection.start, selection.end)
-    var end = max(selection.start, selection.end)
+    val end = max(selection.start, selection.end)
 
     // 关键修复：如果选区的起点恰好是一个换行符，则逻辑上将起点后移一位。
     // 这是为了防止当光标从上一行末尾开始选择时，错误地修改了上一行的内容。
@@ -222,3 +169,43 @@ private fun removeIndent(value: TextFieldValue): TextFieldValue {
         TextRange(newStart, newEnd)
     )
 }
+```
+
+## 3. 遇到的问题与迭代过程
+
+功能的实现并非一帆风顺，我们经历了几次迭代才达到最终的理想效果。这个过程暴露了在 Compose 中处理文本输入和事件的几个关键要点。
+
+### 3.1. 初始尝试：直接翻译 JavaFX 逻辑
+
+我们最初的思路是直接将之前在 JavaFX 中实现的缩进逻辑翻译到 Compose。然而，这种命令式的、直接操作 UI 组件状态的方式与 Compose 的声明式、状态驱动的理念格格不入，导致了许多问题，最严重的是 `StringIndexOutOfBoundsException` 异常，原因是选区 `TextRange` 在连续操作后出现了 `start` 大于 `end` 的非法状态。
+
+### 3.2. 关键转折：`onKeyEvent` vs `onPreviewKeyEvent`
+
+我们遇到的一个核心问题是：在多行选择文本后按 Tab，选中的文本会被直接替换成一个 Tab 字符，而不是我们期望的缩进行为。这表明 `TextField` 的默认 Tab 行为（替换选区）在我们的逻辑之前执行了。
+
+**解决方案**：将事件处理器从 `Modifier.onKeyEvent` 更换为 `Modifier.onPreviewKeyEvent`。后者在事件向下传递（Preview 阶段）时触发，允许我们先于 `TextField` 的内置处理器捕获并消费掉 Tab 事件，从而确保了我们自定义逻辑的优先执行。
+
+### 3.3. Shift+Tab 的“幽灵”Bug
+
+在修复了 Tab 的问题后，Shift+Tab 出现了两个新问题：
+1.  在单行上（无选区）按键无效。
+2.  连续两次对多行进行操作时，会错误地影响到选区上一行的内容。
+
+通过您的细致观察，我们发现这个 bug 与 JavaFX 早期版本中的一个已知问题非常相似。根源在于对**选区起点的判断**。当选区从上一行的末尾（即换行符 `
+` 之后）开始时，我们的代码错误地将上一行也计算在内。通过增加一个简单的判断，如果选区以 `
+` 开始，则将逻辑起点向后移动一位，我们成功修复了这个问题。
+
+### 3.4. Tab 键的最后一块拼图：整行选择
+
+最后，我们处理了 Tab 键在单行选择时的最后一个不一致行为。当用户选中一整行时，正确的行为应该是缩进该行，而不是替换它。
+
+**解决方案**：在处理单行选择的逻辑中，增加一个对“是否为整行选择”的判断。通过检查选区的 `start` 和 `end` 是否与该行的起止位置完全对应，我们可以精确地区分出“部分选择”和“整行选择”，并分别执行“替换”或“缩进”操作。同时，在缩进后，我们必须正确地更新选区，将新加入的 Tab 字符也包含进来，这样才能保证下一次 Tab 操作的判断依然正确。
+
+## 4. 总结
+
+通过这次功能实现，我们不仅完成了了一个鲁棒的、行为正确的文本缩进功能，也对 Jetpack Compose 的事件处理机制和状态管理有了更深刻的理解。关键的经验是：
+
+-   **事件处理的顺序至关重要**：`onPreviewKeyEvent` 是拦截并优先处理事件的有力工具。
+-   **状态更新的原子性**：Compose 中的状态应该是不可变的。每次操作都应该基于当前状态生成一个全新的状态（`TextFieldValue`），而不是试图在原地修改，这能有效避免许多难以追踪的 bug。
+-   **清晰的逻辑分支**：面对复杂的交互，将逻辑清晰地划分为不同情况（如无选区、单行、多行、整行等）是保证代码正确性和可维护性的基础。
+
