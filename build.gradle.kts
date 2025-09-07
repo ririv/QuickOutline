@@ -3,7 +3,7 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.jetbrains.compose.ComposeExtension
 
 plugins {
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version "2.2.10"
     id("org.jetbrains.compose") version "1.8.2"
     // 核心修正: 根据 Kotlin 2.0.0 的要求，必须显式应用 Compose 编译器插件。
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
