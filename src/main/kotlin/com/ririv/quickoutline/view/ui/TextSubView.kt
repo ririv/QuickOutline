@@ -37,7 +37,6 @@ fun TextSubView(
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxSize(),
                 placeholder = { Text(stringResource("contentsTextArea.prompt")) },
-                singleLine = false,
                 enabled = !isSyncingWithEditor
             )
             if (isSyncingWithEditor) {

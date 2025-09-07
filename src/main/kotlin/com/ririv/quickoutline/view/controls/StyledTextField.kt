@@ -1,8 +1,10 @@
 package com.ririv.quickoutline.view.controls
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TextField
@@ -28,7 +30,7 @@ fun StyledTextField(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
-    var isHovered by remember { mutableStateOf(false) }
+    val isHovered by interactionSource.collectIsHoveredAsState()
 
     val borderColor = when {
         isFocused -> Color(0xFF409EFF)
@@ -42,8 +44,9 @@ fun StyledTextField(
         placeholder = placeholder,
         modifier = modifier
             .fillMaxWidth()
-            .onPointerEvent(PointerEventType.Enter) { isHovered = true }
-            .onPointerEvent(PointerEventType.Exit) { isHovered = false }
+            .hoverable(
+                interactionSource = interactionSource
+            )
             .border(
                 width = 1.dp,
                 color = borderColor,
