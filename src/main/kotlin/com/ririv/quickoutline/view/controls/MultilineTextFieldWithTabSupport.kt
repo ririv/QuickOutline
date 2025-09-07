@@ -24,12 +24,51 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import java.util.regex.Pattern
 import kotlin.math.max
 import kotlin.math.min
+
+
+class TabToSpacesTransformation(private val tabWidth: Int = 4) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val originalText = text.text
+        val transformedText = originalText.replace("\t", " ".repeat(tabWidth))
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                val tabsBefore = originalText.substring(0, offset).count { it == '\t' }
+                return offset + tabsBefore * (tabWidth - 1)
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                var originalOffset = 0
+                var transformedOffset = 0
+                for (char in originalText) {
+                    if (transformedOffset >= offset) {
+                        break
+                    }
+                    val charWidth = if (char == '\t') tabWidth else 1
+                    if (transformedOffset + charWidth > offset) {
+                        break
+                    }
+                    transformedOffset += charWidth
+                    originalOffset++
+                }
+                return originalOffset
+            }
+        }
+
+        return TransformedText(AnnotatedString(transformedText, text.spanStyles, text.paragraphStyles), offsetMapping)
+    }
+}
+
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -75,6 +114,7 @@ fun MultilineTextFieldWithTabSupport(
                         false
                     }
                 },
+            visualTransformation = TabToSpacesTransformation(),
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = Color.White,
                 focusedContainerColor = Color.White,
