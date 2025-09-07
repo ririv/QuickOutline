@@ -1,15 +1,25 @@
 package com.ririv.quickoutline.view.controls
 
+import androidx.compose.foundation.HorizontalScrollbar
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +43,8 @@ fun MultilineTextFieldWithTabSupport(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val vScrollState = rememberScrollState()
+    val hScrollState = rememberScrollState()
 
     val borderColor = when {
         isFocused -> Color(0xFF409EFF)
@@ -40,44 +52,52 @@ fun MultilineTextFieldWithTabSupport(
         else -> Color.Transparent
     }
 
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(4.dp)
-            )
-            .hoverable(
-                interactionSource = interactionSource
-            )
-            .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
-                    val newValue = if (keyEvent.isShiftPressed) {
-                        removeIndent(value)
+    Box(modifier = modifier.border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(4.dp))) {
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = 12.dp, bottom = 12.dp) // Prevent text from overlapping with the scrollbars
+                .verticalScroll(vScrollState)
+                .horizontalScroll(hScrollState)
+                .hoverable(interactionSource = interactionSource)
+                .onPreviewKeyEvent { keyEvent ->
+                    if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
+                        val newValue = if (keyEvent.isShiftPressed) {
+                            removeIndent(value)
+                        } else {
+                            addIndent(value)
+                        }
+                        onValueChange(newValue)
+                        true
                     } else {
-                        addIndent(value)
+                        false
                     }
-                    onValueChange(newValue)
-                    true
-                } else {
-                    false
-                }
-            },
-        colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = Color.White,
-            focusedContainerColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent
-        ),
-        interactionSource = interactionSource,
-        placeholder = placeholder,
-        singleLine = false,
-        enabled = enabled
-    )
+                },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            ),
+            interactionSource = interactionSource,
+            placeholder = placeholder,
+            singleLine = false,
+            enabled = enabled
+        )
+
+        VerticalScrollbar(
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(all = 4.dp),
+            adapter = rememberScrollbarAdapter(vScrollState)
+        )
+
+        HorizontalScrollbar(
+            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(all = 4.dp),
+            adapter = rememberScrollbarAdapter(hScrollState)
+        )
+    }
 }
 
 // 用于匹配行首缩进的正则表达式，可以是1个Tab或1-4个空格
