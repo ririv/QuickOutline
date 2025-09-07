@@ -1,6 +1,7 @@
 package com.ririv.quickoutline.view.viewmodel
 
 import androidx.compose.ui.text.input.TextFieldValue
+import com.ririv.quickoutline.exception.NoOutlineException
 import com.ririv.quickoutline.model.Bookmark
 import com.ririv.quickoutline.pdfProcess.ViewScaleType
 import com.ririv.quickoutline.service.PdfOutlineService
@@ -57,6 +58,10 @@ class BookmarkViewModel(
                 withContext(Dispatchers.Swing) {
                     _uiState.update { it.copy(rootBookmark = newRootBookmark, textInput = TextFieldValue(newText)) }
                     messageContainerState.showMessage("Bookmarks loaded successfully.", MessageType.SUCCESS)
+                }
+            } catch (e: NoOutlineException) {
+                withContext(Dispatchers.Swing) {
+                    messageContainerState.showMessage("No existing bookmarks found in the PDF.", MessageType.INFO)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Swing) {
