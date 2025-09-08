@@ -14,12 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.pdfProcess.ViewScaleType
 import com.ririv.quickoutline.view.icons.AppIcon
-import com.ririv.quickoutline.view.icons.AppIcon as Icon
 import com.ririv.quickoutline.view.ui.stringResource
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import com.ririv.quickoutline.view.controls.*
 
 @Composable
@@ -30,19 +28,19 @@ private fun SetContentsPopupContent(onSelect: (ViewScaleType) -> Unit) {
             checked = selected == ViewScaleType.FIT_TO_HEIGHT,
             onCheckedChange = { if (it) { selected = ViewScaleType.FIT_TO_HEIGHT; onSelect(ViewScaleType.FIT_TO_HEIGHT) } }
         ) {
-            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.FitToHeight, modifier = Modifier.size(24.dp))
+            AppIcon(icon = AppIcon.FitToHeight, modifier = Modifier.size(24.dp))
         }
         IconToggleButton(
             checked = selected == ViewScaleType.FIT_TO_WIDTH,
             onCheckedChange = { if (it) { selected = ViewScaleType.FIT_TO_WIDTH; onSelect(ViewScaleType.FIT_TO_WIDTH) } }
         ) {
-            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.FitToWidth, modifier = Modifier.size(24.dp))
+            AppIcon(icon = AppIcon.FitToWidth, modifier = Modifier.size(24.dp))
         }
         IconToggleButton(
             checked = selected == ViewScaleType.ACTUAL_SIZE,
             onCheckedChange = { if (it) { selected = ViewScaleType.ACTUAL_SIZE; onSelect(ViewScaleType.ACTUAL_SIZE) } }
         ) {
-            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.ActualSize, modifier = Modifier.size(24.dp))
+            AppIcon(icon = AppIcon.ActualSize, modifier = Modifier.size(24.dp))
         }
     }
 }
@@ -112,7 +110,7 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
                 interactionSource = deleteInteractionSource
             )
         ) {
-            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Delete, contentDescription = "Delete", modifier = Modifier.size(24.dp), tint = deleteIconTint)
+            AppIcon(icon = AppIcon.Delete, contentDescription = "Delete", modifier = Modifier.size(24.dp), tint = deleteIconTint)
         }
 
         Box(modifier = Modifier.weight(1f)) {
@@ -176,7 +174,7 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
                 interactionSource = switchInteractionSource
             )
         ) {
-            com.ririv.quickoutline.view.icons.AppIcon(icon = if (showTreeView) AppIcon.TextEdit else AppIcon.TreeDiagram, contentDescription = "Switch view", modifier = Modifier.size(24.dp), tint = switchIconTint)
+            AppIcon(icon = if (showTreeView) AppIcon.TextEdit else AppIcon.TreeDiagram, contentDescription = "Switch view", modifier = Modifier.size(24.dp), tint = switchIconTint)
         }
     }
 }
