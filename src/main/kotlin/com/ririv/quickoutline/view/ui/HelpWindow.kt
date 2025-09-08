@@ -1,15 +1,7 @@
 package com.ririv.quickoutline.view.ui
 
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,12 +12,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.utils.InfoUtil
 import com.ririv.quickoutline.view.icons.AppIcon
-import com.ririv.quickoutline.view.icons.AppIcon as AppIconEnum
-import com.ririv.quickoutline.view.icons.AppIcon as AppIconComposable
-import com.ririv.quickoutline.view.icons.AppIcon as AppIconUsage
-import com.ririv.quickoutline.view.icons.AppIcon as AI // keep one alias if needed
-import com.ririv.quickoutline.view.icons.AppIcon as Icon // minimal alias (optional)
-import com.ririv.quickoutline.view.icons.AppIcon as AppIcons // optional
 import java.awt.Desktop
 import java.net.URI
 

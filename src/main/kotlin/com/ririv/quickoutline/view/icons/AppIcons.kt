@@ -6,27 +6,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.painterResource
-import com.ririv.quickoutline.generated.resources.Res
-import com.ririv.quickoutline.generated.resources.actual_size
-import com.ririv.quickoutline.generated.resources.bookmark
-import com.ririv.quickoutline.generated.resources.delete
-import com.ririv.quickoutline.generated.resources.fit_to_height
-import com.ririv.quickoutline.generated.resources.fit_to_width
-import com.ririv.quickoutline.generated.resources.github
-import com.ririv.quickoutline.generated.resources.help
-import com.ririv.quickoutline.generated.resources.open
-import com.ririv.quickoutline.generated.resources.setting
-import com.ririv.quickoutline.generated.resources.text_edit
-import com.ririv.quickoutline.generated.resources.toc
-import com.ririv.quickoutline.generated.resources.tree_diagram
-import com.ririv.quickoutline.generated.resources.xiaohongshu
-import com.ririv.quickoutline.generated.resources.`删除`
-import com.ririv.quickoutline.generated.resources.`特色_风景`
-import com.ririv.quickoutline.generated.resources.`页码_单路径`
+import com.ririv.quickoutline.generated.resources.*
 
 /**
  * 统一的应用内图标枚举, 后续新增图标放这里。
  * 命名规则: 使用 PascalCase, 与资源文件名(去掉后缀)语义一致。
+ */
+/**
+ * 统一应用图标抽象。
+ * 扩展步骤:
+ * 1. 把 svg 放进 resources/drawable
+ * 2. Rebuild 生成 Res.drawable.xxx
+ * 3. 在此处新增 data object
+ * 4. 在 when 分支映射
  */
 sealed interface AppIcon {
     // 社交 / 品牌
@@ -80,4 +72,18 @@ fun AppIcon(
         }
     }
     Icon(painter = painterResource(drawableRes), contentDescription = contentDescription, modifier = modifier, tint = tint)
+}
+
+/** 预加载首屏常用图标，减少首次 compose 时磁盘/解码开销。 */
+@Composable
+fun PreloadPrimaryIcons() {
+    // 只访问 bitmap 启动缓存，不实际绘制
+    listOf(
+        Res.drawable.bookmark,
+        Res.drawable.toc,
+        Res.drawable.`特色_风景`,
+        Res.drawable.setting,
+        Res.drawable.help,
+        Res.drawable.github,
+    ).forEach { painterResource(it) }
 }
