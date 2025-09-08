@@ -3,10 +3,10 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.jetbrains.compose.ComposeExtension
 
 plugins {
+    // 说明: Kotlin 与 Compose 编译器插件版本需保持一致, 否则会出现不匹配警告或编译异常。
     kotlin("jvm") version "2.2.10"
-    id("org.jetbrains.compose") version "1.8.2"
-    // 核心修正: 根据 Kotlin 2.0.0 的要求，必须显式应用 Compose 编译器插件。
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
+    id("org.jetbrains.compose") version "1.8.2" // 当前稳定版 (保持, 后续可再评估是否升级 >=1.9.x)
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.10" // 与 kotlin 插件对齐 (之前是 2.0.0 -> 不兼容)
     idea
     java
 }
