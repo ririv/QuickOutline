@@ -52,10 +52,9 @@ dependencies {
 
     implementation(libs.bundles.itext)
 
-    implementation("javax.validation:validation-api:2.0.1.Final")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
-    testImplementation("org.mockito:mockito-core:5.11.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.junit)
 
     implementation(libs.slf4j.api)
     implementation(libs.slf4j.simple)
@@ -63,9 +62,8 @@ dependencies {
     implementation(libs.pdfbox)
     implementation(libs.fontbox)
 
-    implementation(platform("io.insert-koin:koin-bom:${libs.versions.koin.get()}"))
-    implementation("io.insert-koin:koin-core")
-    implementation("io.insert-koin:koin-compose")
+    implementation(platform(libs.koin.bom))
+    implementation(libs.bundles.koin)
 }
 
 extensions.configure<ComposeExtension> {

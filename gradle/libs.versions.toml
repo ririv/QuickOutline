@@ -7,6 +7,8 @@ itext = "9.2.0"
 koin = "4.1.0"
 slf4j = "2.0.16"
 pdfbox = "3.0.3"
+junit = "5.10.2"
+mockito = "5.11.0"
 
 [libraries]
 coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutinesSwing" }
@@ -20,9 +22,17 @@ itext-io = { module = "com.itextpdf:io", version.ref = "itext" }
 itext-layout = { module = "com.itextpdf:layout", version.ref = "itext" }
 itext-font-asian = { module = "com.itextpdf:font-asian", version.ref = "itext" }
 itext-bc = { module = "com.itextpdf:bouncy-castle-adapter", version.ref = "itext" }
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-compose = { module = "io.insert-koin:koin-compose" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 
 [bundles]
 itext = ["itext-bc", "itext-kernel", "itext-io", "itext-layout", "itext-font-asian"]
+koin = ["koin-core", "koin-compose"]
+tests = ["junit-jupiter", "mockito-core", "mockito-junit"]
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
