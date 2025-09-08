@@ -11,6 +11,7 @@ plugins {
 }
 
 version = "2.2.0"
+group = "com.ririv"
 
 repositories {
     google()
@@ -67,6 +68,9 @@ dependencies {
 }
 
 extensions.configure<ComposeExtension> {
+    // 自定义资源生成 Res 类所在包，避免默认重复 quickoutline 段 (原: com.ririv.quickoutline.quickoutline.generated.resources)
+    // resources { 自定义生成包名 (当前 Compose 版本 API 暂未识别 packageName / packageClassName 属性, 暂时注释)
+    // }
     desktop {
         application {
             mainClass = "com.ririv.quickoutline.view.AppKt"

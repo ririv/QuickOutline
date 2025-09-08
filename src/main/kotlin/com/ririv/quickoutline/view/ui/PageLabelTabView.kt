@@ -22,7 +22,7 @@ import com.ririv.quickoutline.pdfProcess.PageLabel
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
-import com.ririv.quickoutline.view.icons.SvgIcon
+import com.ririv.quickoutline.view.icons.AppIcon
 import com.ririv.quickoutline.view.viewmodel.PageLabelViewModel
 import org.koin.java.KoinJavaComponent.inject
 
@@ -133,11 +133,7 @@ fun PageLabelTabView() {
                                     indication = null
                                 ).padding(8.dp)
                             ) {
-                                SvgIcon(
-                                    resource = "drawable/删除.svg",
-                                    modifier = Modifier.size(20.dp),
-                                    tint = iconColor
-                                )
+                                com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.DeleteCn, modifier = Modifier.size(20.dp), tint = iconColor)
                             }
                         }
                     }

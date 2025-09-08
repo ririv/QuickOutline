@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.graphics.Color
+import com.ririv.quickoutline.view.icons.AppIcon
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.MessageContainer
 import com.ririv.quickoutline.view.controls.MessageContainerState
@@ -143,12 +144,7 @@ fun MainView() {
                             mainViewModel.openPdf(path)
                         }
                     }) {
-                        Icon(
-                            painter = loadResourcePainter("drawable/open.svg"),
-                            contentDescription = "Open file",
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.Gray
-                        )
+                        com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Open, contentDescription = "Open file", modifier = Modifier.size(24.dp), tint = Color.Gray)
                     }
                 }
                 HorizontalDivider(thickness = 1.dp, color = Color(0xFFDFDFDF))

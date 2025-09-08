@@ -19,6 +19,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.utils.InfoUtil
+import com.ririv.quickoutline.view.icons.AppIcon
+import com.ririv.quickoutline.view.icons.AppIcon as AppIconEnum
+import com.ririv.quickoutline.view.icons.AppIcon as AppIconComposable
+import com.ririv.quickoutline.view.icons.AppIcon as AppIconUsage
+import com.ririv.quickoutline.view.icons.AppIcon as AI // keep one alias if needed
+import com.ririv.quickoutline.view.icons.AppIcon as Icon // minimal alias (optional)
+import com.ririv.quickoutline.view.icons.AppIcon as AppIcons // optional
 import java.awt.Desktop
 import java.net.URI
 
@@ -49,12 +56,7 @@ fun HelpWindow() {
 
         // Source
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = loadResourcePainter("drawable/github.svg"),
-                contentDescription = "GitHub",
-                modifier = Modifier.size(16.dp),
-                tint = Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Github, contentDescription = "GitHub", modifier = Modifier.size(16.dp), tint = Color.Gray)
             Spacer(Modifier.width(4.dp))
             HyperlinkText(
                 text = "Source",
@@ -70,12 +72,7 @@ fun HelpWindow() {
                 onClick = { browse("https://www.xiaohongshu.com/user/profile/5f988414000000000101ca29") }
             )
             Spacer(Modifier.width(4.dp))
-            Icon(
-                painter = loadResourcePainter("drawable/xiaohongshu.svg"),
-                contentDescription = "Xiaohongshu",
-                modifier = Modifier.size(16.dp),
-                tint = Color(0xFFADADAD)
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Xiaohongshu, contentDescription = "Xiaohongshu", modifier = Modifier.size(16.dp), tint = Color(0xFFADADAD))
         }
     }
 }

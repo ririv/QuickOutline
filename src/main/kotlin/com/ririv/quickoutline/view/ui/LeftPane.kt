@@ -14,6 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.ririv.quickoutline.view.icons.AppIcon
+import com.ririv.quickoutline.view.icons.AppIcon as IconEnum
+import com.ririv.quickoutline.view.icons.AppIcon as Icon
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.rememberWindowState
 
@@ -32,64 +35,34 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
             checked = selectedTab == 0,
             onCheckedChange = { onTabSelected(0) }
         ) {
-            Icon(
-                painter = loadResourcePainter("drawable/bookmark.svg"),
-                contentDescription = "Bookmark",
-                modifier = Modifier.size(24.dp),
-                tint = if (selectedTab == 0) Color(0xFF409EFF) else Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Bookmark, contentDescription = "Bookmark", modifier = Modifier.size(24.dp), tint = if (selectedTab == 0) Color(0xFF409EFF) else Color.Gray)
         }
         IconToggleButton(
             checked = selectedTab == 2,
             onCheckedChange = { onTabSelected(2) }
         ) {
-            Icon(
-                painter = loadResourcePainter("drawable/页码-单路径.svg"),
-                contentDescription = "Label",
-                modifier = Modifier.size(24.dp),
-                tint = if (selectedTab == 2) Color(0xFF409EFF) else Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.PageLabelSingle, contentDescription = "Label", modifier = Modifier.size(24.dp), tint = if (selectedTab == 2) Color(0xFF409EFF) else Color.Gray)
         }
         IconToggleButton(
             checked = selectedTab == 1,
             onCheckedChange = { onTabSelected(1) }
         ) {
-            Icon(
-                painter = loadResourcePainter("drawable/toc.svg"),
-                contentDescription = "TOC",
-                modifier = Modifier.size(24.dp),
-                tint = if (selectedTab == 1) Color(0xFF409EFF) else Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Toc, contentDescription = "TOC", modifier = Modifier.size(24.dp), tint = if (selectedTab == 1) Color(0xFF409EFF) else Color.Gray)
         }
         IconToggleButton(
             checked = selectedTab == 3,
             onCheckedChange = { onTabSelected(3) }
         ) {
-            Icon(
-                painter = loadResourcePainter("drawable/特色-风景.svg"),
-                contentDescription = "Preview",
-                modifier = Modifier.size(24.dp),
-                tint = if (selectedTab == 3) Color(0xFF409EFF) else Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.FeatureLandscape, contentDescription = "Preview", modifier = Modifier.size(24.dp), tint = if (selectedTab == 3) Color(0xFF409EFF) else Color.Gray)
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
         IconButton(onClick = { /* TODO: Implement settings */ }) {
-            Icon(
-                painter = loadResourcePainter("drawable/setting.svg"),
-                contentDescription = "Settings",
-                modifier = Modifier.size(24.dp),
-                tint = Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Setting, contentDescription = "Settings", modifier = Modifier.size(24.dp), tint = Color.Gray)
         }
         IconButton(onClick = { showHelpWindow = true }) {
-            Icon(
-                painter = loadResourcePainter("drawable/help.svg"),
-                contentDescription = "Help",
-                modifier = Modifier.size(24.dp),
-                tint = Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Help, contentDescription = "Help", modifier = Modifier.size(24.dp), tint = Color.Gray)
         }
     }
 

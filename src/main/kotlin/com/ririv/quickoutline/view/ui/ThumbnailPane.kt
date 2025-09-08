@@ -21,7 +21,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ririv.quickoutline.view.controls.StyledSlider
-import com.ririv.quickoutline.view.icons.SvgIcon
+import com.ririv.quickoutline.view.icons.AppIcon
 import com.ririv.quickoutline.view.viewmodel.ThumbnailViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -59,17 +59,9 @@ fun ThumbnailPane() {
 
     Column(modifier = Modifier.padding(10.dp).fillMaxHeight()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp)) {
-            SvgIcon(
-                resource = "drawable/特色-风景.svg",
-                modifier = Modifier.size(12.dp),
-                tint = Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.FeatureLandscape, modifier = Modifier.size(12.dp), tint = Color.Gray)
             StyledSlider(value = zoom, onValueChange = { zoom = it }, valueRange = 0.5f..3f, modifier = Modifier.weight(1f))
-            SvgIcon(
-                resource = "drawable/特色-风景.svg",
-                modifier = Modifier.size(17.dp),
-                tint = Color.Gray
-            )
+            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.FeatureLandscape, modifier = Modifier.size(17.dp), tint = Color.Gray)
         }
         BoxWithConstraints(modifier = Modifier.weight(1f)) {
             val columnCount = max(1, (maxWidth / (thumbnailWidth + 20.dp)).toInt())
