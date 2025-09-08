@@ -1,16 +1,17 @@
 // 这个文件是解决 "Plugin not found" 错误的关键
 // 它告诉 Gradle 去哪里寻找插件本身
 //
-//pluginManagement {
-//    repositories {
-//        google()
-//        mavenCentral()
-//        gradlePluginPortal()
-//        maven {
-//            url 'https://maven.pkg.jetbrains.space/public/p/compose/dev'
-//        }
-//    }
-//}
-//
-//// 你的项目名称
-//rootProject.name = 'QuickOutline'
+// 启用插件与版本目录
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
+    }
+}
+
+rootProject.name = "QuickOutline"
+
+// 版本目录 (已在 gradle/libs.versions.toml 定义)
+// 如果后续需要多 catalog，可在此扩展 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") 等

@@ -3,18 +3,14 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.jetbrains.compose.ComposeExtension
 
 plugins {
-    // 说明: Kotlin 与 Compose 编译器插件版本需保持一致, 否则会出现不匹配警告或编译异常。
-    kotlin("jvm") version "2.2.10"
-    id("org.jetbrains.compose") version "1.8.2" // 当前稳定版 (保持, 后续可再评估是否升级 >=1.9.x)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.10" // 与 kotlin 插件对齐 (之前是 2.0.0 -> 不兼容)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.compose.mp)
+    alias(libs.plugins.compose.compiler)
     idea
     java
 }
 
 version = "2.2.0"
-
-val itextVersion = "9.2.0"
-val koinVersion = "4.1.0"
 
 repositories {
     google()
@@ -48,30 +44,26 @@ dependencies {
     implementation(compose.materialIconsExtended)
     // ------------------- 核心修正 END ---------------------
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
+    implementation(libs.coroutines.swing)
 
     // --- Kermit (用于新的 Kotlin 代码) ---
     // Kermit 核心库
-    implementation("co.touchlab:kermit:2.0.3")
+    implementation(libs.kermit)
 
-    implementation("com.itextpdf:bouncy-castle-adapter:${itextVersion}")
-    implementation("com.itextpdf:kernel:${itextVersion}")
-    implementation("com.itextpdf:io:${itextVersion}")
-    implementation("com.itextpdf:layout:${itextVersion}")
-    implementation("com.itextpdf:font-asian:${itextVersion}")
+    implementation(libs.bundles.itext)
 
     implementation("javax.validation:validation-api:2.0.1.Final")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
 
-    implementation("org.slf4j:slf4j-api:2.0.16")
-    implementation("org.slf4j:slf4j-simple:2.0.16")
+    implementation(libs.slf4j.api)
+    implementation(libs.slf4j.simple)
 
-    implementation("org.apache.pdfbox:pdfbox:3.0.3")
-    implementation("org.apache.pdfbox:fontbox:3.0.3")
+    implementation(libs.pdfbox)
+    implementation(libs.fontbox)
 
-    implementation(platform("io.insert-koin:koin-bom:$koinVersion"))
+    implementation(platform("io.insert-koin:koin-bom:${libs.versions.koin.get()}"))
     implementation("io.insert-koin:koin-core")
     implementation("io.insert-koin:koin-compose")
 }

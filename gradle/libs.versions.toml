@@ -1,0 +1,30 @@
+[versions]
+kotlin = "2.2.10"
+compose = "1.8.2"
+coroutinesSwing = "1.8.0"
+kermit = "2.0.3"
+itext = "9.2.0"
+koin = "4.1.0"
+slf4j = "2.0.16"
+pdfbox = "3.0.3"
+
+[libraries]
+coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutinesSwing" }
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
+fontbox = { module = "org.apache.pdfbox:fontbox", version.ref = "pdfbox" }
+itext-kernel = { module = "com.itextpdf:kernel", version.ref = "itext" }
+itext-io = { module = "com.itextpdf:io", version.ref = "itext" }
+itext-layout = { module = "com.itextpdf:layout", version.ref = "itext" }
+itext-font-asian = { module = "com.itextpdf:font-asian", version.ref = "itext" }
+itext-bc = { module = "com.itextpdf:bouncy-castle-adapter", version.ref = "itext" }
+
+[bundles]
+itext = ["itext-bc", "itext-kernel", "itext-io", "itext-layout", "itext-font-asian"]
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+compose-mp = { id = "org.jetbrains.compose", version.ref = "compose" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
