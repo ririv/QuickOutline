@@ -133,7 +133,7 @@ public class BookmarkTabController {
 
     private void reconstructTreeByContents() {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(
-                textSubViewController.getContents(), bookmarkSettingsState.getOffset(),
+                textSubViewController.getContents(),
                 textSubViewController.getSelectedMethod()
         );
         bookmarkSettingsState.setRootBookmark(rootBookmark);
@@ -196,7 +196,7 @@ public class BookmarkTabController {
                 return;
             }
 
-            pdfOutlineService.setOutline(rootBookmark, srcFilePath, destFilePath, viewScaleType);
+            pdfOutlineService.setOutline(rootBookmark, srcFilePath, destFilePath, bookmarkSettingsState.getOffset(), viewScaleType);
 
         } catch (BookmarkFormatException e) {
             e.printStackTrace();

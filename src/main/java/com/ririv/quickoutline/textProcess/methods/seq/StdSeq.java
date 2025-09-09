@@ -25,7 +25,7 @@ public class StdSeq implements parser,Seq {
             "^(\\s*)?(\\d+(\\.\\d+)*\\.?)?\\s*(.*?)[\\s.]*(-?[0-9]+)?\\s*$");
 
     @Override
-    public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+    public Bookmark parseLine(String line, List<Bookmark> linearBookmarkList) {
         Matcher matcher = stdPattern.matcher(line);
         if (matcher.find()) {
             String seq = matcher.group(2) != null ? matcher.group(2) : "";
@@ -33,7 +33,7 @@ public class StdSeq implements parser,Seq {
             Integer pageNum;
 
             if (matcher.group(5) != null) { //页码
-                pageNum = Integer.parseInt(matcher.group(5)) + offset;
+                pageNum = Integer.parseInt(matcher.group(5));
             } else { //页码为空
                 pageNum = null;
             }

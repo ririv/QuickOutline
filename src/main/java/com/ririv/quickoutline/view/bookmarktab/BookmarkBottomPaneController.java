@@ -67,7 +67,7 @@ public class BookmarkBottomPaneController {
             if (newVal == null) {
                 offsetTF.setText("");
             } else {
-                if (!offsetTF.getText().equals(newVal.toString())) {
+                if (newVal.toString().equals(offsetTF.getText())) {
                     offsetTF.setText(newVal.toString());
                 }
             }
@@ -75,13 +75,13 @@ public class BookmarkBottomPaneController {
 
         offsetTF.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null || newVal.isEmpty() || "-".equals(newVal)) {
-                bookmarkSettingsState.setOffset(null);
+                bookmarkSettingsState.setOffset(0);
             } else {
                 try {
                     bookmarkSettingsState.setOffset(Integer.parseInt(newVal));
                 } catch (NumberFormatException e) {
                     // Invalid number format, set state to null
-                    bookmarkSettingsState.setOffset(null);
+                    bookmarkSettingsState.setOffset(0);
                 }
             }
         });

@@ -51,17 +51,17 @@ class ItextOutlineProcessorTest {
 
         Bookmark chapter1 = root.getChildren().get(0);
         assertEquals("Chapter 1", chapter1.getTitle());
-        assertEquals(1, chapter1.getOffsetPageNum().orElse(-1));
+        assertEquals(1, chapter1.getPageNum().orElse(-1));
         assertEquals(1, chapter1.getChildren().size());
 
         Bookmark section1_1 = chapter1.getChildren().get(0);
         assertEquals("Section 1.1", section1_1.getTitle());
-        assertEquals(2, section1_1.getOffsetPageNum().orElse(-1));
+        assertEquals(2, section1_1.getPageNum().orElse(-1));
         assertTrue(section1_1.getChildren().isEmpty());
 
         Bookmark chapter2 = root.getChildren().get(1);
         assertEquals("Chapter 2", chapter2.getTitle());
-        assertEquals(3, chapter2.getOffsetPageNum().orElse(-1));
+        assertEquals(3, chapter2.getPageNum().orElse(-1));
         assertTrue(chapter2.getChildren().isEmpty());
     }
 

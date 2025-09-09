@@ -43,11 +43,11 @@ public class BookmarkViewModel {
     }
 
     public String getOffsetPageNumAsString() {
-        return model.getOffsetPageNum().map(String::valueOf).orElse("");
+        return model.getPageNum().map(String::valueOf).orElse("");
     }
 
     public void setOffsetPageNum(Integer pageNum) {
-        model.setOffsetPageNum(pageNum);
+        model.setPageNum(pageNum);
     }
 
     // Methods to manipulate the model and sync the view model

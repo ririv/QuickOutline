@@ -87,13 +87,13 @@ public class TextProcessor {
     }
 
 
-    private List<Bookmark> createLinearBookmarkList(String text, int offset) {
+    private List<Bookmark> createLinearBookmarkList(String text) {
         List<String> preprocessedText = preprocess(text);
-        return parser.parse(preprocessedText, offset);
+        return parser.parse(preprocessedText);
     }
 
 
-    public Bookmark process(String text, int offset, Method method) {
+    public Bookmark process(String text, Method method) {
         if (method == Method.INDENT){
             parser = new Indent();
         } else {
@@ -107,7 +107,7 @@ public class TextProcessor {
             }
         }
 
-        var linearBookmarkList = createLinearBookmarkList(text, offset);
+        var linearBookmarkList = createLinearBookmarkList(text);
         return convertListToBookmarkTree(linearBookmarkList);
     }
 

@@ -16,7 +16,7 @@ public interface OutlineProcessor {
      当再次使用上次被打开的pdfDoc时，会报错head not found
      因此这里调用函数时打开doc，并在函数中即时关闭它
 */
-    void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException;
+    void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, int offset, ViewScaleType scaleType) throws IOException;
 
     Bookmark getOutlineAsBookmark(String srcFilePath, int offset) throws IOException;
 

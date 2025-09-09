@@ -50,12 +50,12 @@ Part I  监督学习  25
     final Method method = Method.SEQ;
 
     PdfOutlineService pdfOutlineService = new PdfOutlineService();
-    final Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, offset, method);
+    final Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, method);
 
     @Test
     void setOutline() throws IOException {
         OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
-        outlineProcessor.setOutline(rootBookmark, srcFilePath, dstFilePath, ViewScaleType.ACTUAL_SIZE);
+        outlineProcessor.setOutline(rootBookmark, srcFilePath, dstFilePath, offset, ViewScaleType.ACTUAL_SIZE);
     }
 
 

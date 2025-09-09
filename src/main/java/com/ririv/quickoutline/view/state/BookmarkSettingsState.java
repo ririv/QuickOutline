@@ -10,7 +10,10 @@ public class BookmarkSettingsState {
     private final ObjectProperty<Integer> offset = new SimpleObjectProperty<>(null);
     private final ObjectProperty<Bookmark> rootBookmark = new SimpleObjectProperty<>();
 
-    public Integer getOffset() {
+    public int getOffset() {
+        if (offset.get() == null) {
+            offset.set(0);
+        }
         return offset.get();
     }
 

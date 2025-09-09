@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class iTextTocPageGenerator implements TocPageGenerator {
 
@@ -72,14 +71,14 @@ public class iTextTocPageGenerator implements TocPageGenerator {
 
         // Add TOC entries
         for (Bookmark bookmark : bookmarks) {
-            int pageNumInDest = bookmark.getOffsetPageNum().orElse(1);
+            int pageNumInDest = bookmark.getPageNum().orElse(1);
             Paragraph p = new Paragraph()
                     .addTabStops(tabStops)
                     .setFont(font)
                     .setPaddingLeft((bookmark.getLevel() - 1) * 20) // Indent based on level
                     .add(bookmark.getTitle())
                     .add(new Tab())
-                    .add(String.valueOf(bookmark.getOffsetPageNum().orElse(0)))
+                    .add(String.valueOf(bookmark.getPageNum().orElse(0)))
                     .setAction(PdfAction.createGoTo(PdfExplicitDestination.createFit(pdfDoc.getPage(pageNumInDest))));
             doc.add(p);
         }

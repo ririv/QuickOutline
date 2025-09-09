@@ -69,7 +69,7 @@ public class EnSeq implements parser,Seq {
 
 
     @Override
-    public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+    public Bookmark parseLine(String line, List<Bookmark> linearBookmarkList) {
         String trimmedLine = line.trim(); // 去掉行首尾的空白字符
         int pageNumIndex = findPageNumberIndex(trimmedLine);
         String titleWithSeq;
@@ -107,7 +107,7 @@ public class EnSeq implements parser,Seq {
             level = getLevelByStandardSeq(seq);
         }
 
-        return new Bookmark(title, pageNum == null? null: Integer.parseInt(pageNum)+offset,level);
+        return new Bookmark(title, pageNum == null? null: Integer.parseInt(pageNum),level);
 
     }
 

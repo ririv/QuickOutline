@@ -32,7 +32,7 @@ public class CnSeq implements parser,Seq {
                     + "\\s*$");
 
 
-    public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+    public Bookmark parseLine(String line, List<Bookmark> linearBookmarkList) {
         Matcher matcher = cnPattern.matcher(line);
         if (matcher.find()) {
             String rawSeq = matcher.group(2) != null ? matcher.group(2) : ""; //原seq字符串
@@ -42,7 +42,7 @@ public class CnSeq implements parser,Seq {
             Integer pageNum;
 
             if (matcher.group(5) != null) { //页码
-                pageNum = Integer.parseInt(matcher.group(5)) + offset;
+                pageNum = Integer.parseInt(matcher.group(5));
             } else { //页码为空
                 pageNum = null;
             }

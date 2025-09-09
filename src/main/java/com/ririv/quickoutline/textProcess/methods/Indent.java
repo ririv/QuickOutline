@@ -29,7 +29,7 @@ public class Indent implements parser {
                     +  "\\s*$");
 
 
-    public Bookmark parseLine(int offset, String line, List<Bookmark> linearBookmarkList) {
+    public Bookmark parseLine(String line, List<Bookmark> linearBookmarkList) {
         Matcher matcher = indentPattern.matcher(line);
         if (matcher.find()) {
 
@@ -41,7 +41,7 @@ public class Indent implements parser {
 
             Integer offsetPageNum = null;
             if (matcher.group(3)!=null){
-                offsetPageNum = Integer.parseInt(matcher.group(3)) + offset;
+                offsetPageNum = Integer.parseInt(matcher.group(3));
             }
 
 
