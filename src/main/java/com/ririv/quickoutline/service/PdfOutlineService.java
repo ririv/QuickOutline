@@ -22,11 +22,6 @@ public class PdfOutlineService {
         outlineProcessor.setOutline(rootBookmark, srcFilePath, destFilePath, scaleType);
     }
 
-    public void setOutline(String text, String srcFilePath, String destFilePath, int offset, Method method, ViewScaleType scaleType) throws IOException {
-        Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);
-        setOutline(rootBookmark, srcFilePath, destFilePath, scaleType);
-    }
-
     public void deleteOutline(String srcFilePath, String destFilePath) {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
         try {

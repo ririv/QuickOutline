@@ -133,7 +133,7 @@ public class BookmarkTabController {
 
     private void reconstructTreeByContents() {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(
-                textSubViewController.getContents(), 0,
+                textSubViewController.getContents(), bookmarkSettingsState.getOffset(),
                 textSubViewController.getSelectedMethod()
         );
         bookmarkSettingsState.setRootBookmark(rootBookmark);
