@@ -24,7 +24,7 @@ java {
     }
 }
 
-version = '2.2.0'
+version = '2.2.2'
 
 javafx {
     version = '23' // LTS
