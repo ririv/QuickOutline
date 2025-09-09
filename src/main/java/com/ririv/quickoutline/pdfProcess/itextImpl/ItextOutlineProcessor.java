@@ -25,7 +25,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
     //    如果rootBookmark没有Children，即之前的text为空（当然这种情况已在Controller中被排除）
 //    list.clear()没有起作用（不知道原因），最终目录没有影响，怀疑原因是没有写入操作。
     @Override
-    public void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException {
+    public void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, int offset, ViewScaleType scaleType) throws IOException {
         if (checkEncrypted(srcFilePath)) throw new EncryptedPdfException();
 
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
@@ -34,14 +34,14 @@ public class ItextOutlineProcessor implements OutlineProcessor {
             rootOutline.getAllChildren().clear();
 //            rootOutline.removeOutline(); //如果使用了这个方法，后续将添加不了书签，不会报错，这是由于rootOutline失去了在Doc中的引用，
 
-            bookmarkToOutlines(rootBookmark, rootOutline, pdfDoc, scaleType);
+            bookmarkToOutlines(rootBookmark, rootOutline, pdfDoc, offset, scaleType);
 
             pdfDoc.close();
     }
 
 
     //合并了上面两个函数
-    private void bookmarkToOutlines(Bookmark parentBookmark, PdfOutline rootOutline, PdfDocument srcDoc, ViewScaleType scaleType) {
+    private void bookmarkToOutlines(Bookmark parentBookmark, PdfOutline rootOutline, PdfDocument srcDoc, int offset, ViewScaleType scaleType) {
 
         //不为根结点时，进行添加操作
         if (!parentBookmark.isRoot()) {
@@ -56,11 +56,12 @@ public class ItextOutlineProcessor implements OutlineProcessor {
 
 //            https://kb.itextpdf.com/itext/chapter-6-creating-actions-destinations-and-bookma
             https://kb.itextpdf.com/itext/itext-7-building-blocks-chapter-6-actions-destinat
-            if (parentBookmark.getOffsetPageNum().isPresent()) {
-                int pageNum = parentBookmark.getOffsetPageNum().get();
-                if (pageNum > -1 && pageNum <= pageNumMax) {
+            if (parentBookmark.getPageNum().isPresent()) {
+                int pageNum = parentBookmark.getPageNum().get();
+                int offsetPageNum = pageNum + offset; //偏移后的页码
+                if (offsetPageNum > -1 && offsetPageNum <= pageNumMax) {
                     // getPage的pageNum参数是从1开始的，即与实际的未偏移页码相对应
-                    PdfPage page = srcDoc.getPage(pageNum);
+                    PdfPage page = srcDoc.getPage(offsetPageNum);
                     // Page的坐标系统的原点位于页面的左下角（与正常的坐标系一致）
                     // 因此top的值为页面高度，bottom才是为0；left也即为0
                     // Destination设置top会向上偏移（即当前页的内容从下向上开始浮现），最多偏移页面高度，更大的top值不会显示更上一页的内容
@@ -68,8 +69,8 @@ public class ItextOutlineProcessor implements OutlineProcessor {
                     // 显示效果为，从此页与下一页的间隔开始显示，并显示下一页内容。
                     // 所以，Destination的top必须设置为页面高度，才能将阅读器的左上角定位于页面的左上角，从当前页开始显示
 
-                    float top = srcDoc.getPage(pageNum).getPageSize().getTop();
-                    float left = srcDoc.getPage(pageNum).getPageSize().getLeft();
+                    float top = srcDoc.getPage(offsetPageNum).getPageSize().getTop();
+                    float left = srcDoc.getPage(offsetPageNum).getPageSize().getLeft();
                     logger.info("top: {}, left: {}", top, left);
 
                     PdfDestination destination = null;
@@ -107,14 +108,14 @@ public class ItextOutlineProcessor implements OutlineProcessor {
     /*
                 //未知的原因，下面的写法没有效果，调试时发现Destination值为null
                 outline.addAction(PdfAction.createGoTo(
-                        PdfExplicitDestination.createFitH(srcDoc.getPage(pageNum),
-                        srcDoc.getPage(pageNum).getPageSize().getTop())));
+                        PdfExplicitDestination.createFitH(srcDoc.getPage(offsetPageNum),
+                        srcDoc.getPage(offsetPageNum).getPageSize().getTop())));
     */
                 } else {
                     srcDoc.close();
                     throw new BookmarkFormatException(String.format(
                             "添加页码错误\n\"%s  %d\" 偏移后的页码超过最大页数或为负数\n偏移后的页码范围应为: 0 ~ %d",
-                            title, pageNum, pageNumMax));
+                            title, offsetPageNum, pageNumMax));
                 }
             }
 
@@ -122,7 +123,7 @@ public class ItextOutlineProcessor implements OutlineProcessor {
 
         if (!parentBookmark.getChildren().isEmpty()) {
             for (Bookmark subBookmark : parentBookmark.getChildren()) {
-                bookmarkToOutlines(subBookmark, rootOutline, srcDoc, scaleType);
+                bookmarkToOutlines(subBookmark, rootOutline, srcDoc, offset, scaleType);
 
             }
 

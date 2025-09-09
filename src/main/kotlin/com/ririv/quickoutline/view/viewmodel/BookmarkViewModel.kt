@@ -92,10 +92,11 @@ class BookmarkViewModel(
         val root = uiState.value.rootBookmark ?: return
         val sourcePath = mainViewModel.uiState.value.paths.src_file?.toString() ?: return
         val destPath = mainViewModel.uiState.value.paths.dst_file?.toString() ?: return
+        val offset = uiState.value.offset.text.toIntOrNull() ?: 0
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                pdfOutlineService.setOutline(root, sourcePath, destPath, viewScaleType)
+                pdfOutlineService.setOutline(root, sourcePath, destPath, offset, viewScaleType)
                 withContext(Dispatchers.Swing) {
                     messageContainerState.showMessage("Bookmarks saved successfully!", MessageType.SUCCESS)
                 }
@@ -132,7 +133,7 @@ class BookmarkViewModel(
 
         // Then, process the text to update the bookmark tree structure
         val textProcessor = TextProcessor()
-        val newRootBookmark = textProcessor.process(newValue.text, 0, Method.SEQ) // Assuming SEQ method for now
+        val newRootBookmark = textProcessor.process(newValue.text, Method.SEQ) // Assuming SEQ method for now
         _uiState.update { it.copy(rootBookmark = newRootBookmark) }
     }
 

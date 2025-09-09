@@ -16,8 +16,7 @@ val appModule = module {
     single { MessageContainerState() }
     single { MainViewModel(get()) }
     single { PdfOutlineService() }
-    single<TocPageGenerator> { iTextTocPageGenerator() }
-    single { PdfTocPageGeneratorService(get()) }
+    single { PdfTocPageGeneratorService() }
     single { PdfTocExtractorService() }
     single { PdfPageLabelService() }
     single { SyncWithExternalEditorService() } onClose { service -> service?.shutdown() } // Add service and its shutdown hook

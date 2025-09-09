@@ -18,17 +18,17 @@ public class Bookmark {
 
 
     private String title; // 一般情况下 title with seq
-    private Integer offsetPageNum; //偏移后的页码，即pdf中的页码，非真实页码，空为无页码
+    private Integer pageNum; //空为无页码
     private final List<Bookmark> children = new ArrayList<>();
     private Bookmark parent;
     private int level; // 0为root，1为顶层目录（since v1.0.3，此前版本中-1为root，0为顶层）
     private List<Bookmark> linearBookmarkList; // root节点下将记录原始的线性Bookmark
     private final String id;
 
-    public Bookmark(String title, Integer offsetPageNum, int level) {
+    public Bookmark(String title, Integer pageNum, int level) {
         this.id = UUID.randomUUID().toString(); // 为每个 Bookmark 生成唯一的 ID
         this.title = title;
-        this.offsetPageNum = offsetPageNum;
+        this.pageNum = pageNum;
         this.level = level;
     }
 
@@ -39,16 +39,16 @@ public class Bookmark {
     }
 
 
-    public void setOffsetPageNum(Integer offsetPageNum) {
-        this.offsetPageNum = offsetPageNum;
+    public void setPageNum(Integer pageNum) {
+        this.pageNum = pageNum;
     }
 
     public boolean isRoot() {
         return (this.parent == null) && (getLevel() == 0);
     }
 
-    public Optional<Integer> getOffsetPageNum() {
-        return Optional.ofNullable(offsetPageNum);
+    public Optional<Integer> getPageNum() {
+        return Optional.ofNullable(pageNum);
     }
 
 
@@ -166,7 +166,7 @@ public class Bookmark {
     @Override
     public String toString() {
         // 使用你最终确定的 getPageNum 方法
-        String offsetPageNumStr = getOffsetPageNum().map(String::valueOf).orElse("N/A");
+        String offsetPageNumStr = getPageNum().map(String::valueOf).orElse("N/A");
 
         return String.format(
                 "Bookmark[title='%s', offsetPageNum=%s, level=%d]",
@@ -181,7 +181,7 @@ public class Bookmark {
     public String toOutlineString() {
         StringBuilder text = new StringBuilder();
         traverse(e -> {
-            String pageNumStr = e.getOffsetPageNum().map(String::valueOf).orElse("");
+            String pageNumStr = e.getPageNum().map(String::valueOf).orElse("");
             buildLine(text, e.getLevel(),
                     e.getTitle(), pageNumStr);
         });

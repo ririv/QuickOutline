@@ -17,14 +17,9 @@ public class PdfOutlineService {
 
     private final OutlineProcessor outlineProcessor = new ItextOutlineProcessor();
 
-    public void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, ViewScaleType scaleType) throws IOException {
+    public void setOutline(Bookmark rootBookmark, String srcFilePath, String destFilePath, int offset, ViewScaleType scaleType) throws IOException {
         if (srcFilePath.isEmpty()) throw new RuntimeException("PDF路径为空");
-        outlineProcessor.setOutline(rootBookmark, srcFilePath, destFilePath, scaleType);
-    }
-
-    public void setOutline(String text, String srcFilePath, String destFilePath, int offset, Method method, ViewScaleType scaleType) throws IOException {
-        Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, offset, method);
-        setOutline(rootBookmark, srcFilePath, destFilePath, scaleType);
+        outlineProcessor.setOutline(rootBookmark, srcFilePath, destFilePath, offset, scaleType);
     }
 
     public void deleteOutline(String srcFilePath, String destFilePath) {
@@ -39,13 +34,13 @@ public class PdfOutlineService {
 
     //先经过text生成bookmark，在将bookmark转化为text
     public String autoFormat(String text) {
-        Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, 0, Method.SEQ);
+        Bookmark rootBookmark = convertTextToBookmarkTreeByMethod(text, Method.SEQ);
         return rootBookmark.toOutlineString();
     }
 
-    public Bookmark convertTextToBookmarkTreeByMethod(String text, int offset, Method method) {
+    public Bookmark convertTextToBookmarkTreeByMethod(String text, Method method) {
         TextProcessor textProcessor = new TextProcessor();
-        return textProcessor.process(text, offset, method);
+        return textProcessor.process(text, method);
     }
 
     public void checkOpenFile(String srcFilepath) throws IOException {

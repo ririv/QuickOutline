@@ -130,7 +130,7 @@ fun BookmarkTree(
                         color = Color.Black
                     )
                     Text(
-                        text = bookmark.offsetPageNum.map { it.toString() }.orElse(""),
+                        text = bookmark.pageNum.map { it.toString() }.orElse(""),
                         modifier = Modifier.width(100.dp),
                         color = Color.Black
                     )
