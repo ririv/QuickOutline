@@ -112,7 +112,7 @@ fun BookmarkTree(
 
                     if (bookmark.children.isNotEmpty()) {
                         Icon(
-                            imageVector = if (expansionState[bookmark] == true) Icons.Default.ArrowDropDown else Icons.Default.ArrowRight,
+                            imageVector = if (expansionState[bookmark] == true) Icons.Default.ArrowDropDown else Icons.AutoMirrored.Filled.ArrowRight,
                             contentDescription = "Expand/Collapse",
                             tint = if (isHovered) Color.Black else Color.Gray,
                             modifier = Modifier.size(24.dp).clickable(
