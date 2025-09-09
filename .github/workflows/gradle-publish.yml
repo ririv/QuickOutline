@@ -155,10 +155,10 @@ jobs:
         with:
           path: artifacts/
 
-      - name: Create Pre-Release and Upload Assets
+      - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          prerelease: true
+          prerelease: false
           files: |
             artifacts/**/*.dmg
             artifacts/**/*.msi
