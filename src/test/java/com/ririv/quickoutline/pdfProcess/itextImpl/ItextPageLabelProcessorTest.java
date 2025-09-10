@@ -6,15 +6,11 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Paragraph;
-import com.ririv.quickoutline.pdfProcess.PageLabel;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-class ItextPageLabelSetterTest {
+class ItextPageLabelProcessorTest {
 
     String SRC = "tmp/page_labels_from_page_3.pdf";
 
@@ -73,7 +69,7 @@ class ItextPageLabelSetterTest {
     void getPageLabels() {
 
         try{
-            String[] labels = new ItextPageLabelSetter().getPageLabels(SRC);
+            String[] labels = new ItextPageLabelProcessor().getPageLabels(SRC);
             for (int i = 0; i < labels.length; i++) {
                 System.out.println("Page " + (i + 1) + ": " + labels[i]);
             }
