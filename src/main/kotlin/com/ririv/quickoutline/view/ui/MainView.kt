@@ -7,8 +7,6 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +17,7 @@ import com.ririv.quickoutline.view.icons.AppIcon
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.controls.MessageContainer
 import com.ririv.quickoutline.view.controls.MessageContainerState
+import com.ririv.quickoutline.view.ui.controls.GraphIconButton
 import com.ririv.quickoutline.view.ui.bookmarktab.BookmarkTab
 import com.ririv.quickoutline.view.viewmodel.MainViewModel
 import org.koin.java.KoinJavaComponent.inject
@@ -134,7 +133,7 @@ fun MainView() {
                             color = Color(100, 100, 100, 120),
                         )
                     }
-                    IconButton(onClick = {
+                    GraphIconButton(onClick = {
                         val dialog = FileDialog(null as Frame?, "Select File to Open", FileDialog.LOAD)
                         dialog.isVisible = true
                         val file = dialog.file
@@ -143,8 +142,8 @@ fun MainView() {
                             val path = dir + file
                             mainViewModel.openPdf(path)
                         }
-                    }) {
-                        com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.Open, contentDescription = "Open file", modifier = Modifier.size(24.dp), tint = Color.Gray)
+                    }, modifier = Modifier.size(40.dp)) {
+                        AppIcon(icon = AppIcon.Open, contentDescription = "Open file", modifier = Modifier.size(24.dp), tint = Color.Gray)
                     }
                 }
                 HorizontalDivider(thickness = 1.dp, color = Color(0xFFDFDFDF))
