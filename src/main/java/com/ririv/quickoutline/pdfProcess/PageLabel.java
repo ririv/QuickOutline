@@ -26,6 +26,8 @@ public record PageLabel(int pageNum, PageLabelNumberingStyle numberingStyle, Str
         /**
          * a, b, c, d...
          */
-        LOWERCASE_LETTERS
+        LOWERCASE_LETTERS,
+
+        NONE
     }
 }

@@ -5,7 +5,7 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
-import com.ririv.quickoutline.pdfProcess.PageLabelSetter;
+import com.ririv.quickoutline.pdfProcess.PageLabelProcessor;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import static com.ririv.quickoutline.utils.PathUtils.getUserHomePath;
 
 
 // https://kb.itextpdf.com/itext/page-labels
-public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingStyle> {
+public class ItextPageLabelProcessor implements PageLabelProcessor<PageLabelNumberingStyle> {
 
     public static void main(String[] args) throws IOException {
         final String SRC = getUserHomePath() +"/Downloads/统计学习方法_第2版.pdf";
@@ -29,7 +29,7 @@ public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingS
         labelList.add(new PageLabel(3, PageLabel.PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS,"G",3));
         File file = new File(DEST);
         file.getParentFile().mkdirs();
-        new ItextPageLabelSetter().setPageLabels(SRC, DEST, labelList);
+        new ItextPageLabelProcessor().setPageLabels(SRC, DEST, labelList);
 
     }
 
@@ -50,7 +50,7 @@ public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingS
             String labelPrefix = label.labelPrefix();
             Integer firstPage = label.firstPage();
 
-            if (label.firstPage() ==null){
+            if (label.firstPage() == null){
                 pdfDoc.getPage(pageNum).setPageLabel(numberingStyle, labelPrefix);
             } else {
                 pdfDoc.getPage(pageNum).setPageLabel(numberingStyle, labelPrefix, firstPage);
@@ -75,37 +75,21 @@ public class ItextPageLabelSetter implements PageLabelSetter<PageLabelNumberingS
     public String[] getPageLabels(String src) throws IOException {
         PdfReader reader = new PdfReader(src);
         PdfDocument pdfDoc = new PdfDocument(reader);
-
         String[] pageLabels = pdfDoc.getPageLabels();
-
         reader.close();
         return pageLabels;
     }
 
-
     @Override
     public PageLabelNumberingStyle mapPageLabelNumberingStyle(PageLabel.PageLabelNumberingStyle numberingStyle) {
-
-        switch (numberingStyle) {
-            case PageLabel.PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS -> {
-                return PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
-            }
-            case PageLabel.PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS -> {
-                return PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS;
-            }
-            case PageLabel.PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS-> {
-                return PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS;
-            }
-            case PageLabel.PageLabelNumberingStyle.LOWERCASE_LETTERS-> {
-                return PageLabelNumberingStyle.LOWERCASE_LETTERS;
-            }
-            case PageLabel.PageLabelNumberingStyle.UPPERCASE_LETTERS-> {
-                return PageLabelNumberingStyle.UPPERCASE_LETTERS;
-            }
-            case null -> {
-                return null;
-            }
-        }
+        if (numberingStyle == null) return null;
+        return switch (numberingStyle) {
+            case DECIMAL_ARABIC_NUMERALS -> PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
+            case LOWERCASE_ROMAN_NUMERALS -> PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS;
+            case UPPERCASE_ROMAN_NUMERALS -> PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS;
+            case LOWERCASE_LETTERS -> PageLabelNumberingStyle.LOWERCASE_LETTERS;
+            case UPPERCASE_LETTERS -> PageLabelNumberingStyle.UPPERCASE_LETTERS;
+            case NONE -> null;
+        };
     }
-
 }

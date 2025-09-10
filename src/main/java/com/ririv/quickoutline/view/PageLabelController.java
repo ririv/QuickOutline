@@ -1,15 +1,17 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
+import com.ririv.quickoutline.exception.InvalidPageLabelRuleException;
+import com.ririv.quickoutline.service.PageLabelRule;
+import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
+import com.ririv.quickoutline.service.PdfPageLabelService;
+import com.ririv.quickoutline.view.controls.message.Message;
+import com.ririv.quickoutline.view.controls.select.StyledSelect;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.PageLabelsChangedEvent;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.event.ShowSuccessDialogEvent;
-import com.ririv.quickoutline.pdfProcess.PageLabel;
-import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.view.state.CurrentFileState;
-import com.ririv.quickoutline.view.controls.select.StyledSelect;
-import com.ririv.quickoutline.view.controls.message.Message;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -22,19 +24,24 @@ import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class PageLabelController {
 
-    // 代码风格优化: 将所有样式字符串定义为公共静态常量
-    public static final String STYLE_NONE = "无";
-    public static final String STYLE_DECIMAL = "1, 2, 3, ...";
-    public static final String STYLE_ROMAN_LOWER = "i, ii, iii, ...";
-    public static final String STYLE_ROMAN_UPPER = "I, II, III, ...";
-    public static final String STYLE_LETTERS_LOWER = "a, b, c, ...";
-    public static final String STYLE_LETTERS_UPPER = "A, B, C, ...";
+    // The UI display strings and their mapping to the domain model (Enum)
+    // are now properly confined to the view layer.
+    private static final Map<String, PageLabelNumberingStyle> STYLE_MAP = new LinkedHashMap<>();
+    static {
+        STYLE_MAP.put("无", PageLabelNumberingStyle.NONE);
+        STYLE_MAP.put("1, 2, 3, ...", PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
+        STYLE_MAP.put("i, ii, iii, ...", PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS);
+        STYLE_MAP.put("I, II, III, ...", PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS);
+        STYLE_MAP.put("a, b, c, ...", PageLabelNumberingStyle.LOWERCASE_LETTERS);
+        STYLE_MAP.put("A, B, C, ...", PageLabelNumberingStyle.UPPERCASE_LETTERS);
+    }
 
     public ScrollPane labelRuleListLayout;
     @FXML
@@ -46,17 +53,12 @@ public class PageLabelController {
     @FXML
     private TextField fromPageTextField;
 
-    private record PageLabelRule(int fromPage, PageLabel.PageLabelNumberingStyle style, String styleString, String prefix, int start) {}
-
     private final List<PageLabelRule> pageLabelRules = new ArrayList<>();
     private final PdfPageLabelService pdfPageLabelService;
     private final CurrentFileState fileService;
     private final VBox ruleVBox = new VBox(5);
     private final AppEventBus appEventBus;
     private List<String> originalPageLabels;
-
-    @FXML
-    private ThumbnailPaneController thumbnailPaneController; // Injected by FXML loader
 
     @Inject
     public PageLabelController(PdfPageLabelService pdfPageLabelService, CurrentFileState fileService, AppEventBus appEventBus) {
@@ -67,18 +69,13 @@ public class PageLabelController {
 
     public void initialize() {
         labelRuleListLayout.setContent(ruleVBox);
-        numberingStyleChoiceBox.setItems(FXCollections.observableArrayList(
-                STYLE_NONE, STYLE_DECIMAL, STYLE_ROMAN_LOWER, STYLE_ROMAN_UPPER, STYLE_LETTERS_LOWER, STYLE_LETTERS_UPPER
-        ));
-        // 使用常量来设置默认值
-        if (numberingStyleChoiceBox.getValue() == null) {
-            numberingStyleChoiceBox.setValue(STYLE_DECIMAL);
-        }
+        numberingStyleChoiceBox.setItems(FXCollections.observableArrayList(STYLE_MAP.keySet()));
+        numberingStyleChoiceBox.setValue("1, 2, 3, ...");
 
         fileService.srcFileProperty().addListener((obs, oldFile, newFile) -> {
             if (newFile != null) {
                 try {
-                    originalPageLabels = java.util.Arrays.asList(pdfPageLabelService.getPageLabels(newFile.toString()));
+                    originalPageLabels = Arrays.asList(pdfPageLabelService.getPageLabels(newFile.toString()));
                 } catch (IOException e) {
                     e.printStackTrace();
                     originalPageLabels = null;
@@ -92,64 +89,44 @@ public class PageLabelController {
     @FXML
     void addRule() {
         try {
-            if (fromPageTextField.getText().isEmpty()) {
-                appEventBus.post(new ShowMessageEvent("输入无效，'起始页' 字段不能为空。", Message.MessageType.ERROR));
-                return;
-            }
-            int fromPage = Integer.parseInt(fromPageTextField.getText());
+            String selectedStyleString = numberingStyleChoiceBox.getValue();
+            PageLabelNumberingStyle selectedStyleEnum = STYLE_MAP.get(selectedStyleString);
 
-            for (PageLabelRule existingRule : pageLabelRules) {
-                if (existingRule.fromPage() == fromPage) {
-                    appEventBus.post(new ShowMessageEvent("输入无效，已存在相同起始页的规则。", Message.MessageType.ERROR));
-                    return;
-                }
-            }
+            // The service is now called with the pure Enum, not the display string.
+            PageLabelRule rule = pdfPageLabelService.validateAndCreateRule(
+                    fromPageTextField.getText(),
+                    prefixTextField.getText(),
+                    startTextField.getText(),
+                    selectedStyleEnum, // Pass the pure enum
+                    pageLabelRules
+            );
 
-            if (fromPage <= 0) {
-                appEventBus.post(new ShowMessageEvent("输入无效，页码必须是正数。", Message.MessageType.ERROR));
-                return;
-            }
-
-            String prefix = prefixTextField.getText();
-            int start = 1;
-            if (!startTextField.getText().isEmpty()) {
-                start = Integer.parseInt(startTextField.getText());
-                if (start < 1) {
-                    appEventBus.post(new ShowMessageEvent("输入无效，起始数字必须大于或等于 1。", Message.MessageType.ERROR));
-                    return;
-                }
-            }
-
-            String styleString = numberingStyleChoiceBox.getValue();
-            PageLabel.PageLabelNumberingStyle style = getNumberingStyle(styleString);
-
-            PageLabelRule rule = new PageLabelRule(fromPage, style, styleString, prefix, start);
             pageLabelRules.add(rule);
-
-            addRuleToView(rule);
+            // The view needs the display string to show the rule, so we create a temporary view model or just format it here.
+            addRuleToView(rule, selectedStyleString);
             simulate();
 
             fromPageTextField.clear();
             prefixTextField.clear();
             startTextField.clear();
 
-        } catch (NumberFormatException e) {
-            appEventBus.post(new ShowMessageEvent("输入无效，请在页码和起始数字字段中输入有效的数字。", Message.MessageType.ERROR));
+        } catch (InvalidPageLabelRuleException e) {
+            appEventBus.post(new ShowMessageEvent(e.getMessage(), Message.MessageType.ERROR));
         }
     }
 
-    private void addRuleToView(PageLabelRule rule) {
+    private void addRuleToView(PageLabelRule rule, String styleString) {
         HBox ruleBox = new HBox(10);
         ruleBox.setAlignment(Pos.CENTER_LEFT);
 
         String text = String.format("从第 %d 页开始: 样式=%s, 前缀='%s', 起始于=%d",
-                rule.fromPage(), rule.styleString(), rule.prefix(), rule.start());
+                rule.fromPage(), styleString, rule.prefix(), rule.start());
         Label ruleLabel = new Label(text);
         HBox.setHgrow(ruleLabel, Priority.ALWAYS);
         ruleLabel.setMaxWidth(Double.MAX_VALUE);
 
         Button deleteButton = new Button();
-        deleteButton.getStyleClass().addAll("graph-button","graph-button-important");
+        deleteButton.getStyleClass().addAll("graph-button", "graph-button-important");
         deleteButton.setPrefWidth(30);
         Node graphic = new Region();
         graphic.getStyleClass().addAll("icon", "delete-item-icon");
@@ -184,15 +161,9 @@ public class PageLabelController {
             return;
         }
 
-        List<PageLabel> pageLabels = new ArrayList<>();
-        for (PageLabelRule rule : pageLabelRules) {
-            pageLabels.add(new PageLabel(rule.fromPage(), rule.style(), rule.prefix(), rule.start()));
-        }
-
-        List<String> simulatedLabels = pdfPageLabelService.simulatePageLabels(pageLabels, totalPages);
+        List<String> simulatedLabels = pdfPageLabelService.simulatePageLabels(pageLabelRules, totalPages);
         appEventBus.post(new PageLabelsChangedEvent(simulatedLabels));
     }
-
 
     @FXML
     void apply() {
@@ -201,49 +172,17 @@ public class PageLabelController {
             return;
         }
 
-        // ==============================================
-        // 我们只需要为每条规则的 *起始页* 创建一个 PageLabel 条目。
-
-        // 使用 Map (特别是 TreeMap) 可以确保对于同一个起始页，后添加的规则会覆盖先添加的规则。
-        Map<Integer, PageLabel> pageLabelsMap = new TreeMap<>();
-        for (PageLabelRule rule : pageLabelRules) {
-            // 对于每条规则，只为其起始页创建一个 PageLabel 对象。
-            // pageNum: 新编号开始的物理页码 (即 rule.fromPage())。
-            // style: 这个区段的编号样式。
-            // prefix: 这个区段的前缀。
-            // firstPage: 起始页应当具有的逻辑页码 (即 rule.start())。
-            PageLabel pageLabel = new PageLabel(rule.fromPage(), rule.style(), rule.prefix(), rule.start());
-
-            // Map 的键 (key) 就是规则开始的物理页码。
-            pageLabelsMap.put(rule.fromPage(), pageLabel);
-        }
-
-        // 最终的列表就是这些唯一的、按页码排序的起始页规则的集合。
-        List<PageLabel> finalPageLabels = new ArrayList<>(pageLabelsMap.values());
-        // ==============================================
-
+        List<com.ririv.quickoutline.pdfProcess.PageLabel> finalPageLabels = pdfPageLabelService.convertRulesToPageLabels(pageLabelRules);
 
         String srcFilePath = fileService.getSrcFile().toString();
         String destFilePath = fileService.getDestFile().toString();
         try {
             String[] pageLabels = pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
-            appEventBus.post(new PageLabelsChangedEvent(java.util.Arrays.asList(pageLabels)));
+            appEventBus.post(new PageLabelsChangedEvent(Arrays.asList(pageLabels)));
             appEventBus.post(new ShowSuccessDialogEvent());
         } catch (IOException e) {
-            appEventBus.post(new ShowMessageEvent("应用页码标签失败: " + "e.getMessage()", Message.MessageType.ERROR));
+            appEventBus.post(new ShowMessageEvent("应用页码标签失败: " + e.getMessage(), Message.MessageType.ERROR));
             throw new RuntimeException(e);
         }
-    }
-
-    private PageLabel.PageLabelNumberingStyle getNumberingStyle(String styleString) {
-        // 在 switch 语句中使用常量，确保逻辑和定义一致
-        return switch (styleString) {
-            case STYLE_DECIMAL -> PageLabel.PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
-            case STYLE_ROMAN_LOWER -> PageLabel.PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS;
-            case STYLE_ROMAN_UPPER -> PageLabel.PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS;
-            case STYLE_LETTERS_LOWER -> PageLabel.PageLabelNumberingStyle.LOWERCASE_LETTERS;
-            case STYLE_LETTERS_UPPER -> PageLabel.PageLabelNumberingStyle.UPPERCASE_LETTERS;
-            default -> null; // STYLE_NONE 和其他未知情况都返回 null
-        };
     }
 }
