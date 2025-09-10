@@ -118,7 +118,7 @@ public class ThumbnailView extends VBox {
         String displayLabel = "";
         if (pageLabels != null && pageIndex < pageLabels.length) {
             String labelText = pageLabels[pageIndex];
-            if (labelText != null && !labelText.isEmpty()) {
+            if (labelText != null) {
                 displayLabel = labelText;
             } else {
                 displayLabel = "第 " + (pageIndex + 1) + " 页";

@@ -35,10 +35,7 @@ public class PdfPageLabelService {
 
         // Rules are already sorted by fromPage due to TreeMap in convertRulesToPageLabels
 
-        int ruleIndex = 0;
         for (int i = 1; i <= totalPages; i++) {
-            String label = String.valueOf(i); // Default label
-
             // Find the correct rule for the current page `i`
             PageLabel currentRule = null;
             for (PageLabel rule : pageLabels) {
@@ -49,9 +46,14 @@ public class PdfPageLabelService {
                 }
             }
 
+            String label;
             if (currentRule != null) {
                 int pageOffset = i - currentRule.pageNum();
                 label = generateLabel(currentRule.numberingStyle(), currentRule.firstPage() + pageOffset, currentRule.labelPrefix());
+            } else {
+                // If no rule has been set yet (e.g., for pages before the first rule),
+                // use the default decimal numbering.
+                label = String.valueOf(i);
             }
             simulatedLabels.add(label);
         }
@@ -59,7 +61,7 @@ public class PdfPageLabelService {
     }
 
     private String generateLabel(PageLabel.PageLabelNumberingStyle style, int number, String prefix) {
-        if (style == null || style == PageLabel.PageLabelNumberingStyle.NONE) {
+        if (style == null) { // Fallback for undefined or null styles
             return (prefix != null ? prefix : "") + number;
         }
         String label;
@@ -69,6 +71,7 @@ public class PdfPageLabelService {
             case LOWERCASE_ROMAN_NUMERALS -> label = toRoman(number).toLowerCase();
             case UPPERCASE_LETTERS -> label = toLetters(number);
             case LOWERCASE_LETTERS -> label = toLetters(number).toLowerCase();
+            case NONE -> label = ""; // For NONE style, display nothing.
             default -> label = String.valueOf(number);
         }
         return prefix != null ? prefix + label : label;
