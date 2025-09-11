@@ -3,9 +3,11 @@ package com.ririv.quickoutline.view.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.view.icons.AppIcon
@@ -27,31 +29,32 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp) // Add vertical spacing
     ) {
+        val modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp))
         GraphIconToggleButton(
             checked = selectedTab == 0,
             onCheckedChange = { onTabSelected(0) },
-            modifier = Modifier.size(40.dp)
+            modifier = modifier
         ) {
             AppIcon(icon = AppIcon.Bookmark, contentDescription = "Bookmark", modifier = Modifier.size(24.dp), tint = if (selectedTab == 0) Color(0xFF409EFF) else Color.Gray)
         }
         GraphIconToggleButton(
             checked = selectedTab == 2,
             onCheckedChange = { onTabSelected(2) },
-            modifier = Modifier.size(40.dp)
+            modifier = modifier
         ) {
             AppIcon(icon = AppIcon.PageLabelSingle, contentDescription = "Label", modifier = Modifier.size(24.dp), tint = if (selectedTab == 2) Color(0xFF409EFF) else Color.Gray)
         }
         GraphIconToggleButton(
             checked = selectedTab == 1,
             onCheckedChange = { onTabSelected(1) },
-            modifier = Modifier.size(40.dp)
+            modifier = modifier
         ) {
             AppIcon(icon = AppIcon.Toc, contentDescription = "TOC", modifier = Modifier.size(24.dp), tint = if (selectedTab == 1) Color(0xFF409EFF) else Color.Gray)
         }
         GraphIconToggleButton(
             checked = selectedTab == 3,
             onCheckedChange = { onTabSelected(3) },
-            modifier = Modifier.size(40.dp)
+            modifier = modifier
         ) {
             AppIcon(icon = AppIcon.FeatureLandscape, contentDescription = "Preview", modifier = Modifier.size(24.dp), tint = if (selectedTab == 3) Color(0xFF409EFF) else Color.Gray)
         }

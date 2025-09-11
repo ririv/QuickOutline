@@ -58,7 +58,6 @@ fun GraphIconToggleButton(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
             .background(backgroundColor)
             .clickable(
                 interactionSource = interactionSource,

@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,31 +18,79 @@ import com.ririv.quickoutline.view.icons.AppIcon
 import com.ririv.quickoutline.view.ui.stringResource
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import com.ririv.quickoutline.view.controls.*
+import com.ririv.quickoutline.view.ui.controls.GraphIconToggleButton
+import org.intellij.lang.annotations.JdkConstants
 
 @Composable
 private fun SetContentsPopupContent(onSelect: (ViewScaleType) -> Unit) {
     var selected by remember { mutableStateOf(ViewScaleType.NONE) }
-    Row(modifier = Modifier.padding(8.dp)) {
-        IconToggleButton(
-            checked = selected == ViewScaleType.FIT_TO_HEIGHT,
-            onCheckedChange = { if (it) { selected = ViewScaleType.FIT_TO_HEIGHT; onSelect(ViewScaleType.FIT_TO_HEIGHT) } }
+
+    val viewScaleText = when (selected) {
+        ViewScaleType.FIT_TO_HEIGHT -> stringResource("viewScaleTypeLabel.FIT_TO_HEIGHT")
+        ViewScaleType.FIT_TO_WIDTH -> stringResource("viewScaleTypeLabel.FIT_TO_WIDTH")
+        ViewScaleType.ACTUAL_SIZE -> stringResource("viewScaleTypeLabel.ACTUAL_SIZE")
+        else -> stringResource("viewScaleTypeLabel.NONE")
+    }
+
+    Column(
+        modifier = Modifier.padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+//        Box(
+////            contentAlignment = Alignment.Start
+//        ) {
+            Text(
+                stringResource("setContentsPopup.title"),
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF9198A1),
+                textAlign = TextAlign.Left,
+                modifier=Modifier.align(Alignment.Start)
+            )
+//        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            AppIcon(icon = AppIcon.FitToHeight, modifier = Modifier.size(24.dp))
+            val modifier = Modifier.clip(RoundedCornerShape(5.dp)).size(22.dp)
+            GraphIconToggleButton(
+                checked = selected == ViewScaleType.FIT_TO_HEIGHT,
+                onCheckedChange = {
+                    val newSelection = if (it) ViewScaleType.FIT_TO_HEIGHT else ViewScaleType.NONE
+                    selected = newSelection
+                    onSelect(newSelection)
+                },
+                modifier
+            ) {
+                AppIcon(icon = AppIcon.FitToHeight, modifier = Modifier.size(24.dp), tint = Color.Gray)
+            }
+            GraphIconToggleButton(
+                checked = selected == ViewScaleType.FIT_TO_WIDTH,
+                onCheckedChange = {
+                    val newSelection = if (it) ViewScaleType.FIT_TO_WIDTH else ViewScaleType.NONE
+                    selected = newSelection
+                    onSelect(newSelection)
+                },
+                modifier
+            ) {
+                AppIcon(icon = AppIcon.FitToWidth, modifier = Modifier.size(24.dp), tint = Color.Gray)
+            }
+            GraphIconToggleButton(
+                checked = selected == ViewScaleType.ACTUAL_SIZE,
+                onCheckedChange = {
+                    val newSelection = if (it) ViewScaleType.ACTUAL_SIZE else ViewScaleType.NONE
+                    selected = newSelection
+                    onSelect(newSelection)
+                },
+                modifier
+            ) {
+                AppIcon(icon = AppIcon.ActualSize, modifier = Modifier.size(24.dp), tint = Color.Gray)
+            }
         }
-        IconToggleButton(
-            checked = selected == ViewScaleType.FIT_TO_WIDTH,
-            onCheckedChange = { if (it) { selected = ViewScaleType.FIT_TO_WIDTH; onSelect(ViewScaleType.FIT_TO_WIDTH) } }
-        ) {
-            AppIcon(icon = AppIcon.FitToWidth, modifier = Modifier.size(24.dp))
-        }
-        IconToggleButton(
-            checked = selected == ViewScaleType.ACTUAL_SIZE,
-            onCheckedChange = { if (it) { selected = ViewScaleType.ACTUAL_SIZE; onSelect(ViewScaleType.ACTUAL_SIZE) } }
-        ) {
-            AppIcon(icon = AppIcon.ActualSize, modifier = Modifier.size(24.dp))
-        }
+        Text(viewScaleText, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -49,7 +98,11 @@ private fun SetContentsPopupContent(onSelect: (ViewScaleType) -> Unit) {
 private fun GetContentsPopupContent(onSelect: (String) -> Unit) {
     var selected by remember { mutableStateOf("bookmark") }
     Column(modifier = Modifier.padding(8.dp)) {
-        Text("Source", fontWeight = FontWeight.Bold)
+        Text("获取目录",
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF9198A1),
+            textAlign = TextAlign.Left,
+            modifier=Modifier.align(Alignment.Start))
         Spacer(Modifier.height(8.dp))
 
         // 1. 定义你的选项列表
@@ -68,7 +121,6 @@ private fun GetContentsPopupContent(onSelect: (String) -> Unit) {
             onItemSelected = { newValue ->
                 // 当用户点击时，更新状态
                 selectedValue = newValue
-                println("用户选择了: $newValue")
             }
         )
     }
