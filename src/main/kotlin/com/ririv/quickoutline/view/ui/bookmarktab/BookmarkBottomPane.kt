@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view.ui.bookmarktab
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -140,20 +141,22 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
         val deleteInteractionSource = remember { MutableInteractionSource() }
         val isDeleteHovered by deleteInteractionSource.collectIsHoveredAsState()
         val isDeletePressed by deleteInteractionSource.collectIsPressedAsState()
-        val deleteIconTint = when {
+        val targetDeleteIconTint = when {
             isDeletePressed -> Color(0xFFC45656)
             isDeleteHovered -> Color(0xFFf56c6c)
             else -> Color.Gray
         }
+        val deleteIconTint by animateColorAsState(targetDeleteIconTint)
 
         val switchInteractionSource = remember { MutableInteractionSource() }
         val isSwitchHovered by switchInteractionSource.collectIsHoveredAsState()
         val isSwitchPressed by switchInteractionSource.collectIsPressedAsState()
-        val switchIconTint = when {
+        val targetSwitchIconTint = when {
             isSwitchPressed -> Color(0xE5969696)
             isSwitchHovered -> Color(0xFF363636)
             else -> Color.Gray
         }
+        val switchIconTint by animateColorAsState(targetSwitchIconTint)
 
         Box(
             modifier = Modifier.clickable(

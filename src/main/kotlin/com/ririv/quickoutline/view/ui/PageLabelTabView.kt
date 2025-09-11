@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view.ui
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -121,11 +122,12 @@ fun PageLabelTabView() {
                             val isHovered by interactionSource.collectIsHoveredAsState()
                             val isPressed by interactionSource.collectIsPressedAsState()
 
-                            val iconColor = when {
+                            val targetIconColor = when {
                                 isPressed -> Color(0xFFC45656) // Pressed red
                                 isHovered -> Color(0xFFF56C6C) // Hover red
                                 else -> Color.Gray
                             }
+                            val iconColor by animateColorAsState(targetIconColor)
                             Box(
                                 modifier = Modifier.clickable(
                                     onClick = { viewModel.removeRule(rule) },
