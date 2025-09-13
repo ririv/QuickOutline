@@ -74,7 +74,6 @@ fun TextSubView(
         ) {
             Box(modifier = Modifier.weight(1f)) {
                 StyledButton(
-
                     onClick = onVsCodeClick,
                     text = if (isSyncingWithEditor) stringResource("btn.externalEditorConnected") else "VSCode",
                     type = ButtonType.PLAIN_PRIMARY,

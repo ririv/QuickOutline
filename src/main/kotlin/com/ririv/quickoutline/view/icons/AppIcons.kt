@@ -42,6 +42,7 @@ sealed interface AppIcon {
     data object Open: AppIcon
     data object Delete: AppIcon // delete.svg
     data object DeleteCn: AppIcon // 删除.svg (中文版本)
+    data object Connected: AppIcon
 }
 
 @Composable
@@ -69,6 +70,7 @@ fun AppIcon(
             AppIcon.Open -> Res.drawable.`open`
             AppIcon.Delete -> Res.drawable.delete
             AppIcon.DeleteCn -> Res.drawable.`删除`
+            AppIcon.Connected -> Res.drawable.connected
         }
     }
     Icon(painter = painterResource(drawableRes), contentDescription = contentDescription, modifier = modifier, tint = tint)

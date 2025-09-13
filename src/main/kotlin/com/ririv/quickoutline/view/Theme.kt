@@ -39,4 +39,5 @@ object AppColors {
         hovered = ButtonColors(containerColor = Color(0xFFF56C6C), contentColor = Color.White, borderColor = Color(0xFFF56C6C)),
         pressed = ButtonColors(containerColor = Color(0xFFD9534F), contentColor = Color.White, borderColor = Color(0xFFD9534F))
     )
+
 }
