@@ -29,7 +29,7 @@ sealed interface AppIcon {
     data object Bookmark: AppIcon
     data object PageLabelSingle: AppIcon // 页码-单路径.svg
     data object Toc: AppIcon
-    data object FeatureLandscape: AppIcon // 特色-风景.svg
+    data object FeatureLandscape: AppIcon // 风景.svg
     data object Setting: AppIcon
     data object Help: AppIcon
 
@@ -57,19 +57,19 @@ fun AppIcon(
             AppIcon.Github -> Res.drawable.github
             AppIcon.Xiaohongshu -> Res.drawable.xiaohongshu
             AppIcon.Bookmark -> Res.drawable.bookmark
-            AppIcon.PageLabelSingle -> Res.drawable.`页码_单路径`
+            AppIcon.PageLabelSingle -> Res.drawable.页码_单路径
             AppIcon.Toc -> Res.drawable.toc
-            AppIcon.FeatureLandscape -> Res.drawable.`特色_风景`
-            AppIcon.Setting -> Res.drawable.setting
+            AppIcon.FeatureLandscape -> Res.drawable.风景
+            AppIcon.Setting -> Res.drawable.设置
             AppIcon.Help -> Res.drawable.help
             AppIcon.FitToHeight -> Res.drawable.fit_to_height
             AppIcon.FitToWidth -> Res.drawable.fit_to_width
             AppIcon.ActualSize -> Res.drawable.actual_size
             AppIcon.TreeDiagram -> Res.drawable.tree_diagram
             AppIcon.TextEdit -> Res.drawable.text_edit
-            AppIcon.Open -> Res.drawable.`open`
+            AppIcon.Open -> Res.drawable.open
             AppIcon.Delete -> Res.drawable.delete
-            AppIcon.DeleteCn -> Res.drawable.`删除`
+            AppIcon.DeleteCn -> Res.drawable.删除
             AppIcon.Connected -> Res.drawable.connected
         }
     }
@@ -83,8 +83,8 @@ fun PreloadPrimaryIcons() {
     listOf(
         Res.drawable.bookmark,
         Res.drawable.toc,
-        Res.drawable.`特色_风景`,
-        Res.drawable.setting,
+        Res.drawable.风景,
+        Res.drawable.设置,
         Res.drawable.help,
         Res.drawable.github,
     ).forEach { painterResource(it) }
