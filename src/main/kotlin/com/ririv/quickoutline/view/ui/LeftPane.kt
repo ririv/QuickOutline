@@ -14,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.rememberWindowState
 import com.ririv.quickoutline.view.icons.AppIcon
-import com.ririv.quickoutline.view.ui.controls.GraphIconButton
-import com.ririv.quickoutline.view.ui.controls.GraphIconToggleButton
+import com.ririv.quickoutline.view.controls.GraphIconButton
+import com.ririv.quickoutline.view.controls.GraphIconToggleButton
 
 @Composable
 fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {

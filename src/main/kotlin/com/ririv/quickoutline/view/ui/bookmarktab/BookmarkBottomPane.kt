@@ -23,8 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import com.ririv.quickoutline.view.controls.*
-import com.ririv.quickoutline.view.ui.controls.GraphIconToggleButton
-import org.intellij.lang.annotations.JdkConstants
+import com.ririv.quickoutline.view.controls.GraphIconToggleButton
 
 @Composable
 private fun SetContentsPopupContent(onSelect: (ViewScaleType) -> Unit) {
