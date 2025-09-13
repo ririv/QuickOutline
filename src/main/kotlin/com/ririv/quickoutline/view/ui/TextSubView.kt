@@ -5,8 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,7 +53,16 @@ fun TextSubView(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource("mask.text"), color = Color.White)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.Black.copy(alpha = 0.3f), // 给文字一个更深的背景
+                    ) {
+                        Text(
+                            text = stringResource("mask.text"),
+                            color = Color.White, // 文字用纯白色
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+                        )
+                    }
                 }
             }
         }
