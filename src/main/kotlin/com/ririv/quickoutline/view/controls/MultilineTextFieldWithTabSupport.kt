@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -96,7 +97,7 @@ fun MultilineTextFieldWithTabSupport(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(end = 12.dp, bottom = 12.dp) // Prevent text from overlapping with the scrollbars
                 .verticalScroll(vScrollState)
                 .horizontalScroll(hScrollState)
