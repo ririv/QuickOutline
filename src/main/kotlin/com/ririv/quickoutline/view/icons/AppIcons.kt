@@ -53,7 +53,7 @@ fun AppIcon(
     tint: Color = Color.Unspecified
 ) {
     val drawableRes = remember(icon) {
-        when(icon) {
+        when (icon) {
             AppIcon.Github -> Res.drawable.github
             AppIcon.Xiaohongshu -> Res.drawable.xiaohongshu
             AppIcon.Bookmark -> Res.drawable.bookmark
