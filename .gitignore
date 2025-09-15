@@ -8,6 +8,8 @@
 .idea/shelf/
 .idea/vcs.xml
 .idea/misc.xml
+.idea/copilot.data.migration.agent.xml
+.idea/copilot.data.migration.edit.xml
 
 target
 
