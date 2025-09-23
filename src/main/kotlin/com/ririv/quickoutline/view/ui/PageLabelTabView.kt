@@ -2,8 +2,10 @@ package com.ririv.quickoutline.view.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
@@ -11,7 +13,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.material.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,10 +28,11 @@ import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.StyledButton
 import com.ririv.quickoutline.view.controls.StyledTextField
 import com.ririv.quickoutline.view.icons.AppIcon
+import com.ririv.quickoutline.view.theme.QuickOutlineTheme
 import com.ririv.quickoutline.view.viewmodel.PageLabelViewModel
 import org.koin.java.KoinJavaComponent.inject
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun PageLabelTabView() {
     val viewModel: PageLabelViewModel by inject(PageLabelViewModel::class.java)
@@ -41,26 +46,40 @@ fun PageLabelTabView() {
             Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(stringResource("pageLabel.style"), modifier = Modifier.width(80.dp))
+                    val styleDisplayNames = mapOf(
+                        PageLabel.PageLabelNumberingStyle.NONE to "无",
+                        PageLabel.PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS to "1, 2, 3, ...",
+                        PageLabel.PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS to "i, ii, iii, ...",
+                        PageLabel.PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS to "I, II, III, ...",
+                        PageLabel.PageLabelNumberingStyle.LOWERCASE_LETTERS to "a, b, c, ...",
+                        PageLabel.PageLabelNumberingStyle.UPPERCASE_LETTERS to "A, B, C, ...",
+                    )
                     ExposedDropdownMenuBox(
                         expanded = expanded,
-                        onExpandedChange = { expanded = !expanded }
+                        onExpandedChange = { expanded = !expanded },
+                        modifier = Modifier.weight(1f)
                     ) {
                         StyledTextField(
-                            value = TextFieldValue(viewModel.numberingStyle.name),
+                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                            value = TextFieldValue(styleDisplayNames[viewModel.numberingStyle] ?: ""),
                             onValueChange = {},
-                            placeholder = null,
-                            singleLine = true
+                            readOnly = true,
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                            }
                         )
                         ExposedDropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            PageLabel.PageLabelNumberingStyle.entries.forEach { style ->
-                                DropdownMenuItem(onClick = {
-                                    viewModel.numberingStyle = style
-                                    expanded = false
-                                }) {
-                                    Text(style.name)
+                            QuickOutlineTheme {
+                                PageLabel.PageLabelNumberingStyle.entries.forEach { style ->
+                                    DropdownMenuItem(
+                                        text = { Text(styleDisplayNames[style] ?: "") },
+                                        onClick = {
+                                            viewModel.numberingStyle = style
+                                            expanded = false
+                                        })
                                 }
                             }
                         }
@@ -71,8 +90,6 @@ fun PageLabelTabView() {
                     StyledTextField(
                         value = viewModel.prefix,
                         onValueChange = { viewModel.prefix = it },
-                        placeholder = null,
-                        singleLine = true
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -81,7 +98,6 @@ fun PageLabelTabView() {
                         value = viewModel.startNumber,
                         onValueChange = { viewModel.startNumber = it },
                         placeholder = { Text(stringResource("pageLabel.startNumber.prompt")) },
-                        singleLine = true
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -89,8 +105,6 @@ fun PageLabelTabView() {
                     StyledTextField(
                         value = viewModel.fromPage,
                         onValueChange = { viewModel.fromPage = it },
-                        placeholder = null,
-                        singleLine = true
                     )
                 }
             }

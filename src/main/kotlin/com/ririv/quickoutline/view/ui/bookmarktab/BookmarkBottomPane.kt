@@ -209,15 +209,16 @@ fun BookmarkBottomPane(viewModel: BookmarkViewModel, showTreeView: Boolean, onSw
             }
         }
 
-        OutlinedTextField(
+        StyledTextField(
             value = uiState.offset,
             onValueChange = { viewModel.setOffset(it) },
-            label = { Text(stringResource("bookmarkTab.offsetTF.prompt")) },
+//            label = { Text(stringResource("bookmarkTab.offsetTF.prompt")) },
             modifier = Modifier.weight(1f),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-            ),
+//            colors = TextFieldDefaults.colors(
+//                focusedContainerColor = Color.Transparent,
+//                unfocusedContainerColor = Color.Transparent,
+//            ),
+            placeholder = { Text(stringResource("bookmarkTab.offsetTF.prompt")) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
