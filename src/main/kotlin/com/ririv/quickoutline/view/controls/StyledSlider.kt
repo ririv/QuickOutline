@@ -3,11 +3,14 @@ package com.ririv.quickoutline.view.controls
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,13 +46,14 @@ fun StyledSlider(
 
     val interactionSource = remember { MutableInteractionSource() }
 
+    // 直接在 Slider 外层通过 modifier 禁用 indication (ripple)。部分版本中 IndicationInstance 不对外暴露。
     Slider(
         value = value,
         onValueChange = onValueChange,
         valueRange = valueRange,
         steps = steps,
         colors = sliderColors,
-        modifier = modifier,
+        modifier = modifier.indication(interactionSource, indication = null),
         enabled = enabled,
         interactionSource = interactionSource,
         track = { sliderState ->
@@ -70,12 +74,15 @@ fun StyledSlider(
             val isDragged by interactionSource.collectIsDraggedAsState()
             val isHovered by interactionSource.collectIsHoveredAsState()
             val borderWidth by animateDpAsState(if (isDragged || isHovered) 3.dp else 2.dp)
+            val thumbSize by animateDpAsState(if (isDragged || isHovered) 18.dp else 14.dp)
 
-            // Transparent spacer with a border to debug background issue
-            Spacer(
+            Box(
                 modifier = Modifier
-                    .size(14.dp)
-                    .border(BorderStroke(borderWidth, thumbAndTrackColor), CircleShape)
+                    .size(thumbSize)
+                    .border(
+                        BorderStroke(borderWidth, thumbAndTrackColor),
+                        CircleShape
+                    ),
             )
         }
     )
