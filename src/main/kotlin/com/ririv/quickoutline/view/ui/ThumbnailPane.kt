@@ -58,10 +58,14 @@ fun ThumbnailPane() {
     }
 
     Column(modifier = Modifier.padding(10.dp).fillMaxHeight()) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp)) {
-            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.FeatureLandscape, modifier = Modifier.size(12.dp), tint = Color.Gray)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            AppIcon(icon = AppIcon.FeatureLandscape, modifier = Modifier.size(12.dp), tint = Color.Gray)
             StyledSlider(value = zoom, onValueChange = { zoom = it }, valueRange = 0.5f..3f, modifier = Modifier.weight(1f))
-            com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.FeatureLandscape, modifier = Modifier.size(17.dp), tint = Color.Gray)
+            AppIcon(icon = AppIcon.FeatureLandscape, modifier = Modifier.size(17.dp), tint = Color.Gray)
         }
         BoxWithConstraints(modifier = Modifier.weight(1f)) {
             val columnCount = max(1, (maxWidth / (thumbnailWidth + 20.dp)).toInt())
