@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,7 +116,7 @@ fun PageLabelTabView() {
                 type = ButtonType.PLAIN_PRIMARY
             )
 
-            Divider()
+            HorizontalDivider()
 
             Text(stringResource("pageLabel.ruleList"), fontWeight = FontWeight.Bold, color = Color(0xFF9198A1))
 
