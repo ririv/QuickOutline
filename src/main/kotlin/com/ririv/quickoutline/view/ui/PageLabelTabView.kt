@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.pdfProcess.PageLabel
 import com.ririv.quickoutline.view.controls.ButtonType
@@ -49,7 +50,7 @@ fun PageLabelTabView() {
                     Text(
                         text = stringResource("pageLabel.style"),
                         modifier = Modifier.width(80.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                        textAlign = TextAlign.Right
                     )
                     val styleDisplayNames = mapOf(
                         PageLabel.PageLabelNumberingStyle.NONE to "无",
@@ -94,7 +95,7 @@ fun PageLabelTabView() {
                     Text(
                         text = stringResource("pageLabel.prefix"),
                         modifier = Modifier.width(80.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                        textAlign = TextAlign.Right
                     )
                     StyledTextField(
                         value = viewModel.prefix,
@@ -105,7 +106,7 @@ fun PageLabelTabView() {
                     Text(
                         text = stringResource("pageLabel.startNumber"),
                         modifier = Modifier.width(80.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                        textAlign = TextAlign.Right
                     )
                     StyledTextField(
                         value = viewModel.startNumber,
@@ -117,7 +118,7 @@ fun PageLabelTabView() {
                     Text(
                         text = stringResource("pageLabel.startPage"),
                         modifier = Modifier.width(80.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                        textAlign = TextAlign.Right
                     )
                     StyledTextField(
                         value = viewModel.fromPage,
@@ -168,7 +169,7 @@ fun PageLabelTabView() {
                                     indication = null
                                 ).padding(8.dp)
                             ) {
-                                com.ririv.quickoutline.view.icons.AppIcon(icon = AppIcon.DeleteCn, modifier = Modifier.size(20.dp), tint = iconColor)
+                                AppIcon(icon = AppIcon.DeleteCn, modifier = Modifier.size(20.dp), tint = iconColor)
                             }
                         }
                     }

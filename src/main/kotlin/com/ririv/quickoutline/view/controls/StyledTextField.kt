@@ -68,7 +68,11 @@ fun StyledTextField(
                     contentAlignment = Alignment.CenterStart
                 ) {
                     if (value.text.isEmpty() && placeholder != null) {
-                        placeholder()
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            androidx.compose.material3.LocalContentColor provides Color.Gray
+                        ) {
+                            placeholder()
+                        }
                     }
                     innerTextField()
                 }
