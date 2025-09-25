@@ -32,7 +32,7 @@ class EnSeqTest {
         );
 
 
-        List<Bookmark> parsedLines = parser.parse(lines, 0);
+        List<Bookmark> parsedLines = parser.parse(lines);
 
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
 
