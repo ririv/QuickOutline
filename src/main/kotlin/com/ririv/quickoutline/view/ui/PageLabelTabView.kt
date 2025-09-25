@@ -46,7 +46,11 @@ fun PageLabelTabView() {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource("pageLabel.style"), modifier = Modifier.width(80.dp))
+                    Text(
+                        text = stringResource("pageLabel.style"),
+                        modifier = Modifier.width(80.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                    )
                     val styleDisplayNames = mapOf(
                         PageLabel.PageLabelNumberingStyle.NONE to "无",
                         PageLabel.PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS to "1, 2, 3, ...",
@@ -87,14 +91,22 @@ fun PageLabelTabView() {
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource("pageLabel.prefix"), modifier = Modifier.width(80.dp))
+                    Text(
+                        text = stringResource("pageLabel.prefix"),
+                        modifier = Modifier.width(80.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                    )
                     StyledTextField(
                         value = viewModel.prefix,
                         onValueChange = { viewModel.prefix = it },
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource("pageLabel.startNumber"), modifier = Modifier.width(80.dp))
+                    Text(
+                        text = stringResource("pageLabel.startNumber"),
+                        modifier = Modifier.width(80.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                    )
                     StyledTextField(
                         value = viewModel.startNumber,
                         onValueChange = { viewModel.startNumber = it },
@@ -102,7 +114,11 @@ fun PageLabelTabView() {
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource("pageLabel.startPage"), modifier = Modifier.width(80.dp))
+                    Text(
+                        text = stringResource("pageLabel.startPage"),
+                        modifier = Modifier.width(80.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                    )
                     StyledTextField(
                         value = viewModel.fromPage,
                         onValueChange = { viewModel.fromPage = it },
@@ -110,11 +126,13 @@ fun PageLabelTabView() {
                 }
             }
 
-            StyledButton(
-                onClick = { viewModel.addRule() },
-                text = stringResource("pageLabel.addRuleBtn"),
-                type = ButtonType.PLAIN_PRIMARY
-            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                StyledButton(
+                    onClick = { viewModel.addRule() },
+                    text = stringResource("pageLabel.addRuleBtn"),
+                    type = ButtonType.PLAIN_PRIMARY
+                )
+            }
 
             HorizontalDivider()
 
@@ -161,11 +179,13 @@ fun PageLabelTabView() {
                 )
             }
 
-            StyledButton(
-                onClick = { viewModel.setPageLabels() },
-                text = stringResource("setPageLabelBtn.text"),
-                type = ButtonType.PLAIN_IMPORTANT
-            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                StyledButton(
+                    onClick = { viewModel.setPageLabels() },
+                    text = stringResource("setPageLabelBtn.text"),
+                    type = ButtonType.PLAIN_IMPORTANT
+                )
+            }
         }
         Column(modifier = Modifier.weight(0.25f)) {
             ThumbnailPane()
