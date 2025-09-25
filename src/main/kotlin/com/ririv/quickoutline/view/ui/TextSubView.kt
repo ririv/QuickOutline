@@ -15,12 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.ririv.quickoutline.textProcess.methods.Method
 import com.ririv.quickoutline.view.controls.ButtonType
 import com.ririv.quickoutline.view.controls.MultilineTextFieldWithTabSupport
 import com.ririv.quickoutline.view.controls.StyledButton
+import com.ririv.quickoutline.view.controls.TabToSpacesTransformation
 
 @Composable
 fun TextSubView(
@@ -34,11 +36,16 @@ fun TextSubView(
 
     Row(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            val transformation = remember { TabToSpacesTransformation() }
             MultilineTextFieldWithTabSupport(
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxSize(),
-                placeholder = { Text(stringResource("contentsTextArea.prompt")) },
+                placeholder = {
+                    val placeholderText = stringResource("contentsTextArea.prompt")
+                    val transformedText = transformation.filter(AnnotatedString(placeholderText)).text
+                    Text(transformedText)
+                },
                 enabled = !isSyncingWithEditor
             )
             if (isSyncingWithEditor) {

@@ -71,6 +71,24 @@ class TabToSpacesTransformation(private val tabWidth: Int = 4) : VisualTransform
 }
 
 
+/**
+ * A multiline TextField that adds support for Tab and Shift+Tab for indentation.
+ *
+ * **Note on placeholder:** The visual transformation for tabs is not applied to the placeholder composable.
+ * For visual consistency, if the placeholder contains tab characters, they should be manually
+ * replaced with spaces.
+ *
+ * Example:
+ * ```
+ * placeholder = { Text("Indented\tplaceholder".replace("\t", "    ")) }
+ * ```
+ *
+ * @param value The [TextFieldValue] to be shown in the text field.
+ * @param onValueChange The callback that is triggered when the user input changes.
+ * @param modifier The modifier to be applied to this text field.
+ * @param placeholder The placeholder to be displayed when the text field is empty.
+ * @param enabled Controls the enabled state of this text field.
+ */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun MultilineTextFieldWithTabSupport(
@@ -91,6 +109,8 @@ fun MultilineTextFieldWithTabSupport(
         isHovered -> Color(0xFF409EFF)
         else -> Color.Transparent
     }
+
+    val transformation = remember { TabToSpacesTransformation() }
 
     Box(modifier = modifier.border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(4.dp))) {
         TextField(
@@ -115,7 +135,7 @@ fun MultilineTextFieldWithTabSupport(
                         false
                     }
                 },
-            visualTransformation = TabToSpacesTransformation(),
+            visualTransformation = transformation,
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = Color.White,
                 focusedContainerColor = Color.White,
