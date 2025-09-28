@@ -80,7 +80,7 @@ fun LeftPane(selectedTab: Int, onTabSelected: (Int) -> Unit) {
             modifier = graphButtonModifier
         ) {
             AppIcon(
-                icon = AppIcon.FeatureLandscape,
+                icon = AppIcon.view,
                 contentDescription = "Preview",
                 modifier = iconModifier,
                 tint = if (selectedTab == 3) Color(0xFF409EFF) else Color.Gray
