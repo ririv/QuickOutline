@@ -2,6 +2,8 @@ package com.ririv.quickoutline.view.bookmarktab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.pdfProcess.PdfPreview;
+import com.ririv.quickoutline.view.controls.PopupCard;
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.LocalizationManager;
@@ -10,11 +12,19 @@ import com.ririv.quickoutline.view.RecursiveTreeItem;
 import com.ririv.quickoutline.view.controls.EditableTreeTableCell;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class TreeSubViewController {
     public TreeTableView<BookmarkViewModel> treeTableView;
@@ -23,24 +33,49 @@ public class TreeSubViewController {
 
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
     private final BookmarkSettingsState bookmarkSettingsState;
+    private final com.ririv.quickoutline.view.state.CurrentFileState currentFileState;
+    private PdfPreview pdfPreviewInstance;
     private MenuItem promoteMenuItem;
     private MenuItem demoteMenuItem;
 
+    private ImageView popupImageView;
+    private PopupCard imagePopupCard;
+    private final ExecutorService previewRenderExecutor = Executors.newSingleThreadExecutor();
+    private static final double POPUP_WIDTH = 600;
+
     @Inject
-    public TreeSubViewController(BookmarkSettingsState bookmarkSettingsState) {
+    public TreeSubViewController(BookmarkSettingsState bookmarkSettingsState, com.ririv.quickoutline.view.state.CurrentFileState currentFileState) {
         this.bookmarkSettingsState = bookmarkSettingsState;
+        this.currentFileState = currentFileState;
     }
 
     public void initialize() {
         treeTableView.setEditable(true);
         treeTableView.setColumnResizePolicy(TreeTableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-        
+
         // 为使用EditableTreeTableCell的TreeTableView添加专用样式类
         treeTableView.getStyleClass().add("editable-tree-table-view");
-        
+
         titleColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.9));
         offsetPageColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.1));
+        setupPopupCard();
         setupRowFactory();
+
+        currentFileState.srcFileProperty().addListener((obs, oldPath, newPath) -> {
+            try {
+                if (pdfPreviewInstance != null) {
+                    pdfPreviewInstance.close();
+                }
+                if (newPath != null) {
+                    pdfPreviewInstance = new PdfPreview(newPath.toFile());
+                } else {
+                    pdfPreviewInstance = null;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                pdfPreviewInstance = null;
+            }
+        });
 
         bookmarkSettingsState.rootBookmarkProperty().addListener((obs, oldRoot, newRoot) -> {
             if (newRoot == null) {
@@ -76,6 +111,19 @@ public class TreeSubViewController {
         });
     }
 
+    private void setupPopupCard() {
+        popupImageView = new ImageView();
+        popupImageView.setPreserveRatio(true);
+        popupImageView.setFitWidth(POPUP_WIDTH);
+
+        StackPane popupContentWrapper = new StackPane(popupImageView);
+
+        imagePopupCard = new PopupCard(popupContentWrapper);
+        imagePopupCard.setPosition(PopupCard.PopupPosition.RIGHT_OF);
+        imagePopupCard.setTriggers(PopupCard.TriggerType.INSTANT_ON_HOVER);
+        imagePopupCard.setHideDelay(Duration.millis(1));
+    }
+
     private void setupRowFactory() {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem addSiblingItem = new MenuItem(bundle.getString("contextMenu.addBookmark"));
@@ -94,6 +142,33 @@ public class TreeSubViewController {
 
         treeTableView.setRowFactory(tv -> {
             TreeTableRow<BookmarkViewModel> row = new TreeTableRow<>();
+
+            imagePopupCard.attachTo(row);
+            row.setOnMouseEntered(event -> {
+                if (!row.isEmpty() && pdfPreviewInstance != null) {
+                    BookmarkViewModel bookmark = row.getItem();
+                    if (bookmark != null) {
+                        bookmark.getModel().getPageNum().ifPresent(pageNum -> {
+                            int offset = bookmarkSettingsState.getOffset();
+                            int pageIndex = pageNum + offset - 1;
+
+                            previewRenderExecutor.submit(() -> {
+                                try {
+                                    pdfPreviewInstance.renderPreviewImage(pageIndex, bufferedImage -> {
+                                        Image highResImage = SwingFXUtils.toFXImage(bufferedImage, null);
+                                        Platform.runLater(() -> popupImageView.setImage(highResImage));
+                                    });
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                        });
+                    } else {
+                        popupImageView.setImage(null);
+                    }
+                }
+            });
+
             row.setOnMouseClicked(event -> {
                 if (event.getButton() == MouseButton.SECONDARY && !row.isEmpty()) {
                     updateContextMenuStatus(row.getTreeItem());
