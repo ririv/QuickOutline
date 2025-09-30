@@ -13,9 +13,6 @@ plugins {
     id 'java'
 }
 
-//java {
-//    modularity.inferModulePath.set(false)
-//}
 
 // java版本选择21（LTS）
 java {
@@ -24,11 +21,11 @@ java {
     }
 }
 
-version = '2.2.3'
+version = '2.3.0'
 
 javafx {
-    version = '23' // LTS
-        modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing' ]
+    version = '23'
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing' ]
 }
 
 application{
