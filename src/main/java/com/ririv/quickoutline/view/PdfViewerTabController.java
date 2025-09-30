@@ -3,7 +3,6 @@ package com.ririv.quickoutline.view;
 import com.google.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PdfPreview;
 import com.ririv.quickoutline.view.state.CurrentFileState;
-import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -13,7 +12,7 @@ import javafx.scene.image.ImageView;
 import java.io.File;
 import java.io.IOException;
 
-public class PdfPreviewController {
+public class PdfViewerTabController {
 
     @FXML
     private ImageView imageView;
@@ -36,7 +35,7 @@ public class PdfPreviewController {
     private final CurrentFileState currentFileState;
 
     @Inject
-    public PdfPreviewController(CurrentFileState currentFileState) {
+    public PdfViewerTabController(CurrentFileState currentFileState) {
         this.currentFileState = currentFileState;
     }
 

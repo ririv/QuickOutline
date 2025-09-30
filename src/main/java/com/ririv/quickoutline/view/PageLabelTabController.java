@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PageLabelController {
+public class PageLabelTabController {
 
     // The UI display strings and their mapping to the domain model (Enum)
     // are now properly confined to the view layer.
@@ -61,7 +61,7 @@ public class PageLabelController {
     private List<String> originalPageLabels;
 
     @Inject
-    public PageLabelController(PdfPageLabelService pdfPageLabelService, CurrentFileState fileService, AppEventBus appEventBus) {
+    public PageLabelTabController(PdfPageLabelService pdfPageLabelService, CurrentFileState fileService, AppEventBus appEventBus) {
         this.pdfPageLabelService = pdfPageLabelService;
         this.fileService = fileService;
         this.appEventBus = appEventBus;

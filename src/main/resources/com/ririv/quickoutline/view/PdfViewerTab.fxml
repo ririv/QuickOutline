@@ -9,7 +9,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ririv.quickoutline.view.PdfPreviewController" prefHeight="800.0" prefWidth="600.0">
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ririv.quickoutline.view.PdfViewerTabController" prefHeight="800.0" prefWidth="600.0">
     <center>
         <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true" BorderPane.alignment="CENTER">
             <content>

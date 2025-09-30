@@ -18,7 +18,7 @@ public class AppModule extends AbstractModule {
     protected void configure() {
         bind(CurrentFileState.class).in(Scopes.SINGLETON);
         bind(PdfOutlineService.class).in(Scopes.SINGLETON);
-        bind(PageLabelController.class).in(Scopes.SINGLETON);
+        bind(PageLabelTabController.class).in(Scopes.SINGLETON);
         bind(LeftPaneController.class).in(Scopes.SINGLETON);
         bind(TreeSubViewController.class).in(Scopes.SINGLETON);
         bind(TocGeneratorTabController.class).in(Scopes.SINGLETON);
