@@ -1,7 +1,7 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.pdfProcess.PdfPreview;
+import com.ririv.quickoutline.pdfProcess.PageImageRender;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import javafx.application.Platform;
@@ -37,7 +37,7 @@ public class ThumbnailPaneController {
     private final CurrentFileState currentFileState;
     private final PdfPageLabelService pdfPageLabelService; // Inject PdfPageLabelService
     private final AppEventBus appEventBus;
-    private PdfPreview currentPreview;
+    private PageImageRender currentPreview;
     private String[] currentPageLabels; // Store the page labels array
     private ExecutorService fileLoadExecutor = Executors.newSingleThreadExecutor();
     private ExecutorService thumbnailRenderExecutor;
@@ -96,10 +96,10 @@ public class ThumbnailPaneController {
     private void loadPdf(File pdfFile) {
         reset();
 
-        Task<PdfPreview> loadFileTask = new Task<>() {
+        Task<PageImageRender> loadFileTask = new Task<>() {
             @Override
-            protected PdfPreview call() throws Exception {
-                return new PdfPreview(pdfFile);
+            protected PageImageRender call() throws Exception {
+                return new PageImageRender(pdfFile);
             }
         };
 

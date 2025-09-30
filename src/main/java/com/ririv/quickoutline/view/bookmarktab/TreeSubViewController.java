@@ -2,7 +2,7 @@ package com.ririv.quickoutline.view.bookmarktab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.pdfProcess.PdfPreview;
+import com.ririv.quickoutline.pdfProcess.PageImageRender;
 import com.ririv.quickoutline.view.controls.PopupCard;
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
@@ -34,7 +34,7 @@ public class TreeSubViewController {
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
     private final BookmarkSettingsState bookmarkSettingsState;
     private final com.ririv.quickoutline.view.state.CurrentFileState currentFileState;
-    private PdfPreview pdfPreviewInstance;
+    private PageImageRender pageImageRenderInstance;
     private MenuItem promoteMenuItem;
     private MenuItem demoteMenuItem;
 
@@ -63,17 +63,17 @@ public class TreeSubViewController {
 
         currentFileState.srcFileProperty().addListener((obs, oldPath, newPath) -> {
             try {
-                if (pdfPreviewInstance != null) {
-                    pdfPreviewInstance.close();
+                if (pageImageRenderInstance != null) {
+                    pageImageRenderInstance.close();
                 }
                 if (newPath != null) {
-                    pdfPreviewInstance = new PdfPreview(newPath.toFile());
+                    pageImageRenderInstance = new PageImageRender(newPath.toFile());
                 } else {
-                    pdfPreviewInstance = null;
+                    pageImageRenderInstance = null;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                pdfPreviewInstance = null;
+                pageImageRenderInstance = null;
             }
         });
 
@@ -145,7 +145,7 @@ public class TreeSubViewController {
 
             imagePopupCard.attachTo(row);
             row.setOnMouseEntered(event -> {
-                if (!row.isEmpty() && pdfPreviewInstance != null) {
+                if (!row.isEmpty() && pageImageRenderInstance != null) {
                     BookmarkViewModel bookmark = row.getItem();
                     if (bookmark != null) {
                         bookmark.getModel().getPageNum().ifPresent(pageNum -> {
@@ -154,7 +154,7 @@ public class TreeSubViewController {
 
                             previewRenderExecutor.submit(() -> {
                                 try {
-                                    pdfPreviewInstance.renderPreviewImage(pageIndex, bufferedImage -> {
+                                    pageImageRenderInstance.renderPreviewImage(pageIndex, bufferedImage -> {
                                         Image highResImage = SwingFXUtils.toFXImage(bufferedImage, null);
                                         Platform.runLater(() -> popupImageView.setImage(highResImage));
                                     });

@@ -1,7 +1,7 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.pdfProcess.PdfPreview;
+import com.ririv.quickoutline.pdfProcess.PageImageRender;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
@@ -29,7 +29,7 @@ public class PdfViewerTabController {
     @FXML
     private TextField pageField;
 
-    private PdfPreview pdfPreview;
+    private PageImageRender pageImageRender;
     private int currentPageIndex = 0;
 
     private final CurrentFileState currentFileState;
@@ -57,7 +57,7 @@ public class PdfViewerTabController {
         try {
             closePreview(); // Close previous document if open
 
-            this.pdfPreview = new PdfPreview(pdfFile);
+            this.pageImageRender = new PageImageRender(pdfFile);
             this.currentPageIndex = 0;
             showPage(this.currentPageIndex);
 
@@ -67,18 +67,18 @@ public class PdfViewerTabController {
     }
 
     private void showPage(int index) {
-        if (pdfPreview == null || pdfPreview.getPageCount() == 0) {
+        if (pageImageRender == null || pageImageRender.getPageCount() == 0) {
             imageView.setImage(null);
             pageLabel.setText("N/A");
             return;
         }
 
-        if (index < 0 || index >= pdfPreview.getPageCount()) {
+        if (index < 0 || index >= pageImageRender.getPageCount()) {
             return;
         }
 
         try {
-            pdfPreview.renderPage(index, bufferedImage -> {
+            pageImageRender.renderImageWithCallback(index, bufferedImage -> {
                 Image image = SwingFXUtils.toFXImage(bufferedImage, null);
                 imageView.setImage(image);
                 currentPageIndex = index;
@@ -96,15 +96,15 @@ public class PdfViewerTabController {
     }
 
     private void updateControls() {
-        boolean isPdfLoaded = pdfPreview != null && pdfPreview.getPageCount() > 0;
+        boolean isPdfLoaded = pageImageRender != null && pageImageRender.getPageCount() > 0;
 
         prevButton.setDisable(!isPdfLoaded || currentPageIndex <= 0);
-        nextButton.setDisable(!isPdfLoaded || currentPageIndex >= pdfPreview.getPageCount() - 1);
+        nextButton.setDisable(!isPdfLoaded || currentPageIndex >= pageImageRender.getPageCount() - 1);
         goButton.setDisable(!isPdfLoaded);
         pageField.setDisable(!isPdfLoaded);
 
         if (isPdfLoaded) {
-            int pageCount = pdfPreview.getPageCount();
+            int pageCount = pageImageRender.getPageCount();
             pageLabel.setText(String.format("第 %d / %d 页", currentPageIndex + 1, pageCount));
             pageField.setText(String.valueOf(currentPageIndex + 1));
         } else {
@@ -122,17 +122,17 @@ public class PdfViewerTabController {
 
     @FXML
     private void handleNextPage() {
-        if (pdfPreview != null && currentPageIndex < pdfPreview.getPageCount() - 1) {
+        if (pageImageRender != null && currentPageIndex < pageImageRender.getPageCount() - 1) {
             showPage(currentPageIndex + 1);
         }
     }
 
     @FXML
     private void handleGoToPage() {
-        if (pdfPreview == null) return;
+        if (pageImageRender == null) return;
         try {
             int pageNum = Integer.parseInt(pageField.getText().trim()) - 1;
-            if (pageNum >= 0 && pageNum < pdfPreview.getPageCount()) {
+            if (pageNum >= 0 && pageNum < pageImageRender.getPageCount()) {
                 showPage(pageNum);
             } else {
                 pageField.setText(String.valueOf(currentPageIndex + 1));
@@ -148,9 +148,9 @@ public class PdfViewerTabController {
      */
     public void closePreview() {
         try {
-            if (pdfPreview != null) {
-                pdfPreview.close();
-                pdfPreview = null;
+            if (pageImageRender != null) {
+                pageImageRender.close();
+                pageImageRender = null;
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -16,11 +16,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Manages loading a PDF document and rendering its pages as images.
  */
-public class PdfPreview implements AutoCloseable {
+public class PageImageRender implements AutoCloseable {
 
     private final PDDocument document;
     private final PDFRenderer renderer;
@@ -33,7 +34,7 @@ public class PdfPreview implements AutoCloseable {
      * @param file The PDF file to be previewed.
      * @throws IOException if there is an error loading the PDF file.
      */
-    public PdfPreview(File file) throws IOException {
+    public PageImageRender(File file) throws IOException {
         this(file, DEFAULT_DPI);
     }
 
@@ -44,7 +45,7 @@ public class PdfPreview implements AutoCloseable {
      * @param dpi The resolution (dots per inch) for rendering pages.
      * @throws IOException if there is an error loading the PDF file.
      */
-    public PdfPreview(File file, float dpi) throws IOException {
+    public PageImageRender(File file, float dpi) throws IOException {
         this.document = Loader.loadPDF(file);
         this.renderer = new PDFRenderer(document);
     }
@@ -68,8 +69,8 @@ public class PdfPreview implements AutoCloseable {
      * @param callback  The callback to be executed with the rendered Image.
      * @throws IOException if there is an error rendering the page.
      */
-    public void renderPage(int pageIndex, java.util.function.Consumer<BufferedImage> callback) throws IOException {
-        renderPage(pageIndex, DEFAULT_DPI, callback);
+    public void renderImageWithCallback(int pageIndex, java.util.function.Consumer<BufferedImage> callback) throws IOException {
+        renderImageWithCallback(pageIndex, DEFAULT_DPI, callback);
     }
 
     /**
@@ -80,7 +81,7 @@ public class PdfPreview implements AutoCloseable {
      * @throws IOException if there is an error rendering the page.
      */
     public void renderThumbnail(int pageIndex, java.util.function.Consumer<BufferedImage> callback) throws IOException {
-        renderPage(pageIndex, THUMBNAIL_DPI, callback);
+        renderImageWithCallback(pageIndex, THUMBNAIL_DPI, callback);
     }
 
     /**
@@ -90,8 +91,8 @@ public class PdfPreview implements AutoCloseable {
      * @param callback  The callback to be executed with the rendered Image.
      * @throws IOException if there is an error rendering the page.
      */
-    public void renderPreviewImage(int pageIndex, java.util.function.Consumer<BufferedImage> callback) throws IOException {
-        renderPage(pageIndex, PREVIEW_DPI, callback);
+    public void renderPreviewImage(int pageIndex, Consumer<BufferedImage> callback) throws IOException {
+        renderImageWithCallback(pageIndex, PREVIEW_DPI, callback);
     }
 
     /**
@@ -102,7 +103,7 @@ public class PdfPreview implements AutoCloseable {
      * @param callback  The callback to be executed with the rendered Image.
      * @throws IOException if there is an error rendering the page.
      */
-    public void renderPage(int pageIndex, float dpi, java.util.function.Consumer<BufferedImage> callback) throws IOException {
+    public void renderImageWithCallback(int pageIndex, float dpi, Consumer<BufferedImage> callback) throws IOException {
         if (pageIndex < 0 || pageIndex >= getPageCount()) {
             throw new IllegalArgumentException("Page index " + pageIndex + " is out of bounds.");
         }

@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.pdfProcess.PdfPreview;
+import com.ririv.quickoutline.pdfProcess.PageImageRender;
 import com.ririv.quickoutline.view.controls.PopupCard;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
@@ -32,7 +32,7 @@ public class ThumbnailView extends VBox {
     private Image originalImage; // This is the low-res image for the thumbnail
     private ImageView popupImageView; // The content for the popup
     private int pageIndex; // Store the page index to re-render high-res image
-    private PdfPreview pdfPreviewInstance; // Store the PdfPreview instance
+    private PageImageRender pageImageRenderInstance; // Store the PdfPreview instance
     private String[] pageLabels; // Store the page labels array
     private int totalPages; // Store total pages
     private ExecutorService previewRenderExecutor = Executors.newSingleThreadExecutor(); // Executor for high-res rendering
@@ -83,19 +83,19 @@ public class ThumbnailView extends VBox {
         thumbnailImageView.setFitHeight(BASE_HEIGHT * scale);
     }
 
-    public void setThumbnailImage(Image image, int pageIndex, PdfPreview pdfPreview, String[] pageLabels) {
+    public void setThumbnailImage(Image image, int pageIndex, PageImageRender pageImageRender, String[] pageLabels) {
         this.originalImage = image;
         this.pageIndex = pageIndex;
-        this.pdfPreviewInstance = pdfPreview;
+        this.pageImageRenderInstance = pageImageRender;
         this.pageLabels = pageLabels;
-        this.totalPages = pdfPreview.getPageCount(); // Get total pages
+        this.totalPages = pageImageRender.getPageCount(); // Get total pages
         this.thumbnailImageView.setImage(image);
 
         // Asynchronously render high-res image for popup
-        if (popupImageView != null && pdfPreviewInstance != null) {
+        if (popupImageView != null && pageImageRenderInstance != null) {
             previewRenderExecutor.submit(() -> {
                 try {
-                    pdfPreviewInstance.renderPreviewImage(pageIndex, bufferedImage -> {
+                    pageImageRenderInstance.renderPreviewImage(pageIndex, bufferedImage -> {
                         Image highResImage = SwingFXUtils.toFXImage(bufferedImage, null);
                         Platform.runLater(() -> popupImageView.setImage(highResImage));
                     });
