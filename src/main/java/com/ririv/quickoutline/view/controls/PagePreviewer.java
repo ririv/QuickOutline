@@ -52,7 +52,7 @@ public class PagePreviewer {
         node.setOnMouseEntered(event -> {
             if (pageImageRender != null && previewRenderExecutor != null && !previewRenderExecutor.isShutdown()) {
                 Integer pageIndex = pageIndexSupplier.get();
-                if (pageIndex != null && pageIndex >= 0) {
+                if (pageIndex != null && pageIndex >= 0 && pageIndex < pageImageRender.getPageCount()) {
                     previewRenderExecutor.submit(() -> {
                         try {
                             pageImageRender.renderPreviewImage(pageIndex, bufferedImage -> {
@@ -64,9 +64,11 @@ public class PagePreviewer {
                         }
                     });
                 } else {
-                    // If there's no valid page index, clear the image to avoid showing a stale preview.
+                    imagePopupCard.hide();
                     Platform.runLater(() -> popupImageView.setImage(null));
                 }
+            } else {
+                imagePopupCard.hide();
             }
         });
     }
