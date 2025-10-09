@@ -3,7 +3,7 @@ package com.ririv.quickoutline.view.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.ririv.quickoutline.pdfProcess.PdfPreview
+import com.ririv.quickoutline.pdfProcess.PdfBatchRasterizer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -22,11 +22,11 @@ class PdfPreviewViewModel(private val mainViewModel: MainViewModel) {
                 if (path != null) {
                     launch(Dispatchers.IO) {
                         val file = path.toFile()
-                        val pdfPreview = PdfPreview(file)
-                        val pageCount = pdfPreview.pageCount
+                        val PdfBatchRasterizer = PdfBatchRasterizer(file)
+                        val pageCount = PdfBatchRasterizer.pageCount
                         val imageList = mutableListOf<BufferedImage>()
                         for (i in 0 until pageCount) {
-                            pdfPreview.renderPage(i) { image ->
+                            PdfBatchRasterizer.renderPreviewImage(i) { image ->
                                 imageList.add(image)
                             }
                         }

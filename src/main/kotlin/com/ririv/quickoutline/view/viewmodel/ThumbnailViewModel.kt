@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
-import com.ririv.quickoutline.pdfProcess.PdfPreview
+import com.ririv.quickoutline.pdfProcess.PdfBatchRasterizer
 import com.ririv.quickoutline.service.PdfPageLabelService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -27,7 +27,7 @@ class ThumbnailViewModel(
     var pageLabels by mutableStateOf<List<String>>(emptyList())
         private set
 
-    private var pdfPreview: PdfPreview? = null
+    private var PdfBatchRasterizer: PdfBatchRasterizer? = null
     private var isLoading by mutableStateOf(false)
     private val thumbnailJobs = ConcurrentHashMap<Int, Job>()
 
@@ -38,9 +38,9 @@ class ThumbnailViewModel(
                 // Cancel all ongoing jobs before closing the preview
                 thumbnailJobs.values.forEach { it.cancel() }
                 thumbnailJobs.clear()
-                pdfPreview?.close()
+                PdfBatchRasterizer?.close()
 
-                pdfPreview = null
+                PdfBatchRasterizer = null
                 thumbnails = emptyMap()
                 pageCount = 0
                 itemsToRender.clear()
@@ -49,7 +49,7 @@ class ThumbnailViewModel(
                 if (path != null) {
                     launch(Dispatchers.IO) {
                         try {
-                            val preview = PdfPreview(path.toFile())
+                            val preview = PdfBatchRasterizer(path.toFile())
                             val labels = try {
                                 pageLabelService.getPageLabels(path.toString()).toList()
                             } catch (e: IOException) {
@@ -57,7 +57,7 @@ class ThumbnailViewModel(
                                 emptyList()
                             }
 
-                            pdfPreview = preview
+                            PdfBatchRasterizer = preview
                             withContext(Dispatchers.Swing) {
                                 pageCount = preview.pageCount
                                 pageLabels = labels
@@ -87,7 +87,7 @@ class ThumbnailViewModel(
         if (thumbnailJobs.containsKey(index) || thumbnails.containsKey(index)) return
 
         val job = CoroutineScope(Dispatchers.IO).launch {
-            pdfPreview?.let { preview ->
+            PdfBatchRasterizer?.let { preview ->
                 try {
                     val bufferedImage = preview.renderImage(index, 150f)
                     ensureActive() // Check for cancellation before converting
