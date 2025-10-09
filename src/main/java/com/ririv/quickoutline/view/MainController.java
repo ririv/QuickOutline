@@ -49,7 +49,7 @@ public class MainController {
     public BorderPane leftPane;
 
     private final CurrentFileState currentFileState;
-    private final PdfPageLabelService pdfPageLabelService; // Inject PdfPageLabelService
+
     private final AppEventBus eventBus;
 
     @FXML
@@ -68,9 +68,8 @@ public class MainController {
     private final ObjectProperty<FnTab> currentTabProperty = new SimpleObjectProperty<>(FnTab.bookmark);
 
     @Inject
-    public MainController(CurrentFileState currentFileState, PdfPageLabelService pdfPageLabelService, AppEventBus eventBus) {
+    public MainController(CurrentFileState currentFileState, AppEventBus eventBus) {
         this.currentFileState = currentFileState;
-        this.pdfPageLabelService = pdfPageLabelService;
         this.eventBus = eventBus;
         // 1. 注册自身为订阅者
         this.eventBus.register(this);
@@ -127,19 +126,23 @@ public class MainController {
         Path oldFile = currentFileState.getSrcFile();
         if (oldFile != null && oldFile.equals(newFilePath)) return;
 
-        try {
-            currentFileState.setSrcFile(newFilePath);
-            // 页码标签会由ThumbnailPaneController在监听到状态变化时自动获取和更新
-            // 不需要在此处手动调用，符合响应式设计原则
-        } catch (java.io.IOException e) { // Catch standard IO Exception
-            messageManager.showMessage(bundle.getString("message.cannotOpenDoc") + e.getMessage(), Message.MessageType.ERROR);
-        } catch (EncryptedPdfException e) {
-            messageManager.showMessage(bundle.getString("message.encryptedDoc"), Message.MessageType.WARNING);
-        } catch (com.itextpdf.io.exceptions.IOException e) { // Catch iText specific IO Exception
-            e.printStackTrace();
-            logger.info(String.valueOf(e));
-            messageManager.showMessage(bundle.getString("message.corruptedDoc") + e.getMessage(), Message.MessageType.ERROR);
-        }
+        Thread t = new Thread(() -> {
+            try {
+                // 后台校验 PDF 是否可打开
+                currentFileState.validateFile(newFilePath);
+                // 校验通过后设置 srcFile（内部会在需要时切换到 FX 线程）
+                currentFileState.setSrcFileValidated(newFilePath);
+            } catch (java.io.IOException e) {
+                messageManager.showMessage(bundle.getString("message.cannotOpenDoc") + e.getMessage(), Message.MessageType.ERROR);
+            } catch (EncryptedPdfException e) {
+                messageManager.showMessage(bundle.getString("message.encryptedDoc"), Message.MessageType.WARNING);
+            } catch (com.itextpdf.io.exceptions.IOException e) {
+                logger.info(String.valueOf(e));
+                messageManager.showMessage(bundle.getString("message.corruptedDoc") + e.getMessage(), Message.MessageType.ERROR);
+            }
+        }, "open-file-validate");
+        t.setDaemon(true);
+        t.start();
     }
 
     // 3. 创建新的、带 @Subscribe 注解的方法

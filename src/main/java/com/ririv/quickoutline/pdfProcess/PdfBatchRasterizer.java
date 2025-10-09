@@ -21,12 +21,15 @@ import java.util.function.Consumer;
 /**
  * Manages loading a PDF document and rendering its pages as images.
  */
-public class PageImageRender implements AutoCloseable {
+public class PdfBatchRasterizer implements AutoCloseable {
 
+    private final File sourceFile;
     private final PDDocument document;
     private final PDFRenderer renderer;
     private final Object renderLock = new Object();
     private static final float DEFAULT_DPI = 150; // Default DPI for rendering
+    private volatile boolean closed = false;
+    private volatile boolean subsamplingAllowed = true;
 
     /**
      * Constructs a PdfPreview instance for a given PDF file with default DPI.
@@ -34,7 +37,7 @@ public class PageImageRender implements AutoCloseable {
      * @param file The PDF file to be previewed.
      * @throws IOException if there is an error loading the PDF file.
      */
-    public PageImageRender(File file) throws IOException {
+    public PdfBatchRasterizer(File file) throws IOException {
         this(file, DEFAULT_DPI);
     }
 
@@ -45,9 +48,12 @@ public class PageImageRender implements AutoCloseable {
      * @param dpi The resolution (dots per inch) for rendering pages.
      * @throws IOException if there is an error loading the PDF file.
      */
-    public PageImageRender(File file, float dpi) throws IOException {
+    public PdfBatchRasterizer(File file, float dpi) throws IOException {
+        this.sourceFile = file;
         this.document = Loader.loadPDF(file);
         this.renderer = new PDFRenderer(document);
+        // Hint: allow subsampling to speed up rendering for large images
+        this.renderer.setSubsamplingAllowed(true);
     }
 
     /**
@@ -56,6 +62,7 @@ public class PageImageRender implements AutoCloseable {
      * @return The page count.
      */
     public int getPageCount() {
+        ensureOpen();
         return document.getNumberOfPages();
     }
 
@@ -104,10 +111,12 @@ public class PageImageRender implements AutoCloseable {
      * @throws IOException if there is an error rendering the page.
      */
     public void renderImageWithCallback(int pageIndex, float dpi, Consumer<BufferedImage> callback) throws IOException {
+        ensureOpen();
         if (pageIndex < 0 || pageIndex >= getPageCount()) {
             throw new IllegalArgumentException("Page index " + pageIndex + " is out of bounds.");
         }
         synchronized (renderLock) {
+            renderer.setSubsamplingAllowed(subsamplingAllowed);
             BufferedImage bufferedImage = renderer.renderImageWithDPI(pageIndex, dpi);
             if (callback != null) {
                 callback.accept(bufferedImage);
@@ -116,10 +125,12 @@ public class PageImageRender implements AutoCloseable {
     }
 
     public BufferedImage renderImage(int pageIndex, float dpi) throws IOException {
+        ensureOpen();
         if (pageIndex < 0 || pageIndex >= getPageCount()) {
             throw new IllegalArgumentException("Page index " + pageIndex + " is out of bounds.");
         }
         synchronized (renderLock) {
+            renderer.setSubsamplingAllowed(subsamplingAllowed);
             return renderer.renderImageWithDPI(pageIndex, dpi);
         }
     }
@@ -131,6 +142,8 @@ public class PageImageRender implements AutoCloseable {
      */
     @Override
     public void close() throws IOException {
+        if (closed) return;
+        closed = true;
         if (document != null) {
             document.close();
         }
@@ -170,6 +183,85 @@ public class PageImageRender implements AutoCloseable {
 
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Enable or disable subsampling to accelerate rendering at the cost of detail for downscaled images.
+     */
+    public void setSubsamplingAllowed(boolean allowed) {
+        this.subsamplingAllowed = allowed;
+    }
+
+    /**
+     * Batch render a page range. If parallelism > 1, this method safely renders in parallel by opening
+     * independent PDDocument instances per worker to avoid thread-safety issues in PDFBox.
+     *
+     * Note: Intended for one-off, offline batch rendering scenarios. Not recommended for interactive UI rendering.
+     *
+     * @param fromPage inclusive, 0-based
+     * @param toPageInclusive inclusive, 0-based
+     * @param dpi resolution
+     * @param parallelism number of worker threads; if <=1 renders sequentially using this instance
+     * @param onPage callback for each page image
+     * @throws IOException on I/O errors
+     */
+    public void batchRenderRange(int fromPage, int toPageInclusive, float dpi, int parallelism,
+                                 java.util.function.BiConsumer<Integer, BufferedImage> onPage) throws IOException {
+        ensureOpen();
+        int pageCount = getPageCount();
+        if (fromPage < 0 || toPageInclusive >= pageCount || fromPage > toPageInclusive) {
+            throw new IllegalArgumentException("Invalid page range");
+        }
+        if (parallelism <= 1) {
+            for (int i = fromPage; i <= toPageInclusive; i++) {
+                BufferedImage img = renderImage(i, dpi);
+                if (onPage != null) onPage.accept(i, img);
+            }
+            return;
+        }
+
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(parallelism, r -> {
+            Thread t = new Thread(r, "page-image-render-batch");
+            t.setDaemon(true);
+            return t;
+        });
+
+        java.util.concurrent.atomic.AtomicInteger next = new java.util.concurrent.atomic.AtomicInteger(fromPage);
+        java.util.List<java.util.concurrent.Future<?>> futures = new java.util.ArrayList<>();
+
+        for (int w = 0; w < parallelism; w++) {
+            futures.add(pool.submit(() -> {
+                try (PDDocument doc = Loader.loadPDF(sourceFile)) {
+                    PDFRenderer localRenderer = new PDFRenderer(doc);
+                    localRenderer.setSubsamplingAllowed(subsamplingAllowed);
+                    while (true) {
+                        int page = next.getAndIncrement();
+                        if (page > toPageInclusive) break;
+                        BufferedImage img = localRenderer.renderImageWithDPI(page, dpi);
+                        if (onPage != null) onPage.accept(page, img);
+                    }
+                }
+                return null;
+            }));
+        }
+
+        // wait
+        for (java.util.concurrent.Future<?> f : futures) {
+            try {
+                f.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (java.util.concurrent.ExecutionException e) {
+                throw new IOException("Batch render failed", e.getCause());
+            }
+        }
+        pool.shutdown();
+    }
+
+    private void ensureOpen() {
+        if (closed) {
+            throw new IllegalStateException("PageImageRender is closed");
         }
     }
 }

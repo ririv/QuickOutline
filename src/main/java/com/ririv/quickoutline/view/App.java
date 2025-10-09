@@ -56,6 +56,14 @@ public class App extends Application {
         if (editorService != null) {
             editorService.shutdown();
         }
+        // 主动释放当前文件会话资源（PDDocument/渲染线程等）
+        try {
+            com.ririv.quickoutline.view.state.CurrentFileState currentFileState = injector.getInstance(com.ririv.quickoutline.view.state.CurrentFileState.class);
+            if (currentFileState != null) {
+                currentFileState.close();
+            }
+        } catch (Exception ignore) {
+        }
         super.stop(); // 调用父类的 stop 方法
     }
 

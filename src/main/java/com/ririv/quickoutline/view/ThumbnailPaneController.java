@@ -1,11 +1,10 @@
 package com.ririv.quickoutline.view;
 
 import com.google.inject.Inject;
-import com.ririv.quickoutline.pdfProcess.PageImageRender;
+import com.ririv.quickoutline.pdfProcess.PdfRenderSession;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -14,7 +13,6 @@ import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.layout.TilePane;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,9 +35,8 @@ public class ThumbnailPaneController {
     private final CurrentFileState currentFileState;
     private final PdfPageLabelService pdfPageLabelService; // Inject PdfPageLabelService
     private final AppEventBus appEventBus;
-    private PageImageRender currentPreview;
+    private PdfRenderSession currentSession;
     private String[] currentPageLabels; // Store the page labels array
-    private ExecutorService fileLoadExecutor = Executors.newSingleThreadExecutor();
     private ExecutorService thumbnailRenderExecutor;
     private int currentPageIndex = 0;
     private boolean isLoading = false;
@@ -57,9 +54,9 @@ public class ThumbnailPaneController {
     public void initialize() {
         thumbnailTilePane.prefWidthProperty().bind(scrollPane.widthProperty());
 
-        currentFileState.srcFileProperty().addListener((obs, oldPath, newPath) -> {
-            if (newPath != null) {
-                loadPdf(newPath.toFile());
+        currentFileState.pageRenderSessionProperty().addListener((obs, oldSession, newSession) -> {
+            if (newSession != null) {
+                startWithSession(newSession);
             } else {
                 reset();
             }
@@ -93,36 +90,40 @@ public class ThumbnailPaneController {
         });
     }
 
-    private void loadPdf(File pdfFile) {
+    private void startWithSession(PdfRenderSession session) {
         reset();
-
-        Task<PageImageRender> loadFileTask = new Task<>() {
-            @Override
-            protected PageImageRender call() throws Exception {
-                return new PageImageRender(pdfFile);
-            }
-        };
-
-        loadFileTask.setOnSucceeded(event -> {
-            currentPreview = loadFileTask.getValue();
-            // 获取页码标签
+        this.currentSession = session;
+        // Fetch page labels asynchronously to avoid blocking FX thread
+        Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "page-label-fetch");
+            t.setDaemon(true);
+            return t;
+        }).submit(() -> {
+            String[] labels = null;
             try {
-                currentPageLabels = pdfPageLabelService.getPageLabels(currentFileState.getSrcFile().toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-                currentPageLabels = null; // Fallback to default numbering
+                if (currentFileState.getSrcFile() != null) {
+                    labels = pdfPageLabelService.getPageLabels(currentFileState.getSrcFile().toString());
+                }
+            } catch (IOException ignored) {
             }
-            thumbnailRenderExecutor = Executors.newSingleThreadExecutor();
-            currentPageIndex = 0;
-            loadMoreThumbnails(); // Load the first batch
+            final String[] result = labels;
+            Platform.runLater(() -> {
+                currentPageLabels = result;
+                // Update existing thumbnails' labels if any
+                for (Node node : thumbnailTilePane.getChildren()) {
+                    if (node instanceof ThumbnailView tv) {
+                        tv.updatePageLabel(currentPageLabels);
+                    }
+                }
+            });
         });
-
-        loadFileTask.setOnFailed(event -> {
-            loadFileTask.getException().printStackTrace();
-            reset();
+        thumbnailRenderExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "thumbnail-render");
+            t.setDaemon(true);
+            return t;
         });
-
-        fileLoadExecutor.submit(loadFileTask);
+        currentPageIndex = 0;
+        loadMoreThumbnails(); // Load the first batch
     }
 
     public void setCurrentPageLabels(String[] pageLabels) {
@@ -130,12 +131,13 @@ public class ThumbnailPaneController {
     }
 
     private void loadMoreThumbnails() {
-        if (currentPreview == null || isLoading || currentPageIndex >= currentPreview.getPageCount()) {
+        final PdfRenderSession session = this.currentSession; // snapshot to avoid races
+        if (session == null || isLoading || currentPageIndex >= session.getPageCount()) {
             return;
         }
         isLoading = true;
 
-        int limit = Math.min(currentPageIndex + BATCH_SIZE, currentPreview.getPageCount());
+        int limit = Math.min(currentPageIndex + BATCH_SIZE, session.getPageCount());
 
         for (int i = currentPageIndex; i < limit; i++) {
             final int pageIndex = i;
@@ -146,14 +148,10 @@ public class ThumbnailPaneController {
             if (thumbnailRenderExecutor == null || thumbnailRenderExecutor.isShutdown()) return;
             
             thumbnailRenderExecutor.submit(() -> {
-                try {
-                    currentPreview.renderThumbnail(pageIndex, bufferedImage -> {
-                        Image image = SwingFXUtils.toFXImage(bufferedImage, null);
-                        Platform.runLater(() -> thumbnailView.setThumbnailImage(image, pageIndex, currentPreview, currentPageLabels));
-                    });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                session.renderThumbnailAsync(pageIndex, bufferedImage -> {
+                    Image image = SwingFXUtils.toFXImage(bufferedImage, null);
+                    Platform.runLater(() -> thumbnailView.setThumbnailImage(image, pageIndex, session, currentPageLabels));
+                });
             });
         }
         currentPageIndex = limit;
@@ -166,14 +164,8 @@ public class ThumbnailPaneController {
             thumbnailRenderExecutor.shutdownNow();
         }
         thumbnailTilePane.getChildren().clear();
-        if (currentPreview != null) {
-            try {
-                currentPreview.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            currentPreview = null;
-        }
+        // session is owned by CurrentFileState; don't close here
+        currentSession = null;
         currentPageIndex = 0;
         isLoading = false;
         // Reset slider and scale on file change

@@ -25,6 +25,11 @@ public class MessageContainer extends AnchorPane {
     }
 
     public void showMessage(String text, Message.MessageType messageType) {
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> showMessage(text, messageType));
+            return;
+        }
+
         final Message message = new Message(text, messageType);
 
         // Set initial position to avoid jarring animation from the top

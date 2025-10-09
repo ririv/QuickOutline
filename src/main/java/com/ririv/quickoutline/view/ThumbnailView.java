@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.pdfProcess.PageImageRender;
+import com.ririv.quickoutline.pdfProcess.PdfRenderSession;
 import com.ririv.quickoutline.view.controls.PagePreviewer;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -55,14 +55,14 @@ public class ThumbnailView extends VBox {
         thumbnailImageView.setFitHeight(BASE_HEIGHT * scale);
     }
 
-    public void setThumbnailImage(Image image, int pageIndex, PageImageRender pageImageRender, String[] pageLabels) {
+    public void setThumbnailImage(Image image, int pageIndex, PdfRenderSession session, String[] pageLabels) {
         this.pageIndex = pageIndex;
         this.pageLabels = pageLabels;
-        this.totalPages = pageImageRender.getPageCount(); // Get total pages
+        this.totalPages = session.getPageCount(); // Get total pages
         this.thumbnailImageView.setImage(image);
 
         // Set the renderer for the previewer
-        this.pagePreviewer.setPageImageRender(pageImageRender);
+        this.pagePreviewer.setRenderSession(session);
 
         // Update page label with PageLabelService
         updatePageLabel();

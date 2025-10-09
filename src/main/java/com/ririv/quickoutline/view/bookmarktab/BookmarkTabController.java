@@ -162,17 +162,24 @@ public class BookmarkTabController {
             eventBus.post(new ShowMessageEvent(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING));
             return;
         }
-
-        try {
-            Bookmark rootBookmark = pdfOutlineService.getOutlineAsBookmark(currentFileState.getSrcFile().toString(), 0);
-            if (rootBookmark != null) {
-                bookmarkSettingsState.setRootBookmark(rootBookmark);
-                textSubViewController.setContents(rootBookmark.toOutlineString());
+        // 重度 IO：放到后台线程，完成后再更新 UI
+        Path src = currentFileState.getSrcFile();
+        Thread t = new Thread(() -> {
+            try {
+                Bookmark rootBookmark = pdfOutlineService.getOutlineAsBookmark(src.toString(), 0);
+                if (rootBookmark != null) {
+                    javafx.application.Platform.runLater(() -> {
+                        bookmarkSettingsState.setRootBookmark(rootBookmark);
+                        textSubViewController.setContents(rootBookmark.toOutlineString());
+                    });
+                }
+            } catch (NoOutlineException e) {
+                e.printStackTrace();
+                eventBus.post(new ShowMessageEvent(bundle.getString("message.noBookmarks"), Message.MessageType.INFO));
             }
-        } catch (NoOutlineException e) {
-            e.printStackTrace();
-            eventBus.post(new ShowMessageEvent(bundle.getString("message.noBookmarks"), Message.MessageType.INFO));
-        }
+        }, "outline-load");
+        t.setDaemon(true);
+        t.start();
     }
 
     public void saveBookmarksToPdf(ViewScaleType viewScaleType) {

@@ -25,6 +25,7 @@ import javafx.scene.layout.VBox;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,12 +75,18 @@ public class PageLabelTabController {
 
         fileService.srcFileProperty().addListener((obs, oldFile, newFile) -> {
             if (newFile != null) {
-                try {
-                    originalPageLabels = Arrays.asList(pdfPageLabelService.getPageLabels(newFile.toString()));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    originalPageLabels = null;
-                }
+                Thread t = new Thread(() -> {
+                    List<String> result = null;
+                    try {
+                        String[] labels = pdfPageLabelService.getPageLabels(newFile.toString());
+                        result = (labels != null) ? Arrays.asList(labels) : null;
+                    } catch (IOException ignored) {
+                    }
+                    final List<String> ready = result;
+                    javafx.application.Platform.runLater(() -> originalPageLabels = ready);
+                }, "page-label-original-fetch");
+                t.setDaemon(true);
+                t.start();
             } else {
                 originalPageLabels = null;
             }
@@ -155,7 +162,11 @@ public class PageLabelTabController {
 
         int totalPages;
         try {
-            totalPages = pdfPageLabelService.getPageLabels(fileService.getSrcFile().toString()).length;
+            String[] labels = pdfPageLabelService.getPageLabels(fileService.getSrcFile().toString());
+            if (labels == null) {
+                return; // 无法获取页码标签，暂不模拟
+            }
+            totalPages = labels.length;
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -178,7 +189,8 @@ public class PageLabelTabController {
         String destFilePath = fileService.getDestFile().toString();
         try {
             String[] pageLabels = pdfPageLabelService.setPageLabels(srcFilePath, destFilePath, finalPageLabels);
-            appEventBus.post(new PageLabelsChangedEvent(Arrays.asList(pageLabels)));
+            List<String> updated = (pageLabels != null) ? Arrays.asList(pageLabels) : Collections.emptyList();
+            appEventBus.post(new PageLabelsChangedEvent(updated));
             appEventBus.post(new ShowSuccessDialogEvent());
         } catch (IOException e) {
             appEventBus.post(new ShowMessageEvent("应用页码标签失败: " + e.getMessage(), Message.MessageType.ERROR));

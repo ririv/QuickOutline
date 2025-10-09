@@ -2,7 +2,6 @@ package com.ririv.quickoutline.view.bookmarktab;
 
 import com.google.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.pdfProcess.PageImageRender;
 import com.ririv.quickoutline.view.controls.PagePreviewer;
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
@@ -15,7 +14,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -49,18 +47,8 @@ public class TreeSubViewController {
         offsetPageColumn.prefWidthProperty().bind(treeTableView.widthProperty().multiply(0.1));
         setupRowFactory();
 
-        currentFileState.srcFileProperty().addListener((obs, oldPath, newPath) -> {
-            try {
-                if (newPath != null) {
-                    PageImageRender pageImageRenderInstance = new PageImageRender(newPath.toFile());
-                    pagePreviewer.setPageImageRender(pageImageRenderInstance);
-                } else {
-                    pagePreviewer.setPageImageRender(null);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                pagePreviewer.setPageImageRender(null);
-            }
+        currentFileState.pageRenderSessionProperty().addListener((obs, oldSession, newSession) -> {
+            pagePreviewer.setRenderSession(newSession);
         });
 
         bookmarkSettingsState.rootBookmarkProperty().addListener((obs, oldRoot, newRoot) -> {
