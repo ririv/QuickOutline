@@ -37,7 +37,7 @@ module quickoutline {
     exports com.ririv.quickoutline.service;
     exports com.ririv.quickoutline.textProcess.methods;
     exports com.ririv.quickoutline.view.controls;
-    exports com.ririv.quickoutline.pdfProcess;
+//取消导出 com.ririv.quickoutline.pdfProcess 包，避免对外暴露 BufferedImage（java.desktop 类型）导致的模块可见性告警；模块内使用不受影响
     exports com.ririv.quickoutline.exception;
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions;
