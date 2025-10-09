@@ -27,7 +27,13 @@ public class EditableTreeTableCell<S, T> extends TreeTableCell<S, T> {
     }
     
     public EditableTreeTableCell(StringConverter<T> converter) {
-        this.converter = converter != null ? converter : (StringConverter<T>) new DefaultStringConverter();
+        // 如果未提供 converter，则默认使用字符串转换器；此时等价于 <T=String>
+        // 将未受检转换限制在最小作用域内，并通过工厂方法 forTreeTableColumn() 提供安全默认。
+        @SuppressWarnings("unchecked")
+        StringConverter<T> usedConverter = converter != null
+                ? converter
+                : (StringConverter<T>) new DefaultStringConverter();
+        this.converter = usedConverter;
         getStyleClass().add("editable-tree-table-cell");
         
         // 加载专门的CSS样式文件
