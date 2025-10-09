@@ -18,7 +18,6 @@
     -fx-border-width: 0 !important;
     -fx-background-insets: 0 !important;
     -fx-padding: 0 !important;
-    -fx-font: initial !important;
     -fx-text-fill: inherit !important;
     /* 确保编辑器与单元格高度一致 */
     -fx-pref-height: 20px !important;
