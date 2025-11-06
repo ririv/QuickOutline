@@ -1,6 +1,7 @@
 plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'com.gluonhq.gluonfx-gradle-plugin' version '1.0.28'
 
     // 参考 https://github.com/openjfx/javafx-gradle-plugin#extra-plugins
     // 不加入此会出现找不到模块错误
@@ -14,18 +15,28 @@ plugins {
 }
 
 
-// java版本选择25（LTS）
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(23))
     }
 }
 
 version = '2.3.0'
 
 javafx {
-    version = '25'
+    version = '23'
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing' ]
+}
+
+print("GRAALVM_HOME:"  +System.getenv("GRAALVM_HOME"))
+
+gluonfx {
+    // 尝试直接从环境变量读取
+    graalvmHome = System.getenv("GRAALVM_HOME")
+    release {
+        // iOS
+        skipSigning = true
+    }
 }
 
 application{
@@ -43,8 +54,6 @@ application{
 //        attribute(MachineArchitecture.ARCHITECTURE_ATTRIBUTE, objects.named(MachineArchitecture, 'x86-64')) // 根据您的架构调整
 //    }
 //}
-
-
 
 def itextVersion = '9.2.0'
 

@@ -1,0 +1,11 @@
+{ "rules": [
+    {"excludeClasses" : "com.sun.glass.ui.mac.*"},
+    {"excludeClasses" : "com.sun.glass.ui.gtk.*"},
+    {"excludeClasses" : "com.sun.glass.ui.win.*"},
+    {"excludeClasses" : "com.sun.prism.es2.*"},
+    {"excludeClasses" : "com.sun.prism.d3d.*"},
+    {"excludeClasses" : "com.sun.scenario.effect.impl.es2.*"},
+    {"excludeClasses" : "com.sun.scenario.effect.impl.hw.d3d.*"},
+    {"excludeClasses" : "com.gluonhq.attach.**"}
+  ]
+}
