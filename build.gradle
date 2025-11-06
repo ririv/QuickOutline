@@ -76,7 +76,7 @@ dependencies {
     // Guice for Dependency Injection
     implementation 'com.google.inject:guice:7.0.0'
     // Force Guava to a newer version to fix CVE-2023-2976                                                  │
-    implementation 'com.google.guava:guava:33.2.1-jre'
+    implementation 'com.google.guava:guava:33.5.0-jre'
     implementation 'jakarta.inject:jakarta.inject-api:2.0.1'
 //    implementation("com.openai:openai-java:3.1.2")
     
@@ -100,7 +100,8 @@ def args = [
     // 屏蔽PDFBox的字形缺失警告
     '-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox.rendering.GlyphCache=error',
     // 屏蔽PDFBox fontbox的字符串命令警告
-    '-Dorg.slf4j.simpleLogger.log.org.apache.fontbox.cff.Type1CharString=error'
+    '-Dorg.slf4j.simpleLogger.log.org.apache.fontbox.cff.Type1CharString=error',
+    '--enable-native-access=javafx.graphics'
 ]
 
 tasks.withType(JavaCompile).configureEach {
