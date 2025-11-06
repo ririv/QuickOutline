@@ -14,17 +14,17 @@ plugins {
 }
 
 
-// java版本选择21（LTS）
+// java版本选择25（LTS）
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
 version = '2.3.0'
 
 javafx {
-    version = '23'
+    version = '25'
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing' ]
 }
 
