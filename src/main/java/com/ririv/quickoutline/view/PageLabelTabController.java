@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import com.ririv.quickoutline.exception.InvalidPageLabelRuleException;
 import com.ririv.quickoutline.service.PageLabelRule;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;

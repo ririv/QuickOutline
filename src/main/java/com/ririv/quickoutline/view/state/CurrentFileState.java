@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view.state;
 
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.pdfProcess.PdfRenderSession;
 import com.ririv.quickoutline.service.PdfOutlineService;

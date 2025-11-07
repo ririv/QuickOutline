@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view.bookmarktab;
 
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.state.CurrentFileState;

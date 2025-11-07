@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view.bookmarktab;
 
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.view.controls.PagePreviewer;
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel;

@@ -1,7 +1,7 @@
 package com.ririv.quickoutline.view.bookmarktab;
 
 import com.google.common.eventbus.Subscribe;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.AutoToggleToIndentEvent;
 import com.ririv.quickoutline.view.event.BookmarksChangedEvent;

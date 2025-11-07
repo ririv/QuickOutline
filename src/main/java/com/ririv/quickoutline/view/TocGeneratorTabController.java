@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.model.Bookmark;

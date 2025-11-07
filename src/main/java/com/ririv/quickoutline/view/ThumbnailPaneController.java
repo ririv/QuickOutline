@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.PdfRenderSession;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.view.state.CurrentFileState;
