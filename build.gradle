@@ -7,7 +7,7 @@ plugins {
     id 'org.javamodularity.moduleplugin' version '2.0.0'
 
     // 请使用高版本，'2.26.0'实测出现 "Unsupported class file major version 65"错误
-    id 'org.beryx.jlink' version '3.1.1'
+    id 'org.beryx.jlink' version '3.1.3'
 
     id 'idea'
     id 'java'
@@ -161,7 +161,7 @@ jlink {
             installerType = 'dmg'
             icon = 'src/main/resources/com/ririv/quickoutline/view/icon/icon.icns'
             installerOptions = [
-                    '--mac-package-name', 'com.ririv.quickoutline',
+                    '--mac-package-name', 'QuickOutline',
                     '--mac-package-identifier', 'com.ririv.quickoutline'
             ]
         } else if (os.isLinux()) {
