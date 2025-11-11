@@ -35,7 +35,7 @@
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="tocGeneratorTabBtn" visible="false"  toggleGroup="$tabToggleGroup"
+                <ToggleButton fx:id="tocGeneratorTabBtn"  toggleGroup="$tabToggleGroup"
                               styleClass="graph-button, graph-toggle-button" >
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>

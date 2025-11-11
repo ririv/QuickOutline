@@ -11,7 +11,7 @@ public class PdfTocPageGeneratorService {
 
     private final TocPageGenerator tocPageGenerator = new iTextTocPageGenerator();
 
-    public void createTocPage(String srcFilePath, String destFilePath, List<Bookmark> bookmarks) throws IOException {
-        tocPageGenerator.generateAndInsertToc(srcFilePath, destFilePath, bookmarks);
+    public void createTocPage(String srcFilePath, String destFilePath, String title, List<Bookmark> bookmarks) throws IOException {
+        tocPageGenerator.generateAndInsertToc(srcFilePath, destFilePath, title, bookmarks);
     }
 }
