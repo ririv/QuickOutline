@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import com.ririv.quickoutline.view.controls.Remind?>
+<?import com.ririv.quickoutline.view.controls.EditorTextArea?>
 <HBox
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
@@ -13,13 +14,13 @@
 
     <StackPane HBox.hgrow="ALWAYS">
 
-        <TextArea fx:id="contentsTextArea" promptText="%contentsTextArea.prompt">
+        <EditorTextArea fx:id="contentsTextArea" promptText="%contentsTextArea.prompt">
             <!--            这里去掉右边Pane的阴影效果了，改为分割线显示，所以不用了-->
             <!--         <StackPane.margin>-->
             <!--             设置右margin，防止右边sidebar的阴影效果挡住部分区域（比如右边挡住滚动条,能看到。但按不了）,并且消除了边框&ndash;&gt;-->
             <!--            <Insets left="2.0" />-->
             <!--         </StackPane.margin>-->
-        </TextArea>
+        </EditorTextArea>
 
         <Label fx:id="mask" textFill="gray" visible="false" text="%mask.text">
         </Label>
