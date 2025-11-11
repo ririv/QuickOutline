@@ -29,12 +29,12 @@
             <Button fx:id="setContentsBtn" minHeight="35.0" mnemonicParsing="false" onAction="#setContentsBtnAction" prefWidth="120.0" styleClass="my-button,plain-button-important" text="%bookmarkTab.setContentsBtn.text" GridPane.columnIndex="2" GridPane.halignment="CENTER">
             </Button>
 
-            <TextField fx:id="offsetTF" maxWidth="200" promptText="%bookmarkTab.offsetTF.prompt" GridPane.columnIndex="3" GridPane.halignment="CENTER">
+            <TextField fx:id="offsetTF" styleClass="underlineTF" maxWidth="200" promptText="%offsetTF.prompt" GridPane.columnIndex="3" GridPane.halignment="CENTER">
                 <GridPane.margin>
                     <Insets left="20.0" right="20.0" />
                 </GridPane.margin>
                 <tooltip>
-                    <Tooltip text="%bookmarkTab.offsetTF.tooltip" />
+                    <Tooltip text="%offsetTF.tooltip" />
                 </tooltip>
             </TextField>
             <StackPane alignment="CENTER_RIGHT" GridPane.columnIndex="4">

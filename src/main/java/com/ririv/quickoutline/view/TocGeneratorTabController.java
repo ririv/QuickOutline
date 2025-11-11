@@ -15,8 +15,11 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.util.converter.NumberStringConverter;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -25,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ResourceBundle;
+import java.util.function.UnaryOperator;
 
 public class TocGeneratorTabController {
 
@@ -41,6 +45,10 @@ public class TocGeneratorTabController {
     private TextArea titleTextArea;
     @FXML
     private VBox previewVBox;
+    @FXML
+    private TextField offsetTF;
+    @FXML
+    private TextField insertPosTextField;
 
     @Inject
     public TocGeneratorTabController(PdfTocPageGeneratorService pdfTocPageGeneratorService, CurrentFileState currentFileState, BookmarkSettingsState bookmarkSettingsState, AppEventBus eventBus, PdfOutlineService pdfOutlineService) {
@@ -58,6 +66,53 @@ public class TocGeneratorTabController {
         if (rootBookmark != null) {
             tocContentTextArea.setText(rootBookmark.toOutlineString());
         }
+
+        // Bind the offset text field to the shared state manually
+        bookmarkSettingsState.offsetProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null) {
+                offsetTF.setText("");
+            } else {
+                if (newVal.toString().equals(offsetTF.getText())) {
+                    offsetTF.setText(newVal.toString());
+                }
+            }
+        });
+
+        offsetTF.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.isEmpty() || "-".equals(newVal)) {
+                bookmarkSettingsState.setOffset(0);
+            } else {
+                try {
+                    bookmarkSettingsState.setOffset(Integer.parseInt(newVal));
+                } catch (NumberFormatException e) {
+                    // Invalid number format, set state to null
+                    bookmarkSettingsState.setOffset(0);
+                }
+            }
+        });
+
+        insertPosTextField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.isEmpty() || "-".equals(newVal)) {
+                bookmarkSettingsState.setOffset(1);
+            } else {
+                try {
+                    bookmarkSettingsState.setOffset(Integer.parseInt(newVal));
+                } catch (NumberFormatException e) {
+                    // Invalid number format, set state to null
+                    bookmarkSettingsState.setOffset(0);
+                }
+            }
+        });
+
+        // Add formatter for insert position field
+        UnaryOperator<TextFormatter.Change> integerFilter = change -> {
+            String newText = change.getControlNewText();
+            if (newText.matches("[0-9]*")) {
+                return change;
+            }
+            return null;
+        };
+        insertPosTextField.setTextFormatter(new TextFormatter<>(integerFilter));
     }
 
     @FXML
@@ -118,11 +173,18 @@ public class TocGeneratorTabController {
             title = "Table of Contents"; // Default title
         }
 
+        int insertPos = 1; // Default to beginning
+        try {
+            insertPos = Integer.parseInt(insertPosTextField.getText());
+            if (insertPos < 0) insertPos = 1; // No negative positions
+        } catch (NumberFormatException e) {
+            // Keep default
+        }
+
+
         String srcFile = currentFileState.getSrcFile().toString();
         String destFile = currentFileState.getDestFile().toString();
         
-        // The user might have edited the text, so we need to parse it back into bookmarks.
-        // We assume the "indent" method for parsing, as it's the most common for TOCs.
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(tocContent, Method.INDENT);
 
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
@@ -131,7 +193,7 @@ public class TocGeneratorTabController {
         }
 
         try {
-            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, rootBookmark.getChildren());
+            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, rootBookmark.getChildren());
             eventBus.post(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {
             eventBus.post(new ShowMessageEvent("Failed to generate TOC page: " + e.getMessage(), Message.MessageType.ERROR));

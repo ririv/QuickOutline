@@ -7,21 +7,18 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 public class BookmarkSettingsState {
-    private final ObjectProperty<Integer> offset = new SimpleObjectProperty<>(null);
+    private final IntegerProperty offset = new SimpleIntegerProperty(0);
     private final ObjectProperty<Bookmark> rootBookmark = new SimpleObjectProperty<>();
 
     public int getOffset() {
-        if (offset.get() == null) {
-            offset.set(0);
-        }
         return offset.get();
     }
 
-    public ObjectProperty<Integer> offsetProperty() {
+    public IntegerProperty offsetProperty() {
         return offset;
     }
 
-    public void setOffset(Integer offset) {
+    public void setOffset(int offset) {
         this.offset.set(offset);
     }
 

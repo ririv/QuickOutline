@@ -4,31 +4,46 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextArea?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 <?import com.ririv.quickoutline.view.controls.EditorTextArea?>
 
 <?import javafx.scene.control.ScrollPane?>
-<SplitPane dividerPositions="0.5" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController">
-    <VBox alignment="CENTER">
-        <TextArea fx:id="titleTextArea" prefHeight="40.0" promptText="%tocTitleTextArea.prompt"/>
-        <EditorTextArea fx:id="tocContentTextArea" VBox.vgrow="ALWAYS" promptText="%tocContentTextArea.prompt"/>
-        <HBox spacing="10" alignment="CENTER">
-            <VBox.margin>
-                <Insets top="10"/>
-            </VBox.margin>
-            <Button text="Preview" onAction="#previewTocPageAction" styleClass="my-button,plain-button-primary"/>
-            <Button text="Generate TOC Page" onAction="#generateTocPageAction"
-                    styleClass="my-button,plain-button-primary"/>
-        </HBox>
-    </VBox>
-    <ScrollPane fitToWidth="true">
-        <VBox fx:id="previewVBox" alignment="CENTER" spacing="10">
-            <padding>
-                <Insets top="10" right="10" bottom="10" left="10"/>
-            </padding>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.Tooltip?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController">
+    <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
+        <VBox>
+            <TextArea fx:id="titleTextArea" prefHeight="40.0" promptText="%tocTitleTextArea.prompt" />
+            <EditorTextArea fx:id="tocContentTextArea" VBox.vgrow="ALWAYS" promptText="%tocContentTextArea.prompt"/>
         </VBox>
-    </ScrollPane>
-</SplitPane>
+        <ScrollPane fitToWidth="true">
+            <VBox fx:id="previewVBox" alignment="TOP_CENTER">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+            </VBox>
+        </ScrollPane>
+    </SplitPane>
+    <HBox alignment="CENTER" prefHeight="40.0" spacing="10">
+        <padding>
+            <Insets top="5" bottom="5" left="10" right="10"/>
+        </padding>
+        <TextField fx:id="offsetTF" styleClass="underlineTF" prefWidth="100" promptText="%offsetTF.prompt" >
+            <tooltip>
+                <Tooltip text="%offsetTF.tooltip" />
+            </tooltip>
+        </TextField>
+        <TextField fx:id="insertPosTextField" styleClass="underlineTF" prefWidth="100" promptText="%insertPosTextField.prompt">
+            <tooltip>
+                <Tooltip text="%insertPosTextField.tooltip" />
+            </tooltip>
+        </TextField>
+        <Region HBox.hgrow="ALWAYS" />
+        <Button text="Preview" onAction="#previewTocPageAction" styleClass="my-button,plain-button-primary"/>
+        <Button text="Generate TOC Page" onAction="#generateTocPageAction"
+                styleClass="my-button,plain-button-primary"/>
+    </HBox>
+</VBox>

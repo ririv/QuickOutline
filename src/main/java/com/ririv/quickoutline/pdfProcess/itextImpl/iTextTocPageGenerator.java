@@ -32,7 +32,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
     private static final Logger log = LoggerFactory.getLogger(iTextTocPageGenerator.class);
 
     @Override
-    public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, List<Bookmark> bookmarks) throws IOException {
+    public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos, List<Bookmark> bookmarks) throws IOException {
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
         // 记录原始文档的页数
         int originalPageNum = pdfDoc.getNumberOfPages();
@@ -91,7 +91,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         // firstTocPageInDoc现在是TOC在当前文档中的起始页码
         int firstTocPageInDoc = totalPages - actualTocPages + 1;
         for (int i = 0; i < actualTocPages; i++) {
-            pdfDoc.movePage(firstTocPageInDoc + i, i + 1);
+            pdfDoc.movePage(firstTocPageInDoc + i, insertPos + i);
         }
 
         doc.close();

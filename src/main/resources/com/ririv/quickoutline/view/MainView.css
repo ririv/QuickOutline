@@ -26,19 +26,19 @@
 }
 
 /*下划线*/
-#offsetTF{
+.underlineTF{
     -fx-border-width: 0 0 1 0; /* 只在底部添加边框 */
     -fx-border-color: #909090; /* 下划线颜色 */
     -fx-border-radius: 0;
 }
 
 
-#offsetTF:hover {
+.underlineTF:hover {
     -fx-border-color: black; /* 下划线颜色 */
 }
 
 /*聚焦，聚焦并悬浮*/
-#offsetTF:focused, #offsetTF:focused:hover {
+.underlineTF:focused, .underlineTF:focused:hover {
     -fx-border-color: #0093EF; /* 下划线颜色 */
 }
 
