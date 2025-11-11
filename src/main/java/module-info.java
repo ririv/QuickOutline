@@ -23,6 +23,9 @@ module quickoutline {
 //    requires openai.java.core;
 //    requires openai.java.client.okhttp;
     requires com.google.common;
+    requires org.commonmark;
+    requires org.commonmark.ext.gfm.tables;
+    requires html2pdf;
 //    requires org.bouncycastle.util;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
