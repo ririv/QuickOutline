@@ -12,6 +12,8 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.control.ComboBox?>
+<?import com.ririv.quickoutline.view.controls.select.StyledSelect?>
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController">
     <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
@@ -36,11 +38,12 @@
                 <Tooltip text="%offsetTF.tooltip" />
             </tooltip>
         </TextField>
-        <TextField fx:id="insertPosTextField" styleClass="underlineTF" prefWidth="100" promptText="%insertPosTextField.prompt">
+        <TextField fx:id="insertPosTextField" styleClass="underlineTF"  prefWidth="100" promptText="%insertPosTextField.prompt">
             <tooltip>
                 <Tooltip text="%insertPosTextField.tooltip" />
             </tooltip>
         </TextField>
+        <StyledSelect fx:id="numberingStyleComboBox" prefWidth="100" />
         <Region HBox.hgrow="ALWAYS" />
         <Button text="Preview" onAction="#previewTocPageAction" styleClass="my-button,plain-button-primary"/>
         <Button text="Generate TOC Page" onAction="#generateTocPageAction"

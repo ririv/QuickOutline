@@ -60,6 +60,7 @@ public class StyledSelectSkin<T> extends SkinBase<StyledSelect<T>> {
     private static class SelectPopup<T> extends Popup {
         private final VBox itemsContainer;
         private final StyledSelect<T> control;
+        private boolean isPopupDownwards = true;
 
         public SelectPopup(StyledSelect<T> control) {
             this.control = control;
@@ -120,9 +121,19 @@ public class StyledSelectSkin<T> extends SkinBase<StyledSelect<T>> {
             return itemNode;
         }
 
+        public void setDirection(boolean isPopupDownwards) {
+            this.isPopupDownwards = isPopupDownwards;
+        }
+
         public void show(StyledSelect<T> owner) {
             double shadowRadius = 12.0;
-            Point2D screenPos = owner.localToScreen(0, owner.getHeight() + 5);
+            Point2D screenPos;
+            double spacing = 5.0;
+            if (isPopupDownwards) {
+                screenPos = owner.localToScreen(0, owner.getHeight() + spacing);
+            } else {
+                screenPos = owner.localToScreen(0, -itemsContainer.getHeight() - spacing);
+            }
             this.show(owner, screenPos.getX() - shadowRadius, screenPos.getY() - shadowRadius);
         }
     }

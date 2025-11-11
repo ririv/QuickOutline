@@ -26,6 +26,7 @@ module quickoutline {
     requires org.commonmark;
     requires org.commonmark.ext.gfm.tables;
     requires html2pdf;
+    requires commons;
 //    requires org.bouncycastle.util;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;

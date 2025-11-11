@@ -4,12 +4,14 @@ import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.action.PdfAction;
 import com.itextpdf.kernel.pdf.canvas.draw.DottedLine;
+import com.itextpdf.kernel.pdf.event.AbstractPdfDocumentEvent;
+import com.itextpdf.kernel.pdf.event.AbstractPdfDocumentEventHandler;
+import com.itextpdf.kernel.pdf.event.PdfDocumentEvent;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
+import com.itextpdf.layout.Canvas;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Paragraph;
@@ -19,6 +21,7 @@ import com.itextpdf.layout.properties.AreaBreakType;
 import com.itextpdf.layout.properties.TabAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +30,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.itextpdf.kernel.numbering.AlphabetNumbering.toAlphabetNumber;
+import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.*;
+import static com.itextpdf.kernel.numbering.RomanNumbering.*;
+
 public class iTextTocPageGenerator implements TocPageGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(iTextTocPageGenerator.class);
 
     @Override
-    public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos, List<Bookmark> bookmarks) throws IOException {
+    public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos, PageLabelNumberingStyle style, List<Bookmark> bookmarks) throws IOException {
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
         // 记录原始文档的页数
         int originalPageNum = pdfDoc.getNumberOfPages();
@@ -48,6 +55,9 @@ public class iTextTocPageGenerator implements TocPageGenerator {
             font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
         }
 
+        if (style != PageLabelNumberingStyle.NONE) {
+            pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new PageNumberEventHandler(doc, style, font, insertPos, -1)); // We don't know total pages yet
+        }
 
         // ======================= !!! FINAL, DEFINITIVE FIX !!! =======================
         // 这是一个两步操作，以确保我们总是在文档的末尾添加新页面
@@ -98,7 +108,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
     }
 
     @Override
-    public void generateTocPagePreview(String title, List<Bookmark> bookmarks, java.io.OutputStream outputStream) throws IOException {
+    public void generateTocPagePreview(String title, PageLabelNumberingStyle style, List<Bookmark> bookmarks, java.io.OutputStream outputStream) throws IOException {
         PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outputStream));
         Document doc = new Document(pdfDoc);
 
@@ -110,6 +120,10 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         } catch (IOException | NullPointerException e) {
             log.warn("未找到字体文件，错误信息：{}",e.getMessage());
             font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
+        }
+
+        if (style != null && style != PageLabelNumberingStyle.NONE) {
+            pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new PageNumberEventHandler(doc, style, font, 1, -1));
         }
 
         Paragraph titleParagraph = new Paragraph(title)
@@ -136,4 +150,53 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         doc.close();
     }
 
+    private static class PageNumberEventHandler extends AbstractPdfDocumentEventHandler {
+        private final Document doc;
+        private final PageLabelNumberingStyle style;
+        private final PdfFont font;
+        private final int startPageNum;
+        private int totalTocPages;
+
+        public PageNumberEventHandler(Document doc, PageLabelNumberingStyle style, PdfFont font, int startPageNum, int totalTocPages) {
+            this.doc = doc;
+            this.style = style;
+            this.font = font;
+            this.startPageNum = startPageNum;
+            this.totalTocPages = totalTocPages;
+        }
+
+        @Override
+        public void onAcceptedEvent(AbstractPdfDocumentEvent currentEvent) {
+            PdfDocumentEvent docEvent = (PdfDocumentEvent) currentEvent;
+            PdfDocument pdfDoc = docEvent.getDocument();
+            PdfPage page = docEvent.getPage();
+            int pageNum = pdfDoc.getPageNumber(page);
+
+            if (totalTocPages == -1) {
+                totalTocPages = pdfDoc.getNumberOfPages();
+            }
+
+            // Only add page numbers to the TOC pages
+            if (pageNum >= startPageNum && pageNum < startPageNum + totalTocPages) {
+                String pageNumberText = formatPageNumber(pageNum - startPageNum + 1);
+                if (pageNumberText == null) return;
+                Canvas canvas = new Canvas(docEvent.getPage(), page.getPageSize());
+                canvas.setFont(font)
+                        .setFontSize(10)
+                        .showTextAligned(pageNumberText, page.getPageSize().getWidth() / 2, doc.getBottomMargin(), TextAlignment.CENTER)
+                        .close();
+            }
+        }
+
+        private String formatPageNumber(int number) {
+            return switch (style) {
+                case DECIMAL_ARABIC_NUMERALS -> String.valueOf(number);
+                case UPPERCASE_ROMAN_NUMERALS -> toRomanUpperCase(number);
+                case LOWERCASE_ROMAN_NUMERALS -> toRomanLowerCase(number);
+                case UPPERCASE_LETTERS -> toLatinAlphabetNumberUpperCase(number);
+                case LOWERCASE_LETTERS -> toLatinAlphabetNumberLowerCase(number);
+                default -> null;
+            };
+        }
+    }
 }

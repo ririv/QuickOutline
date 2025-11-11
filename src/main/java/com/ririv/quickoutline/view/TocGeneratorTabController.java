@@ -1,19 +1,24 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.pdfProcess.PageLabel;
+import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.service.PdfOutlineService;
+import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.view.controls.EditorTextArea;
-import jakarta.inject.Inject;
+import com.ririv.quickoutline.view.controls.message.Message;
+import com.ririv.quickoutline.view.controls.select.StyledSelect;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
-import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
-import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.view.state.CurrentFileState;
-import com.ririv.quickoutline.view.controls.message.Message;
+import jakarta.inject.Inject;
+import javafx.collections.FXCollections;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
@@ -49,6 +54,8 @@ public class TocGeneratorTabController {
     private TextField offsetTF;
     @FXML
     private TextField insertPosTextField;
+    @FXML
+    private StyledSelect<String> numberingStyleComboBox;
 
     @Inject
     public TocGeneratorTabController(PdfTocPageGeneratorService pdfTocPageGeneratorService, CurrentFileState currentFileState, BookmarkSettingsState bookmarkSettingsState, AppEventBus eventBus, PdfOutlineService pdfOutlineService) {
@@ -113,6 +120,10 @@ public class TocGeneratorTabController {
             return null;
         };
         insertPosTextField.setTextFormatter(new TextFormatter<>(integerFilter));
+
+        // Populate numbering style combo box
+        numberingStyleComboBox.setItems(FXCollections.observableArrayList(PageLabel.STYLE_MAP.keySet()));
+        numberingStyleComboBox.setValue("None");
     }
 
     @FXML
@@ -128,6 +139,8 @@ public class TocGeneratorTabController {
             title = "Table of Contents"; // Default title
         }
 
+        PageLabelNumberingStyle style = PageLabel.STYLE_MAP.get(numberingStyleComboBox.getValue());
+
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(tocContent, Method.INDENT);
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
             eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));
@@ -135,7 +148,7 @@ public class TocGeneratorTabController {
         }
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            pdfTocPageGeneratorService.createTocPagePreview(title, rootBookmark.getChildren(), baos);
+            pdfTocPageGeneratorService.createTocPagePreview(title, style, rootBookmark.getChildren(), baos);
 
             try (PDDocument document = Loader.loadPDF(baos.toByteArray())) {
                 PDFRenderer renderer = new PDFRenderer(document);
@@ -181,6 +194,7 @@ public class TocGeneratorTabController {
             // Keep default
         }
 
+        PageLabelNumberingStyle style = PageLabel.STYLE_MAP.get(numberingStyleComboBox.getValue());
 
         String srcFile = currentFileState.getSrcFile().toString();
         String destFile = currentFileState.getDestFile().toString();
@@ -193,7 +207,7 @@ public class TocGeneratorTabController {
         }
 
         try {
-            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, rootBookmark.getChildren());
+            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark.getChildren());
             eventBus.post(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {
             eventBus.post(new ShowMessageEvent("Failed to generate TOC page: " + e.getMessage(), Message.MessageType.ERROR));

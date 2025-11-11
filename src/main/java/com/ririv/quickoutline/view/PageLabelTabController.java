@@ -1,9 +1,9 @@
 package com.ririv.quickoutline.view;
 
-import jakarta.inject.Inject;
 import com.ririv.quickoutline.exception.InvalidPageLabelRuleException;
-import com.ririv.quickoutline.service.PageLabelRule;
+import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
+import com.ririv.quickoutline.service.PageLabelRule;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.controls.select.StyledSelect;
@@ -12,6 +12,7 @@ import com.ririv.quickoutline.view.event.PageLabelsChangedEvent;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.event.ShowSuccessDialogEvent;
 import com.ririv.quickoutline.view.state.CurrentFileState;
+import jakarta.inject.Inject;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -26,23 +27,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+
+import static com.ririv.quickoutline.pdfProcess.PageLabel.STYLE_MAP;
 
 public class PageLabelTabController {
-
-    // The UI display strings and their mapping to the domain model (Enum)
-    // are now properly confined to the view layer.
-    private static final Map<String, PageLabelNumberingStyle> STYLE_MAP = new LinkedHashMap<>();
-    static {
-        STYLE_MAP.put("无", PageLabelNumberingStyle.NONE);
-        STYLE_MAP.put("1, 2, 3, ...", PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
-        STYLE_MAP.put("i, ii, iii, ...", PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS);
-        STYLE_MAP.put("I, II, III, ...", PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS);
-        STYLE_MAP.put("a, b, c, ...", PageLabelNumberingStyle.LOWERCASE_LETTERS);
-        STYLE_MAP.put("A, B, C, ...", PageLabelNumberingStyle.UPPERCASE_LETTERS);
-    }
 
     public ScrollPane labelRuleListLayout;
     @FXML

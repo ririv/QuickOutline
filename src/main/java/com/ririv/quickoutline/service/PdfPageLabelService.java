@@ -2,8 +2,10 @@ package com.ririv.quickoutline.service;
 
 import com.itextpdf.kernel.pdf.PageLabelNumberingStyle;
 import com.ririv.quickoutline.exception.InvalidPageLabelRuleException;
+import com.ririv.quickoutline.pdfProcess.Numbering;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.pdfProcess.PageLabelProcessor;
+import com.ririv.quickoutline.pdfProcess.itextImpl.ItextNumbering;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextPageLabelProcessor;
 
 import java.io.IOException;
@@ -65,36 +67,19 @@ public class PdfPageLabelService {
             return (prefix != null ? prefix : "") + number;
         }
         String label;
+        Numbering numbering = new ItextNumbering();
         switch (style) {
             case DECIMAL_ARABIC_NUMERALS -> label = String.valueOf(number);
-            case UPPERCASE_ROMAN_NUMERALS -> label = toRoman(number);
-            case LOWERCASE_ROMAN_NUMERALS -> label = toRoman(number).toLowerCase();
-            case UPPERCASE_LETTERS -> label = toLetters(number);
-            case LOWERCASE_LETTERS -> label = toLetters(number).toLowerCase();
+            case UPPERCASE_ROMAN_NUMERALS -> label = numbering.toRomanUpperCase(number);
+            case LOWERCASE_ROMAN_NUMERALS -> label = numbering.toRomanLowerCase(number);
+            case UPPERCASE_LETTERS -> label = numbering.toLatinAlphabetNumberUpperCase(number);
+            case LOWERCASE_LETTERS -> label = numbering.toLatinAlphabetNumberLowerCase(number);
             case NONE -> label = ""; // For NONE style, display nothing.
             default -> label = String.valueOf(number);
         }
         return prefix != null ? prefix + label : label;
     }
 
-    private String toRoman(int number) {
-        if (number < 1 || number > 3999) return "";
-        String[] thousands = {"", "M", "MM", "MMM"};
-        String[] hundreds = {"", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"};
-        String[] tens = {"", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"};
-        String[] ones = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
-        return thousands[number / 1000] + hundreds[(number % 1000) / 100] + tens[(number % 100) / 10] + ones[number % 10];
-    }
-
-    private String toLetters(int number) {
-        StringBuilder sb = new StringBuilder();
-        while (number > 0) {
-            number--;
-            sb.insert(0, (char) ('A' + number % 26));
-            number /= 26;
-        }
-        return sb.toString();
-    }
 
     /**
      * Validates user input and creates a PageLabelRule.
