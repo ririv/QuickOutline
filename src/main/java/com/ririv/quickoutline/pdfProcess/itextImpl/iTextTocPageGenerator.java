@@ -97,4 +97,43 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         doc.close();
     }
 
+    @Override
+    public void generateTocPagePreview(String title, List<Bookmark> bookmarks, java.io.OutputStream outputStream) throws IOException {
+        PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outputStream));
+        Document doc = new Document(pdfDoc);
+
+        PdfFont font;
+        try {
+            String fontResourcePath = "/fonts/default.ttf";
+            String defaultFontPath = iTextTocPageGenerator.class.getResource(fontResourcePath).toExternalForm();
+            font = PdfFontFactory.createFont(defaultFontPath, PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
+        } catch (IOException | NullPointerException e) {
+            log.warn("未找到字体文件，错误信息：{}",e.getMessage());
+            font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
+        }
+
+        Paragraph titleParagraph = new Paragraph(title)
+                .setFont(font)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setFontSize(20)
+                .setMarginBottom(20);
+        doc.add(titleParagraph);
+
+        List<TabStop> tabStops = new ArrayList<>();
+        tabStops.add(new TabStop(580, TabAlignment.RIGHT, new DottedLine()));
+
+        for (Bookmark bookmark : bookmarks) {
+            Paragraph p = new Paragraph()
+                    .addTabStops(tabStops)
+                    .setFont(font)
+                    .setPaddingLeft((bookmark.getLevel() - 1) * 20)
+                    .add(bookmark.getTitle())
+                    .add(new Tab())
+                    .add(String.valueOf(bookmark.getPageNum().orElse(0)));
+            doc.add(p);
+        }
+
+        doc.close();
+    }
+
 }

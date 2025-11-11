@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface TocPageGenerator {
     void generateAndInsertToc(String srcFilePath, String destFilePath, String title, List<Bookmark> bookmarks) throws IOException;
+    void generateTocPagePreview(String title, List<Bookmark> bookmarks, java.io.OutputStream outputStream) throws IOException;
 }
