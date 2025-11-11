@@ -23,7 +23,7 @@ public class EditorTextArea extends TextArea {
         if (event.getCode() == KeyCode.TAB && event.isShiftDown()) {
             removeIndent();
             event.consume();
-        } else if (event.getCode() == KeyCode.TAB && isMultipleLinesSelected()) {
+        } else if (event.getCode() == KeyCode.TAB && (isMultipleLinesSelected() || isSingleLineFullySelected())) {
             addIndent();
             event.consume();
         }
@@ -53,7 +53,7 @@ public class EditorTextArea extends TextArea {
             selectedLines[i] = trimmedLine;
         }
         replaceText(startLineStartPos, end, String.join("\n", selectedLines));
-        selectRange(start + firstLineIndent, end + totalIndent);
+        selectRange(startLineStartPos, startLineStartPos + String.join("\n", selectedLines).length());
     }
 
     private void removeIndent() {
@@ -88,23 +88,33 @@ public class EditorTextArea extends TextArea {
                 selectedLines[i] = trimmedLine;
             }
             replaceText(startLineStartPos, end, String.join("\n", selectedLines));
-            selectRange(start - firstLineIndent, end - totalIndent);
-        } else { // 单行或未选中文字
-            int caretPosition = getCaretPosition();
-            if (getText(caretPosition - 1, caretPosition).equals("\n")) {
-                caretPosition++;
-            }
-            int currentLineNumber = getLineNumber(caretPosition);
-            if (getText().split("\n").length < currentLineNumber) {
-                return;
-            }
-            String currentLine = getText().split("\n")[currentLineNumber - 1];
-            if (INDENT_PATTERN.matcher(currentLine).find()) {
-                String trimmedLine = currentLine.replaceFirst(INDENT_PATTERN.pattern(), "");
-                int start = getLineStartPos(currentLineNumber - 1);
-                int end = start + currentLine.length();
-                replaceText(start, end, trimmedLine);
-                positionCaret(caretPosition - 1);
+            selectRange(startLineStartPos, startLineStartPos + String.join("\n", selectedLines).length());
+        } else { // Single line or no selection
+            int selectionStart = getSelection().getStart();
+            int selectionEnd = getSelection().getEnd();
+            boolean hasSelection = selectionEnd > selectionStart;
+
+            int lineNo = getLineNumber(selectionStart);
+            String[] lines = getText().split("\n");
+            if (lineNo > lines.length) return; // Should not happen
+
+            String currentLine = lines[lineNo - 1];
+            Matcher matcher = INDENT_PATTERN.matcher(currentLine);
+
+            if (matcher.find()) {
+                int indentSize = matcher.group(1).length();
+                String trimmedLine = currentLine.substring(indentSize);
+                int lineStartPos = getLineStartPos(lineNo - 1);
+
+                replaceText(lineStartPos, lineStartPos + currentLine.length(), trimmedLine);
+
+                if (hasSelection) {
+                    // Reselect the text, adjusted for the removed indent
+                    selectRange(Math.max(lineStartPos, selectionStart - indentSize), selectionEnd - indentSize);
+                } else {
+                    // Just move the caret
+                    positionCaret(Math.max(lineStartPos, selectionStart - indentSize));
+                }
             }
         }
     }
@@ -143,5 +153,24 @@ public class EditorTextArea extends TextArea {
         int x = getLineNumber(pos);
         int y = getColumnNumber(pos);
         return new Pair<>(x, y);
+    }
+
+    private boolean isSingleLineFullySelected() {
+        int start = getSelection().getStart();
+        int end = getSelection().getEnd();
+        if (start == end) return false;
+
+        String text = getText();
+        // Find the start of the line
+        int lineStart = text.lastIndexOf('\n', start - 1) + 1;
+
+        // Find the end of the line
+        int lineEnd = text.indexOf('\n', start);
+        if (lineEnd == -1) {
+            lineEnd = text.length();
+        }
+
+        // Check if the selection covers the entire line
+        return start == lineStart && end == lineEnd;
     }
 }
