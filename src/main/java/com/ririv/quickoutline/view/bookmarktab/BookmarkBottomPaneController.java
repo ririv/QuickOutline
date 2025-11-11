@@ -67,7 +67,7 @@ public class BookmarkBottomPaneController {
             if (newVal == null) {
                 offsetTF.setText("");
             } else {
-                if (newVal.toString().equals(offsetTF.getText())) {
+                if (!newVal.toString().equals(offsetTF.getText())) {
                     offsetTF.setText(newVal.toString());
                 }
             }
