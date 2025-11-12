@@ -18,3 +18,4 @@ target
 /.vscode/
 .qoder/rules/
 /fx/
+/.idea/copilot.data.migration.*.xml
