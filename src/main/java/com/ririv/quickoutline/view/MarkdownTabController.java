@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.service.MarkdownService; // Added import
+import com.ririv.quickoutline.service.MarkdownService;
 import com.ririv.quickoutline.view.controls.EditorTextArea;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.AppEventBus;
@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 public class MarkdownTabController {
 
@@ -33,9 +34,7 @@ public class MarkdownTabController {
 
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
-    // Removed Parser and HtmlRenderer as they are now in MarkdownService
-
-    private final MarkdownService markdownService; // Injected service
+    private final MarkdownService markdownService;
 
     private DebouncedPreviewer<String, byte[]> previewer;
     private byte[] lastGeneratedPdfBytes;
@@ -49,10 +48,13 @@ public class MarkdownTabController {
 
     @FXML
     public void initialize() {
+        Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+        Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+
         this.previewer = new DebouncedPreviewer<>(500,
-                markdownService::convertMarkdownToPdfBytes, // Use service method
+                markdownText -> markdownService.convertMarkdownToPdfBytes(markdownText, onMessage, onError),
                 this::updatePreviewUI,
-                e -> eventBus.post(new ShowMessageEvent("PDF preview failed: " + e.getMessage(), Message.MessageType.ERROR)));
+                e -> onError.accept("PDF preview failed: " + e.getMessage()));
 
         markdownTextArea.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && !newVal.isEmpty()) {
@@ -63,8 +65,6 @@ public class MarkdownTabController {
             }
         });
     }
-
-    // Removed generatePdfBytes method as it's now in MarkdownService
 
     private void updatePreviewUI(byte[] pdfBytes) {
         if (pdfBytes == null || pdfBytes.length == 0) {
@@ -77,8 +77,6 @@ public class MarkdownTabController {
             PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
             previewVBox.getChildren().clear();
             for (int i = 0; i < pdDocument.getNumberOfPages(); i++) {
-                // This is a long-running operation inside a Task, so no need to check isCancelled here
-                // as the task framework handles it.
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(i, 150);
                 ImageView imageView = new ImageView(SwingFXUtils.toFXImage(bufferedImage, null));
                 imageView.setPreserveRatio(true);
@@ -86,7 +84,6 @@ public class MarkdownTabController {
                 previewVBox.getChildren().add(imageView);
             }
         } catch (IOException e) {
-            // This runs on the JavaFX thread, so it's safe to post an event
             Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to render PDF preview: " + e.getMessage(), Message.MessageType.ERROR)));
             e.printStackTrace();
         }
