@@ -1,7 +1,6 @@
 package com.ririv.quickoutline.pdfProcess.itextImpl;
 
 import com.itextpdf.io.font.PdfEncodings;
-import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.*;
@@ -23,37 +22,48 @@ import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
+import com.ririv.quickoutline.service.FontManager;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-import static com.itextpdf.kernel.numbering.AlphabetNumbering.toAlphabetNumber;
-import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.*;
-import static com.itextpdf.kernel.numbering.RomanNumbering.*;
+import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlphabetNumberLowerCase;
+import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlphabetNumberUpperCase;
+import static com.itextpdf.kernel.numbering.RomanNumbering.toRomanLowerCase;
+import static com.itextpdf.kernel.numbering.RomanNumbering.toRomanUpperCase;
 
 public class iTextTocPageGenerator implements TocPageGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(iTextTocPageGenerator.class);
+    private final FontManager fontManager;
+
+    @Inject
+    public iTextTocPageGenerator(FontManager fontManager) {
+        this.fontManager = fontManager;
+    }
+
+    private PdfFont getPdfFont(Consumer<String> onMessage, Consumer<String> onError) throws IOException {
+        List<Path> fontPaths = fontManager.getFontPaths(onMessage, onError);
+        // For simplicity, we load the regular font. iText will simulate bold/italic if needed.
+        return PdfFontFactory.createFont(fontPaths.get(0).toString(), PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
+    }
 
     @Override
-    public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos, PageLabelNumberingStyle style, List<Bookmark> bookmarks) throws IOException {
+    public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos,
+                                     PageLabelNumberingStyle style, List<Bookmark> bookmarks,
+                                     Consumer<String> onMessage, Consumer<String> onError) throws IOException {
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
         // 记录原始文档的页数
         int originalPageNum = pdfDoc.getNumberOfPages();
         Document doc = new Document(pdfDoc);
 
-        PdfFont font;
-        try {
-            String fontResourcePath = "/fonts/default.ttf";
-            String defaultFontPath = iTextTocPageGenerator.class.getResource(fontResourcePath).toExternalForm();
-            font = PdfFontFactory.createFont(defaultFontPath, PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
-        } catch (IOException | NullPointerException e) {
-            log.warn("未找到字体文件，错误信息：{}",e.getMessage());
-            font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
-        }
+        PdfFont font = getPdfFont(onMessage, onError);
 
         if (style != PageLabelNumberingStyle.NONE) {
             pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new PageNumberEventHandler(doc, style, font, insertPos, -1)); // We don't know total pages yet
@@ -108,19 +118,13 @@ public class iTextTocPageGenerator implements TocPageGenerator {
     }
 
     @Override
-    public void generateTocPagePreview(String title, PageLabelNumberingStyle style, List<Bookmark> bookmarks, java.io.OutputStream outputStream) throws IOException {
+    public void generateTocPagePreview(String title, PageLabelNumberingStyle style, List<Bookmark> bookmarks,
+                                       java.io.OutputStream outputStream,
+                                       Consumer<String> onMessage, Consumer<String> onError) throws IOException {
         PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outputStream));
         Document doc = new Document(pdfDoc);
 
-        PdfFont font;
-        try {
-            String fontResourcePath = "/fonts/default.ttf";
-            String defaultFontPath = iTextTocPageGenerator.class.getResource(fontResourcePath).toExternalForm();
-            font = PdfFontFactory.createFont(defaultFontPath, PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
-        } catch (IOException | NullPointerException e) {
-            log.warn("未找到字体文件，错误信息：{}",e.getMessage());
-            font = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
-        }
+        PdfFont font = getPdfFont(onMessage, onError);
 
         if (style != null && style != PageLabelNumberingStyle.NONE) {
             pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new PageNumberEventHandler(doc, style, font, 1, -1));

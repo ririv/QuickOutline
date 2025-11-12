@@ -35,11 +35,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 public class TocGeneratorTabController {
 
-    // Record to hold all inputs required for a preview
     private record TocPreviewInput(String tocContent, String title, PageLabelNumberingStyle style) {}
 
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
@@ -81,10 +81,14 @@ public class TocGeneratorTabController {
     }
 
     private void setupDebouncedPreviewer() {
-        this.previewer = new DebouncedPreviewer<>(500, this::generatePreviewBytes, this::updatePreviewUI,
-                e -> eventBus.post(new ShowMessageEvent("TOC preview failed: " + e.getMessage(), Message.MessageType.ERROR)));
+        Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+        Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-        // Add listeners to all controls that affect the preview
+        this.previewer = new DebouncedPreviewer<>(500,
+                input -> generatePreviewBytes(input, onMessage, onError),
+                this::updatePreviewUI,
+                e -> onError.accept("TOC preview failed: " + e.getMessage()));
+
         tocContentTextArea.textProperty().addListener((obs, ov, nv) -> triggerPreview());
         titleTextArea.textProperty().addListener((obs, ov, nv) -> triggerPreview());
         numberingStyleComboBox.valueProperty().addListener((obs, ov, nv) -> triggerPreview());
@@ -100,12 +104,12 @@ public class TocGeneratorTabController {
             return;
         }
         if (title == null || title.isBlank()) {
-            title = "Table of Contents"; // Default title
+            title = "Table of Contents";
         }
         previewer.trigger(new TocPreviewInput(tocContent, title, style));
     }
 
-    private byte[] generatePreviewBytes(TocPreviewInput input) {
+    private byte[] generatePreviewBytes(TocPreviewInput input, Consumer<String> onMessage, Consumer<String> onError) {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(input.tocContent(), Method.INDENT);
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
             Platform.runLater(() -> eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING)));
@@ -113,7 +117,7 @@ public class TocGeneratorTabController {
         }
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            pdfTocPageGeneratorService.createTocPagePreview(input.title(), input.style(), rootBookmark.getChildren(), baos);
+            pdfTocPageGeneratorService.createTocPagePreview(input.title(), input.style(), rootBookmark.getChildren(), baos, onMessage, onError);
             return baos.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException("Failed to generate TOC preview bytes", e);
@@ -140,7 +144,7 @@ public class TocGeneratorTabController {
 
     @FXML
     void previewTocPageAction(ActionEvent event) {
-        triggerPreview(); // The button now also uses the debouncer logic
+        triggerPreview();
     }
 
     private void setupBookmarkBindings() {
@@ -220,7 +224,9 @@ public class TocGeneratorTabController {
         try {
             String srcFile = currentFileState.getSrcFile().toString();
             String destFile = currentFileState.getDestFile().toString();
-            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark.getChildren());
+            Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+            Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark.getChildren(), onMessage, onError);
             eventBus.post(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {
             eventBus.post(new ShowMessageEvent("Failed to generate TOC page: " + e.getMessage(), Message.MessageType.ERROR));
