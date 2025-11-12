@@ -1,43 +1,42 @@
 package com.ririv.quickoutline.view;
 
+import com.itextpdf.html2pdf.HtmlConverter;
 import com.ririv.quickoutline.view.controls.EditorTextArea;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.state.CurrentFileState;
-import com.itextpdf.html2pdf.HtmlConverter;
 import jakarta.inject.Inject;
-import javafx.application.Platform;
-import javafx.concurrent.Worker;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.ScrollBar;
-import javafx.scene.web.WebView;
-import netscape.javascript.JSObject;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 
-@SuppressWarnings("removal")
 public class MarkdownTabController {
 
     @FXML
     private EditorTextArea markdownTextArea;
     @FXML
-    private WebView previewWebView;
+    private VBox previewVBox;
 
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
     private final Parser parser = Parser.builder().build();
     private final HtmlRenderer renderer = HtmlRenderer.builder().build();
-
-    private boolean isSyncing = false;
-    private ScrollBar editorScrollBar;
 
     @Inject
     public MarkdownTabController(CurrentFileState currentFileState, AppEventBus eventBus) {
@@ -47,101 +46,80 @@ public class MarkdownTabController {
 
     @FXML
     public void initialize() {
-        markdownTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
-            Node document = parser.parse(newValue);
-            String htmlContent = renderer.render(document);
-            previewWebView.getEngine().loadContent(htmlContent);
-        });
-
-        // Wait for nodes to be rendered
-        Platform.runLater(() -> {
-            editorScrollBar = (ScrollBar) markdownTextArea.lookup(".scroll-bar:vertical");
-            if (editorScrollBar != null) {
-                // Sync from editor to web view
-                editorScrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
-                    if (isSyncing) return;
-                    isSyncing = true;
-
-                    double editorScrollMax = editorScrollBar.getMax();
-                    double editorScrollMin = editorScrollBar.getMin();
-                    double editorScrollValue = newVal.doubleValue();
-
-                    if (editorScrollMax <= editorScrollMin) {
-                        isSyncing = false;
-                        return;
-                    }
-
-                    double scrollPercentage = (editorScrollValue - editorScrollMin) / (editorScrollMax - editorScrollMin);
-
-                    Object result = previewWebView.getEngine().executeScript("document.body.scrollHeight - window.innerHeight");
-                    if (result instanceof Number) {
-                        double webViewScrollHeight = ((Number) result).doubleValue();
-                        previewWebView.getEngine().executeScript("window.scrollTo(0, " + (webViewScrollHeight * scrollPercentage) + ")");
-                    }
-                    isSyncing = false;
-                });
-            }
-        });
-
-        // Sync from web view to editor
-        previewWebView.getEngine().getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-            if (newState == Worker.State.SUCCEEDED) {
-                JSObject window = (JSObject) previewWebView.getEngine().executeScript("window");
-                window.setMember("javaBridge", new JSBridge());
-                previewWebView.getEngine().executeScript(
-                        "window.onscroll = function() {" +
-                        "    var scrollHeight = document.body.scrollHeight - window.innerHeight;" +
-                        "    if (scrollHeight > 0) {" +
-                        "        var percentage = window.scrollY / scrollHeight;" +
-                        "        javaBridge.setScroll(percentage);" +
-                        "    }" +
-                        "}"
-                );
-            }
-        });
+        // Initialization logic can be added here if needed in the future.
     }
 
-    public class JSBridge {
-        public void setScroll(double percentage) {
-            if (isSyncing) return;
-            isSyncing = true;
-            if (editorScrollBar != null) {
-                double editorScrollMax = editorScrollBar.getMax();
-                double editorScrollMin = editorScrollBar.getMin();
-                editorScrollBar.setValue(editorScrollMin + (editorScrollMax - editorScrollMin) * percentage);
+    /**
+     * Generates the PDF in memory and updates the preview area.
+     * @return The byte array of the generated PDF, or null if generation fails.
+     */
+    private byte[] updatePreview() {
+        String markdownText = markdownTextArea.getText();
+        if (markdownText == null || markdownText.isBlank()) {
+            eventBus.post(new ShowMessageEvent("Markdown content is empty.", Message.MessageType.WARNING));
+            return null;
+        }
+
+        Node document = parser.parse(markdownText);
+        String htmlContent = renderer.render(document);
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            // Convert HTML to PDF in memory
+            HtmlConverter.convertToPdf(htmlContent, baos);
+            byte[] pdfBytes = baos.toByteArray();
+
+            // Render the in-memory PDF for preview
+            try (PDDocument pdDocument = Loader.loadPDF(pdfBytes)) {
+                PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
+                previewVBox.getChildren().clear(); // Clear previous preview
+                for (int i = 0; i < pdDocument.getNumberOfPages(); i++) {
+                    BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(i, 150); // 150 DPI for preview
+                    ImageView imageView = new ImageView(SwingFXUtils.toFXImage(bufferedImage, null));
+                    imageView.setPreserveRatio(true);
+                    imageView.setFitWidth(previewVBox.getWidth() > 20 ? previewVBox.getWidth() - 20 : 400); // Adjust width
+                    previewVBox.getChildren().add(imageView);
+                }
             }
-            isSyncing = false;
+            return pdfBytes;
+
+        } catch (IOException e) {
+            eventBus.post(new ShowMessageEvent("Failed to generate PDF preview: " + e.getMessage(), Message.MessageType.ERROR));
+            e.printStackTrace();
+            return null;
         }
     }
 
     @FXML
-    void renderToPdfAction(ActionEvent event) {
-        String markdownText = markdownTextArea.getText();
-        if (markdownText == null || markdownText.isBlank()) {
-            eventBus.post(new ShowMessageEvent("Markdown content is empty.", Message.MessageType.WARNING));
-            return;
-        }
+    void previewAction(ActionEvent event) {
+        updatePreview();
+    }
 
+    @FXML
+    void renderToPdfAction(ActionEvent event) {
         if (currentFileState.getSrcFile() == null) {
             eventBus.post(new ShowMessageEvent("Please select a source PDF file first. The output will be saved in the same directory.", Message.MessageType.WARNING));
             return;
         }
 
-        // 1. Parse Markdown to HTML
-        Node document = parser.parse(markdownText);
-        String htmlContent = renderer.render(document);
+        // Generate PDF and update preview first
+        byte[] pdfBytes = updatePreview();
 
-        // 2. Convert HTML to PDF
+        if (pdfBytes == null) {
+            // Preview generation failed, so don't save.
+            return;
+        }
+
+        // Save the generated PDF bytes to a file
         Path srcPath = currentFileState.getSrcFile();
         String destFileName = srcPath.getFileName().toString().replaceFirst("[.][^.]+$", "") + "_from_markdown.pdf";
         Path destPath = srcPath.getParent().resolve(destFileName);
         File destFile = destPath.toFile();
 
         try (FileOutputStream fos = new FileOutputStream(destFile)) {
-            HtmlConverter.convertToPdf(htmlContent, fos);
+            fos.write(pdfBytes);
             eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile.getAbsolutePath(), Message.MessageType.SUCCESS));
         } catch (IOException e) {
-            eventBus.post(new ShowMessageEvent("Failed to render PDF: " + e.getMessage(), Message.MessageType.ERROR));
+            eventBus.post(new ShowMessageEvent("Failed to save PDF: " + e.getMessage(), Message.MessageType.ERROR));
             e.printStackTrace();
         }
     }
