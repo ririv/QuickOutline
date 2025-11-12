@@ -60,6 +60,7 @@
                 <fx:include fx:id="tocGeneratorTabView" visible="false" source="TocGeneratorTab.fxml"/>
                 <fx:include fx:id="pageLabelTabView" visible="false" source="PageLabelTab.fxml"/>
                 <fx:include fx:id="pdfPreviewTabView" visible="false"  source="PdfViewerTab.fxml" />
+                <fx:include fx:id="markdownTabView" visible="false" source="MarkdownTab.fxml"/>
 
             </StackPane>
             </VBox>

@@ -36,6 +36,7 @@ public class LeftPaneController {
     public ToggleButton tocGeneratorTabBtn;
     public ToggleButton labelTabBtn;
     public ToggleButton previewTabBtn;
+    public ToggleButton markdownTabBtn;
 
     @Inject
     public LeftPaneController(AppEventBus eventBus) {
@@ -59,6 +60,8 @@ public class LeftPaneController {
                 eventBus.post(new SwitchTabEvent(FnTab.label));
             } else if (newValue == previewTabBtn) {
                 eventBus.post(new SwitchTabEvent(FnTab.preview));
+            } else if (newValue == markdownTabBtn) {
+                eventBus.post(new SwitchTabEvent(FnTab.markdown));
             }
         });
     }

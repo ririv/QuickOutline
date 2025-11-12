@@ -2,12 +2,13 @@ module quickoutline {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.desktop;
-//    requires javafx.web;
+    requires javafx.web;
 //    requires java.validation;
     requires javafx.swing;
     requires org.slf4j;
     requires org.apache.commons.logging;
 
+    // itext
     requires kernel;
     requires layout;
     requires io;
@@ -27,6 +28,7 @@ module quickoutline {
     requires org.commonmark.ext.gfm.tables;
     requires html2pdf;
     requires commons;
+    requires jdk.jsobject;
 //    requires org.bouncycastle.util;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;

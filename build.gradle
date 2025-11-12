@@ -184,9 +184,6 @@ jlink {
 
 test {
     useJUnitPlatform()
-    moduleOptions {
-        runOnClasspath = true
-    }
 
     enabled = false // 禁用测试任务
 

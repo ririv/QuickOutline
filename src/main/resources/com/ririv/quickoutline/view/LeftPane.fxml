@@ -56,6 +56,17 @@
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
+            <GraphButtonWrapper>
+                <ToggleButton fx:id="markdownTabBtn" toggleGroup="$tabToggleGroup"
+                              styleClass="graph-button, graph-toggle-button">
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <Region styleClass="icon, icon-size-tab, markdown-icon" />
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
         </VBox>
     </top>
     <bottom>

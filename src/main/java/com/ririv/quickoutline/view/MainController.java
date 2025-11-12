@@ -60,9 +60,11 @@ public class MainController {
     private Node pageLabelTabView;
     @FXML
     private Node pdfPreviewTabView;
+    @FXML
+    private Node markdownTabView;
 
     public enum FnTab {
-        bookmark, toc, setting, label, preview, tocGenerator
+        bookmark, toc, setting, label, preview, tocGenerator, markdown
     }
 
     private final ObjectProperty<FnTab> currentTabProperty = new SimpleObjectProperty<>(FnTab.bookmark);
@@ -84,6 +86,7 @@ public class MainController {
         tocGeneratorTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.tocGenerator));
         pageLabelTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.label));
         pdfPreviewTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.preview));
+        markdownTabView.visibleProperty().bind(currentTabProperty.isEqualTo(FnTab.markdown));
 
         // Drag and drop logic
         root.setOnDragOver(event -> {
