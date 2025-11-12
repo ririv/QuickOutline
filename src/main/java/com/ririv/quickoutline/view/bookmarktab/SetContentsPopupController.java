@@ -3,7 +3,7 @@ package com.ririv.quickoutline.view.bookmarktab;
 import jakarta.inject.Inject;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
-import com.ririv.quickoutline.view.LocalizationManager;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;

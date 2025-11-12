@@ -11,7 +11,7 @@ import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.PdfTocExtractorService;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.state.CurrentFileState;
-import com.ririv.quickoutline.view.LocalizationManager;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.*;
 import javafx.fxml.FXML;

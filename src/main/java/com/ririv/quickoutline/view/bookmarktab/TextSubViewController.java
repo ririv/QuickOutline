@@ -6,7 +6,7 @@ import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEdi
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
 import com.ririv.quickoutline.utils.Pair;
-import com.ririv.quickoutline.view.LocalizationManager;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.EditorTextArea;
 import com.ririv.quickoutline.view.controls.Remind;
 import com.ririv.quickoutline.view.event.AppEventBus;

@@ -4,7 +4,7 @@ import jakarta.inject.Inject;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.state.CurrentFileState;
-import com.ririv.quickoutline.view.LocalizationManager;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.PopupCard;
 import com.ririv.quickoutline.view.event.*;
 import javafx.event.ActionEvent;

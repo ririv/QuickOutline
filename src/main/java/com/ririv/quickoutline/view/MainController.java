@@ -1,13 +1,13 @@
 package com.ririv.quickoutline.view;
 
 import com.google.common.eventbus.Subscribe;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import jakarta.inject.Inject;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.event.ShowSuccessDialogEvent;
 import com.ririv.quickoutline.view.event.SwitchTabEvent;
 import com.ririv.quickoutline.exception.EncryptedPdfException;
-import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import com.ririv.quickoutline.utils.OsDesktopUtil;
 import com.ririv.quickoutline.view.controls.message.Message;

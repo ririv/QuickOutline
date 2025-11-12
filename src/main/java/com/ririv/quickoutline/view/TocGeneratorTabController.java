@@ -14,6 +14,7 @@ import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.state.CurrentFileState;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;

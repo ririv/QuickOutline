@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view.bookmarktab;
 
-import com.ririv.quickoutline.view.LocalizationManager;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import com.ririv.quickoutline.view.controls.radioButton2.RadioButton2;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

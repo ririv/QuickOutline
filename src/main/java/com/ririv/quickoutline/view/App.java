@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.ririv.quickoutline.di.AppModule;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

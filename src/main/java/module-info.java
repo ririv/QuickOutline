@@ -68,4 +68,6 @@ module quickoutline {
     opens com.ririv.quickoutline.service.syncWithExternelEditor to com.google.guice;
     exports com.ririv.quickoutline.view.viewmodel;
     opens com.ririv.quickoutline.view.viewmodel to com.google.guice, javafx.fxml, javafx.graphics;
+    exports com.ririv.quickoutline.view.utils;
+    opens com.ririv.quickoutline.view.utils to com.google.guice, javafx.fxml, javafx.graphics;
 }

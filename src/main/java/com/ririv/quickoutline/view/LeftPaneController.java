@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import jakarta.inject.Inject;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.SwitchTabEvent;

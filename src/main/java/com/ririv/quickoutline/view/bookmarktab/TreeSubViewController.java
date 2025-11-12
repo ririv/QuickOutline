@@ -5,7 +5,7 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.view.controls.PagePreviewer;
 import com.ririv.quickoutline.view.viewmodel.BookmarkViewModel;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
-import com.ririv.quickoutline.view.LocalizationManager;
+import com.ririv.quickoutline.view.utils.LocalizationManager;
 import com.ririv.quickoutline.view.MyAlert;
 import com.ririv.quickoutline.view.RecursiveTreeItem;
 import com.ririv.quickoutline.view.controls.EditableTreeTableCell;

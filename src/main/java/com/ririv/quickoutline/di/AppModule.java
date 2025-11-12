@@ -25,7 +25,7 @@ public class AppModule extends AbstractModule {
         bind(TreeSubViewController.class).in(Scopes.SINGLETON);
         bind(TocGeneratorTabController.class).in(Scopes.SINGLETON);
         bind(MarkdownTabController.class).in(Scopes.SINGLETON);
-        bind(HelpController.class).in(Scopes.SINGLETON);
+        bind(HelpWindowController.class).in(Scopes.SINGLETON);
         bind(LeftPaneController.class).in(Scopes.SINGLETON);
         bind(MainController.class).in(Scopes.SINGLETON);
         bind(TocPageGenerator.class).to(iTextTocPageGenerator.class).in(Scopes.SINGLETON);

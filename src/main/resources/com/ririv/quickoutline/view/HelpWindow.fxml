@@ -7,7 +7,7 @@
             fx:id="helpPane"
             style="-fx-background-color: white"
             stylesheets="@svg.css"
-            fx:controller="com.ririv.quickoutline.view.HelpController">
+            fx:controller="com.ririv.quickoutline.view.HelpWindowController">
 
     <FlowPane fx:id="innerPane"
               alignment="CENTER"

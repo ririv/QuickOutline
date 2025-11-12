@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view;
+package com.ririv.quickoutline.view.utils;
 
 import com.ririv.quickoutline.utils.BindText;
 import javafx.beans.property.ObjectProperty;
