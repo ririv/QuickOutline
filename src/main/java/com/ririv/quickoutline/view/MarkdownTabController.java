@@ -1,13 +1,14 @@
 package com.ririv.quickoutline.view;
 
-import com.itextpdf.html2pdf.HtmlConverter;
-import com.ririv.quickoutline.view.utils.DebouncedPreviewer;
+import com.ririv.quickoutline.service.MarkdownService; // Added import
 import com.ririv.quickoutline.view.controls.EditorTextArea;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.state.CurrentFileState;
+import com.ririv.quickoutline.view.utils.DebouncedPreviewer;
 import jakarta.inject.Inject;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -16,12 +17,8 @@ import javafx.scene.layout.VBox;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,21 +33,25 @@ public class MarkdownTabController {
 
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
-    private final Parser parser = Parser.builder().build();
-    private final HtmlRenderer renderer = HtmlRenderer.builder().build();
+    // Removed Parser and HtmlRenderer as they are now in MarkdownService
+
+    private final MarkdownService markdownService; // Injected service
 
     private DebouncedPreviewer<String, byte[]> previewer;
     private byte[] lastGeneratedPdfBytes;
 
     @Inject
-    public MarkdownTabController(CurrentFileState currentFileState, AppEventBus eventBus) {
+    public MarkdownTabController(CurrentFileState currentFileState, AppEventBus eventBus, MarkdownService markdownService) {
         this.currentFileState = currentFileState;
         this.eventBus = eventBus;
+        this.markdownService = markdownService;
     }
 
     @FXML
     public void initialize() {
-        this.previewer = new DebouncedPreviewer<>(500, this::generatePdfBytes, this::updatePreviewUI,
+        this.previewer = new DebouncedPreviewer<>(500,
+                markdownService::convertMarkdownToPdfBytes, // Use service method
+                this::updatePreviewUI,
                 e -> eventBus.post(new ShowMessageEvent("PDF preview failed: " + e.getMessage(), Message.MessageType.ERROR)));
 
         markdownTextArea.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -63,19 +64,14 @@ public class MarkdownTabController {
         });
     }
 
-    private byte[] generatePdfBytes(String markdownText) {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Node document = parser.parse(markdownText);
-            String htmlContent = renderer.render(document);
-            HtmlConverter.convertToPdf(htmlContent, baos);
-            return baos.toByteArray();
-        } catch (Exception e) {
-            // This will be caught by the Task's onFailed handler
-            throw new RuntimeException("Failed to generate PDF bytes", e);
-        }
-    }
+    // Removed generatePdfBytes method as it's now in MarkdownService
 
     private void updatePreviewUI(byte[] pdfBytes) {
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            previewVBox.getChildren().clear();
+            lastGeneratedPdfBytes = null;
+            return;
+        }
         this.lastGeneratedPdfBytes = pdfBytes;
         try (PDDocument pdDocument = Loader.loadPDF(pdfBytes)) {
             PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
@@ -91,7 +87,7 @@ public class MarkdownTabController {
             }
         } catch (IOException e) {
             // This runs on the JavaFX thread, so it's safe to post an event
-            eventBus.post(new ShowMessageEvent("Failed to render PDF preview: " + e.getMessage(), Message.MessageType.ERROR));
+            Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to render PDF preview: " + e.getMessage(), Message.MessageType.ERROR)));
             e.printStackTrace();
         }
     }

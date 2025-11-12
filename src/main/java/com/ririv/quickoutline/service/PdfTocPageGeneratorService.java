@@ -4,7 +4,6 @@ import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
-import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.util.List;
