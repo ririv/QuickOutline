@@ -1,6 +1,7 @@
 package com.ririv.quickoutline.view;
 
 import com.itextpdf.html2pdf.HtmlConverter;
+import com.ririv.quickoutline.view.utils.DebouncedPreviewer;
 import com.ririv.quickoutline.view.controls.EditorTextArea;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.AppEventBus;
@@ -38,6 +39,9 @@ public class MarkdownTabController {
     private final Parser parser = Parser.builder().build();
     private final HtmlRenderer renderer = HtmlRenderer.builder().build();
 
+    private DebouncedPreviewer<String, byte[]> previewer;
+    private byte[] lastGeneratedPdfBytes;
+
     @Inject
     public MarkdownTabController(CurrentFileState currentFileState, AppEventBus eventBus) {
         this.currentFileState = currentFileState;
@@ -46,52 +50,58 @@ public class MarkdownTabController {
 
     @FXML
     public void initialize() {
-        // Initialization logic can be added here if needed in the future.
+        this.previewer = new DebouncedPreviewer<>(500, this::generatePdfBytes, this::updatePreviewUI,
+                e -> eventBus.post(new ShowMessageEvent("PDF preview failed: " + e.getMessage(), Message.MessageType.ERROR)));
+
+        markdownTextArea.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                previewer.trigger(newVal);
+            } else {
+                previewVBox.getChildren().clear();
+                lastGeneratedPdfBytes = null;
+            }
+        });
     }
 
-    /**
-     * Generates the PDF in memory and updates the preview area.
-     * @return The byte array of the generated PDF, or null if generation fails.
-     */
-    private byte[] updatePreview() {
-        String markdownText = markdownTextArea.getText();
-        if (markdownText == null || markdownText.isBlank()) {
-            eventBus.post(new ShowMessageEvent("Markdown content is empty.", Message.MessageType.WARNING));
-            return null;
-        }
-
-        Node document = parser.parse(markdownText);
-        String htmlContent = renderer.render(document);
-
+    private byte[] generatePdfBytes(String markdownText) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            // Convert HTML to PDF in memory
+            Node document = parser.parse(markdownText);
+            String htmlContent = renderer.render(document);
             HtmlConverter.convertToPdf(htmlContent, baos);
-            byte[] pdfBytes = baos.toByteArray();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            // This will be caught by the Task's onFailed handler
+            throw new RuntimeException("Failed to generate PDF bytes", e);
+        }
+    }
 
-            // Render the in-memory PDF for preview
-            try (PDDocument pdDocument = Loader.loadPDF(pdfBytes)) {
-                PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
-                previewVBox.getChildren().clear(); // Clear previous preview
-                for (int i = 0; i < pdDocument.getNumberOfPages(); i++) {
-                    BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(i, 150); // 150 DPI for preview
-                    ImageView imageView = new ImageView(SwingFXUtils.toFXImage(bufferedImage, null));
-                    imageView.setPreserveRatio(true);
-                    imageView.setFitWidth(previewVBox.getWidth() > 20 ? previewVBox.getWidth() - 20 : 400); // Adjust width
-                    previewVBox.getChildren().add(imageView);
-                }
+    private void updatePreviewUI(byte[] pdfBytes) {
+        this.lastGeneratedPdfBytes = pdfBytes;
+        try (PDDocument pdDocument = Loader.loadPDF(pdfBytes)) {
+            PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
+            previewVBox.getChildren().clear();
+            for (int i = 0; i < pdDocument.getNumberOfPages(); i++) {
+                // This is a long-running operation inside a Task, so no need to check isCancelled here
+                // as the task framework handles it.
+                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(i, 150);
+                ImageView imageView = new ImageView(SwingFXUtils.toFXImage(bufferedImage, null));
+                imageView.setPreserveRatio(true);
+                imageView.setFitWidth(previewVBox.getWidth() > 20 ? previewVBox.getWidth() - 20 : 400);
+                previewVBox.getChildren().add(imageView);
             }
-            return pdfBytes;
-
         } catch (IOException e) {
-            eventBus.post(new ShowMessageEvent("Failed to generate PDF preview: " + e.getMessage(), Message.MessageType.ERROR));
+            // This runs on the JavaFX thread, so it's safe to post an event
+            eventBus.post(new ShowMessageEvent("Failed to render PDF preview: " + e.getMessage(), Message.MessageType.ERROR));
             e.printStackTrace();
-            return null;
         }
     }
 
     @FXML
     void previewAction(ActionEvent event) {
-        updatePreview();
+        String text = markdownTextArea.getText();
+        if (text != null && !text.isEmpty()) {
+            previewer.trigger(text);
+        }
     }
 
     @FXML
@@ -100,23 +110,18 @@ public class MarkdownTabController {
             eventBus.post(new ShowMessageEvent("Please select a source PDF file first. The output will be saved in the same directory.", Message.MessageType.WARNING));
             return;
         }
-
-        // Generate PDF and update preview first
-        byte[] pdfBytes = updatePreview();
-
-        if (pdfBytes == null) {
-            // Preview generation failed, so don't save.
+        if (lastGeneratedPdfBytes == null) {
+            eventBus.post(new ShowMessageEvent("No PDF has been generated yet. Please type something or click preview first.", Message.MessageType.WARNING));
             return;
         }
 
-        // Save the generated PDF bytes to a file
         Path srcPath = currentFileState.getSrcFile();
         String destFileName = srcPath.getFileName().toString().replaceFirst("[.][^.]+$", "") + "_from_markdown.pdf";
         Path destPath = srcPath.getParent().resolve(destFileName);
         File destFile = destPath.toFile();
 
         try (FileOutputStream fos = new FileOutputStream(destFile)) {
-            fos.write(pdfBytes);
+            fos.write(lastGeneratedPdfBytes);
             eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile.getAbsolutePath(), Message.MessageType.SUCCESS));
         } catch (IOException e) {
             eventBus.post(new ShowMessageEvent("Failed to save PDF: " + e.getMessage(), Message.MessageType.ERROR));
