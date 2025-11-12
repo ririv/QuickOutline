@@ -16,7 +16,7 @@ import static com.ririv.quickoutline.utils.PathUtils.getUserHomePath;
 
 
 // https://kb.itextpdf.com/itext/page-labels
-public class ItextPageLabelProcessor implements PageLabelProcessor<PageLabelNumberingStyle> {
+public class ItextPageLabelProcessor implements PageLabelProcessor {
 
     public static void main(String[] args) throws IOException {
         final String SRC = getUserHomePath() +"/Downloads/统计学习方法_第2版.pdf";
@@ -80,8 +80,7 @@ public class ItextPageLabelProcessor implements PageLabelProcessor<PageLabelNumb
         return pageLabels;
     }
 
-    @Override
-    public PageLabelNumberingStyle mapPageLabelNumberingStyle(PageLabel.PageLabelNumberingStyle numberingStyle) {
+    private PageLabelNumberingStyle mapPageLabelNumberingStyle(PageLabel.PageLabelNumberingStyle numberingStyle) {
         if (numberingStyle == null) return null;
         return switch (numberingStyle) {
             case DECIMAL_ARABIC_NUMERALS -> PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;

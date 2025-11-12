@@ -1,6 +1,5 @@
 package com.ririv.quickoutline.service;
 
-import com.itextpdf.kernel.pdf.PageLabelNumberingStyle;
 import com.ririv.quickoutline.exception.InvalidPageLabelRuleException;
 import com.ririv.quickoutline.pdfProcess.Numbering;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
@@ -14,8 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+
 public class PdfPageLabelService {
-    private final PageLabelProcessor<PageLabelNumberingStyle> pageLabelProcessor = new ItextPageLabelProcessor();
+    private final PageLabelProcessor pageLabelProcessor = new ItextPageLabelProcessor();
 
     public String[] setPageLabels(String srcFilePath, String destFilePath, List<PageLabel> labelList) throws IOException{
         return pageLabelProcessor.setPageLabels(srcFilePath, destFilePath, labelList);
