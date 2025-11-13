@@ -9,6 +9,8 @@
 <?import com.ririv.quickoutline.view.icons.TocIcon?>
 <?import com.ririv.quickoutline.view.icons.SettingIcon?>
 <?import com.ririv.quickoutline.view.icons.HelpIcon?>
+<?import com.ririv.quickoutline.view.icons.PreviewIcon?>
+<?import com.ririv.quickoutline.view.icons.MarkdownIcon?>
 <BorderPane id="leftPane"
             xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
@@ -50,17 +52,7 @@
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
-            <GraphButtonWrapper>
-                <ToggleButton fx:id="previewTabBtn" visible="false" toggleGroup="$tabToggleGroup"
-                              styleClass="graph-button, graph-toggle-button">
-                    <padding>
-                        <Insets topRightBottomLeft="3.0"/>
-                    </padding>
-                    <graphic>
-                        <Region styleClass="icon, icon-size-tab, preview-icon" prefWidth="20" prefHeight="20"/>
-                    </graphic>
-                </ToggleButton>
-            </GraphButtonWrapper>
+
             <GraphButtonWrapper>
                 <ToggleButton fx:id="markdownTabBtn" toggleGroup="$tabToggleGroup"
                               styleClass="graph-button, graph-toggle-button">
@@ -68,7 +60,18 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-size-tab, markdown-icon" />
+                        <MarkdownIcon styleClass="icon-size-tab" />
+                    </graphic>
+                </ToggleButton>
+            </GraphButtonWrapper>
+            <GraphButtonWrapper>
+                <ToggleButton fx:id="previewTabBtn" visible="true" toggleGroup="$tabToggleGroup"
+                              styleClass="graph-button, graph-toggle-button">
+                    <padding>
+                        <Insets topRightBottomLeft="3.0"/>
+                    </padding>
+                    <graphic>
+                        <PreviewIcon styleClass="icon-size-tab" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
