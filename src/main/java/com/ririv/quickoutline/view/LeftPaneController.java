@@ -80,7 +80,7 @@ public class LeftPaneController {
             helpStage.setTitle("Help");
             helpStage.setScene(new Scene(helpWinRoot, 400, 300));
 
-            helpStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon/help_black.png"))));
+            helpStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("images/help_black.png"))));
             helpStage.setResizable(false);
             helpStage.initOwner(((Node)actionEvent.getSource()).getScene().getWindow());
             helpStage.show();

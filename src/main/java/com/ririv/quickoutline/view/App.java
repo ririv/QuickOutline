@@ -45,7 +45,7 @@ public class App extends Application {
 
 //            stage.setResizable(false); //不可调整大小
             stage.setTitle(bundle.getString("app.title"));
-            stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("icon/icon.png"))));
+            stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("images/icon.png"))));
             stage.setScene(scene);
             stage.show();
         }

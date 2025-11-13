@@ -18,8 +18,6 @@ import java.util.Optional;
 //https://blog.csdn.net/qq_40990854/article/details/85161449
 public class MyAlert extends Alert {
 
-
-
     public MyAlert(AlertType alertType,String contentText,Window owner,ButtonType... buttons) {
 
         super(alertType,contentText,buttons);
@@ -35,13 +33,9 @@ public class MyAlert extends Alert {
             }
 
         }
-
-
-
         this.setHeaderText(null);
         configure();
     }
-
 
     public static Optional<ButtonType> showAlert(AlertType alertType,String contentText,Window owner,ButtonType... buttons) {
         Alert alert = new MyAlert(alertType,contentText,owner,buttons);
@@ -58,25 +52,25 @@ public class MyAlert extends Alert {
         Image image;
         if (this.getAlertType() == AlertType.WARNING) {
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
-                    "icon/warning.png"
+                    "images/warning.png"
             )));
             this.setTitle("WARNING");
         }
         else if (this.getAlertType() == AlertType.ERROR) {
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
-                    "icon/error.png"
+                    "images/error.png"
             )));
             this.setTitle("ERROR");
         }
         else if (this.getAlertType() == AlertType.CONFIRMATION){
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
-                    "icon/confirmation.png"
+                    "images/confirmation.png"
             )));
             this.setTitle("CONFIRMATION");
         }
         else {
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(
-                    "icon/success.png"
+                    "images/success.png"
             )));
             this.setTitle("SUCCESS");
         }
