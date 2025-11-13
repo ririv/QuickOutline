@@ -3,6 +3,9 @@
 <?import com.ririv.quickoutline.view.GraphButtonWrapper?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.ririv.quickoutline.view.icons.FitToWidthIcon?>
+<?import com.ririv.quickoutline.view.icons.ActualSizeIcon?>
+<?import com.ririv.quickoutline.view.icons.FitToHeightIcon?>
 <fx:root type="javafx.scene.layout.StackPane"
          xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
@@ -18,21 +21,21 @@
             <GraphButtonWrapper wrapperPadding="0">
                 <ToggleButton fx:id="fitToHeightBtn" styleClass="graph-button, graph-toggle-button, view-scale-button-padding" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
-                        <Region styleClass="icon, fit-to-height-icon" prefHeight="20" prefWidth="20" />
+                        <FitToHeightIcon prefHeight="20" prefWidth="20" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper wrapperPadding="0">
                 <ToggleButton fx:id="fitToWidthBtn" styleClass="graph-button, graph-toggle-button, view-scale-button-padding" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
-                        <Region styleClass="icon, fit-to-width-icon" prefHeight="20" prefWidth="20"/>
+                        <FitToWidthIcon prefHeight="20" prefWidth="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
             <GraphButtonWrapper wrapperPadding="0">
                 <ToggleButton fx:id="actualSizeBtn" styleClass="graph-button, graph-toggle-button, view-scale-button-padding" toggleGroup="$viewScaleToggleGroup">
                     <graphic>
-                        <Region styleClass="icon, actual-size-icon" prefHeight="20" prefWidth="20"/>
+                        <ActualSizeIcon  prefHeight="20" prefWidth="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>

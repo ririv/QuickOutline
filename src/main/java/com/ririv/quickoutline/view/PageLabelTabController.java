@@ -11,6 +11,7 @@ import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.PageLabelsChangedEvent;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.event.ShowSuccessDialogEvent;
+import com.ririv.quickoutline.view.icons.DeleteItemIcon;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import jakarta.inject.Inject;
 import javafx.collections.FXCollections;
@@ -124,9 +125,7 @@ public class PageLabelTabController {
         Button deleteButton = new Button();
         deleteButton.getStyleClass().addAll("graph-button", "graph-button-important");
         deleteButton.setPrefWidth(30);
-        Node graphic = new Region();
-        graphic.getStyleClass().addAll("icon", "delete-item-icon");
-        deleteButton.setGraphic(graphic);
+        deleteButton.setGraphic(new DeleteItemIcon());
         deleteButton.setOnAction(event -> {
             pageLabelRules.remove(rule);
             ruleVBox.getChildren().remove(ruleBox);

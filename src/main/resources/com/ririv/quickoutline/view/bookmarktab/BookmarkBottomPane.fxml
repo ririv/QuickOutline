@@ -6,6 +6,10 @@
 
 <!-- 根节点从 VBox 开始，并指定新的控制器 -->
 
+<?import com.ririv.quickoutline.view.icons.TrashIcon?>
+<?import com.ririv.quickoutline.view.icons.TreeDiagramIcon?>
+<?import com.ririv.quickoutline.view.icons.SwitchIcon?>
+<?import com.ririv.quickoutline.view.icons.TextEditIcon?>
 <VBox xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ririv.quickoutline.view.bookmarktab.BookmarkBottomPaneController">
     <StackPane>
         <GridPane fx:id="outlineBottomPane">
@@ -19,7 +23,7 @@
                     <Tooltip text="%bookmarkTab.deleteBtn.tooltip" />
                 </tooltip>
                 <graphic>
-                    <Region styleClass="icon, delete-icon" />
+                    <TrashIcon/>
                 </graphic>
             </Button>
 
@@ -44,8 +48,8 @@
                     </tooltip>
                     <graphic>
                         <HBox alignment="CENTER_RIGHT" spacing="5">
-                            <Region styleClass="icon, icon-size-bottom-menu, text-edit-icon" />
-                            <Region styleClass="icon, icon-size-bottom-menu, switch-icon" />
+                            <TextEditIcon styleClass="icon-size-bottom-menu" />
+                            <SwitchIcon styleClass="icon-size-bottom-menu" />
                         </HBox>
                     </graphic>
                 </Button>
@@ -55,8 +59,8 @@
                     </tooltip>
                     <graphic>
                         <HBox alignment="CENTER_RIGHT" spacing="5">
-                            <Region styleClass="icon, icon-size-bottom-menu, tree-diagram-icon" />
-                            <Region styleClass="icon, icon-size-bottom-menu, switch-icon" />
+                            <TreeDiagramIcon styleClass="icon-size-bottom-menu" />
+                            <SwitchIcon styleClass="icon-size-bottom-menu" />
                         </HBox>
                     </graphic>
                 </Button>

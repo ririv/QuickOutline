@@ -4,6 +4,11 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.ririv.quickoutline.view.icons.PageNumberIcon?>
+<?import com.ririv.quickoutline.view.icons.BookmarkIcon?>
+<?import com.ririv.quickoutline.view.icons.TocIcon?>
+<?import com.ririv.quickoutline.view.icons.SettingIcon?>
+<?import com.ririv.quickoutline.view.icons.HelpIcon?>
 <BorderPane id="leftPane"
             xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
@@ -19,7 +24,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-size-tab, bookmark-icon" prefWidth="20" prefHeight="20"/>
+                        <BookmarkIcon styleClass="icon-size-tab" prefWidth="20" prefHeight="20"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
@@ -30,7 +35,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-size-tab, page-number-icon" />
+                        <PageNumberIcon styleClass="icon-size-tab" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
@@ -41,7 +46,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-size-tab, toc-icon" />
+                        <TocIcon styleClass="icon-size-tab" />
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
@@ -78,7 +83,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-size-tab, setting-icon"/>
+                        <SettingIcon styleClass="icon-size-tab"/>
                     </graphic>
                 </ToggleButton>
             </GraphButtonWrapper>
@@ -91,7 +96,7 @@
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
                     <graphic>
-                        <Region styleClass="icon, icon-size-tab, help-icon"/>
+                        <HelpIcon styleClass="icon-size-tab"/>
                     </graphic>
                 </Button>
             </GraphButtonWrapper>

@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.layout.Region?>
+<?import com.ririv.quickoutline.view.icons.LandscapeIcon?>
 <VBox spacing="10" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ririv.quickoutline.view.ThumbnailPaneController">
     <padding>
@@ -17,9 +18,9 @@
 
     <HBox alignment="CENTER_LEFT" spacing="10">
 <!--        <Label text="%zoom"/>-->
-        <Region prefWidth="12" prefHeight="12"  minHeight="12"  maxHeight="12" styleClass="icon, landscape-icon" />
+        <LandscapeIcon prefWidth="12" prefHeight="12" minHeight="12" maxHeight="12" />
         <StyledSlider fx:id="zoomSlider" max="3.0" min="0.5" value="1.0" HBox.hgrow="ALWAYS"/>
-        <Region prefWidth="17" prefHeight="17"  minHeight="17"  maxHeight="17" styleClass="icon, landscape-icon" />
+        <LandscapeIcon prefWidth="17" prefHeight="17"  minHeight="17"  maxHeight="17"/>
     </HBox>
 
     <ScrollPane fx:id="scrollPane" fitToWidth="true" VBox.vgrow="ALWAYS">

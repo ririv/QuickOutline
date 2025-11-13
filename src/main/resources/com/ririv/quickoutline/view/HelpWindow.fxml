@@ -2,11 +2,12 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
+<?import com.ririv.quickoutline.view.icons.XiaohongshuIcon?>
+<?import com.ririv.quickoutline.view.icons.GithubIcon?>
 <AnchorPane
             xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1"
             fx:id="helpPane"
             style="-fx-background-color: white"
-            stylesheets="@svg.css"
             fx:controller="com.ririv.quickoutline.view.HelpWindowController">
 
     <FlowPane fx:id="innerPane"
@@ -33,18 +34,18 @@
         <FlowPane>
             <Label styleClass="graph-button" >
                 <graphic>
-                    <Region styleClass="icon,github-icon" prefWidth="15" prefHeight="15"/>
+                    <GithubIcon prefWidth="15" prefHeight="15"/>
                 </graphic>
             </Label>
             <Hyperlink onMouseClicked="#browseRemoteRepo">Source</Hyperlink>
         </FlowPane>
         <FlowPane>
             <Text>By </Text>
-            <Hyperlink onMouseClicked="#browseHelpOnMyPage" text="%helpWindow.author"></Hyperlink>
+            <Hyperlink onMouseClicked="#browseHelpOnMyPage" text="%helpWindow.author" />
 <!--            <Text fill="#fd5656">🌺</Text>-->
             <Label styleClass="graph-button" >
                 <graphic>
-                    <Region styleClass="icon,xiaohongshu-icon" prefWidth="15" prefHeight="15"/>
+                    <XiaohongshuIcon prefWidth="15" prefHeight="15"/>
                 </graphic>
             </Label>
         </FlowPane>

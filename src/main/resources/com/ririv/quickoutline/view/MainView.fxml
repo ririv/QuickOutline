@@ -6,6 +6,7 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.ririv.quickoutline.view.icons.OpenIcon?>
 <StackPane xmlns:fx="http://javafx.com/fxml" fx:id="root"
            stylesheets="@MainView.css"
            xmlns="http://javafx.com/javafx"
@@ -31,7 +32,7 @@
                                 <Tooltip text="%browseFileBtn.tooltip"/>
                             </tooltip>
                             <graphic>
-                                <Region styleClass="icon,open-icon" prefWidth="15" prefHeight="15"/>
+                                <OpenIcon styleClass="icon" prefWidth="15" prefHeight="15"/>
                             </graphic>
                         </Button>
                     </GraphButtonWrapper>
