@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.ririv.quickoutline.view.controls.EditorTextArea?>
+<?import com.ririv.quickoutline.view.controls.select.StyledSelect?>
+<?import com.ririv.quickoutline.view.icons.RefreshIcon?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextArea?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
-<?import com.ririv.quickoutline.view.controls.EditorTextArea?>
-
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.control.Tooltip?>
-<?import javafx.scene.control.ComboBox?>
-<?import com.ririv.quickoutline.view.controls.select.StyledSelect?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController">
     <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
@@ -21,13 +21,23 @@
             <TextArea fx:id="titleTextArea" prefHeight="40.0" promptText="%tocTitleTextArea.prompt" />
             <EditorTextArea fx:id="tocContentTextArea" VBox.vgrow="ALWAYS" promptText="%tocContentTextArea.prompt"/>
         </VBox>
-        <ScrollPane fitToWidth="true">
-            <VBox fx:id="previewVBox" alignment="TOP_CENTER">
-                <padding>
-                    <Insets top="10" right="10" bottom="10" left="10"/>
-                </padding>
-            </VBox>
-        </ScrollPane>
+        <StackPane>
+            <ScrollPane fitToWidth="true">
+                <VBox fx:id="previewVBox" alignment="TOP_CENTER">
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10"/>
+                    </padding>
+                </VBox>
+            </ScrollPane>
+            <Button onAction="#previewTocPageAction" styleClass="graph-button, graph-button-basic" StackPane.alignment="BOTTOM_RIGHT">
+                <graphic>
+                    <RefreshIcon prefWidth="15" prefHeight="15" />
+                </graphic>
+                <StackPane.margin>
+                    <Insets right="10" bottom="10"/>
+                </StackPane.margin>
+            </Button>
+        </StackPane>
     </SplitPane>
     <HBox alignment="CENTER" prefHeight="40.0" spacing="10">
         <padding>
@@ -45,7 +55,6 @@
         </TextField>
         <StyledSelect fx:id="numberingStyleComboBox" prefWidth="100" />
         <Region HBox.hgrow="ALWAYS" />
-        <Button text="Preview" onAction="#previewTocPageAction" styleClass="my-button,plain-button-primary"/>
         <Button text="Generate TOC Page" onAction="#generateTocPageAction"
                 styleClass="my-button,plain-button-primary"/>
     </HBox>
