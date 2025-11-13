@@ -45,7 +45,6 @@ public class LeftPaneController {
     }
 
     public void initialize() {
-        bookmarkTabBtn.setSelected(true);
 
         tabToggleGroup.selectedToggleProperty().addListener((event,oldValue,newValue) -> {
             if (newValue == null){

@@ -14,7 +14,7 @@
     <top>
         <VBox>
             <GraphButtonWrapper>
-                <ToggleButton fx:id="bookmarkTabBtn" toggleGroup="$tabToggleGroup" styleClass="graph-button, graph-toggle-button">
+                <ToggleButton fx:id="bookmarkTabBtn" toggleGroup="$tabToggleGroup" selected="true" styleClass="graph-button, graph-toggle-button">
                     <padding>
                         <Insets topRightBottomLeft="3.0"/>
                     </padding>
