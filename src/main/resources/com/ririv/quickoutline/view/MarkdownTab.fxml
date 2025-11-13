@@ -10,9 +10,6 @@
 <?import javafx.scene.layout.HBox?>
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ririv.quickoutline.view.MarkdownTabController" alignment="CENTER" spacing="10">
-    <padding>
-        <Insets top="10" right="10" bottom="10" left="10" />
-    </padding>
     <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
         <EditorTextArea fx:id="markdownTextArea" promptText="Enter Markdown here..."/>
         <ScrollPane fitToWidth="true">
