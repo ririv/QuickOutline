@@ -79,6 +79,11 @@ dependencies {
 
     implementation "com.itextpdf:html2pdf:6.2.1"
 
+    // Apache Batik for SVG rendering
+    implementation('org.apache.xmlgraphics:batik-transcoder:1.19') {
+        exclude group: 'xml-apis', module: 'xml-apis'
+    }
+
     // Commonmark for Markdown processing
     implementation 'org.commonmark:commonmark:0.27.0'
     implementation 'org.commonmark:commonmark-ext-gfm-tables:0.27.0' // For table support

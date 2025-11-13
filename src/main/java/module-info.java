@@ -29,6 +29,11 @@ module quickoutline {
     requires org.commonmark.ext.gfm.tables;
     requires html2pdf;
     requires commons;
+    requires xml.apis.ext;
+    requires jdk.xml.dom;
+    requires org.apache.xmlgraphics.batik.svgdom;
+    requires org.apache.xmlgraphics.batik.util;
+    requires org.apache.xmlgraphics.batik.anim;
 
 //    requires org.bouncycastle.util;
 
@@ -70,4 +75,5 @@ module quickoutline {
     opens com.ririv.quickoutline.view.viewmodel to com.google.guice, javafx.fxml, javafx.graphics;
     exports com.ririv.quickoutline.view.utils;
     opens com.ririv.quickoutline.view.utils to com.google.guice, javafx.fxml, javafx.graphics;
+    exports com.ririv.quickoutline.view.icons;
 }
