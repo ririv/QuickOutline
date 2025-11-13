@@ -12,6 +12,7 @@ import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import org.apache.pdfbox.Loader;
@@ -31,6 +32,8 @@ public class MarkdownTabController {
     private EditorTextArea markdownTextArea;
     @FXML
     private VBox previewVBox;
+    @FXML
+    private TextField insertPosTextField;
 
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
@@ -100,24 +103,36 @@ public class MarkdownTabController {
     @FXML
     void renderToPdfAction(ActionEvent event) {
         if (currentFileState.getSrcFile() == null) {
-            eventBus.post(new ShowMessageEvent("Please select a source PDF file first. The output will be saved in the same directory.", Message.MessageType.WARNING));
+            eventBus.post(new ShowMessageEvent("Please select a source PDF file first.", Message.MessageType.WARNING));
             return;
         }
-        if (lastGeneratedPdfBytes == null) {
-            eventBus.post(new ShowMessageEvent("No PDF has been generated yet. Please type something or click preview first.", Message.MessageType.WARNING));
+        String markdownText = markdownTextArea.getText();
+        if (markdownText == null || markdownText.isBlank()) {
+            eventBus.post(new ShowMessageEvent("No Markdown content to render.", Message.MessageType.WARNING));
             return;
         }
 
-        Path srcPath = currentFileState.getSrcFile();
-        String destFileName = srcPath.getFileName().toString().replaceFirst("[.][^.]+$", "") + "_from_markdown.pdf";
-        Path destPath = srcPath.getParent().resolve(destFileName);
-        File destFile = destPath.toFile();
+        int insertPos = 1;
+        try {
+            insertPos = Integer.parseInt(insertPosTextField.getText());
+            if (insertPos <= 0) {
+                insertPos = 1;
+            }
+        } catch (NumberFormatException e) {
+            // Keep default value of 1
+        }
 
-        try (FileOutputStream fos = new FileOutputStream(destFile)) {
-            fos.write(lastGeneratedPdfBytes);
-            eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile.getAbsolutePath(), Message.MessageType.SUCCESS));
+        try {
+            String srcFile = currentFileState.getSrcFile().toString();
+            String destFile = currentFileState.getDestFile().toString();
+            Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+            Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+
+            markdownService.createMarkdownPage(srcFile, destFile, markdownText, insertPos, onMessage, onError);
+
+            eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {
-            eventBus.post(new ShowMessageEvent("Failed to save PDF: " + e.getMessage(), Message.MessageType.ERROR));
+            eventBus.post(new ShowMessageEvent("Failed to render to PDF: " + e.getMessage(), Message.MessageType.ERROR));
             e.printStackTrace();
         }
     }

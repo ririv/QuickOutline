@@ -1,5 +1,9 @@
 package com.ririv.quickoutline.service;
 
+
+
+import com.itextpdf.layout.font.FontProvider;
+import com.itextpdf.styledxmlparser.resolver.font.BasicFontProvider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -11,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 @Singleton
@@ -31,6 +36,20 @@ public class FontManager {
         String userHome = System.getProperty("user.home");
         this.fontDir = Paths.get(userHome, ".quickoutline", "fonts");
         FONT_FILES.forEach(fileName -> fontPaths.add(fontDir.resolve(fileName)));
+    }
+
+    public Optional<FontProvider> getFontProvider(Consumer<String> onMessage, Consumer<String> onError) {
+        try {
+            List<Path> paths = getFontPaths(onMessage, onError);
+            BasicFontProvider fontProvider = new BasicFontProvider(false, false, false);
+            for (Path fontPath : paths) {
+                fontProvider.addFont(fontPath.toString());
+            }
+            return Optional.of(fontProvider);
+        } catch (IOException e) {
+            onError.accept("Failed to get font provider: " + e.getMessage());
+            return Optional.empty();
+        }
     }
 
     /**

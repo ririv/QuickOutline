@@ -9,6 +9,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.Region?>
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ririv.quickoutline.view.MarkdownTabController" alignment="CENTER" spacing="10">
     <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
@@ -27,7 +30,12 @@
             </Button>
         </StackPane>
     </SplitPane>
-    <HBox spacing="10" alignment="CENTER_RIGHT">
+    <HBox alignment="CENTER" prefHeight="40.0" spacing="10">
+        <padding>
+            <Insets top="5" bottom="5" left="10" right="10"/>
+        </padding>
+        <TextField fx:id="insertPosTextField" styleClass="underlineTF" promptText="%insertPosTextField.prompt" prefWidth="100"/>
+        <Region HBox.hgrow="ALWAYS" />
         <Button text="Render to PDF" onAction="#renderToPdfAction" styleClass="my-button,plain-button-primary"/>
     </HBox>
 </VBox>

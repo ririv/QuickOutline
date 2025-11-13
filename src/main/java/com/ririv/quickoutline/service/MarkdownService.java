@@ -1,7 +1,9 @@
 package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.pdfProcess.HtmlConverter;
+import com.ririv.quickoutline.pdfProcess.MarkdownPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextHtmlConverter;
+import com.ririv.quickoutline.pdfProcess.itextImpl.iTextMarkdownPageGenerator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.commonmark.node.Node;
@@ -9,6 +11,7 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.function.Consumer;
 
 @Singleton
@@ -17,12 +20,20 @@ public class MarkdownService {
     private final Parser parser;
     private final HtmlRenderer renderer;
     private final HtmlConverter htmlConverter;
+    private final MarkdownPageGenerator markdownPageGenerator;
 
     @Inject
     public MarkdownService(FontManager fontManager) {
         this.parser = Parser.builder().build();
         this.renderer = HtmlRenderer.builder().build();
         this.htmlConverter = new ItextHtmlConverter(fontManager);
+        this.markdownPageGenerator = new iTextMarkdownPageGenerator(fontManager);
+    }
+
+    public void createMarkdownPage(String srcFile, String destFile, String markdownText, int insertPos, Consumer<String> onMessage, Consumer<String> onError) throws IOException {
+        Node document = parser.parse(markdownText);
+        String htmlContent = renderer.render(document);
+        markdownPageGenerator.generateAndInsertMarkdownPage(srcFile, destFile, htmlContent, insertPos, onMessage, onError);
     }
 
     /**

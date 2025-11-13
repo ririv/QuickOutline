@@ -34,6 +34,7 @@ module quickoutline {
     requires org.apache.xmlgraphics.batik.svgdom;
     requires org.apache.xmlgraphics.batik.util;
     requires org.apache.xmlgraphics.batik.anim;
+    requires styled.xml.parser;
 
 //    requires org.bouncycastle.util;
 
@@ -50,6 +51,7 @@ module quickoutline {
     exports com.ririv.quickoutline.view.controls;
 //取消导出 com.ririv.quickoutline.pdfProcess 包，避免对外暴露 BufferedImage（java.desktop 类型）导致的模块可见性告警；模块内使用不受影响
     exports com.ririv.quickoutline.exception;
+    exports com.ririv.quickoutline.pdfProcess;
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions;
     exports com.ririv.quickoutline.view.state;
