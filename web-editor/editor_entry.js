@@ -3,9 +3,10 @@ import { EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap, indentMore, indentLess } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
+import { indentUnit } from '@codemirror/language';
 
 // 可选：后续可以加入主题/快捷键扩展
 // import { oneDark } from '@codemirror/theme-one-dark';
@@ -20,8 +21,51 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
   // 诊断: JS 层变更 -> Java 回调链路日志
   // 仅轮询方案：不在 JS 侧触发任何跨桥回调，Java 侧自行轮询 window.getContent()
 
-  // Compose keymap: default + history + search (+ completion 可按需再开启)
-  const combinedKeymap = [...defaultKeymap, ...historyKeymap, ...searchKeymap /*, ...completionKeymap*/];
+  // === Custom Tab/Shift+Tab indent/outdent logic (VSCode-like) ===
+  const customIndentKeymap = [
+    {
+      key: 'Tab',
+      run: (view) => {
+        console.log('[TAB] Custom Tab keymap triggered');
+        const selection = view.state.selection.main;
+        const { from, to } = selection;
+        const doc = view.state.doc;
+        
+        // Check if multiple lines are selected or single line is fully selected
+        const fromLine = doc.lineAt(from);
+        const toLine = doc.lineAt(to);
+        const isMultiLine = fromLine.number !== toLine.number;
+        const isSingleLineFullySelected = 
+          fromLine.number === toLine.number && 
+          from === fromLine.from && 
+          to === fromLine.to;
+        
+        if (isMultiLine || isSingleLineFullySelected) {
+          // Indent all selected lines
+          console.log('[TAB] Indenting multiple lines or full line');
+          return indentMore(view);
+        } else {
+          // Insert tab at cursor
+          console.log('[TAB] Inserting tab character at cursor');
+          view.dispatch({
+            changes: { from, to, insert: '\t' },
+            selection: { anchor: from + 1 }
+          });
+          return true;
+        }
+      }
+    },
+    {
+      key: 'Shift-Tab',
+      run: (view) => {
+        // Always outdent selected lines
+        return indentLess(view);
+      }
+    }
+  ];
+
+  // Compose keymap: custom indent + default + history + search (+ completion 可按需再开启)
+  const combinedKeymap = [...customIndentKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap /*, ...completionKeymap*/];
 
   // Minimal custom Markdown completion source (headings, fenced code blocks, task list, table pipes)
   function markdownExtraCompletions(context) {
@@ -80,8 +124,23 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
   ]);
 
 
+  // === 阻止 Tab 键的默认焦点遍历行为 ===
+  // 使用 domEventHandlers 在 DOM 层拦截 Tab 键，阻止默认行为但允许 CodeMirror 处理
+  const preventTabDefault = EditorView.domEventHandlers({
+    keydown(event, view) {
+      if (event.key === 'Tab') {
+        console.log('[TAB] Tab key pressed, preventing default');
+        event.preventDefault();  // 阻止默认的焦点遍历
+        // 返回 false 让事件继续传递给 keymap 处理
+        return false;
+      }
+      return false;
+    }
+  });
+
   const candidates = [
     { name: 'markdown()', ext: markdown() },
+    { name: 'indentUnit.of("\\t")', ext: indentUnit.of('\t') }, // Use tab for indentation
     { name: 'lineNumbers()', ext: lineNumbers() },
     { name: 'highlightActiveLine()', ext: highlightActiveLine() },
     { name: 'highlightActiveLineGutter()', ext: highlightActiveLineGutter() },
@@ -92,6 +151,7 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     // { name: 'autocompletion()', ext: autocompletion({override:[markdownExtraCompletions]}) },
     { name: 'highlightSelectionMatches()', ext: highlightSelectionMatches() },
     { name: 'keymap.of(combinedKeymap)', ext: keymap.of(combinedKeymap) },
+    { name: 'preventTabDefault', ext: preventTabDefault },  // 放在 keymap 之后，先让 keymap 处理，然后阻止默认行为
     { name: 'EditorView.lineWrapping', ext: EditorView.lineWrapping },
     { name: 'syntaxHighlighting(defaultHighlightStyle)', ext: syntaxHighlighting(defaultHighlightStyle) },
     // Apply custom Markdown highlighting (maps to CSS classes in markdown-highlight.css)
