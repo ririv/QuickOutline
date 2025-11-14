@@ -40,7 +40,7 @@ public class App extends Application {
 
             Parent root = fxmlLoader.load();
 
-            Scene scene = new Scene(root, 800, 600);
+            Scene scene = new Scene(root, 1280, 800);
 
 
 //            stage.setResizable(false); //不可调整大小
