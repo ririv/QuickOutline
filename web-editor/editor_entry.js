@@ -254,6 +254,193 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     return { from: urlFrom + 1, to: urlTo, options };
   }
 
+  // === Markdown Table Helpers ===
+  function isInCodeFenceAtPos(state, pos){
+    const doc = state.doc;
+    let inFence = false;
+    const lineNo = doc.lineAt(pos).number;
+    for (let i = 1; i <= lineNo; i++) {
+      const t = doc.line(i).text;
+      if (/^```/.test(t)) inFence = !inFence;
+    }
+    return inFence;
+  }
+
+  function isTableSeparatorLine(text){
+    const t = text.trim();
+    if (!t.includes('|')) return false;
+    // Only pipes, colons, dashes, and spaces
+    return /^[|:\-\s]+$/.test(t);
+  }
+
+  function isTableRow(text){
+    return /\|/.test(text) && !isTableSeparatorLine(text);
+  }
+
+  function countColumns(text){
+    const starts = /^\s*\|/.test(text);
+    const ends = /\|\s*$/.test(text);
+    const parts = text.split('|');
+    if (starts && ends) return Math.max(1, parts.length - 2);
+    if (starts || ends) return Math.max(1, parts.length - 1);
+    return Math.max(1, parts.length); // rows without leading pipe
+  }
+
+  function buildSeparator(columns){
+    let s = '|';
+    for (let i=0;i<columns;i++) s += ' --- |';
+    return s;
+  }
+
+  function buildEmptyRow(columns){
+    let s = '|';
+    for (let i=0;i<columns;i++) s += '   |';
+    return s;
+  }
+
+  function getTableBlockBounds(state, fromLineNo){
+    const doc = state.doc;
+    let top = fromLineNo, bottom = fromLineNo;
+    // expand up over table rows/separators
+    while (top > 1) {
+      const t = doc.line(top - 1).text;
+      if (isTableRow(t) || isTableSeparatorLine(t)) top--; else break;
+    }
+    // expand down
+    while (bottom < doc.lines) {
+      const t = doc.line(bottom + 1).text;
+      if (isTableRow(t) || isTableSeparatorLine(t)) bottom++; else break;
+    }
+    return { top, bottom };
+  }
+
+  function nextCellPos(view){
+    const { state } = view;
+    const sel = state.selection.main;
+    if (!sel.empty) return null;
+    const pos = sel.from;
+    if (isInCodeFenceAtPos(state, pos)) return null;
+    const line = state.doc.lineAt(pos);
+    const text = line.text;
+    if (!isTableRow(text)) return null;
+    const rel = pos - line.from;
+    const nextBar = text.indexOf('|', rel + 1);
+    if (nextBar >= 0) {
+      // Move to start of next cell (after pipe and one space if present)
+      const after = line.from + nextBar + 1;
+      const target = (/\s/.test(text[nextBar+1]||' ')) ? after + 1 : after;
+      return target;
+    }
+    // No next pipe: move to next row first cell or create a new row
+    const nextLineNo = line.number + 1;
+    if (nextLineNo <= state.doc.lines) {
+      const nextText = state.doc.line(nextLineNo).text;
+      if (isTableSeparatorLine(nextText) && nextLineNo + 1 <= state.doc.lines) {
+        const nn = state.doc.line(nextLineNo + 1);
+        if (isTableRow(nn.text)) return nn.from + (nn.text.startsWith('|') ? 2 : 0);
+      } else if (isTableRow(nextText)) {
+        return state.doc.line(nextLineNo).from + (nextText.startsWith('|') ? 2 : 0);
+      }
+    }
+    // Create a new empty row with same columns
+    const cols = countColumns(text);
+    const newRow = '\n' + buildEmptyRow(cols);
+    view.dispatch({ changes: { from: line.to, to: line.to, insert: newRow } });
+    return line.to + newRow.length - (buildEmptyRow(cols).length) + 2; // after "| "
+  }
+
+  function prevCellPos(view){
+    const { state } = view;
+    const sel = state.selection.main;
+    if (!sel.empty) return null;
+    const pos = sel.from;
+    if (isInCodeFenceAtPos(state, pos)) return null;
+    const line = state.doc.lineAt(pos);
+    const text = line.text;
+    if (!isTableRow(text)) return null;
+    const rel = pos - line.from;
+    const leftPart = text.slice(0, Math.max(0, rel - 1));
+    const prevBar = leftPart.lastIndexOf('|');
+    if (prevBar >= 0) {
+      const after = line.from + prevBar + 1;
+      const target = (/\s/.test(text[prevBar+1]||' ')) ? after + 1 : after;
+      return target;
+    }
+    // go to previous row last cell
+    let prevNo = line.number - 1;
+    if (prevNo >= 1) {
+      const prevText = state.doc.line(prevNo).text;
+      if (isTableSeparatorLine(prevText)) prevNo--;
+      if (prevNo >= 1) {
+        const pl = state.doc.line(prevNo);
+        if (isTableRow(pl.text)) {
+          const lastBar = pl.text.lastIndexOf('|');
+          if (lastBar >= 0) {
+            const after = pl.from + lastBar + 1;
+            const target = (/\s/.test(pl.text[lastBar+1]||' ')) ? after + 1 : after;
+            return target;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function handleEnterInTable(view){
+    const { state } = view;
+    const sel = state.selection.main;
+    if (!sel.empty) return false;
+    const pos = sel.from;
+    if (isInCodeFenceAtPos(state, pos)) return false;
+    const line = state.doc.lineAt(pos);
+    const text = line.text;
+    if (!isTableRow(text)) return false;
+    const cols = countColumns(text);
+    const { top } = getTableBlockBounds(state, line.number);
+    const nextLine = (n)=> (n>=1 && n<=state.doc.lines) ? state.doc.line(n) : null;
+    const atHeader = (line.number === top);
+    const nextIsSep = nextLine(line.number+1) && isTableSeparatorLine(nextLine(line.number+1).text);
+
+    if (atHeader && !nextIsSep) {
+      const sep = '\n' + buildSeparator(cols);
+      const newRow = '\n' + buildEmptyRow(cols);
+      view.dispatch({
+        changes: { from: line.to, to: line.to, insert: sep + newRow },
+        selection: EditorSelection.cursor(line.to + sep.length + 2) // jump into first cell
+      });
+      return true;
+    } else {
+      const newRow = '\n' + buildEmptyRow(cols);
+      view.dispatch({
+        changes: { from: line.to, to: line.to, insert: newRow },
+        selection: EditorSelection.cursor(line.to + 1 + 2)
+      });
+      return true;
+    }
+  }
+
+  function insertTableTemplateCmd(cols=2, rows=2){
+    return (view)=>{
+      try{
+        const { state } = view;
+        const sel = state.selection.main;
+        const c = Math.max(1, cols|0);
+        const r = Math.max(1, rows|0);
+        const header = buildEmptyRow(c);
+        const sep = buildSeparator(c);
+        let body = '';
+        for (let i=0;i<r;i++) body += '\n' + buildEmptyRow(c);
+        const insert = header + '\n' + sep + body;
+        view.dispatch({
+          changes: { from: sel.from, to: sel.to, insert },
+          selection: EditorSelection.cursor(sel.from + 2) // inside first cell
+        });
+        return true;
+      }catch(e){ console.warn('[CM6] insertTableTemplate error', e); }
+      return false;
+    };
+  }
+
   const customMarkdownKeymap = [
     { key: 'Mod-b', run: toggleInlineWrapperCmd('**') },
     { key: 'Mod-i', run: toggleInlineWrapperCmd('*') },
@@ -264,6 +451,24 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
   // Compose keymap: completion + custom indent + default + history + search
   const combinedKeymap = [
     ...completionKeymap,
+    // Table-aware Enter/Tab navigation
+    { key: 'Enter', run: (view)=> handleEnterInTable(view) },
+    { key: 'Tab', run: (view)=> {
+        try { if (acceptCompletion(view)) return true; } catch(_) {}
+        const pos = nextCellPos(view);
+        if (pos != null) { view.dispatch({ selection: EditorSelection.cursor(pos) }); return true; }
+        // fallback to indent logic
+        return customIndentKeymap[0].run(view);
+      }
+    },
+    { key: 'Shift-Tab', run: (view)=> {
+        const pos = prevCellPos(view);
+        if (pos != null) { view.dispatch({ selection: EditorSelection.cursor(pos) }); return true; }
+        return indentLess(view);
+      }
+    },
+    // quick insert a 2x2 table
+    { key: 'Mod-Alt-t', run: insertTableTemplateCmd(2,2) },
     ...customIndentKeymap,
     ...customMarkdownKeymap,
     ...defaultKeymap,
