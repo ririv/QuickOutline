@@ -5,7 +5,7 @@ import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from '@code
 import { tags } from '@lezer/highlight';
 import { defaultKeymap, history, historyKeymap, indentMore, indentLess } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
+import { autocompletion, completionKeymap, acceptCompletion } from '@codemirror/autocomplete';
 import { indentUnit } from '@codemirror/language';
 
 // 可选：后续可以加入主题/快捷键扩展
@@ -26,6 +26,8 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     {
       key: 'Tab',
       run: (view) => {
+        // 若有补全面板，优先用 Tab 接受补全
+        try { if (acceptCompletion(view)) return true; } catch(_) {}
         console.log('[TAB] Custom Tab keymap triggered');
         const selection = view.state.selection.main;
         const { from, to } = selection;
@@ -180,6 +182,78 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     };
   }
 
+  // === Internal heading completion inside markdown link URL ===
+  function collectHeadings(state){
+    const doc = state.doc;
+    const res = [];
+    let inFence = false;
+    for (let i = 1; i <= doc.lines; i++) {
+      const line = doc.line(i);
+      const t = line.text;
+      if (/^```/.test(t)) { inFence = !inFence; continue; }
+      if (inFence) continue;
+      const m = t.match(/^\s*(?:>\s*)*(#{1,6})\s+(.+?)\s*$/);
+      if (m) {
+        const level = m[1].length;
+        const text = m[2];
+        res.push({ lineNo: i, level, text });
+      }
+    }
+    return res;
+  }
+
+  function slugifyHeading(text){
+    try {
+      const lower = text.trim().toLowerCase();
+      return lower
+        .replace(/[`~!@#$%^&*()_=+\[\]{};:'",.<>/?\\|]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    } catch(_e){ return text; }
+  }
+
+  function linkHeadingCompletion(context){
+    const pos = context.pos;
+    const doc = context.state.doc;
+    const line = doc.lineAt(pos);
+    const rel = pos - line.from;
+    const s = line.text;
+    // Find last '(' before cursor and check pattern [...](|here)
+    const openParenIdx = s.lastIndexOf('(', rel);
+    if (openParenIdx < 0) return null;
+    const rb = openParenIdx - 1;
+    if (rb < 0 || s[rb] !== ']') return null;
+    const lb = s.lastIndexOf('[', rb);
+    if (lb < 0) return null;
+    const closeParenIdx = s.indexOf(')', rel);
+    const urlFrom = line.from + openParenIdx + 1;
+    const urlTo = closeParenIdx >= 0 ? line.from + closeParenIdx : pos;
+    if (pos < urlFrom || pos > urlTo) return null;
+
+    // 仅在括号内输入了 # 时触发补全（不在行首触发）
+    const typed = doc.sliceString(urlFrom, pos);
+    if (!typed.startsWith('#')) return null;
+
+    const headings = collectHeadings(context.state);
+    if (!headings.length) return null;
+    // 基于 slug 去重，避免同名标题导致的重复项
+    const seen = new Set();
+    const options = [];
+    for (const h of headings) {
+      const slug = slugifyHeading(h.text);
+      if (seen.has(slug)) continue;
+      seen.add(slug);
+      options.push({
+        label: h.text,           // 仅显示标题文本，避免与 #slug 重复感
+        type: `H${h.level}`,     // 用类型位显示 H1/H2/H3...
+        filterText: slug,        // 让输入的 slug 进行过滤
+        apply: slug              // 已输入 '#'
+      });
+    }
+    // from/to 也排除 #，让过滤/替换更自然
+    return { from: urlFrom + 1, to: urlTo, options };
+  }
+
   const customMarkdownKeymap = [
     { key: 'Mod-b', run: toggleInlineWrapperCmd('**') },
     { key: 'Mod-i', run: toggleInlineWrapperCmd('*') },
@@ -187,13 +261,14 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     { key: 'Mod-k', run: insertOrEditLinkCmd() },
   ];
 
-  // Compose keymap: custom indent + default + history + search (+ completion 可按需再开启)
+  // Compose keymap: completion + custom indent + default + history + search
   const combinedKeymap = [
+    ...completionKeymap,
     ...customIndentKeymap,
     ...customMarkdownKeymap,
     ...defaultKeymap,
     ...historyKeymap,
-    ...searchKeymap /*, ...completionKeymap*/
+    ...searchKeymap
   ];
 
   // Minimal custom Markdown completion source (headings, fenced code blocks, task list, table pipes)
@@ -375,8 +450,8 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     { name: 'drawSelection()', ext: drawSelection() },
     { name: 'dropCursor()', ext: dropCursor() },
     { name: 'history()', ext: history() },
-    // 自动补全可按需恢复：取消注释下面一行
-    // { name: 'autocompletion()', ext: autocompletion({override:[markdownExtraCompletions]}) },
+  // 自动补全：仅开启“链接内输入 # 的内部标题补全”
+    { name: 'autocompletion()', ext: autocompletion({override:[linkHeadingCompletion]}) },
     { name: 'highlightSelectionMatches()', ext: highlightSelectionMatches() },
     { name: 'keymap.of(combinedKeymap)', ext: keymap.of(combinedKeymap) },
     { name: 'preventTabDefault', ext: preventTabDefault },  // 放在 keymap 之后，先让 keymap 处理，然后阻止默认行为

@@ -478,3 +478,34 @@
     background-color: #f5f5f5 !important;
   }
 }
+
+/* === Autocomplete Icon Tweaks === */
+/* 在补全面板左侧图标区显示 H2/H3/... 等级徽标，替换默认小图标 */
+.cm-tooltip-autocomplete .cm-completionIcon {
+  width: 2.2em; /* 给徽标留空间 */
+}
+
+.cm-tooltip-autocomplete .cm-completionIcon-H1::before,
+.cm-tooltip-autocomplete .cm-completionIcon-H2::before,
+.cm-tooltip-autocomplete .cm-completionIcon-H3::before,
+.cm-tooltip-autocomplete .cm-completionIcon-H4::before,
+.cm-tooltip-autocomplete .cm-completionIcon-H5::before,
+.cm-tooltip-autocomplete .cm-completionIcon-H6::before {
+  display: inline-block;
+  min-width: 1.6em;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--cm-gutter-bg);
+  color: var(--cm-heading-color);
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.cm-tooltip-autocomplete .cm-completionIcon-H1::before { content: 'H1'; }
+.cm-tooltip-autocomplete .cm-completionIcon-H2::before { content: 'H2'; }
+.cm-tooltip-autocomplete .cm-completionIcon-H3::before { content: 'H3'; }
+.cm-tooltip-autocomplete .cm-completionIcon-H4::before { content: 'H4'; }
+.cm-tooltip-autocomplete .cm-completionIcon-H5::before { content: 'H5'; }
+.cm-tooltip-autocomplete .cm-completionIcon-H6::before { content: 'H6'; }
