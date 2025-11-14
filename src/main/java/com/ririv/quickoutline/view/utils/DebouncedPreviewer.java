@@ -55,16 +55,20 @@ public class DebouncedPreviewer<T, R> {
      * @param input The input to be passed to the task logic.
      */
     public void trigger(T input) {
+        System.out.println("[Preview DEBUG] trigger() inputHash=" + (input == null ? 0 : input.hashCode()) + " len=" + (input == null ? 0 : input.toString().length()));
         // Cancel any previously scheduled (but not yet started) task
         if (scheduledTask != null && !scheduledTask.isDone()) {
+            System.out.println("[Preview DEBUG] cancel previously scheduled task");
             scheduledTask.cancel(false);
         }
 
         // Schedule the new task to run after the delay
         scheduledTask = scheduler.schedule(() -> {
+            System.out.println("[Preview DEBUG] scheduler fired, queuing FX runLater");
             Platform.runLater(() -> {
                 // Cancel the previous *running* task, if it's still running
                 if (runningTask != null && runningTask.isRunning()) {
+                    System.out.println("[Preview DEBUG] cancel runningTask before new one starts");
                     runningTask.cancel();
                 }
 
@@ -72,6 +76,7 @@ public class DebouncedPreviewer<T, R> {
                 runningTask = new Task<>() {
                     @Override
                     protected R call() throws Exception {
+                        System.out.println("[Preview DEBUG] background task start");
                         // Execute the long-running logic
                         return taskLogic.apply(input);
                     }
@@ -80,12 +85,14 @@ public class DebouncedPreviewer<T, R> {
                 runningTask.setOnSucceeded(event -> {
                     R result = runningTask.getValue();
                     if (result != null) {
+                        System.out.println("[Preview DEBUG] task succeeded, result!=null forwarding to onSuccess");
                         onSuccess.accept(result);
                     }
                 });
 
                 runningTask.setOnFailed(event -> {
                     if (onError != null) {
+                        System.out.println("[Preview DEBUG] task failed: " + runningTask.getException());
                         onError.accept(runningTask.getException());
                     } else {
                         runningTask.getException().printStackTrace();
@@ -93,7 +100,9 @@ public class DebouncedPreviewer<T, R> {
                 });
 
                 // Run the task on a new background thread
-                new Thread(runningTask).start();
+                Thread t = new Thread(runningTask);
+                t.setDaemon(true);
+                t.start();
             });
         }, delayMillis, TimeUnit.MILLISECONDS);
     }

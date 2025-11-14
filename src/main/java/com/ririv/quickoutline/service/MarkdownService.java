@@ -46,19 +46,26 @@ public class MarkdownService {
      * @throws RuntimeException if the conversion fails.
      */
     public byte[] convertMarkdownToPdfBytes(String markdownText, Consumer<String> onMessage, Consumer<String> onError) {
-        if (markdownText == null || markdownText.isBlank()) {
+        final String safe = markdownText == null ? "" : markdownText;
+        if (safe.isBlank()) {
+            // 空内容直接返回，不报错，避免误触发失败提示
+            System.out.println("[MarkdownService] skip empty content");
             return new byte[0];
         }
-
+        long start = System.currentTimeMillis();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Node document = parser.parse(markdownText);
+            Node document = parser.parse(safe);
             String htmlContent = renderer.render(document);
+            System.out.println("[MarkdownService] parsed length=" + safe.length() + ", html length=" + htmlContent.length());
             htmlConverter.convertToPdf(htmlContent, baos, onMessage, onError);
-            return baos.toByteArray();
+            byte[] bytes = baos.toByteArray();
+            System.out.println("[MarkdownService] PDF bytes=" + bytes.length + ", cost=" + (System.currentTimeMillis()-start) + "ms");
+            return bytes;
         } catch (Exception e) {
-            // Wrap checked exceptions in a RuntimeException for use in lambdas/streams
-            onError.accept("Failed to convert Markdown to PDF: " + e.getMessage());
-            throw new RuntimeException("Failed to convert Markdown to PDF", e);
+            String msg = "Failed to convert Markdown to PDF: " + e.getMessage();
+            System.out.println("[MarkdownService] ERROR " + msg);
+            onError.accept(msg);
+            throw new RuntimeException(msg, e);
         }
     }
 }

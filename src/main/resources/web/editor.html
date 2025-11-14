@@ -16,6 +16,14 @@
 
     <script>
         const diag = msg => { const el = document.getElementById('diag'); el.textContent += msg + "\n"; console.log('[CM6]', msg); };
+        window.addEventListener('error', e => { diag('window.onerror: ' + e.message + ' @' + e.filename + ':' + e.lineno); });
+        window.addEventListener('unhandledrejection', e => { diag('unhandledrejection: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)); });
+        // 心跳，确认页面仍在运行（若心跳停止说明主线程冻结）
+        let heartbeatCounter = 0;
+        setInterval(() => {
+            heartbeatCounter++;
+            if (heartbeatCounter % 20 === 0) { diag('heartbeat #' + heartbeatCounter); }
+        }, 1000);
         diag('UserAgent: ' + navigator.userAgent);
         // 新目录下同名 bundle
         const BUNDLE_URL = 'codemirror.bundle.js';
@@ -46,6 +54,7 @@
                     }
                 });
                 window.editorView = view;
+                diag('EditorView instance created: ' + !!view);
                 window.setContent = c => {
                     if (!view) return;
                     const tr = view.state.update({ changes:{ from:0,to:view.state.doc.length, insert:c } });
