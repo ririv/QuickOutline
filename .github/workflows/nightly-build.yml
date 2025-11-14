@@ -1,0 +1,78 @@
+name: Nightly Build
+
+on:
+  schedule:
+    # Runs at 18:00 UTC (2 AM Beijing Time) every day
+    - cron: '0 18 * * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  call-build:
+    uses: ./.github/workflows/build-jpackage.yml
+    with:
+      os_matrix: '["ubuntu-latest", "macos-latest", "windows-latest"]'
+      version: nightly-${{ needs.setup.outputs.date }}-${{ github.run_number }}
+    needs: setup
+
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.date.outputs.date }}
+    steps:
+      - id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+  publish-nightly-release:
+    name: Publish Nightly Pre-Release
+    runs-on: ubuntu-latest
+    needs: [call-build, setup]
+    permissions:
+      contents: write
+      pull-requests: write # Required for deleting releases
+    steps:
+      - name: Delete older nightly release and tag
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            try {
+              const releases = await github.rest.repos.listReleases({ owner, repo });
+              const nightlyRelease = releases.data.find(r => r.tag_name === 'nightly');
+
+              if (nightlyRelease) {
+                console.log(`Found nightly release with ID: ${nightlyRelease.id}. Deleting it.`);
+                await github.rest.repos.deleteRelease({ owner, repo, release_id: nightlyRelease.id });
+                
+                console.log(`Deleting associated tag: nightly`);
+                try {
+                  await github.rest.git.deleteRef({ owner, repo, ref: 'tags/nightly' });
+                } catch (error) {
+                  console.log(`Tag 'nightly' might have already been deleted or doesn't exist: ${error.message}`);
+                }
+              } else {
+                console.log('No existing nightly release found. Nothing to delete.');
+              }
+            } catch (error) {
+              console.log(`An error occurred: ${error.message}. This might be normal if no releases exist yet.`);
+            }
+
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create Nightly Pre-Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Nightly Build ${{ needs.setup.outputs.date }}"
+          tag_name: "nightly"
+          body: "This is an automated nightly build. It may be unstable."
+          prerelease: true
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.msi
+            artifacts/**/*.deb
+            artifacts/**/*.zip
+            artifacts/**/*.tar.gz
