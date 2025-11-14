@@ -1,5 +1,5 @@
 import { EditorState, EditorSelection } from '@codemirror/state';
-import { EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection, dropCursor, keymap } from '@codemirror/view';
+import { EditorView, ViewPlugin, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection, dropCursor, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
@@ -273,6 +273,105 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     { name: 'lineNumbers()', ext: lineNumbers() },
     { name: 'highlightActiveLine()', ext: highlightActiveLine() },
     { name: 'highlightActiveLineGutter()', ext: highlightActiveLineGutter() },
+    // 单击行号选中整行 + Shift 扩展（不含拖拽，拖拽后续单独完善）
+    { name: 'gutterLineSelection', ext: ViewPlugin.fromClass(class {
+      constructor(view){
+        this.view = view;
+        this.dragging = false;
+        this.anchorLine = null; // 拖拽锚点（行）
+        this.onMouseDown = this.onMouseDown.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onMouseUp = this.onMouseUp.bind(this);
+        // 用捕获阶段监听，确保能在 CodeMirror 默认处理前截获
+        view.dom.addEventListener('mousedown', this.onMouseDown, true);
+      }
+      destroy(){
+        this.view.dom.removeEventListener('mousedown', this.onMouseDown, true);
+        window.removeEventListener('mousemove', this.onMouseMove, true);
+        window.removeEventListener('mouseup', this.onMouseUp, true);
+      }
+      isInGutter(target){
+        if (!target) return false;
+        const el = target.nodeType === 3 ? target.parentElement : target;
+        return !!(el && el.closest && (el.closest('.cm-gutters') || el.closest('.cm-gutter') || el.closest('.cm-lineNumbers') || el.closest('.cm-gutterElement')));
+      }
+      lineAtY(y){
+        const rect = this.view.contentDOM.getBoundingClientRect();
+        const x = rect.left + 2; // 靠内容区最左，避免受 gutter 宽度影响
+        const pos = this.view.posAtCoords({ x, y });
+        if (pos == null) return null;
+        return this.view.state.doc.lineAt(pos);
+      }
+      fullLineRange(line){
+        const doc = this.view.state.doc;
+        const isLast = line.number === doc.lines;
+        const from = line.from;
+        const to = isLast ? line.to : doc.line(line.number + 1).from; // 选到下一行起点，包含换行
+        return { from, to };
+      }
+      selectLinesBetween(lineA, lineB){
+        const first = lineA.number <= lineB.number ? lineA : lineB;
+        const last = lineA.number <= lineB.number ? lineB : lineA;
+        const rangeA = this.fullLineRange(first);
+        const rangeB = this.fullLineRange(last);
+        const from = rangeA.from;
+        const to = rangeB.to;
+        this.view.dispatch({ selection: EditorSelection.single(from, to), scrollIntoView: false });
+      }
+      autoScrollIfNeeded(clientY){
+        const sd = this.view.scrollDOM;
+        const rect = sd.getBoundingClientRect();
+        const margin = 16;
+        const step = 24;
+        if (clientY < rect.top + margin) sd.scrollTop -= step;
+        else if (clientY > rect.bottom - margin) sd.scrollTop += step;
+      }
+      onMouseDown(ev){
+        try {
+          if (ev.button !== 0) return; // 仅处理左键
+          if (!this.isInGutter(ev.target)) return;
+          ev.preventDefault();
+          const clicked = this.lineAtY(ev.clientY);
+          if (!clicked) return;
+
+          const sel = this.view.state.selection.main;
+          if (ev.shiftKey && !sel.empty) {
+            this.anchorLine = this.view.state.doc.lineAt(sel.anchor);
+          } else {
+            this.anchorLine = clicked;
+          }
+
+          // 初始选择
+          this.selectLinesBetween(this.anchorLine, clicked);
+
+          // 开始拖拽
+          this.dragging = true;
+          window.addEventListener('mousemove', this.onMouseMove, true);
+          window.addEventListener('mouseup', this.onMouseUp, true);
+        } catch(e) {
+          console.warn('[CM6] gutterLineSelection mousedown error', e);
+        }
+      }
+      onMouseMove(ev){
+        if (!this.dragging) return;
+        try {
+          ev.preventDefault();
+          this.autoScrollIfNeeded(ev.clientY);
+          const cur = this.lineAtY(ev.clientY);
+          if (!cur || !this.anchorLine) return;
+          this.selectLinesBetween(this.anchorLine, cur);
+        } catch(e) {
+          console.warn('[CM6] gutterLineSelection mousemove error', e);
+        }
+      }
+      onMouseUp(){
+        if (!this.dragging) return;
+        this.dragging = false;
+        this.anchorLine = null;
+        window.removeEventListener('mousemove', this.onMouseMove, true);
+        window.removeEventListener('mouseup', this.onMouseUp, true);
+      }
+    }) },
     { name: 'drawSelection()', ext: drawSelection() },
     { name: 'dropCursor()', ext: dropCursor() },
     { name: 'history()', ext: history() },
