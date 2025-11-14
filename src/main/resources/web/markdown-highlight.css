@@ -84,6 +84,14 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+
+/* 行号与gutter区域：不应出现编辑光标，也不应选择文本 */
+.cm-gutters, .cm-gutter, .cm-lineNumbers, .cm-gutterElement {
+  -webkit-user-select: none;
+  user-select: none;
+  caret-color: transparent;
+  cursor: default;
+}
 }
 
 .cm-content {

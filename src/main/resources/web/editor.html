@@ -73,6 +73,93 @@
                 };
                 window.getContent = () => view?.state.doc.toString() || '';
                 window.getEditorType = () => 'cm6';
+                // 行号点击/拖动：选中整行，支持拖动多行与 Shift 扩展
+                (function setupGutterSelection(){
+                    let dragging = false;
+                    let startLine = null; // {from,to,number}
+                    let anchorFrom = null; // Shift 扩展起点（锚定行的起始位置）
+
+                    function isInGutter(target){
+                        return !!(target && (target.closest && (target.closest('.cm-gutters') || target.closest('.cm-gutter') || target.closest('.cm-lineNumbers'))));
+                    }
+
+                    function posToLineAtY(clientY){
+                        const rect = view.contentDOM.getBoundingClientRect();
+                        const x = rect.left + 4; // 内容区靠左，避免命中行号
+                        const pos = view.posAtCoords({ x, y: clientY });
+                        if (pos == null) return null;
+                        return view.state.doc.lineAt(pos);
+                    }
+
+                    function selectLinesBetween(l1, l2){
+                        if (!l1 || !l2) return;
+                        const from = Math.min(l1.from, l2.from);
+                        const to = Math.max(l1.to, l2.to);
+                        view.dispatch({ selection: { anchor: from, head: to }, scrollIntoView: false });
+                    }
+
+                    function autoScrollIfNeeded(clientY){
+                        const sd = view.scrollDOM;
+                        const rect = sd.getBoundingClientRect();
+                        const margin = 16;
+                        const step = 24; // 每次滚动像素
+                        if (clientY < rect.top + margin) sd.scrollTop -= step;
+                        else if (clientY > rect.bottom - margin) sd.scrollTop += step;
+                    }
+
+                    parentEl.addEventListener('mousedown', (ev) => {
+                        try {
+                            if (ev.button !== 0) return; // 仅处理左键
+                            const tgt = ev.target;
+                            if (!isInGutter(tgt)) return;
+                            ev.preventDefault(); // 阻止默认选择/拖拽行为
+
+                            const clickedLine = posToLineAtY(ev.clientY);
+                            if (!clickedLine) return;
+
+                            // Shift+点击：扩展自现有选择的锚定行
+                            if (ev.shiftKey && !view.state.selection.main.empty) {
+                                const sel = view.state.selection.main;
+                                const anchorLine = view.state.doc.lineAt(sel.anchor);
+                                anchorFrom = anchorLine.from;
+                                selectLinesBetween(anchorLine, clickedLine);
+                            } else {
+                                anchorFrom = null;
+                                view.dispatch({ selection: { anchor: clickedLine.from, head: clickedLine.to }, scrollIntoView: true });
+                            }
+
+                            startLine = clickedLine;
+                            dragging = true;
+
+                            const onMove = (moveEv) => {
+                                if (!dragging) return;
+                                moveEv.preventDefault();
+                                autoScrollIfNeeded(moveEv.clientY);
+                                const curLine = posToLineAtY(moveEv.clientY);
+                                if (!curLine) return;
+                                if (anchorFrom != null) {
+                                    // 以锚点作为一端
+                                    const anchorLine = view.state.doc.lineAt(anchorFrom);
+                                    selectLinesBetween(anchorLine, curLine);
+                                } else {
+                                    selectLinesBetween(startLine, curLine);
+                                }
+                            };
+
+                            const onUp = () => {
+                                dragging = false;
+                                startLine = null;
+                                anchorFrom = null;
+                                window.removeEventListener('mousemove', onMove, true);
+                                window.removeEventListener('mouseup', onUp, true);
+                            };
+
+                            window.addEventListener('mousemove', onMove, true);
+                            window.addEventListener('mouseup', onUp, true);
+                        } catch (e) { diag('gutter drag handler error: ' + e); }
+                    }, true);
+                })();
+                
                 diag('CM6 (local bundle) ready');
             } catch (e) {
                 diag('Init local bundle failed: ' + e + '\n请重新构建本地 bundle');
