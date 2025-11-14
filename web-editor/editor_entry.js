@@ -1,7 +1,8 @@
 import { EditorState } from '@codemirror/state';
 import { EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection, dropCursor, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from '@codemirror/language';
+import { tags } from '@lezer/highlight';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
@@ -54,20 +55,47 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     return {from: before.from, options};
   }
 
+  // Define comprehensive Markdown syntax highlighting using CSS classes
+  // These classes map to styles defined in markdown-highlight.css
+  const markdownHighlighting = HighlightStyle.define([
+    { tag: tags.heading, class: 'cm-heading' },
+    { tag: tags.heading1, class: 'cm-heading1' },
+    { tag: tags.heading2, class: 'cm-heading2' },
+    { tag: tags.heading3, class: 'cm-heading3' },
+    { tag: tags.heading4, class: 'cm-heading4' },
+    { tag: tags.heading5, class: 'cm-heading5' },
+    { tag: tags.heading6, class: 'cm-heading6' },
+    { tag: tags.strong, class: 'cm-strong' },
+    { tag: tags.emphasis, class: 'cm-em' },
+    { tag: tags.link, class: 'cm-link' },
+    { tag: tags.url, class: 'cm-url' },
+    { tag: tags.monospace, class: 'cm-code' },
+    { tag: tags.quote, class: 'cm-quote' },
+    { tag: tags.list, class: 'cm-list' },
+    { tag: tags.punctuation, class: 'cm-punctuation' },
+    { tag: tags.meta, class: 'cm-meta' },
+    { tag: tags.bracket, class: 'cm-bracket' },
+    { tag: tags.strikethrough, class: 'cm-strikethrough' },
+    { tag: tags.escape, class: 'cm-escape' },
+  ]);
+
+
   const candidates = [
     { name: 'markdown()', ext: markdown() },
-    { name: 'syntaxHighlighting(defaultHighlightStyle)', ext: syntaxHighlighting(defaultHighlightStyle) },
     { name: 'lineNumbers()', ext: lineNumbers() },
     { name: 'highlightActiveLine()', ext: highlightActiveLine() },
     { name: 'highlightActiveLineGutter()', ext: highlightActiveLineGutter() },
     { name: 'drawSelection()', ext: drawSelection() },
     { name: 'dropCursor()', ext: dropCursor() },
-  { name: 'history()', ext: history() },
-  // 自动补全可按需恢复：取消注释下面一行
-  // { name: 'autocompletion()', ext: autocompletion({override:[markdownExtraCompletions]}) },
+    { name: 'history()', ext: history() },
+    // 自动补全可按需恢复：取消注释下面一行
+    // { name: 'autocompletion()', ext: autocompletion({override:[markdownExtraCompletions]}) },
     { name: 'highlightSelectionMatches()', ext: highlightSelectionMatches() },
     { name: 'keymap.of(combinedKeymap)', ext: keymap.of(combinedKeymap) },
-    { name: 'EditorView.lineWrapping', ext: EditorView.lineWrapping }
+    { name: 'EditorView.lineWrapping', ext: EditorView.lineWrapping },
+    { name: 'syntaxHighlighting(defaultHighlightStyle)', ext: syntaxHighlighting(defaultHighlightStyle) },
+    // Apply custom Markdown highlighting (maps to CSS classes in markdown-highlight.css)
+    { name: 'syntaxHighlighting(markdownHighlighting)', ext: syntaxHighlighting(markdownHighlighting) }
   ];
 
   const goodExts = [];
