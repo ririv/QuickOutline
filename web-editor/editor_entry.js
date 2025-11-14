@@ -1,4 +1,4 @@
-import { EditorState } from '@codemirror/state';
+import { EditorState, EditorSelection } from '@codemirror/state';
 import { EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection, dropCursor, keymap } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from '@codemirror/language';
@@ -64,8 +64,137 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     }
   ];
 
+  // === Markdown helpers for toggle wrappers & link ===
+  function toggleInlineWrapperCmd(marker) {
+    return (view) => {
+      try {
+        const tr = view.state.changeByRange(r => {
+          const from = r.from, to = r.to;
+          const doc = view.state.doc;
+          if (from === to) {
+            const insert = marker + marker;
+            return {
+              changes: { from, to, insert },
+              range: EditorSelection.cursor(from + marker.length)
+            };
+          } else {
+            const leftStart = Math.max(0, from - marker.length);
+            const left = doc.sliceString(leftStart, from);
+            const right = doc.sliceString(to, Math.min(doc.length, to + marker.length));
+            if (left === marker && right === marker) {
+              return {
+                changes: [
+                  { from: to, to: to + marker.length, insert: '' },
+                  { from: leftStart, to: from, insert: '' }
+                ],
+                range: EditorSelection.range(from - marker.length, to - marker.length)
+              };
+            } else {
+              return {
+                changes: [
+                  { from: to, to, insert: marker },
+                  { from, to: from, insert: marker }
+                ],
+                range: EditorSelection.range(from + marker.length, to + marker.length)
+              };
+            }
+          }
+        });
+        view.dispatch(tr);
+        return true;
+      } catch (e) { console.warn('[CM6] toggleInlineWrapper error', e); }
+      return false;
+    };
+  }
+
+  function togglePairWrapperCmd(open, close) {
+    return (view) => {
+      try {
+        const tr = view.state.changeByRange(r => {
+          const from = r.from, to = r.to;
+          const doc = view.state.doc;
+          if (from === to) {
+            return {
+              changes: { from, to, insert: open + close },
+              range: EditorSelection.cursor(from + open.length)
+            };
+          } else {
+            const leftStart = Math.max(0, from - open.length);
+            const rightEnd = Math.min(doc.length, to + close.length);
+            const left = doc.sliceString(leftStart, from);
+            const right = doc.sliceString(to, rightEnd);
+            if (left === open && right === close) {
+              return {
+                changes: [
+                  { from: to, to: rightEnd, insert: '' },
+                  { from: leftStart, to: from, insert: '' }
+                ],
+                range: EditorSelection.range(from - open.length, to - open.length)
+              };
+            } else {
+              return {
+                changes: [
+                  { from: to, to, insert: close },
+                  { from, to: from, insert: open }
+                ],
+                range: EditorSelection.range(from + open.length, to + open.length)
+              };
+            }
+          }
+        });
+        view.dispatch(tr);
+        return true;
+      } catch (e) { console.warn('[CM6] togglePairWrapper error', e); }
+      return false;
+    };
+  }
+
+  function insertOrEditLinkCmd() {
+    // 简化：不再弹窗，直接包裹为 [选中文本]()，并把光标放在括号内；无选区时插入 []() 并把光标放在括号内
+    return (view) => {
+      try {
+        const tr = view.state.changeByRange(r => {
+          const from = r.from, to = r.to;
+          if (from === to) {
+            // 无选区：插入 []()，光标到 [] 内
+            const insert = '[]()';
+            return {
+              changes: { from, to, insert },
+              range: EditorSelection.cursor(from + 1) // inside []
+            };
+          } else {
+            // 有选区：包裹为 [text]()，光标到 () 内
+            const selText = view.state.doc.sliceString(from, to);
+            const insert = `[${selText}]()`;
+            return {
+              changes: { from, to, insert },
+              range: EditorSelection.cursor(from + selText.length + 3)
+            };
+          }
+        });
+        if (tr.changes.empty) return false;
+        view.dispatch(tr);
+        return true;
+      } catch (e) { console.warn('[CM6] insertOrEditLink error', e); }
+      return false;
+    };
+  }
+
+  const customMarkdownKeymap = [
+    { key: 'Mod-b', run: toggleInlineWrapperCmd('**') },
+    { key: 'Mod-i', run: toggleInlineWrapperCmd('*') },
+    { key: 'Mod-u', run: togglePairWrapperCmd('<u>', '</u>') },
+    { key: 'Mod-k', run: insertOrEditLinkCmd() },
+  ];
+
   // Compose keymap: custom indent + default + history + search (+ completion 可按需再开启)
-  const combinedKeymap = [...customIndentKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap /*, ...completionKeymap*/];
+  const combinedKeymap = [
+    ...customIndentKeymap,
+    ...customMarkdownKeymap,
+    ...defaultKeymap,
+    ...historyKeymap,
+    ...searchKeymap /*, ...completionKeymap*/
+  ];
 
   // Minimal custom Markdown completion source (headings, fenced code blocks, task list, table pipes)
   function markdownExtraCompletions(context) {
