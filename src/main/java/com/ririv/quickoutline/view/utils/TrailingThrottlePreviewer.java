@@ -3,6 +3,8 @@ package com.ririv.quickoutline.view.utils;
 // NOTE: Removed JavaFX-specific Task/Platform to avoid accessibility issues in non-JavaFX context.
 
 import javafx.application.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -20,6 +22,8 @@ import java.util.function.Function;
  * - If user keeps typing while previous task is running, a follow-up run is scheduled.
  */
 public class TrailingThrottlePreviewer<T, R> {
+
+    private static final Logger log = LoggerFactory.getLogger(TrailingThrottlePreviewer.class);
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "preview-throttle");
@@ -53,20 +57,20 @@ public class TrailingThrottlePreviewer<T, R> {
             contentChangedDuringRun = true; // mark for follow-up run
         }
         if (scheduled == null || scheduled.isDone()) {
-            System.out.println("[Throttle] schedule initial in " + delayMillis + "ms");
+            if (log.isDebugEnabled()) log.debug("schedule initial in {}ms", delayMillis);
             scheduled = scheduler.schedule(this::execute, delayMillis, TimeUnit.MILLISECONDS);
             pendingChangeCount = 1; // 首次触发
         } else {
             // 已经有等待中的执行，仅更新最新内容并累积计数
             pendingChangeCount++;
-            System.out.println("[Throttle] updated latestInput while pending (pendingChangeCount=" + pendingChangeCount + ")");
+            if (log.isDebugEnabled()) log.debug("updated latestInput while pending (pendingChangeCount={})", pendingChangeCount);
         }
     }
 
     private void execute() {
         T inputSnapshot = latestInput;
         contentChangedDuringRun = false; // reset before run
-    System.out.println("[Throttle] execute start (snapshot hash=" + (inputSnapshot==null?0:inputSnapshot.hashCode()) + ") pendingChangeCount=" + pendingChangeCount);
+    if (log.isDebugEnabled()) log.debug("execute start (snapshot hash={}) pendingChangeCount={}", (inputSnapshot==null?0:inputSnapshot.hashCode()), pendingChangeCount);
     int localPendingCount = pendingChangeCount; // 捕获本次执行前的累计变更次数
     pendingChangeCount = 0; // 重置
         running = true;
@@ -78,10 +82,10 @@ public class TrailingThrottlePreviewer<T, R> {
                     Platform.runLater(() -> onSuccess.accept(result));
                 }
             } catch (Throwable ex) {
-                if (onError != null) onError.accept(ex); else ex.printStackTrace();
+                if (onError != null) onError.accept(ex); else log.error("throttle task failed", ex);
             } finally {
                 running = false;
-                System.out.println("[Throttle] execute finished; contentChangedDuringRun=" + contentChangedDuringRun);
+                if (log.isDebugEnabled()) log.debug("execute finished; contentChangedDuringRun={}", contentChangedDuringRun);
                 lastExecutedSnapshot = inputSnapshot;
                 scheduleFollowUpIfNeeded(localPendingCount);
             }
@@ -93,23 +97,23 @@ public class TrailingThrottlePreviewer<T, R> {
     private void scheduleFollowUpIfNeeded(int localPendingCount) {
         // If content changed during run or latestInput differs from what we used, schedule again.
         if (contentChangedDuringRun) {
-            System.out.println("[Throttle] follow-up scheduled (flag) in " + delayMillis + "ms");
+            if (log.isDebugEnabled()) log.debug("follow-up scheduled (flag) in {}ms", delayMillis);
             scheduled = scheduler.schedule(this::execute, delayMillis, TimeUnit.MILLISECONDS);
             return;
         }
         // 若执行结束后 latestInput 已与刚才使用的 snapshot 不同，也安排一次尾随运行
         if (lastExecutedSnapshot != latestInput) {
-            System.out.println("[Throttle] follow-up scheduled (diff) in " + delayMillis + "ms");
+            if (log.isDebugEnabled()) log.debug("follow-up scheduled (diff) in {}ms", delayMillis);
             scheduled = scheduler.schedule(this::execute, delayMillis, TimeUnit.MILLISECONDS);
             return;
         }
         // 如果等待阶段发生了多次变化（说明用户在打字的一个小爆发里输入很快），也安排一次尾随执行
         if (localPendingCount > 1) {
-            System.out.println("[Throttle] follow-up scheduled (burst=" + localPendingCount + ") in " + delayMillis + "ms");
+            if (log.isDebugEnabled()) log.debug("follow-up scheduled (burst={}) in {}ms", localPendingCount, delayMillis);
             scheduled = scheduler.schedule(this::execute, delayMillis, TimeUnit.MILLISECONDS);
             return;
         }
-        System.out.println("[Throttle] no follow-up needed (identical / single change)");
+        if (log.isDebugEnabled()) log.debug("no follow-up needed (identical / single change)");
         scheduled = null;
     }
 

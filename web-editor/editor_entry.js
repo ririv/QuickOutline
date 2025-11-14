@@ -17,27 +17,7 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
 
   // 简化：取消 JS 端防抖，直接发送，每次内容变化都回调；只依赖 Java 侧 DebouncedPreviewer 统一限频
   // 诊断: JS 层变更 -> Java 回调链路日志
-  let __changeSeq = 0;
-  let lastSentLen = 0;
-  let lastDocLen = 0;
-  let lastChangeTime = 0;
-  const updateListener = EditorView.updateListener.of(u => {
-    if (!u.docChanged) {
-      if (u.selectionSet) console.log('[CM6 DEBUG] selection changed (no doc change)');
-      return;
-    }
-    const txt = u.state.doc.toString();
-    const len = txt.length;
-    lastDocLen = len;
-    lastChangeTime = Date.now();
-    const seq = ++__changeSeq;
-    console.log('[CM6 DEBUG] change #' + seq + ' len=' + len);
-    if (window.javaCallback?.log) {
-      try { window.javaCallback.log('[CM6 DEBUG] JS->Java notifyUpdated seq=' + seq + ' len=' + len); } catch(e) {}
-    }
-    // 新机制：仅发送信号，不直接传递整段文本，交由 Java 端主动 pull
-    try { window.javaCallback?.notifyUpdated && window.javaCallback.notifyUpdated(seq); } catch(e) { console.warn('[CM6 notifyUpdated error]', e); }
-  });
+  // 仅轮询方案：不在 JS 侧触发任何跨桥回调，Java 侧自行轮询 window.getContent()
 
   // Compose keymap: default + history + search (+ completion 可按需再开启)
   const combinedKeymap = [...defaultKeymap, ...historyKeymap, ...searchKeymap /*, ...completionKeymap*/];
@@ -87,8 +67,7 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
   // { name: 'autocompletion()', ext: autocompletion({override:[markdownExtraCompletions]}) },
     { name: 'highlightSelectionMatches()', ext: highlightSelectionMatches() },
     { name: 'keymap.of(combinedKeymap)', ext: keymap.of(combinedKeymap) },
-    { name: 'EditorView.lineWrapping', ext: EditorView.lineWrapping },
-    { name: 'updateListener', ext: updateListener }
+    { name: 'EditorView.lineWrapping', ext: EditorView.lineWrapping }
   ];
 
   const goodExts = [];
@@ -105,54 +84,16 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
   console.log('[CM6 DIAG TEST] Passed extensions count =', goodExts.length);
   const state = EditorState.create({ doc: initialDoc || '', extensions: goodExts });
   const view = new EditorView({ state, parent });
-  // 输入/焦点事件诊断
-  view.dom.addEventListener('keydown', e => {
-    console.log('[CM6 EVT] keydown key=' + e.key + ' code=' + e.code);
-  });
-  view.dom.addEventListener('input', e => {
-    console.log('[CM6 EVT] input event valueLen=' + view.state.doc.length);
-  });
-  view.dom.addEventListener('compositionstart', e => {
-    console.log('[CM6 EVT] compositionstart');
-  });
-  view.dom.addEventListener('compositionupdate', e => {
-    console.log('[CM6 EVT] compositionupdate data=' + (e.data||''));
-  });
-  view.dom.addEventListener('compositionend', e => {
-    console.log('[CM6 EVT] compositionend finalData=' + (e.data||''));
-  });
-  view.dom.addEventListener('focus', () => console.log('[CM6 EVT] focus'));
-  view.dom.addEventListener('blur', () => console.log('[CM6 EVT] blur'));
+  // 诊断事件日志移除：减少桥接调用数量，提升稳定性
 
   // 手动调试函数：可在 WebView 控制台执行 window.debugDumpContent()
-  window.debugDumpContent = function() {
-    const txt = view.state.doc.toString();
-    console.log('[CM6 DEBUG] manual dump len=' + txt.length + ' head="' + txt.slice(0,50).replace(/\n/g,'\\n') + '"');
-    return txt;
-  };
-  window.editorViewFocus = function(){
-    try { view.focus(); console.log('[CM6 DEBUG] editorView.focus() invoked'); } catch(e){ console.log('[CM6 DEBUG] focus error', e); }
-  };
+  window.debugDumpContent = function() { return view.state.doc.toString(); };
+  window.editorViewFocus = function(){ try { view.focus(); } catch(e){} };
 
-  // 轮询回退：若由于某种原因 notifyUpdated 未被 Java 捕获，长度变化仍强制触发一次通知
-  setInterval(() => {
-    try {
-      const len = view.state.doc.length;
-      if (len !== lastSentLen) {
-        lastSentLen = len;
-        if (window.javaCallback?.log) {
-          try { window.javaCallback.log('[CM6 FALLBACK] poll len=' + len); } catch(e) {}
-        }
-        window.javaCallback?.notifyUpdated && window.javaCallback.notifyUpdated(__changeSeq);
-      }
-    } catch(e) {
-      console.warn('[CM6 FALLBACK poll error]', e);
-    }
-  }, 800);
+  // 说明：JS 侧不再做任何跨桥通知或轮询；仅由 Java 侧定时轮询 window.getContent()。
+  // 经尝试，JS->Java发送事件通知，在第一次渲染后，后续会无效（接受不到任何打字更新信息）
   window.__cm6_initialized = true;
   window.editorView = view;
-  if (window.javaCallback?.log) {
-    try { window.javaCallback.log('[CM6 DEBUG] EditorView initialized. initialDocLen=' + (initialDoc?initialDoc.length:0)); } catch(e) {}
-  }
+  // 初始化日志移除，减少 Java 桥调用
   return view;
 };

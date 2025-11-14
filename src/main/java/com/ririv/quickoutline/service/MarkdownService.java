@@ -9,6 +9,8 @@ import jakarta.inject.Singleton;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,6 +18,8 @@ import java.util.function.Consumer;
 
 @Singleton
 public class MarkdownService {
+
+    private static final Logger log = LoggerFactory.getLogger(MarkdownService.class);
 
     private final Parser parser;
     private final HtmlRenderer renderer;
@@ -49,21 +53,21 @@ public class MarkdownService {
         final String safe = markdownText == null ? "" : markdownText;
         if (safe.isBlank()) {
             // 空内容直接返回，不报错，避免误触发失败提示
-            System.out.println("[MarkdownService] skip empty content");
+            if (log.isDebugEnabled()) log.debug("skip empty content");
             return new byte[0];
         }
         long start = System.currentTimeMillis();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Node document = parser.parse(safe);
             String htmlContent = renderer.render(document);
-            System.out.println("[MarkdownService] parsed length=" + safe.length() + ", html length=" + htmlContent.length());
+            if (log.isDebugEnabled()) log.debug("parsed length={}, html length={}", safe.length(), htmlContent.length());
             htmlConverter.convertToPdf(htmlContent, baos, onMessage, onError);
             byte[] bytes = baos.toByteArray();
-            System.out.println("[MarkdownService] PDF bytes=" + bytes.length + ", cost=" + (System.currentTimeMillis()-start) + "ms");
+            if (log.isDebugEnabled()) log.debug("PDF bytes={}, cost={}ms", bytes.length, (System.currentTimeMillis()-start));
             return bytes;
         } catch (Exception e) {
             String msg = "Failed to convert Markdown to PDF: " + e.getMessage();
-            System.out.println("[MarkdownService] ERROR " + msg);
+            log.error(msg, e);
             onError.accept(msg);
             throw new RuntimeException(msg, e);
         }

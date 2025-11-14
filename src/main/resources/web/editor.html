@@ -7,7 +7,8 @@
         html,body {height:100%;margin:0;padding:0;}
         #editor {height:100%;}
         .cm-editor {height:100%;}
-        .diag-panel {position:absolute;top:4px;right:4px;z-index:99;font:11px/1.4 monospace;color:#333;background:#f6f6f6;border:1px solid #ccc;padding:4px 6px;border-radius:4px;max-width:260px;white-space:pre-wrap}
+        /* 默认隐藏诊断面板，运行时需要时可通过 window.enableDiag() 打开 */
+        .diag-panel {display:none; position:absolute;top:4px;right:4px;z-index:99;font:11px/1.4 monospace;color:#333;background:#f6f6f6;border:1px solid #ccc;padding:4px 6px;border-radius:4px;max-width:260px;white-space:pre-wrap}
     </style>
 </head>
 <body>
@@ -15,15 +16,25 @@
     <div id="diag" class="diag-panel"></div>
 
     <script>
-        const diag = msg => { const el = document.getElementById('diag'); el.textContent += msg + "\n"; console.log('[CM6]', msg); };
+        // 诊断函数，默认不输出（通过 window.__diagEnabled 控制）
+        window.__diagEnabled = false; // 默认关闭
+        const diag = msg => {
+            try {
+                if (!window.__diagEnabled) return;
+                const el = document.getElementById('diag');
+                if (!el) return;
+                el.textContent += msg + "\n";
+                el.style.display = 'block';
+                console.log('[CM6]', msg);
+            } catch (e) { console.log('[CM6 diag error]', e); }
+        };
+
+        // 提供全局开关，便于在 WebView 控制台或 Java 侧按需开启/关闭诊断面板
+        window.enableDiag = function() { window.__diagEnabled = true; const el = document.getElementById('diag'); if (el) el.style.display = 'block'; console.log('[CM6] diag enabled'); };
+        window.disableDiag = function() { window.__diagEnabled = false; const el = document.getElementById('diag'); if (el) el.style.display = 'none'; console.log('[CM6] diag disabled'); };
         window.addEventListener('error', e => { diag('window.onerror: ' + e.message + ' @' + e.filename + ':' + e.lineno); });
         window.addEventListener('unhandledrejection', e => { diag('unhandledrejection: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)); });
-        // 心跳，确认页面仍在运行（若心跳停止说明主线程冻结）
-        let heartbeatCounter = 0;
-        setInterval(() => {
-            heartbeatCounter++;
-            if (heartbeatCounter % 20 === 0) { diag('heartbeat #' + heartbeatCounter); }
-        }, 1000);
+        // 说明：原心跳(heartbeat)仅用于开发期诊断页面是否卡死；已移除以减少噪音和开销。
         diag('UserAgent: ' + navigator.userAgent);
         // 新目录下同名 bundle
         const BUNDLE_URL = 'codemirror.bundle.js';
