@@ -80,6 +80,30 @@
             }
         }
         loadLocalBundle();
+
+        // 仅拦截在行号/行号下方（gutter）或编辑器外的右键，保留编辑内容区域的默认右键菜单（支持复制/粘贴）
+        document.addEventListener('contextmenu', function (e) {
+            try {
+                let t = e.target;
+                if (!t) return;
+                if (t.nodeType === 3) t = t.parentElement;
+                // 判断是否在 editor 容器内
+                const inEditor = t && (t.closest && t.closest('#editor'));
+                if (!inEditor) {
+                    // 页面空白处：阻止默认菜单（避免误触“重新加载”）
+                    e.preventDefault();
+                    return;
+                }
+                // 在 editor 内部：判断是否位于 gutter（行号/行号下方）
+                const isInGutter = (t.closest && (t.closest('.cm-gutters') || t.closest('.cm-gutter') || t.closest('.cm-lineNumbers') || t.closest('.cm-gutterElement')))
+                    || (t.classList && (t.classList.contains('cm-gutters') || t.classList.contains('cm-gutter') || t.classList.contains('cm-lineNumbers') || t.classList.contains('cm-gutterElement')));
+                if (isInGutter) {
+                    // gutter 区域阻止默认菜单
+                    e.preventDefault();
+                }
+                // 否则允许默认行为（保留可编辑区的复制/粘贴菜单）
+            } catch (err) {}
+        }, true);
     </script>
     <noscript>需要开启 JavaScript 才能使用编辑器。</noscript>
 </body>
