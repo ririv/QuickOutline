@@ -72,11 +72,18 @@
   outline: none;
 }
 
+/* Editor main text uses proportional UI fonts with CJK-friendly fallbacks */
 .cm-scroller {
   overflow: auto;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
-  line-height: 1.6;
+  /* 优先系统 UI 字体，其次中文黑体/苹方，最后常见 Sans 作为兜底 */
+  font-family: -apple-system, system-ui, "SF Pro Text", "Helvetica Neue", Arial,
+    "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC",
+    "Microsoft YaHei", "Segoe UI", Roboto, "Noto Sans", "Liberation Sans", sans-serif;
+  line-height: 1.65;
   color: var(--cm-text) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .cm-content {
@@ -142,7 +149,9 @@
 .cm-monospace,
 .cm-code {
   color: var(--cm-code-color) !important;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  /* 代码片段与代码块使用更友好的等宽字体栈 */
+  font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Monaco,
+    Consolas, "Source Code Pro", "Cascadia Code", monospace;
   background-color: rgba(127, 127, 127, 0.1);
   padding: 0.1em 0.3em;
   border-radius: 3px;
