@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 
 /**
  * Provides utility methods for converting SVG path data for JavaFX.
@@ -19,44 +20,37 @@ import java.io.InputStream;
 public class BatikToJavaFXConverter {
 
     /**
-     * Parses an SVG file and combines all path data into a single string.
-     * This combined path string can be used with JavaFX's -fx-shape CSS property.
-     *
-     * @param svgFilePath The path to the SVG file.
-     * @return A string containing the combined 'd' attributes of all path elements, or an empty string if no paths are found.
+     * Parses an SVG resource on the classpath and combines all path data.
+     * Safer for resources inside a modular runtime / jpackage image where URL.getPath() is not a real filesystem path.
+     * @param resourcePath classpath resource path, e.g. "/drawable/open.svg"
+     * @return combined 'd' attributes string
      */
-    public static String getCombinedPath(String svgFilePath) {
-        SVGDocument svgDoc;
-        try {
-            svgDoc = getSvgDocument(svgFilePath);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read SVG file: " + svgFilePath, e);
+    public static String getCombinedPathFromResource(String resourcePath) {
+        if (resourcePath == null || resourcePath.isEmpty()) {
+            throw new IllegalArgumentException("resourcePath must not be empty");
         }
-
-        StringBuilder combinedPath = new StringBuilder();
-        NodeList pathNodes = svgDoc.getElementsByTagName("path");
-
-        for (int i = 0; i < pathNodes.getLength(); i++) {
-            Element pathElem = (Element) pathNodes.item(i);
-            String d = pathElem.getAttribute("d");
-            if (!d.trim().isEmpty()) {
-                combinedPath.append(d).append(" ");
-            }
+        URL url = BatikToJavaFXConverter.class.getResource(resourcePath);
+        if (url == null) {
+            throw new RuntimeException("Resource not found: " + resourcePath);
         }
-        return combinedPath.toString().trim();
-    }
-
-
-    private static SVGDocument getSvgDocument(String svgFilePath) throws IOException {
+        // 请使用 URL.openStream() 打开流，而不是使用 FileInputStream，因为在 jpackage 镜像中，资源可能不在真实的文件系统路径中，
+        // 因为在 jpackage 镜像中，资源可能不在真实的文件系统路径中
         String parser = XMLResourceDescriptor.getXMLParserClassName();
         SVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
-        SVGDocument svgDoc;
-        // 使用 try-with-resources 确保 InputStream 被正确关闭
-        try (InputStream is = new FileInputStream(svgFilePath)) {
-            String fileUri = new File(svgFilePath).toURI().toString(); // 获取文件的 URI
-            // 根据您提供的 Javadoc，使用 (namespaceURI, qualifiedName, documentURI, inputStream)
-            svgDoc = (SVGDocument) factory.createDocument("http://www.w3.org/2000/svg", "svg", fileUri, is);
+        try (InputStream is = url.openStream()) {
+            SVGDocument svgDoc = (SVGDocument) factory.createDocument("http://www.w3.org/2000/svg", "svg", url.toExternalForm(), is);
+            StringBuilder combinedPath = new StringBuilder();
+            NodeList pathNodes = svgDoc.getElementsByTagName("path");
+            for (int i = 0; i < pathNodes.getLength(); i++) {
+                Element pathElem = (Element) pathNodes.item(i);
+                String d = pathElem.getAttribute("d");
+                if (!d.trim().isEmpty()) {
+                    combinedPath.append(d).append(" ");
+                }
+            }
+            return combinedPath.toString().trim();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read SVG resource: " + resourcePath, e);
         }
-        return svgDoc;
     }
 }

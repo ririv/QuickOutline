@@ -8,9 +8,6 @@ import java.util.Objects;
 public class ActualSizeIcon extends SvgIcon {
 
     public ActualSizeIcon() {
-        String svgPath = Objects.requireNonNull(
-            getClass().getResource("/drawable/actual-size.svg")
-        ).getPath();
-        setSvgPath(svgPath);
+        setSvgResource("/drawable/actual-size.svg");
     }
 }

@@ -11,17 +11,15 @@ import javafx.scene.paint.Color;
 public class SvgIcon extends Region {
 
     /**
-     * Sets the SVG path for this icon.
-     * @param svgPath The resource path to the SVG file.
+     * Sets the SVG from a classpath resource (preferred inside jpackage image).
+     * @param resourcePath classpath resource path like "/drawable/open.svg"
      */
-    protected void setSvgPath(String svgPath) {
-        String combinedPath = BatikToJavaFXConverter.getCombinedPath(svgPath);
+    protected void setSvgResource(String resourcePath) {
+        String combinedPath = BatikToJavaFXConverter.getCombinedPathFromResource(resourcePath);
         if (!combinedPath.isEmpty()) {
             this.setStyle("-fx-shape: \"" + combinedPath + "\";");
         }
-        // Add a default style class for all icons
         this.getStyleClass().add("icon");
-
         setBackground(Background.fill(Color.GRAY));
     }
 }
