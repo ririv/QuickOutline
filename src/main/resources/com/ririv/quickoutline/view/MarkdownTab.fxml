@@ -1,34 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.ririv.quickoutline.view.controls.EditorTextArea?>
-<?import com.ririv.quickoutline.view.icons.RefreshIcon?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.web.WebView?>
+
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ririv.quickoutline.view.MarkdownTabController" alignment="CENTER" spacing="10">
     <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
-        <EditorTextArea fx:id="markdownTextArea" promptText="Enter Markdown here..."/>
-        <StackPane>
-            <ScrollPane fitToWidth="true">
-                <VBox fx:id="previewVBox" alignment="TOP_CENTER" spacing="5"/>
-            </ScrollPane>
-            <Button onAction="#previewAction" styleClass="graph-button, graph-button-basic" StackPane.alignment="BOTTOM_RIGHT">
-                <graphic>
-                    <RefreshIcon prefWidth="15" prefHeight="15" />
-                </graphic>
-                <StackPane.margin>
-                    <Insets right="10" bottom="10"/>
-                </StackPane.margin>
-            </Button>
-        </StackPane>
+        <WebView fx:id="webView"/>
+        <ScrollPane fitToWidth="true">
+            <VBox fx:id="previewVBox" alignment="TOP_CENTER" spacing="5"/>
+        </ScrollPane>
     </SplitPane>
     <HBox alignment="CENTER" prefHeight="40.0" spacing="10">
         <padding>

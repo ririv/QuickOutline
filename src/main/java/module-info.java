@@ -2,8 +2,8 @@ module quickoutline {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.desktop;
-//    requires javafx.web;
-//    requires jdk.jsobject;
+    requires javafx.web;
+    requires jdk.jsobject;
 //    requires java.validation;
     requires javafx.swing;
     requires org.slf4j;

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Markdown Editor (CM6)</title>
+    <style>
+        html,body {height:100%;margin:0;padding:0;}
+        #editor {height:100%;}
+        .cm-editor {height:100%;}
+        .diag-panel {position:absolute;top:4px;right:4px;z-index:99;font:11px/1.4 monospace;color:#333;background:#f6f6f6;border:1px solid #ccc;padding:4px 6px;border-radius:4px;max-width:260px;white-space:pre-wrap}
+    </style>
+</head>
+<body>
+    <div id="editor"></div>
+    <div id="diag" class="diag-panel"></div>
+
+    <script>
+        const diag = msg => { const el = document.getElementById('diag'); el.textContent += msg + "\n"; console.log('[CM6]', msg); };
+        diag('UserAgent: ' + navigator.userAgent);
+        // 新目录下同名 bundle
+        const BUNDLE_URL = 'codemirror.bundle.js';
+        function loadLocalBundle() {
+            const s = document.createElement('script');
+            s.src = BUNDLE_URL;
+            s.onload = () => {
+                if (window.CodeMirrorBootstrap) {
+                    diag('Local bundle loaded');
+                    initFromBootstrap();
+                } else {
+                    diag('Bundle loaded but CodeMirrorBootstrap missing (no fallback)');
+                    window.getEditorType = () => 'none';
+                }
+            };
+            s.onerror = () => {
+                diag('Local bundle not found: ' + BUNDLE_URL + ' (no fallback)');
+                window.getEditorType = () => 'none';
+            };
+            document.head.appendChild(s);
+        }
+        function initFromBootstrap() {
+            try {
+                const parentEl = document.getElementById('editor');
+                const view = window.CodeMirrorBootstrap(parentEl, '', content => {
+                    if (window.javaCallback?.onContentChanged) {
+                        try { window.javaCallback.onContentChanged(content); } catch(e){ diag('Callback error: '+e); }
+                    }
+                });
+                window.editorView = view;
+                window.setContent = c => {
+                    if (!view) return;
+                    const tr = view.state.update({ changes:{ from:0,to:view.state.doc.length, insert:c } });
+                    view.dispatch(tr);
+                };
+                window.getContent = () => view?.state.doc.toString() || '';
+                window.getEditorType = () => 'cm6';
+                diag('CM6 (local bundle) ready');
+            } catch (e) {
+                diag('Init local bundle failed: ' + e + '\n请重新构建本地 bundle');
+                window.getEditorType = () => 'none';
+            }
+        }
+        loadLocalBundle();
+    </script>
+    <noscript>需要开启 JavaScript 才能使用编辑器。</noscript>
+</body>
+</html>

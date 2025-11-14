@@ -25,7 +25,7 @@ version = '2.3.0'
 
 javafx {
     version = '25'
-    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing' ]
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
 }
 
 application{

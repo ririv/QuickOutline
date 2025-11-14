@@ -1,0 +1,24 @@
+{
+  "name": "web-editor",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+  "build": "esbuild editor_entry.js --bundle --format=iife --platform=browser --main-fields=module --metafile=meta.json --global-name=CodeMirrorBundle --minify --outfile=../src/main/resources/web/codemirror.bundle.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@codemirror/lang-html": "^6.4.11",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/lang-markdown": "^6.2.1",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0"
+  }
+}
