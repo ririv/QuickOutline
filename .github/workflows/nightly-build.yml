@@ -2,8 +2,8 @@ name: Nightly Build
 
 on:
   schedule:
-    # Runs at 18:00 UTC (2 AM Beijing Time) every day
-    - cron: '0 18 * * *'
+    # Runs at 19:00 UTC (3 AM Beijing Time) every day
+    - cron: '0 19 * * *'
   workflow_dispatch: # Allows manual triggering
 
 jobs:
