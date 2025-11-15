@@ -1,46 +1,23 @@
 package com.ririv.quickoutline.pdfProcess.itextImpl;
 
-import com.itextpdf.html2pdf.ConverterProperties;
-import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.ririv.quickoutline.pdfProcess.MarkdownPageGenerator;
-import com.ririv.quickoutline.service.FontManager;
-import jakarta.inject.Inject;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.function.Consumer;
 
 public class iTextMarkdownPageGenerator implements MarkdownPageGenerator {
 
-    private final FontManager fontManager;
-
-    @Inject
-    public iTextMarkdownPageGenerator(FontManager fontManager) {
-        this.fontManager = fontManager;
-    }
 
     @Override
     public void generateAndInsertMarkdownPage(String srcFile,
                                               String destFile,
-                                              String htmlContent,
-                                              int insertPos,
-                                              String baseUri,
-                                              Consumer<String> onMessage,
-                                              Consumer<String> onError) throws IOException {
-        // Step 1: Convert HTML to a temporary in-memory PDF
-        ByteArrayOutputStream tempPdfBaos = new ByteArrayOutputStream();
-        ConverterProperties properties = new ConverterProperties();
-        fontManager.getFontProvider(onMessage, onError).ifPresent(properties::setFontProvider);
-        if (baseUri != null && !baseUri.isBlank()) {
-            properties.setBaseUri(baseUri);
-        }
-        HtmlConverter.convertToPdf(htmlContent, tempPdfBaos, properties);
+                                              byte[] markdownPdfBytes,
+                                              int insertPos) throws IOException {
 
-        // Step 2: Merge the temporary PDF with the source PDF
+        // Merge the provided markdown PDF bytes with the source PDF
         PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile));
         PdfDocument destDoc = new PdfDocument(new PdfWriter(destFile));
 
@@ -49,8 +26,8 @@ public class iTextMarkdownPageGenerator implements MarkdownPageGenerator {
             srcDoc.copyPagesTo(1, insertPos - 1, destDoc);
         }
 
-        // Copy pages from the temporary markdown PDF
-        PdfDocument tempDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(tempPdfBaos.toByteArray())));
+    // Copy pages from the temporary markdown PDF
+    PdfDocument tempDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(markdownPdfBytes)));
         tempDoc.copyPagesTo(1, tempDoc.getNumberOfPages(), destDoc);
         tempDoc.close();
 

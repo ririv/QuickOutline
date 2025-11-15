@@ -1,14 +1,15 @@
 package com.ririv.quickoutline.pdfProcess;
 
 import java.io.IOException;
-import java.util.function.Consumer;
 
 public interface MarkdownPageGenerator {
+
+    /**
+     * Merge the given markdown PDF bytes into the source PDF at the given position
+     * and write the result to destFile.
+     */
     void generateAndInsertMarkdownPage(String srcFile,
                                        String destFile,
-                                       String htmlContent,
-                                       int insertPos,
-                                       String baseUri,
-                                       Consumer<String> onMessage,
-                                       Consumer<String> onError) throws IOException;
+                                       byte[] markdownPdfBytes,
+                                       int insertPos) throws IOException;
 }

@@ -21,6 +21,6 @@ public interface HtmlConverter {
      * @throws Exception if the conversion fails.
      */
     void convertToPdf(String html, String baseUri, OutputStream outputStream,
-                      Consumer<String> onMessage, Consumer<String> onError) throws Exception;
+                      Consumer<String> onMessage, Consumer<String> onError);
 
 }

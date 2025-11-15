@@ -4,8 +4,6 @@ import com.ririv.quickoutline.pdfProcess.HtmlConverter;
 import com.ririv.quickoutline.pdfProcess.MarkdownPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextHtmlConverter;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextMarkdownPageGenerator;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -16,36 +14,37 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-@Singleton
+
 public class MarkdownService {
 
     private static final Logger log = LoggerFactory.getLogger(MarkdownService.class);
 
-    private final Parser parser;
-    private final HtmlRenderer renderer;
-    private final HtmlConverter htmlConverter;
-    private final MarkdownPageGenerator markdownPageGenerator;
+    private final Parser parser = Parser.builder().build();
+    private final HtmlRenderer renderer = HtmlRenderer.builder().build();;
+    private final HtmlConverter htmlConverter = new ItextHtmlConverter();
+    private final MarkdownPageGenerator markdownPageGenerator = new iTextMarkdownPageGenerator();
 
-    @Inject
-    public MarkdownService(FontManager fontManager) {
-        this.parser = Parser.builder().build();
-        this.renderer = HtmlRenderer.builder().build();
-        this.htmlConverter = new ItextHtmlConverter(fontManager);
-        this.markdownPageGenerator = new iTextMarkdownPageGenerator(fontManager);
-    }
 
-    public void createMarkdownPage(String srcFile,
-                                String destFile,
-                                String markdownText,
-                                int insertPos,
-                                String baseUri,
-                                Consumer<String> onMessage,
-                                Consumer<String> onError) throws IOException {
+    /**
+     * Common helper: convert Markdown text to HTML string using the shared parser/renderer.
+     */
+    private String convertMarkdownToHtml(String markdownText) {
         final String safe = markdownText == null ? "" : markdownText;
         Node document = parser.parse(safe);
-        String htmlContent = renderer.render(document);
-        markdownPageGenerator.generateAndInsertMarkdownPage(
-                srcFile, destFile, htmlContent, insertPos, baseUri, onMessage, onError);
+        return renderer.render(document);
+    }
+
+    private byte[] convertHtmlToPdfBytes(String htmlContent, String baseUri,
+                                         Consumer<String> onMessage, Consumer<String> onError) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            htmlConverter.convertToPdf(htmlContent, baseUri, baos, onMessage, onError);
+            return baos.toByteArray();
+        } catch (Exception e) {
+            String msg = "Failed to convert HTML to PDF: " + e.getMessage();
+            log.error(msg, e);
+            onError.accept(msg);
+            throw new RuntimeException(msg, e);
+        }
     }
 
     /**
@@ -67,19 +66,9 @@ public class MarkdownService {
             if (log.isDebugEnabled()) log.debug("skip empty content");
             return new byte[0];
         }
-        long start = System.currentTimeMillis();
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Node document = parser.parse(safe);
-            String htmlContent = renderer.render(document);
-            if (log.isDebugEnabled()) {
-                String snippet = htmlContent.substring(0, Math.min(500, htmlContent.length()));
-                log.debug("[MD->PDF] baseUri={}, mdLen={}, htmlLen={}, htmlSnippet={}",
-                        baseUri, safe.length(), htmlContent.length(), snippet);
-            }
-            htmlConverter.convertToPdf(htmlContent, baseUri, baos, onMessage, onError);
-            byte[] bytes = baos.toByteArray();
-            if (log.isDebugEnabled()) log.debug("PDF bytes={}, cost={}ms", bytes.length, (System.currentTimeMillis()-start));
-            return bytes;
+        try {
+            String htmlContent = convertMarkdownToHtml(safe);
+            return convertHtmlToPdfBytes(htmlContent, baseUri, onMessage, onError);
         } catch (Exception e) {
             String msg = "Failed to convert Markdown to PDF: " + e.getMessage();
             log.error(msg, e);
@@ -88,12 +77,16 @@ public class MarkdownService {
         }
     }
 
-    /**
-     * Backwards-compatible overload that converts Markdown to PDF bytes without an explicit baseUri.
-     * Relative resources will be resolved without a base directory, which may break image loading.
-     */
-    public byte[] convertMarkdownToPdfBytes(String markdownText,
-                                            Consumer<String> onMessage, Consumer<String> onError) {
-        return convertMarkdownToPdfBytes(markdownText, null, onMessage, onError);
+    public void createMarkdownPage(String srcFile,
+                                   String destFile,
+                                   String markdownText,
+                                   int insertPos,
+                                   String baseUri,
+                                   Consumer<String> onMessage,
+                                   Consumer<String> onError) throws IOException {
+        byte[] markdownPdfBytes = convertMarkdownToPdfBytes(markdownText, baseUri, onMessage, onError);
+        markdownPageGenerator.generateAndInsertMarkdownPage(
+                srcFile, destFile, markdownPdfBytes, insertPos);
     }
+
 }
