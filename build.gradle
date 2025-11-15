@@ -141,6 +141,17 @@ jlink {
         name = 'QuickOutline'
         jvmArgs = args
     }
+
+   // https://github.com/openjdk/jfx/blob/jfx25/doc-files/release-notes-24.md#the-jdkjsobject-module-is-now-included-with-javafx
+   // 确保使用 JavaFX 自带的 jdk.jsobject 模块：
+   // 将 JavaFX jmods 放在 JDK jmods 之前，使其作为可升级模块覆盖 JDK 中的同名模块。
+   // 注意：请将下面的路径替换为你本机 JavaFX jmods 实际位置（例如：/Users/wuhao/Downloads/javafx-jmods-25）。
+   // 如果你使用的是本地解压的 JavaFX SDK：jmods 目录一般在 sdk 根目录的 "jmods" 子目录中。
+   // 示例：/path/to/javafx-jmods-25 或 /path/to/javafx-sdk-25/jmods
+//    def javafxJmodsPath = System.getenv('JAVAFX_JMODS')
+//    if (javafxJmodsPath != null && !javafxJmodsPath.isBlank()) {
+//        addExtraModulePaths(files(javafxJmodsPath))
+//    }
 //    压缩问题：https://github.com/fvarrui/JavaPackager/issues/383
 //     “警告: 当前不支持已签名模块化" 加入'--ignore-signing-information'选项
     options = ['--strip-debug', '--compress', 'zip-6', '--no-header-files', '--no-man-pages', '--ignore-signing-information']
