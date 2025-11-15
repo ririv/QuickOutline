@@ -12,12 +12,15 @@ public interface HtmlConverter {
     /**
      * Converts the given HTML string into a PDF and writes it to the provided OutputStream.
      *
-     * @param html The HTML content as a string.
+     * @param html         The HTML content as a string.
+     * @param baseUri      Base URI used to resolve relative resources such as images.
+     *                     For example: {@code file:///path/to/pdf/dir/}.
      * @param outputStream The stream to write the resulting PDF to.
-     * @param onMessage Callback for informational messages.
-     * @param onError Callback for error messages.
+     * @param onMessage    Callback for informational messages.
+     * @param onError      Callback for error messages.
      * @throws Exception if the conversion fails.
      */
-     void convertToPdf(String html, OutputStream outputStream, Consumer<String> onMessage, Consumer<String> onError) throws Exception;
+    void convertToPdf(String html, String baseUri, OutputStream outputStream,
+                      Consumer<String> onMessage, Consumer<String> onError) throws Exception;
 
 }

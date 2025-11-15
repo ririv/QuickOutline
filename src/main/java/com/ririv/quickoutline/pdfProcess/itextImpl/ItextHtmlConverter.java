@@ -20,7 +20,8 @@ public class ItextHtmlConverter implements com.ririv.quickoutline.pdfProcess.Htm
     }
 
     @Override
-    public void convertToPdf(String html, OutputStream outputStream, Consumer<String> onMessage, Consumer<String> onError) throws IOException {
+    public void convertToPdf(String html, String baseUri, OutputStream outputStream,
+                             Consumer<String> onMessage, Consumer<String> onError) throws IOException {
         List<Path> fontPaths = fontManager.getFontPaths(onMessage, onError);
 
         ConverterProperties properties = new ConverterProperties();
@@ -29,8 +30,10 @@ public class ItextHtmlConverter implements com.ririv.quickoutline.pdfProcess.Htm
             fontProvider.addFont(fontPath.toString());
         }
         properties.setFontProvider(fontProvider);
-        // Set a default font family that matches the font we added
-        properties.setBaseUri("body{ font-family: 'Source Han Sans SC'; }");
+        // Set base URI for resolving relative resources (e.g. images)
+        if (baseUri != null && !baseUri.isBlank()) {
+            properties.setBaseUri(baseUri);
+        }
 
         HtmlConverter.convertToPdf(html, outputStream, properties);
     }

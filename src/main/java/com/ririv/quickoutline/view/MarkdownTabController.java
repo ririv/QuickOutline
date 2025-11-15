@@ -26,6 +26,9 @@ import org.slf4j.LoggerFactory;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -61,16 +64,29 @@ public class MarkdownTabController {
 
     @FXML
     public void initialize() {
-    log.debug("Controller initialize start");
-    final int PREVIEW_THROTTLE_MS = 250; // 节流延迟：在持续输入下确保周期性更新
+        log.debug("Controller initialize start");
+        final int PREVIEW_THROTTLE_MS = 250; // 节流延迟：在持续输入下确保周期性更新
+
         // --- Previewer Setup ---
         Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
         Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
-    // 使用 TrailingThrottlePreviewer：确保在输入高频时仍能落地周期性渲染，并在执行期间检测到内容再次变化时追加一次尾随运行
-    this.previewer = new TrailingThrottlePreviewer<>(PREVIEW_THROTTLE_MS,
-        markdownText -> markdownService.convertMarkdownToPdfBytes(markdownText, onMessage, onError),
-        this::updatePreviewUI,
-        e -> onError.accept("PDF preview failed: " + e.getMessage()));
+
+        // 使用 TrailingThrottlePreviewer：每次执行时动态读取当前 srcFile，确保 baseUri 始终与当前源 PDF 目录一致
+        this.previewer = new TrailingThrottlePreviewer<>(PREVIEW_THROTTLE_MS,
+            markdownText -> {
+                String baseUri = null;
+                try {
+                    if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
+                        baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
+                    }
+                    log.info("[Preview] dynamic baseUri={}", baseUri);
+                } catch (Exception ex) {
+                    log.warn("[Preview] failed to compute baseUri", ex);
+                }
+                return markdownService.convertMarkdownToPdfBytes(markdownText, baseUri, onMessage, onError);
+            },
+            this::updatePreviewUI,
+            e -> onError.accept("PDF preview failed: " + e.getMessage()));
 
         // --- WebView Setup ---
         webEngine = webView.getEngine();
@@ -88,7 +104,11 @@ public class MarkdownTabController {
             }
         });
 
-        webEngine.load(url.toExternalForm());
+        if (url != null) {
+            webEngine.load(url.toExternalForm());
+        } else {
+            log.error("Failed to load editor.html resource");
+        }
 
         // --- Input Field Setup ---
         UnaryOperator<TextFormatter.Change> integerFilter = change -> {
@@ -129,8 +149,8 @@ public class MarkdownTabController {
     }
 
     private void updatePreviewUI(byte[] pdfBytes) {
-    final int RENDER_DPI = 120; // 降低 DPI 减少阻塞
-    if (log.isDebugEnabled()) log.debug("updatePreviewUI bytes={}", (pdfBytes == null ? 0 : pdfBytes.length));
+        final int RENDER_DPI = 120; // 降低 DPI 减少阻塞
+        if (log.isDebugEnabled()) log.debug("updatePreviewUI bytes={}", (pdfBytes == null ? 0 : pdfBytes.length));
         if (pdfBytes == null || pdfBytes.length == 0) {
             previewVBox.getChildren().clear();
             return;
@@ -191,12 +211,51 @@ public class MarkdownTabController {
             return;
         }
         markdownContent = newContent;
-    if (log.isDebugEnabled()) log.debug("throttle trigger len={}", newContent.length());
+        if (log.isDebugEnabled()) log.debug("throttle trigger len={}", newContent.length());
         previewer.trigger(newContent);
         if (newContent.isEmpty()) {
             previewVBox.getChildren().clear();
         }
     }
+
+    // ================= Image helpers =================
+
+    /**
+     * 计算某个文件相对于当前源 PDF 目录的相对路径。
+     */
+    private String relativizeToPdfDir(Path file) {
+        Path src = currentFileState.getSrcFile();
+        if (src == null) return file.getFileName().toString();
+        Path pdfDir = src.getParent();
+        try {
+            String rel = pdfDir.relativize(file).toString();
+            return rel.replace('\\', '/');
+        } catch (IllegalArgumentException e) {
+            // 不同盘符等情况，退回仅文件名
+            return file.getFileName().toString();
+        }
+    }
+
+    /**
+     * 确保文件位于 PDF 目录或其 images 子目录下；
+     * 若不在，则复制到 pdfDir/images 下并返回目标路径。
+     */
+    private Path ensureUnderPdfImages(Path chosenFile) throws IOException {
+        Path src = currentFileState.getSrcFile();
+        if (src == null) return chosenFile;
+        Path pdfDir = src.getParent();
+        Path normalizedPdfDir = pdfDir.toAbsolutePath().normalize();
+        Path normalizedChosen = chosenFile.toAbsolutePath().normalize();
+        if (normalizedChosen.startsWith(normalizedPdfDir)) {
+            return normalizedChosen; // 已在 PDF 目录树下
+        }
+        Path imagesDir = normalizedPdfDir.resolve("images");
+        Files.createDirectories(imagesDir);
+        Path dest = imagesDir.resolve(chosenFile.getFileName());
+        Files.copy(chosenFile, dest, StandardCopyOption.REPLACE_EXISTING);
+        return dest;
+    }
+
 
     @FXML
     void renderToPdfAction() {
@@ -226,15 +285,52 @@ public class MarkdownTabController {
         try {
             String srcFile = currentFileState.getSrcFile().toString();
             String destFile = currentFileState.getDestFile().toString();
+            String baseUri = null;
+            if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
+                baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
+            }
             Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
             Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-            markdownService.createMarkdownPage(srcFile, destFile, currentMarkdown, insertPos, onMessage, onError);
+            markdownService.createMarkdownPage(srcFile, destFile, currentMarkdown, insertPos, baseUri, onMessage, onError);
 
             eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {
             eventBus.post(new ShowMessageEvent("Failed to render to PDF: " + e.getMessage(), Message.MessageType.ERROR));
             log.error("Render to PDF failed", e);
+        }
+    }
+
+    // ============ Image insert entrypoint (for future wiring) ============
+    /**
+     * 选择一张图片，必要时复制到 PDF 目录的 images/ 下，并在编辑器中插入相对路径的 Markdown 图像语法。
+     * 注意：当前方法只提供核心逻辑骨架，尚未与具体菜单/按钮绑定。
+     */
+    @FXML
+    void insertImageIntoMarkdown() {
+        if (currentFileState.getSrcFile() == null) {
+            eventBus.post(new ShowMessageEvent("Please select a source PDF file first.", Message.MessageType.WARNING));
+            return;
+        }
+        // 仅示意：使用简单的 AWT FileDialog 或 JavaFX FileChooser，具体实现可按现有 UI 规范调整
+        javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
+        chooser.setTitle("选择图片");
+        chooser.getExtensionFilters().addAll(
+                new javafx.stage.FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.svg")
+        );
+        javafx.stage.Window owner = previewVBox.getScene() != null ? previewVBox.getScene().getWindow() : null;
+        java.io.File file = chooser.showOpenDialog(owner);
+        if (file == null) return;
+        try {
+            Path chosen = file.toPath();
+            Path finalFile = ensureUnderPdfImages(chosen);
+            String relPath = relativizeToPdfDir(finalFile);
+            String escaped = relPath.replace("\\", "\\\\").replace("'", "\\'");
+            String js = "window.insertImageMarkdown('" + escaped + "')";
+            webEngine.executeScript(js);
+        } catch (IOException e) {
+            log.error("Insert image into markdown failed", e);
+            eventBus.post(new ShowMessageEvent("Failed to insert image: " + e.getMessage(), Message.MessageType.ERROR));
         }
     }
 }

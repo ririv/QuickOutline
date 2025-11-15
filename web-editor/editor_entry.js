@@ -446,6 +446,29 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
     { key: 'Mod-i', run: toggleInlineWrapperCmd('*') },
     { key: 'Mod-u', run: togglePairWrapperCmd('<u>', '</u>') },
     { key: 'Mod-k', run: insertOrEditLinkCmd() },
+    // 插入图片：路径由 Java 侧通过 window.insertImageMarkdown(relativePath) 调用居多，
+    // 但快捷键仍然有用，例如先键入相对路径再手动调整。
+    { key: 'Mod-Shift-i', run: (view) => {
+        // 若已有选中内容，当作 alt 文本，插入占位 path
+        const sel = view.state.selection.main;
+        const from = sel.from, to = sel.to;
+        const hasSelection = !sel.empty;
+        const altText = hasSelection
+          ? view.state.doc.sliceString(from, to)
+          : '';
+        const placeholderPath = 'images/';
+        const md = hasSelection
+          ? `![${altText}](${placeholderPath})`
+          : `![](${placeholderPath})`;
+        const tr = view.state.update({
+          changes: { from, to, insert: md },
+          // 光标放在 path 尾部，方便立刻补全文件名
+          selection: EditorSelection.cursor(from + md.length)
+        });
+        view.dispatch(tr);
+        return true;
+      }
+    },
   ];
 
   // Compose keymap: completion + custom indent + default + history + search
@@ -685,6 +708,32 @@ window.CodeMirrorBootstrap = function(parent, initialDoc, onChange) {
   // 手动调试函数：可在 WebView 控制台执行 window.debugDumpContent()
   window.debugDumpContent = function() { return view.state.doc.toString(); };
   window.editorViewFocus = function(){ try { view.focus(); } catch(e){} };
+
+  // === Image markdown helper ===
+  // 调用方式：window.insertImageMarkdown('images/foo.png')
+  // 有选中文本时，作为 alt 文本；无选区时插入空 alt。
+  window.insertImageMarkdown = function(relativePath) {
+    try {
+      if (!relativePath) relativePath = '';
+      const sel = view.state.selection.main;
+      const from = sel.from, to = sel.to;
+      const hasSelection = !sel.empty;
+      const altText = hasSelection
+        ? view.state.doc.sliceString(from, to)
+        : '';
+      const md = hasSelection
+        ? `![${altText}](${relativePath})`
+        : `![](${relativePath})`;
+      const tr = view.state.update({
+        changes: { from, to, insert: md },
+        selection: EditorSelection.cursor(from + md.length)
+      });
+      view.dispatch(tr);
+      view.focus();
+    } catch (e) {
+      console.warn('[CM6] insertImageMarkdown error', e);
+    }
+  };
 
   // 说明：JS 侧不再做任何跨桥通知或轮询；仅由 Java 侧定时轮询 window.getContent()。
   // 经尝试，JS->Java发送事件通知，在第一次渲染后，后续会无效（接受不到任何打字更新信息）

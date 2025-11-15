@@ -24,12 +24,20 @@ public class iTextMarkdownPageGenerator implements MarkdownPageGenerator {
     }
 
     @Override
-    public void generateAndInsertMarkdownPage(String srcFile, String destFile, String htmlContent, int insertPos,
-                                              Consumer<String> onMessage, Consumer<String> onError) throws IOException {
+    public void generateAndInsertMarkdownPage(String srcFile,
+                                              String destFile,
+                                              String htmlContent,
+                                              int insertPos,
+                                              String baseUri,
+                                              Consumer<String> onMessage,
+                                              Consumer<String> onError) throws IOException {
         // Step 1: Convert HTML to a temporary in-memory PDF
         ByteArrayOutputStream tempPdfBaos = new ByteArrayOutputStream();
         ConverterProperties properties = new ConverterProperties();
         fontManager.getFontProvider(onMessage, onError).ifPresent(properties::setFontProvider);
+        if (baseUri != null && !baseUri.isBlank()) {
+            properties.setBaseUri(baseUri);
+        }
         HtmlConverter.convertToPdf(htmlContent, tempPdfBaos, properties);
 
         // Step 2: Merge the temporary PDF with the source PDF
