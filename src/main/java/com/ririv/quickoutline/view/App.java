@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -45,6 +46,9 @@ public class App extends Application {
 
 //            stage.setResizable(false); //不可调整大小
             stage.setTitle(bundle.getString("app.title"));
+
+//            javafx 25预览特性 https://gist.github.com/mstr2/0befc541ee7297b6db2865cc5e4dbd09
+//            stage.initStyle(StageStyle.EXTENDED);
             stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("images/icon.png"))));
             stage.setScene(scene);
             stage.show();

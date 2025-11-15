@@ -114,7 +114,8 @@ def args = [
     '-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox.rendering.GlyphCache=error',
     // 屏蔽PDFBox fontbox的字符串命令警告
     '-Dorg.slf4j.simpleLogger.log.org.apache.fontbox.cff.Type1CharString=error',
-    '--enable-native-access=javafx.graphics'
+    '--enable-native-access=javafx.graphics',
+    '-Djavafx.enablePreview=true'
 ]
 
 tasks.withType(JavaCompile).configureEach {
