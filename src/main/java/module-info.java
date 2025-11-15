@@ -35,6 +35,7 @@ module quickoutline {
     requires org.apache.xmlgraphics.batik.util;
     requires org.apache.xmlgraphics.batik.anim;
     requires styled.xml.parser;
+    requires org.apache.xmlgraphics.batik.transcoder;
 
 //    requires org.bouncycastle.util;
 
