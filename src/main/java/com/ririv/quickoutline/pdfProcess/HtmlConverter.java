@@ -1,5 +1,7 @@
 package com.ririv.quickoutline.pdfProcess;
 
+import com.ririv.quickoutline.service.DownloadEvent;
+
 import java.io.OutputStream;
 import java.util.function.Consumer;
 
@@ -16,11 +18,10 @@ public interface HtmlConverter {
      * @param baseUri      Base URI used to resolve relative resources such as images.
      *                     For example: {@code file:///path/to/pdf/dir/}.
      * @param outputStream The stream to write the resulting PDF to.
-     * @param onMessage    Callback for informational messages.
-     * @param onError      Callback for error messages.
+    * @param onEvent      Callback for download/infrastructure events (e.g. font download).
      * @throws Exception if the conversion fails.
      */
     void convertToPdf(String html, String baseUri, OutputStream outputStream,
-                      Consumer<String> onMessage, Consumer<String> onError);
+               Consumer<DownloadEvent> onEvent);
 
 }

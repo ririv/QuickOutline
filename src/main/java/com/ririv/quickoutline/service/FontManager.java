@@ -21,51 +21,65 @@ import java.util.function.Consumer;
 @Singleton
 public class FontManager {
 
-    private static final String FONT_BASE_URL = "https://raw.githubusercontent.com/adobe-fonts/source-han-sans/release/OTF/SimplifiedChinese/";
-    private static final List<String> FONT_FILES = List.of(
-            "SourceHanSansSC-Regular.otf",
-            "SourceHanSansSC-Bold.otf"
+    /**
+     * Simple font source descriptor, so we can support different font sets in future.
+     */
+    private static final class FontSource {
+        final String baseUrl;
+        final List<String> files;
+
+        FontSource(String baseUrl, List<String> files) {
+            this.baseUrl = baseUrl;
+            this.files = files;
+        }
+    }
+
+    // Current default: Source Han Sans SC (Simplified Chinese)
+    private static final FontSource SOURCE_HAN_SC = new FontSource(
+            "https://raw.githubusercontent.com/adobe-fonts/source-han-sans/release/OTF/SimplifiedChinese/",
+            List.of(
+                    "SourceHanSansSC-Regular.otf",
+                    "SourceHanSansSC-Bold.otf"
+            )
     );
 
     private final Path fontDir;
     private final List<Path> fontPaths = new ArrayList<>();
+    private final FontSource fontSource = SOURCE_HAN_SC;
 
     private volatile boolean areFontsInitialized = false;
 
     public FontManager() {
         String userHome = System.getProperty("user.home");
         this.fontDir = Paths.get(userHome, ".quickoutline", "fonts");
-        FONT_FILES.forEach(fileName -> fontPaths.add(fontDir.resolve(fileName)));
+        // Precompute local font paths for the configured font source
+        for (String fileName : fontSource.files) {
+            fontPaths.add(fontDir.resolve(fileName));
+        }
     }
 
-    public Optional<FontProvider> getFontProvider(Consumer<String> onMessage, Consumer<String> onError) {
-        try {
-            List<Path> paths = getFontPaths(onMessage, onError);
-            BasicFontProvider fontProvider = new BasicFontProvider(false, false, false);
-            for (Path fontPath : paths) {
-                fontProvider.addFont(fontPath.toString());
-            }
-            return Optional.of(fontProvider);
-        } catch (IOException e) {
-            onError.accept("Failed to get font provider: " + e.getMessage());
-            return Optional.empty();
+    public FontProvider getFontProvider(Consumer<DownloadEvent> onEvent) throws IOException {
+        List<Path> paths = getFontPaths(onEvent);
+        BasicFontProvider fontProvider = new BasicFontProvider(false, false, false);
+        for (Path fontPath : paths) {
+            fontProvider.addFont(fontPath.toString());
         }
+        return fontProvider;
     }
 
     /**
      * Gets the paths to the required fonts. If any font is not present locally,
      * it will be downloaded and cached first. This is a blocking operation.
      *
-     * @param onMessage Callback for informational messages.
-     * @param onError   Callback for error messages.
+     * @param onEvent   Callback for download events.
      * @return A list of paths to the font files.
      * @throws IOException if a font cannot be downloaded or accessed.
      */
-    public List<Path> getFontPaths(Consumer<String> onMessage, Consumer<String> onError) throws IOException {
+    public List<Path> getFontPaths(Consumer<DownloadEvent> onEvent) throws IOException {
         if (!areFontsInitialized) {
             synchronized (this) {
                 if (!areFontsInitialized) {
-                    ensureFontsAreAvailable(onMessage, onError);
+                    ensureFontsAreAvailable(onEvent);
                     areFontsInitialized = true;
                 }
             }
@@ -73,28 +87,28 @@ public class FontManager {
         return fontPaths;
     }
 
-    private void ensureFontsAreAvailable(Consumer<String> onMessage, Consumer<String> onError) throws IOException {
+    private void ensureFontsAreAvailable(Consumer<DownloadEvent> onEvent) throws IOException {
         Files.createDirectories(fontDir);
 
-        for (String fontFileName : FONT_FILES) {
+        for (String fontFileName : fontSource.files) {
             Path fontPath = fontDir.resolve(fontFileName);
             if (Files.exists(fontPath)) {
                 continue; // Font is already available
             }
 
-            onMessage.accept("正在下载字体: " + fontFileName + "...");
+            onEvent.accept(new DownloadEvent(DownloadEvent.Type.START, fontFileName, null));
             Path tempPath = fontDir.resolve(fontFileName + ".tmp");
-            String fontUrl = FONT_BASE_URL + fontFileName;
+            String fontUrl = fontSource.baseUrl + fontFileName;
 
             try {
                 try (InputStream in = URI.create(fontUrl).toURL().openStream()) {
                     Files.copy(in, tempPath, StandardCopyOption.REPLACE_EXISTING);
                 }
                 Files.move(tempPath, fontPath, StandardCopyOption.REPLACE_EXISTING);
-                onMessage.accept("字体 " + fontFileName + " 下载完成。");
+                onEvent.accept(new DownloadEvent(DownloadEvent.Type.SUCCESS, fontFileName, null));
 
             } catch (IOException e) {
-                onError.accept("字体下载失败: " + fontFileName + " - " + e.getMessage());
+                onEvent.accept(new DownloadEvent(DownloadEvent.Type.ERROR, fontFileName, e.getMessage()));
                 throw new IOException("Failed to download or save the font file: " + fontFileName, e);
             }
         }

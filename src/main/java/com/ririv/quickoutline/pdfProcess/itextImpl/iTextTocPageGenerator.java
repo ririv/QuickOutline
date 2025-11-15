@@ -49,9 +49,23 @@ public class iTextTocPageGenerator implements TocPageGenerator {
     }
 
     private PdfFont getPdfFont(Consumer<String> onMessage, Consumer<String> onError) throws IOException {
-        List<Path> fontPaths = fontManager.getFontPaths(onMessage, onError);
+        // TOC 这条链路不经过 MarkdownService，这里本地消费 DownloadEvent，复用与 MarkdownService 相同的文案策略。
+        List<Path> fontPaths = fontManager.getFontPaths(event -> {
+            if (event == null) return;
+            switch (event.getType()) {
+                case START -> onMessage.accept("正在下载字体: " + event.getResourceName() + "...");
+                case SUCCESS -> onMessage.accept("字体 " + event.getResourceName() + " 下载完成。");
+                case ERROR -> onError.accept("字体下载失败: " + event.getResourceName() +
+                        (event.getDetail() == null ? "" : " - " + event.getDetail()));
+                case PROGRESS -> { /* 目前不需要进度粒度 */ }
+            }
+        });
         // For simplicity, we load the regular font. iText will simulate bold/italic if needed.
-        return PdfFontFactory.createFont(fontPaths.get(0).toString(), PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
+        return PdfFontFactory.createFont(
+                fontPaths.getFirst().toString(),
+                PdfEncodings.IDENTITY_H,
+                PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+        );
     }
 
     @Override

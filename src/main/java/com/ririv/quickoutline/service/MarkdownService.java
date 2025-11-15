@@ -37,7 +37,21 @@ public class MarkdownService {
     private byte[] convertHtmlToPdfBytes(String htmlContent, String baseUri,
                                          Consumer<String> onMessage, Consumer<String> onError) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            htmlConverter.convertToPdf(htmlContent, baseUri, baos, onMessage, onError);
+            htmlConverter.convertToPdf(
+                    htmlContent,
+                    baseUri,
+                    baos,
+                    event -> {
+                        if (event == null) return;
+                        switch (event.getType()) {
+                            case START -> onMessage.accept("正在下载字体: " + event.getResourceName() + "...");
+                            case SUCCESS -> onMessage.accept("字体 " + event.getResourceName() + " 下载完成。");
+                            case ERROR -> onError.accept("字体下载失败: " + event.getResourceName() +
+                                    (event.getDetail() == null ? "" : " - " + event.getDetail()));
+                            case PROGRESS -> { /* currently unused */ }
+                        }
+                    }
+            );
             return baos.toByteArray();
         } catch (Exception e) {
             String msg = "Failed to convert HTML to PDF: " + e.getMessage();
