@@ -49,7 +49,7 @@ public class MarkdownTabController {
     private final MarkdownService markdownService;
 
     private WebEngine webEngine;
-    private String markdownContent = "";
+    private String editorHtmlContent = ""; // 前端内容（现为 HTML）
     private TrailingThrottlePreviewer<String, byte[]> previewer;
     private ScheduledExecutorService contentPoller;
 
@@ -71,7 +71,7 @@ public class MarkdownTabController {
 
         // 使用 TrailingThrottlePreviewer：每次执行时动态读取当前 srcFile，确保 baseUri 始终与当前源 PDF 目录一致
         this.previewer = new TrailingThrottlePreviewer<>(PREVIEW_THROTTLE_MS,
-            markdownText -> {
+            htmlContent -> {
                 String baseUri = null;
                 try {
                     if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
@@ -81,7 +81,7 @@ public class MarkdownTabController {
                 } catch (Exception ex) {
                     log.warn("[Preview] failed to compute baseUri", ex);
                 }
-                return markdownService.convertMarkdownToPdfBytes(markdownText, baseUri, onMessage, onError);
+                return markdownService.convertHtmlToPdfBytes(htmlContent, baseUri, onMessage, onError);
             },
             this::updatePreviewUI,
             e -> onError.accept("PDF preview failed: " + e.getMessage()));
@@ -132,9 +132,9 @@ public class MarkdownTabController {
             try {
                 Platform.runLater(() -> {
                     try {
-                        String polled = (String) webEngine.executeScript("window.getContent && window.getContent()");
+                        String polled = (String) webEngine.executeScript("window.getHtml && window.getHtml()");
                         if (polled == null) polled = "";
-                        if (!polled.equals(markdownContent)) {
+                        if (!polled.equals(editorHtmlContent)) {
                             if (log.isDebugEnabled()) log.debug("poll diff detected len={}", polled.length());
                             triggerPreviewIfChanged(polled);
                         }
@@ -204,11 +204,11 @@ public class MarkdownTabController {
     // 不再使用 JavaCallback：仅依赖 Java 侧轮询
 
     private void triggerPreviewIfChanged(String newContent) {
-        if (newContent.equals(markdownContent)) {
+        if (newContent.equals(editorHtmlContent)) {
             // unchanged: skip redundant render
             return;
         }
-        markdownContent = newContent;
+        editorHtmlContent = newContent;
         if (log.isDebugEnabled()) log.debug("throttle trigger len={}", newContent.length());
         previewer.trigger(newContent);
         if (newContent.isEmpty()) {
@@ -262,11 +262,11 @@ public class MarkdownTabController {
             return;
         }
 
-        // Get the latest content directly from the editor for maximum accuracy
-        String currentMarkdown = (String) webEngine.executeScript("window.getContent()");
+        // Get the latest HTML content directly from the editor for maximum accuracy
+        String currentHtml = (String) webEngine.executeScript("window.getHtml && window.getHtml()");
 
-        if (currentMarkdown == null || currentMarkdown.isBlank()) {
-            eventBus.post(new ShowMessageEvent("No Markdown content to render.", Message.MessageType.WARNING));
+        if (currentHtml == null || currentHtml.isBlank()) {
+            eventBus.post(new ShowMessageEvent("No HTML content to render.", Message.MessageType.WARNING));
             return;
         }
 
@@ -290,7 +290,7 @@ public class MarkdownTabController {
             Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
             Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-            markdownService.insertPage(srcFile, destFile, currentMarkdown, insertPos, baseUri, onMessage, onError);
+            markdownService.insertPageFromHtml(srcFile, destFile, currentHtml, insertPos, baseUri, onMessage, onError);
 
             eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {

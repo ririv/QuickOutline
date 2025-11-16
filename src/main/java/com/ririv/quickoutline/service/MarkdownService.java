@@ -1,12 +1,8 @@
 package com.ririv.quickoutline.service;
 
-import com.ririv.quickoutline.pdfProcess.HtmlConverter;
 import com.ririv.quickoutline.pdfProcess.PdfPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextHtmlConverter;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextPdfPageGenerator;
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,26 +15,27 @@ public class MarkdownService {
 
     private static final Logger log = LoggerFactory.getLogger(MarkdownService.class);
 
-    private final Parser parser = Parser.builder().build();
-    private final HtmlRenderer renderer = HtmlRenderer.builder().build();;
-    private final HtmlConverter htmlConverter = new ItextHtmlConverter();
     private final PdfPageGenerator pdfPageGenerator = new iTextPdfPageGenerator();
-
-
+    private final ItextHtmlConverter htmlConverter = new ItextHtmlConverter();
     /**
-     * Common helper: convert Markdown text to HTML string using the shared parser/renderer.
+     * 将 HTML 字符串转换为 PDF 字节数组。
+     *
+     * @param htmlContent HTML 内容（由前端 Vditor 渲染产生）。
+     * @param baseUri     Base URI 用于解析相对资源路径（图片等）。
+     * @param onMessage   信息提示回调（字体下载等）。
+     * @param onError     错误提示回调。
      */
-    private String convertMarkdownToHtml(String markdownText) {
-        final String safe = markdownText == null ? "" : markdownText;
-        Node document = parser.parse(safe);
-        return renderer.render(document);
-    }
-
-    private byte[] convertHtmlToPdfBytes(String htmlContent, String baseUri,
-                                         Consumer<String> onMessage, Consumer<String> onError) {
+    public byte[] convertHtmlToPdfBytes(String htmlContent, String baseUri,
+                                        Consumer<String> onMessage, Consumer<String> onError) {
+        final String safe = htmlContent == null ? "" : htmlContent;
+        if (safe.isBlank()) {
+            if (log.isDebugEnabled()) log.debug("skip empty html content");
+            return new byte[0];
+        }
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            // HtmlConverter 仍然由 ItextHtmlConverter 管理，使用 DownloadEvent 在下层上报字体下载
             htmlConverter.convertToPdf(
-                    htmlContent,
+                    safe,
                     baseUri,
                     baos,
                     event -> {
@@ -62,45 +59,18 @@ public class MarkdownService {
     }
 
     /**
-     * Converts a Markdown string to a PDF byte array.
-     *
-     * @param markdownText The Markdown content to convert.
-     * @param baseUri      Base URI used to resolve relative resources (images, CSS, etc.).
-     *                     Typically the directory of the source PDF, e.g. {@code file:///.../pdfDir/}.
-     * @param onMessage    Callback for informational messages (e.g., font download progress).
-     * @param onError      Callback for error messages.
-     * @return A byte array representing the generated PDF.
-     * @throws RuntimeException if the conversion fails.
+     * 基于前端渲染好的 HTML 将页面插入到 PDF 中。
      */
-    public byte[] convertMarkdownToPdfBytes(String markdownText, String baseUri,
-                                            Consumer<String> onMessage, Consumer<String> onError) {
-        final String safe = markdownText == null ? "" : markdownText;
-        if (safe.isBlank()) {
-            // 空内容直接返回，不报错，避免误触发失败提示
-            if (log.isDebugEnabled()) log.debug("skip empty content");
-            return new byte[0];
-        }
-        try {
-            String htmlContent = convertMarkdownToHtml(safe);
-            return convertHtmlToPdfBytes(htmlContent, baseUri, onMessage, onError);
-        } catch (Exception e) {
-            String msg = "Failed to convert Markdown to PDF: " + e.getMessage();
-            log.error(msg, e);
-            onError.accept(msg);
-            throw new RuntimeException(msg, e);
-        }
-    }
-
-    public void insertPage(String srcFile,
-                           String destFile,
-                           String markdownText,
-                           int insertPos,
-                           String baseUri,
-                           Consumer<String> onMessage,
-                           Consumer<String> onError) throws IOException {
-        byte[] markdownPdfBytes = convertMarkdownToPdfBytes(markdownText, baseUri, onMessage, onError);
+    public void insertPageFromHtml(String srcFile,
+                                   String destFile,
+                                   String htmlContent,
+                                   int insertPos,
+                                   String baseUri,
+                                   Consumer<String> onMessage,
+                                   Consumer<String> onError) throws IOException {
+        byte[] pdfPageBytes = convertHtmlToPdfBytes(htmlContent, baseUri, onMessage, onError);
         pdfPageGenerator.generateAndInsertPage(
-                srcFile, destFile, markdownPdfBytes, insertPos);
+                srcFile, destFile, pdfPageBytes, insertPos);
     }
 
 }

@@ -58,3 +58,15 @@ window.insertImageMarkdown = function (relativePath) {
   const insert = `\n![](${path})\n`;
   vditorInstance.setValue(current + insert);
 };
+
+// 返回预览区域的 HTML，用于 Java 侧 HTML→PDF
+window.getHtml = function () {
+  if (!vditorInstance) return '';
+  // 在 sv 模式下，Vditor 内部会维护预览 HTML
+  try {
+    return vditorInstance.getHTML();
+  } catch (e) {
+    console.warn('[Vditor] getHTML failed', e);
+    return '';
+  }
+};
