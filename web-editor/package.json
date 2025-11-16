@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild vditor_entry.js --bundle --format=iife --platform=browser --metafile=meta.json --minify --outfile=../src/main/resources/web/vditor.bundle.js --loader:.woff=file --loader:.woff2=file --loader:.ttf=file --asset-names=fonts/[name]-[hash]",
+    "build": "esbuild vditor_entry.js --bundle --format=iife --platform=browser --metafile=meta.json --minify --outfile=../src/main/resources/web/vditor.bundle.js --loader:.woff=dataurl --loader:.woff2=dataurl --loader:.ttf=dataurl",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
