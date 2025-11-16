@@ -1,5 +1,11 @@
 # QuickOutline
 
+> [!note] 
+> QuickOutline 3 将在不久后发布，将支持制作TOC、Markdown插入PDF页面等新功能
+> 
+> 想提前体验的小伙伴们可以下载nightly构建版本，敬请期待！
+
+
 ## 使用方式 Usage
 
 
