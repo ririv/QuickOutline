@@ -27,15 +27,18 @@ public class MarkdownService {
      */
     public byte[] convertHtmlToPdfBytes(String htmlContent, String baseUri,
                                         Consumer<String> onMessage, Consumer<String> onError) {
-        final String safe = htmlContent == null ? "" : htmlContent;
-        if (safe.isBlank()) {
+        final String safeBody = htmlContent == null ? "" : htmlContent;
+        if (safeBody.isBlank()) {
             if (log.isDebugEnabled()) log.debug("skip empty html content");
             return new byte[0];
         }
+
+        // 将 Vditor 的 HTML 片段包装成完整文档，并内联一份适用于 PDF 的样式
+        String fullHtml = buildHtmlForPdf(safeBody, onError);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             // HtmlConverter 仍然由 ItextHtmlConverter 管理，使用 DownloadEvent 在下层上报字体下载
             htmlConverter.convertToPdf(
-                    safe,
+                    fullHtml,
                     baseUri,
                     baos,
                     event -> {
@@ -56,6 +59,58 @@ public class MarkdownService {
             onError.accept(msg);
             throw new RuntimeException(msg, e);
         }
+    }
+
+    /**
+     * 构造用于 PDF 渲染的完整 HTML 文档，并尝试内联 Vditor 的样式。
+     *
+     * 方案B：尽可能复用 Vditor 的 CSS，让 PDF 的视觉接近编辑器预览。
+     */
+    private String buildHtmlForPdf(String bodyFragment, Consumer<String> onError) {
+        String vditorCss = "";
+        try {
+            // 方案 B：直接复用打包进来的 vditor.bundle.css，使 PDF 更接近 Vditor 预览效果
+            var cssStream = MarkdownService.class.getResourceAsStream("/web/vditor.bundle.css");
+            if (cssStream != null) {
+                try (cssStream) {
+                    vditorCss = new String(cssStream.readAllBytes());
+                }
+            } else {
+                vditorCss = fallbackCss();
+            }
+        } catch (Exception e) {
+            String msg = "Failed to load Vditor CSS for PDF, fallback to basic styles: " + e.getMessage();
+            log.warn(msg, e);
+            onError.accept(msg);
+            vditorCss = fallbackCss();
+        }
+
+        // bodyFragment 是 Vditor 的预览 HTML 片段，这里将它包在一个带有 vditor-reset 的容器中
+        return "<!DOCTYPE html>" +
+                "<html><head>" +
+                "<meta charset=\"utf-8\"/>" +
+                "<style>" + vditorCss + "</style>" +
+                "</head><body>" +
+                "<div class=\"vditor-reset\">" +
+                bodyFragment +
+                "</div>" +
+                "</body></html>";
+    }
+
+    /**
+     * 当找不到 Vditor CSS 或加载失败时使用的基础样式，避免 PDF 完全无样式。
+     */
+    private String fallbackCss() {
+        return "body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; font-size: 14px; }" +
+                "h1, h2, h3, h4, h5, h6 { font-weight: 600; margin: 1.2em 0 0.6em; }" +
+                "p { margin: 0.5em 0; }" +
+                "pre, code { font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }" +
+                "pre { background: #f5f5f5; padding: 8px 12px; border-radius: 4px; overflow-x: auto; }" +
+                "code { background: #f5f5f5; padding: 2px 4px; border-radius: 3px; }" +
+                "ul, ol { padding-left: 1.6em; }" +
+                "table { border-collapse: collapse; width: 100%; margin: 1em 0; }" +
+                "th, td { border: 1px solid #ccc; padding: 4px 8px; }" +
+                "blockquote { border-left: 4px solid #ccc; margin: 0.8em 0; padding: 0.2em 0.8em; color: #555; }";
     }
 
     /**
