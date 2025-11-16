@@ -3,19 +3,19 @@ package com.ririv.quickoutline.pdfProcess.itextImpl;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import com.ririv.quickoutline.pdfProcess.MarkdownPageGenerator;
+import com.ririv.quickoutline.pdfProcess.PdfPageGenerator;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-public class iTextMarkdownPageGenerator implements MarkdownPageGenerator {
+public class iTextPdfPageGenerator implements PdfPageGenerator {
 
 
     @Override
-    public void generateAndInsertMarkdownPage(String srcFile,
-                                              String destFile,
-                                              byte[] markdownPdfBytes,
-                                              int insertPos) throws IOException {
+    public void generateAndInsertPage(String srcFile,
+                                      String destFile,
+                                      byte[] pdfPageBytes,
+                                      int insertPos) throws IOException {
 
         // Merge the provided markdown PDF bytes with the source PDF
         PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFile));
@@ -27,7 +27,7 @@ public class iTextMarkdownPageGenerator implements MarkdownPageGenerator {
         }
 
     // Copy pages from the temporary markdown PDF
-    PdfDocument tempDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(markdownPdfBytes)));
+    PdfDocument tempDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(pdfPageBytes)));
         tempDoc.copyPagesTo(1, tempDoc.getNumberOfPages(), destDoc);
         tempDoc.close();
 

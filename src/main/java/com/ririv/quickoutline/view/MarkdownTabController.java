@@ -20,8 +20,6 @@ import javafx.scene.web.WebView;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -292,7 +290,7 @@ public class MarkdownTabController {
             Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
             Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-            markdownService.createMarkdownPage(srcFile, destFile, currentMarkdown, insertPos, baseUri, onMessage, onError);
+            markdownService.insertPage(srcFile, destFile, currentMarkdown, insertPos, baseUri, onMessage, onError);
 
             eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {

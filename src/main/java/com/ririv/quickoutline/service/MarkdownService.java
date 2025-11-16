@@ -1,9 +1,9 @@
 package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.pdfProcess.HtmlConverter;
-import com.ririv.quickoutline.pdfProcess.MarkdownPageGenerator;
+import com.ririv.quickoutline.pdfProcess.PdfPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextHtmlConverter;
-import com.ririv.quickoutline.pdfProcess.itextImpl.iTextMarkdownPageGenerator;
+import com.ririv.quickoutline.pdfProcess.itextImpl.iTextPdfPageGenerator;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -22,7 +22,7 @@ public class MarkdownService {
     private final Parser parser = Parser.builder().build();
     private final HtmlRenderer renderer = HtmlRenderer.builder().build();;
     private final HtmlConverter htmlConverter = new ItextHtmlConverter();
-    private final MarkdownPageGenerator markdownPageGenerator = new iTextMarkdownPageGenerator();
+    private final PdfPageGenerator pdfPageGenerator = new iTextPdfPageGenerator();
 
 
     /**
@@ -91,15 +91,15 @@ public class MarkdownService {
         }
     }
 
-    public void createMarkdownPage(String srcFile,
-                                   String destFile,
-                                   String markdownText,
-                                   int insertPos,
-                                   String baseUri,
-                                   Consumer<String> onMessage,
-                                   Consumer<String> onError) throws IOException {
+    public void insertPage(String srcFile,
+                           String destFile,
+                           String markdownText,
+                           int insertPos,
+                           String baseUri,
+                           Consumer<String> onMessage,
+                           Consumer<String> onError) throws IOException {
         byte[] markdownPdfBytes = convertMarkdownToPdfBytes(markdownText, baseUri, onMessage, onError);
-        markdownPageGenerator.generateAndInsertMarkdownPage(
+        pdfPageGenerator.generateAndInsertPage(
                 srcFile, destFile, markdownPdfBytes, insertPos);
     }
 
