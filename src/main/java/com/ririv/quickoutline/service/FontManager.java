@@ -5,21 +5,26 @@ package com.ririv.quickoutline.service;
 import com.itextpdf.layout.font.FontProvider;
 import com.itextpdf.styledxmlparser.resolver.font.BasicFontProvider;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 @Singleton
 public class FontManager {
+
+    private static final Logger log = LoggerFactory.getLogger(FontManager.class);
 
     /**
      * Simple font source descriptor, so we can support different font sets in future.
@@ -56,6 +61,7 @@ public class FontManager {
         for (String fileName : fontSource.files) {
             fontPaths.add(fontDir.resolve(fileName));
         }
+        loadBundleFont();
     }
 
     public FontProvider getFontProvider(Consumer<DownloadEvent> onEvent) throws IOException {
@@ -65,6 +71,25 @@ public class FontManager {
             fontProvider.addFont(fontPath.toString());
         }
         return fontProvider;
+    }
+
+
+    public void loadBundleFont() {
+        // Add fonts from the resources
+        try {
+            var fontFolder = FontManager.class.getResource("/web/fonts");
+            if (fontFolder != null) {
+                Path fontPath = Paths.get(fontFolder.toURI());
+                try (Stream<Path> paths = Files.walk(fontPath)) {
+                    paths.filter(Files::isRegularFile).forEach(file -> {
+                        log.debug("add font: {}", file);
+                        fontPaths.add(file);
+                    });
+                }
+            }
+        } catch (URISyntaxException | IOException e) {
+            log.error("Failed to load fonts from resources", e);
+        }
     }
 
     /**

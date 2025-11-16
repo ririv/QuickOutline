@@ -1,5 +1,6 @@
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
+import 'vditor/dist/js/katex/katex.min.css';
 
 let vditorInstance = null;
 

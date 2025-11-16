@@ -2,15 +2,24 @@ package com.ririv.quickoutline.pdfProcess.itextImpl;
 
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
+import com.itextpdf.layout.font.FontProvider;
 import com.ririv.quickoutline.service.DownloadEvent;
 import com.ririv.quickoutline.service.FontManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class ItextHtmlConverter implements com.ririv.quickoutline.pdfProcess.HtmlConverter {
 
+    private static final Logger log = LoggerFactory.getLogger(ItextHtmlConverter.class);
     private final FontManager fontManager  = new FontManager();
 
     @Override
