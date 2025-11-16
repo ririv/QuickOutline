@@ -279,45 +279,53 @@ public class MarkdownTabController {
             eventBus.post(new ShowMessageEvent("Please select a source PDF file first.", Message.MessageType.WARNING));
             return;
         }
-
-        // Get the latest HTML content directly from the editor for maximum accuracy
-        String currentHtml = (String) webEngine.executeScript("window.getHtml && window.getHtml()");
-
-        if (currentHtml == null || currentHtml.isBlank()) {
-            eventBus.post(new ShowMessageEvent("No HTML content to render.", Message.MessageType.WARNING));
-            return;
-        }
-
-        int insertPos = 1;
-        try {
-            insertPos = Integer.parseInt(insertPosTextField.getText());
-            if (insertPos <= 0) {
-                insertPos = 1;
-            }
-        } catch (NumberFormatException e) {
-            // Keep default value of 1
-        }
+        new Thread(() -> {
 
         try {
-            String srcFile = currentFileState.getSrcFile().toString();
-            String destFile = currentFileState.getDestFile().toString();
-            String baseUri = null;
-            if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
-                baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
+            // Get the latest HTML content directly from the editor for maximum accuracy
+            String currentHtml = bridge.getHtmlSync(webEngine);
+
+
+            if (currentHtml == null || currentHtml.isBlank()) {
+                eventBus.post(new ShowMessageEvent("No HTML content to render.", Message.MessageType.WARNING));
+                return;
             }
-            Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
-            Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-            markdownService.insertPageFromHtml(srcFile, destFile, currentHtml, insertPos, baseUri, onMessage, onError);
+            int insertPos = 1;
+            try {
+                insertPos = Integer.parseInt(insertPosTextField.getText());
+                if (insertPos <= 0) {
+                    insertPos = 1;
+                }
+            } catch (NumberFormatException e) {
+                // Keep default value of 1
+            }
 
-            eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS));
-        } catch (IOException e) {
-            eventBus.post(new ShowMessageEvent("Failed to render to PDF: " + e.getMessage(), Message.MessageType.ERROR));
-            log.error("Render to PDF failed", e);
+            try {
+                String srcFile = currentFileState.getSrcFile().toString();
+                String destFile = currentFileState.getDestFile().toString();
+                String baseUri = null;
+                if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
+                    baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
+                }
+                Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+                Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+
+                markdownService.insertPageFromHtml(srcFile, destFile, currentHtml, insertPos, baseUri, onMessage, onError);
+
+                eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS));
+            } catch (IOException e) {
+                eventBus.post(new ShowMessageEvent("Failed to render to PDF: " + e.getMessage(), Message.MessageType.ERROR));
+                log.error("Render to PDF failed", e);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        }, "pdf-render").start();
+
     }
 
-    // ============ Image insert entrypoint (for future wiring) ============
+        // ============ Image insert entrypoint (for future wiring) ============
     /**
      * 选择一张图片，必要时复制到 PDF 目录的 images/ 下，并在编辑器中插入相对路径的 Markdown 图像语法。
      * 注意：当前方法只提供核心逻辑骨架，尚未与具体菜单/按钮绑定。
