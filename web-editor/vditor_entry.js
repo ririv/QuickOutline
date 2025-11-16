@@ -59,12 +59,26 @@ window.insertImageMarkdown = function (relativePath) {
   vditorInstance.setValue(current + insert);
 };
 
+
 // 返回预览区域的 HTML，用于 Java 侧 HTML→PDF
-window.getHtml = function () {
-  if (!vditorInstance) return '';
-  // 在 sv 模式下，Vditor 内部会维护预览 HTML
+window.getHtml = async function () {
+  if (!vditorInstance) return Promise.resolve('');
+  const mdText = vditorInstance.getValue();
+  console.log('[Vditor] mdText', mdText);
+
+  const previewElement = document.createElement('div');
+  previewElement.setAttribute('id', 'preview');
+
   try {
-    return vditorInstance.getHTML();
+    await Vditor.preview(previewElement, mdText, {
+    hljs: true,
+    math: {
+      engine: 'KaTeX',
+    }
+    });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    console.log(previewElement);
+    return previewElement.innerHTML;
   } catch (e) {
     console.warn('[Vditor] getHTML failed', e);
     return '';

@@ -1,0 +1,75 @@
+package com.ririv.quickoutline.view;
+import javafx.application.Platform;
+import javafx.scene.web.WebEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
+public class JsBridge {
+
+    private static final Logger logger = LoggerFactory.getLogger(JsBridge.class);
+
+    // 这个 Future 将用来“挂起”等待 JS 的结果
+    private CompletableFuture<String> pendingFuture;
+
+    // JS 将调用这个方法来"完成" pendingFuture
+    public void receiveHtml(String html) {
+        logger.debug("[JsBridge] 接收到 HTML");
+        // 确保在 JavaFX 线程上完成 Future，这更安全
+        Platform.runLater(() -> {
+            if (pendingFuture != null && !pendingFuture.isDone()) {
+                pendingFuture.complete(html);
+            }
+        });
+    }
+
+    // JS 发生错误时调用
+    public void receiveError(String error) {
+        Platform.runLater(() -> {
+            if (pendingFuture != null && !pendingFuture.isDone()) {
+                pendingFuture.completeExceptionally(new RuntimeException(error));
+            }
+        });
+    }
+
+    /**
+     * 这是您将从 Java 调用的“同步”方法！
+     * @param webEngine
+     * @return
+     */
+    public String getHtmlSync(WebEngine webEngine) throws Exception {
+        // 1. 创建一个新的 Future 来等待
+        this.pendingFuture = new CompletableFuture<>();
+
+        // 2. 准备 JS 脚本，让它在完成后回调我们的 bridge
+        String script = """
+            window.getHtml()
+                .then(html => {
+                    window.javaBridge.receiveHtml(html);
+                })
+                .catch(error => {
+                    window.javaBridge.receiveError(String(error));
+                });
+        """;
+
+        // 3. 关键：我们必须在 JavaFX 线程上执行 executeScript
+        // 但我们不能在 JavaFX 线程上 "get()" (阻塞)
+        // 所以我们使用 Platform.runLater 来 *触发* JS
+        Platform.runLater(() -> {
+            webEngine.executeScript(script);
+        });
+
+        // 4. 等待！
+        // 我们在这里“同步”阻塞了 *调用 getHtmlSync 的这个线程*
+        // 等待 JS 调用 receiveHtml() 来 complete 这个 Future
+        // 我们加一个超时（比如 10 秒）以防万一
+        try {
+            return pendingFuture.get(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("获取 HTML 失败 (超时或 JS 异常)");
+            throw e;
+        }
+    }
+}

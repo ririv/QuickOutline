@@ -17,6 +17,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -52,6 +53,8 @@ public class MarkdownTabController {
     private String editorHtmlContent = ""; // 前端内容（现为 HTML）
     private TrailingThrottlePreviewer<String, byte[]> previewer;
     private ScheduledExecutorService contentPoller;
+
+    JsBridge bridge = new JsBridge();
 
     @Inject
     public MarkdownTabController(CurrentFileState currentFileState, AppEventBus eventBus, MarkdownService markdownService) {
@@ -97,6 +100,9 @@ public class MarkdownTabController {
             if (newState == Worker.State.SUCCEEDED) {
                 log.info("WebView load succeeded");
 
+                JSObject window = (JSObject) webEngine.executeScript("window");
+                window.setMember("javaBridge", bridge); // "javaBridge" 是 JS 中的名字
+
                 // 启动轻量轮询作为兜底，确保回调偶发丢失时仍能抓到变更
                 startContentPoller();
             }
@@ -128,21 +134,33 @@ public class MarkdownTabController {
             t.setDaemon(true);
             return t;
         });
+
+
         contentPoller.scheduleAtFixedRate(() -> {
             try {
+                log.debug("[JavaFX] 正在后台线程上同步请求 HTML...");
+
+                // 这是“同步”调用！
+                // 这个线程会在这里被阻塞，直到 JS 回调
+                String html = bridge.getHtmlSync(webEngine);
+
+                log.debug("[JavaFX] 成功同步获取到 HTML！\n{}", html);
+
+                // 成功！现在我们拿到了 html
+                if (html == null) html = "";
+                if (!html.equals(editorHtmlContent)) {
+                    if (log.isDebugEnabled()) log.debug("html diff detected len={}", html.length());
+                    triggerPreviewIfChanged(html);
+                }
+
+            } catch (Exception e) {
+                // 处理超时或 JS 错误
+                log.error("在同步等待时出错: " + e.getMessage());
                 Platform.runLater(() -> {
-                    try {
-                        String polled = (String) webEngine.executeScript("window.getHtml && window.getHtml()");
-                        if (polled == null) polled = "";
-                        if (!polled.equals(editorHtmlContent)) {
-                            if (log.isDebugEnabled()) log.debug("poll diff detected len={}", polled.length());
-                            triggerPreviewIfChanged(polled);
-                        }
-                    } catch (Exception ex) {
-                        // swallow
-                    }
+                    // myLoadingSpinner.setVisible(false);
+                    // showError("错误：" + e.getMessage());
                 });
-            } catch (Exception ignore) {}
+            }
         }, 1200, 1000, TimeUnit.MILLISECONDS);
     }
 
