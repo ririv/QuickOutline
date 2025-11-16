@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Markdown Editor (CM6)</title>
+    <style>
+        html,body {height:100%;margin:0;padding:0;}
+        #editor {height:100%;}
+        /* 默认隐藏诊断面板，运行时需要时可通过 window.enableDiag() 打开 */
+        .diag-panel {display:none; position:absolute;top:4px;right:4px;z-index:99;font:11px/1.4 monospace;color:#333;background:#f6f6f6;border:1px solid #ccc;padding:4px 6px;border-radius:4px;max-width:260px;white-space:pre-wrap}
+    </style>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+    <div id="editor"></div>
+    <div id="diag" class="diag-panel"></div>
+
+    <script>
+        // 诊断函数，默认不输出（通过 window.__diagEnabled 控制）
+        window.__diagEnabled = false; // 默认关闭
+        const diag = msg => {
+            try {
+                if (!window.__diagEnabled) return;
+                const el = document.getElementById('diag');
+                if (!el) return;
+                el.textContent += msg + "\n";
+                el.style.display = 'block';
+                console.log('[CM6]', msg);
+            } catch (e) { console.log('[CM6 diag error]', e); }
+        };
+
+        // 提供全局开关，便于在 WebView 控制台或 Java 侧按需开启/关闭诊断面板
+        window.enableDiag = function() { window.__diagEnabled = true; const el = document.getElementById('diag'); if (el) el.style.display = 'block'; console.log('[CM6] diag enabled'); };
+        window.disableDiag = function() { window.__diagEnabled = false; const el = document.getElementById('diag'); if (el) el.style.display = 'none'; console.log('[CM6] diag disabled'); };
+        window.addEventListener('error', e => { diag('window.onerror: ' + e.message + ' @' + e.filename + ':' + e.lineno); });
+        window.addEventListener('unhandledrejection', e => { diag('unhandledrejection: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)); });
+        // 说明：原心跳(heartbeat)仅用于开发期诊断页面是否卡死；已移除以减少噪音和开销。
+        diag('UserAgent: ' + navigator.userAgent);
+        // 新目录下同名 bundle
+        const BUNDLE_URL = 'codemirror.bundle.js';
+        function loadLocalBundle() {
+            const s = document.createElement('script');
+            s.src = BUNDLE_URL;
+            s.onload = () => {
+                if (window.CodeMirrorBootstrap) {
+                    diag('Local bundle loaded');
+                    initFromBootstrap();
+                } else {
+                    diag('Bundle loaded but CodeMirrorBootstrap missing (no fallback)');
+                    window.getEditorType = () => 'none';
+                }
+            };
+            s.onerror = () => {
+                diag('Local bundle not found: ' + BUNDLE_URL + ' (no fallback)');
+                window.getEditorType = () => 'none';
+            };
+            document.head.appendChild(s);
+        }
+        function initFromBootstrap() {
+            try {
+                const parentEl = document.getElementById('editor');
+                const view = window.CodeMirrorBootstrap(parentEl, '', content => {
+                    if (window.javaCallback?.onContentChanged) {
+                        try { window.javaCallback.onContentChanged(content); } catch(e){ diag('Callback error: '+e); }
+                    }
+                });
+                window.editorView = view;
+                diag('EditorView instance created: ' + !!view);
+                window.setContent = c => {
+                    if (!view) return;
+                    const tr = view.state.update({ changes:{ from:0,to:view.state.doc.length, insert:c } });
+                    view.dispatch(tr);
+                };
+                window.getContent = () => view?.state.doc.toString() || '';
+                window.getEditorType = () => 'cm6';
+                // 行号点击/拖拽逻辑已迁移到 codemirror.bundle.js（editor_entry.js 内的 ViewPlugin）
+                
+                diag('CM6 (local bundle) ready');
+            } catch (e) {
+                diag('Init local bundle failed: ' + e + '\n请重新构建本地 bundle');
+                window.getEditorType = () => 'none';
+            }
+        }
+        loadLocalBundle();
+
+        // 仅拦截在行号/行号下方（gutter）或编辑器外的右键，保留编辑内容区域的默认右键菜单（支持复制/粘贴）
+        document.addEventListener('contextmenu', function (e) {
+            try {
+                let t = e.target;
+                if (!t) return;
+                if (t.nodeType === 3) t = t.parentElement;
+                // 判断是否在 editor 容器内
+                const inEditor = t && (t.closest && t.closest('#editor'));
+                if (!inEditor) {
+                    // 页面空白处：阻止默认菜单（避免误触“重新加载”）
+                    e.preventDefault();
+                    return;
+                }
+                // 在 editor 内部：判断是否位于 gutter（行号/行号下方）
+                const isInGutter = (t.closest && (t.closest('.cm-gutters') || t.closest('.cm-gutter') || t.closest('.cm-lineNumbers') || t.closest('.cm-gutterElement')))
+                    || (t.classList && (t.classList.contains('cm-gutters') || t.classList.contains('cm-gutter') || t.classList.contains('cm-lineNumbers') || t.classList.contains('cm-gutterElement')));
+                if (isInGutter) {
+                    // gutter 区域阻止默认菜单
+                    e.preventDefault();
+                }
+                // 否则允许默认行为（保留可编辑区的复制/粘贴菜单）
+            } catch (err) {}
+        }, true);
+    </script>
+    <noscript>需要开启 JavaScript 才能使用编辑器。</noscript>
+</body>
+</html>

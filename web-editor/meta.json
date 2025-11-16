@@ -1,0 +1,70 @@
+{
+  "inputs": {
+    "node_modules/vditor/dist/index.js": {
+      "bytes": 701503,
+      "imports": [],
+      "format": "cjs"
+    },
+    "node_modules/vditor/dist/index.css": {
+      "bytes": 43492,
+      "imports": [
+        {
+          "path": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8AgMAAABHkjHhAAAACVBMVEWAgIBaWlo+Pj7rTFvWAAAAA3RSTlMHCAw+VhR4AAAA+klEQVQoz4WSMW7EQAhFPxKWNh2FCx+HkaZI6RRb5DYbyVfIJXLKDCFoMbaTKSw/8ZnPAPjaH2xgZcUNUDADD7D9LtDBCLZ45fbkvo/30K8yeI64pPwl6znd/3n/Oe93P3ho9qeh72btTFzqkz0rsJle8Zr81OLEwZ1dv/713uWqvu2pl+k0fy7MWtj9r/tN5q/02z89qa/L4Dc2LvM93kezPfXlME/O86EbY/V9GB9ePX8G1/6W+/9h1dq/HGfTfzT3j/xNo7522Bfnqe5jO/fvhVthlfk434v3iO9zG/UOphyPeinPl1J8Gtaa7xPTa/Dk+RIs4deMvwGvcGsmsCvJ0AAAAABJRU5ErkJggg==",
+          "kind": "url-token",
+          "external": true
+        }
+      ]
+    },
+    "vditor_entry.js": {
+      "bytes": 1561,
+      "imports": [
+        {
+          "path": "node_modules/vditor/dist/index.js",
+          "kind": "import-statement",
+          "original": "vditor"
+        },
+        {
+          "path": "node_modules/vditor/dist/index.css",
+          "kind": "import-statement",
+          "original": "vditor/dist/index.css"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "../src/main/resources/web/vditor.bundle.js": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": "vditor_entry.js",
+      "cssBundle": "../src/main/resources/web/vditor.bundle.css",
+      "inputs": {
+        "node_modules/vditor/dist/index.js": {
+          "bytesInOutput": 294170
+        },
+        "vditor_entry.js": {
+          "bytesInOutput": 859
+        },
+        "node_modules/vditor/dist/index.css": {
+          "bytesInOutput": 0
+        }
+      },
+      "bytes": 296942
+    },
+    "../src/main/resources/web/vditor.bundle.css": {
+      "imports": [
+        {
+          "path": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8AgMAAABHkjHhAAAACVBMVEWAgIBaWlo+Pj7rTFvWAAAAA3RSTlMHCAw+VhR4AAAA+klEQVQoz4WSMW7EQAhFPxKWNh2FCx+HkaZI6RRb5DYbyVfIJXLKDCFoMbaTKSw/8ZnPAPjaH2xgZcUNUDADD7D9LtDBCLZ45fbkvo/30K8yeI64pPwl6znd/3n/Oe93P3ho9qeh72btTFzqkz0rsJle8Zr81OLEwZ1dv/713uWqvu2pl+k0fy7MWtj9r/tN5q/02z89qa/L4Dc2LvM93kezPfXlME/O86EbY/V9GB9ePX8G1/6W+/9h1dq/HGfTfzT3j/xNo7522Bfnqe5jO/fvhVthlfk434v3iO9zG/UOphyPeinPl1J8Gtaa7xPTa/Dk+RIs4deMvwGvcGsmsCvJ0AAAAABJRU5ErkJggg==",
+          "kind": "url-token",
+          "external": true
+        }
+      ],
+      "inputs": {
+        "node_modules/vditor/dist/index.css": {
+          "bytesInOutput": 34619
+        }
+      },
+      "bytes": 35954
+    }
+  }
+}
