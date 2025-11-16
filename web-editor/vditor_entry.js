@@ -1,6 +1,5 @@
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
-import 'vditor/dist/js/katex/katex.min.css';
 
 let vditorInstance = null;
 
@@ -27,6 +26,14 @@ window.initVditor = function (initialMarkdown) {
       'quote','code','inline-code','code-theme','|',
       'table','upload','preview','outline','fullscreen'
     ],
+    preview: {
+      math: {
+        engine: 'MathJax',
+        mathJaxOptions: {
+          loader: {load: ["output/svg"]}
+      }
+      }
+    },
     input: (value) => {
       // 当前架构下，Java 侧轮询 window.getContent()
     },
@@ -74,9 +81,14 @@ window.getHtml = async function () {
     await Vditor.preview(previewElement, mdText, {
     hljs: true,
     math: {
-      engine: 'KaTeX',
+      engine: 'MathJax',
+      mathJaxOptions: {
+        loader: {load: ["output/svg"]},
+        options: {
+          enableAssistiveMml: false
+        }
     }
-    });
+    }});
     await new Promise(resolve => setTimeout(resolve, 0));
     console.log(previewElement);
     return previewElement.innerHTML;
