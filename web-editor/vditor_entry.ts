@@ -37,7 +37,7 @@ window.initVditor = function (initialMarkdown: string): Vditor | undefined {
       'headings', 'bold', 'italic', 'strike', 'link', '|',
       'list', 'ordered-list', 'check', '|',
       'quote', 'code', 'inline-code', 'code-theme', '|',
-      'table', 'upload', 'preview', 'outline', 'fullscreen'
+      'table', 'upload', 'preview', 'outline', 'fullescreen'
     ],
     preview: {
       math: {
@@ -72,6 +72,33 @@ window.setContent = function (markdown: string): void {
   }
 };
 
+
+let resetMathjaxSvgActualSize = function (element: HTMLElement): void {
+    element.style.position = 'absolute';
+    element.style.top = '-9999px';
+    element.style.left = '-9999px';
+    element.style.visibility = 'hidden';
+    document.body.appendChild(element);
+
+    const mjxContainers = element.querySelectorAll('mjx-container');
+    if (mjxContainers.length > 0) {
+      for (const mjxContainer of mjxContainers) {
+        const svgElements = mjxContainer.querySelectorAll('svg');
+        console.log('[Vditor] allSvgParagraphs', svgElements);
+        const svgElement = svgElements[0];
+        if (svgElement) { // Ensure svgElement exists
+          const preciseHeight = svgElement.getBoundingClientRect().height;
+          const preciseWidth = svgElement.getBoundingClientRect().width;
+          console.log('[Vditor] svgElement', svgElement);
+          svgElement.setAttribute('width', preciseWidth + 'px');
+          svgElement.setAttribute('height', preciseHeight + 'px');
+        }
+      }
+    }
+    document.body.removeChild(element); // Clean up the temporary element
+}
+
+
 window.insertImageMarkdown = function (relativePath: string): void {
   if (!vditorInstance) return;
   const path = relativePath || '';
@@ -90,11 +117,6 @@ window.getContentHtml = async function (): Promise<string> {
   const element = document.createElement('div');
   element.setAttribute('id', 'preview');
 
-  element.style.position = 'absolute';
-  element.style.top = '-9999px';
-  element.style.left = '-9999px';
-  element.style.visibility = 'hidden';
-  document.body.appendChild(element);
 
 
   try {
@@ -113,27 +135,12 @@ window.getContentHtml = async function (): Promise<string> {
     await new Promise(resolve => setTimeout(resolve, 0));
     console.log(element);
 
-    const mjxContainers = element.querySelectorAll('mjx-container');
-    if (mjxContainers.length > 0) {
-      for (const mjxContainer of mjxContainers) {
-        const svgElements = mjxContainer.querySelectorAll('svg');
-        console.log('[Vditor] allSvgParagraphs', svgElements);
-        const svgElement = svgElements[0];
-        if (svgElement) { // Ensure svgElement exists
-          const preciseHeight = svgElement.getBoundingClientRect().height;
-          const preciseWidth = svgElement.getBoundingClientRect().width;
-          console.log('[Vditor] svgElement', svgElement);
-          svgElement.setAttribute('width', preciseWidth + 'px');
-          svgElement.setAttribute('height', preciseHeight + 'px');
-        }
-      }
-    }
+    // resetMathjaxSvgActualSize(element);
+
     return element.innerHTML;
   } catch (e) {
     console.warn('[Vditor] getHTML failed', e);
     return '';
-  } finally {
-    document.body.removeChild(element); // Clean up the temporary element
   }
 };
 

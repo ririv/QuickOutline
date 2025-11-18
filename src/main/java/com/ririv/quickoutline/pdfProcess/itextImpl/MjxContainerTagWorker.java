@@ -25,6 +25,7 @@ public class MjxContainerTagWorker implements ITagWorker {
         if (isBlock) {
             this.blockResult = new Div();
         }
+
     }
 
     @Override

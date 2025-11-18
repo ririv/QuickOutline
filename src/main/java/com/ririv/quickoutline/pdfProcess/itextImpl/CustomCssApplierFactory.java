@@ -1,11 +1,10 @@
 package com.ririv.quickoutline.pdfProcess.itextImpl;
 
-import com.itextpdf.html2pdf.css.CssConstants;
 import com.itextpdf.html2pdf.css.apply.ICssApplier;
 import com.itextpdf.html2pdf.css.apply.impl.BlockCssApplier;
 import com.itextpdf.html2pdf.css.apply.impl.DefaultCssApplierFactory;
-import com.itextpdf.html2pdf.css.apply.impl.SpanTagCssApplier;
 import com.itextpdf.styledxmlparser.node.IElementNode;
+import com.itextpdf.svg.SvgConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +14,14 @@ public class CustomCssApplierFactory extends DefaultCssApplierFactory {
 
     @Override
     public ICssApplier getCustomCssApplier(IElementNode tag) {
+        if (SvgConstants.Tags.SVG.equalsIgnoreCase(tag.name())
+                && tag.parentNode() instanceof IElementNode // Ensure parent is an IElementNode
+                && "mjx-container".equalsIgnoreCase(((IElementNode) tag.parentNode()).name())) { // Cast to IElementNode
+            log.info("Handling MathJax SVG with CustomSvgCssApplier.");
+            return new MjxSvgCssApplier(tag);
+        }
         if ("mjx-container".equalsIgnoreCase(tag.name())) {
-            log.info("Handling mjx-container css.");
+            log.info("Handling mjx-container css with BlockCssApplier.");
             return new BlockCssApplier();
         }
         return super.getCustomCssApplier(tag);
