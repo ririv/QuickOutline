@@ -3,17 +3,18 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild vditor_entry.js --bundle --format=iife --platform=browser --metafile=meta.json --minify --outfile=../src/main/resources/web/vditor.bundle.js --loader:.woff=dataurl --loader:.woff2=dataurl --loader:.ttf=dataurl",
+    "build": "esbuild vditor_entry.ts --bundle --format=iife --platform=browser --metafile=meta.json --minify --outfile=../src/main/resources/web/vditor.bundle.js --loader:.woff=dataurl --loader:.woff2=dataurl --loader:.ttf=dataurl",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "vditor": "^3.10.7"
   },
   "devDependencies": {
-    "esbuild": "^0.27.0"
-  }
+    "esbuild": "^0.27.0",
+    "typescript": "^5.9.3"
+  },
+  "description": ""
 }

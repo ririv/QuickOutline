@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "target": "ESNext",
+    "module": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "vditor_entry.ts"
+  ]
+}

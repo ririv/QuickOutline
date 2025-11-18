@@ -1,6 +1,7 @@
 /build/
 /.gradle/
 /bin/
+/target
 
 # IntelliJ IDEA
 .idea/workspace.xml
@@ -9,7 +10,7 @@
 .idea/vcs.xml
 .idea/misc.xml
 
-target
+
 
 /.env
 
@@ -27,6 +28,10 @@ node_modules/
 meta.json
 # 临时安装过程中可能出现的锁文件碎片（一般保留正式 lock 文件）
 npm-debug.log*
+nodejs/
+
+src/main/resources/web/vditor.bundle.js
+src/main/resources/web/vditor.bundle.css
 
 
 /.idea/jsLibraryMappings.xml

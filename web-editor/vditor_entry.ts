@@ -1,9 +1,22 @@
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
 
-let vditorInstance = null;
+// Define a custom interface for the Window object to add Vditor-related functions
+declare global {
+  interface Window {
+    initVditor: (initialMarkdown: string) => Vditor | undefined;
+    getContent: () => string;
+    setContent: (markdown: string) => void;
+    insertImageMarkdown: (relativePath: string) => void;
+    getContentHtml: () => Promise<string>;
+    getMathJaxStyles: () => string;
+    getPayloads: () => Promise<string>;
+  }
+}
 
-window.initVditor = function (initialMarkdown) {
+let vditorInstance: Vditor | null = null;
+
+window.initVditor = function (initialMarkdown: string): Vditor | undefined {
   if (vditorInstance) {
     return vditorInstance;
   }
@@ -30,25 +43,28 @@ window.initVditor = function (initialMarkdown) {
       math: {
         engine: 'MathJax',
         mathJaxOptions: {
-          loader: { load: ["output/svg"] }
+          loader: { load: ["output/svg"] },
+          options: {
+            enableAssistiveMml: false
+          }
         }
       }
     },
     after: () => {
       if (initialMarkdown) {
-        vditorInstance.setValue(initialMarkdown);
+        vditorInstance?.setValue(initialMarkdown);
       }
     },
   });
   return vditorInstance;
 };
 
-window.getContent = function () {
+window.getContent = function (): string {
   if (!vditorInstance) return '';
   return vditorInstance.getValue();
 };
 
-window.setContent = function (markdown) {
+window.setContent = function (markdown: string): void {
   if (!vditorInstance) {
     window.initVditor(markdown || '');
   } else {
@@ -56,7 +72,7 @@ window.setContent = function (markdown) {
   }
 };
 
-window.insertImageMarkdown = function (relativePath) {
+window.insertImageMarkdown = function (relativePath: string): void {
   if (!vditorInstance) return;
   const path = relativePath || '';
   const current = vditorInstance.getValue() || '';
@@ -66,7 +82,7 @@ window.insertImageMarkdown = function (relativePath) {
 
 
 // 返回预览区域的 HTML，用于 Java 侧 HTML→PDF
- async function getContentHtml() {
+window.getContentHtml = async function (): Promise<string> {
   if (!vditorInstance) return Promise.resolve('');
   const mdText = vditorInstance.getValue();
   console.log('[Vditor] mdText', mdText);
@@ -83,7 +99,7 @@ window.insertImageMarkdown = function (relativePath) {
 
   try {
     await Vditor.preview(element, mdText, {
-      hljs: true,
+      mode: "light",
       math: {
         engine: 'MathJax',
         mathJaxOptions: {
@@ -97,41 +113,43 @@ window.insertImageMarkdown = function (relativePath) {
     await new Promise(resolve => setTimeout(resolve, 0));
     console.log(element);
 
-    const mjxContainers = element.querySelectorAll('mjx-container')
+    const mjxContainers = element.querySelectorAll('mjx-container');
     if (mjxContainers.length > 0) {
       for (const mjxContainer of mjxContainers) {
-              const svgElements = mjxContainer.querySelectorAll('svg')
-      console.log('[Vditor] allSvgParagraphs', svgElements);
-      const svgElement = svgElements[0];
-      const preciseHeight = svgElement.getBoundingClientRect().height;
-      const preciseWidth = svgElement.getBoundingClientRect().width;
-      console.log('[Vditor] svgElement', svgElement);
-      svgElement.setAttribute('width', preciseWidth + 'px');
-      svgElement.setAttribute('height', preciseHeight + 'px');
+        const svgElements = mjxContainer.querySelectorAll('svg');
+        console.log('[Vditor] allSvgParagraphs', svgElements);
+        const svgElement = svgElements[0];
+        if (svgElement) { // Ensure svgElement exists
+          const preciseHeight = svgElement.getBoundingClientRect().height;
+          const preciseWidth = svgElement.getBoundingClientRect().width;
+          console.log('[Vditor] svgElement', svgElement);
+          svgElement.setAttribute('width', preciseWidth + 'px');
+          svgElement.setAttribute('height', preciseHeight + 'px');
+        }
       }
     }
     return element.innerHTML;
   } catch (e) {
     console.warn('[Vditor] getHTML failed', e);
     return '';
+  } finally {
+    document.body.removeChild(element); // Clean up the temporary element
   }
 };
 
 
-window.getContentHtml = getContentHtml;
-
-function getMathJaxStyles() {
+window.getMathJaxStyles = function (): string {
   return document.getElementById('MJX-SVG-styles')?.textContent || '';
-}
+};
 
-window.getPayloads = async function () {
+window.getPayloads = async function (): Promise<string> {
   try {
-    const html = await getContentHtml();
-    const css = getMathJaxStyles();
-    console.log('[Vditor] getHtmlAndStyles completed.');
-    return JSON.stringify({ html: html, css: css });
+    const html = await window.getContentHtml();
+    const styles = window.getMathJaxStyles();
+    console.log('[Vditor] getPayloads completed.');
+    return JSON.stringify({ html: html, styles: styles });
   } catch (e) {
-    console.warn('[Vditor] getHtmlAndStyles failed', e);
-    return JSON.stringify({ html: '', css: '' });
+    console.warn('[Vditor] getPayloads failed', e);
+    return JSON.stringify({ html: '', styles: '' });
   }
 };
