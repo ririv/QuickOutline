@@ -1,6 +1,7 @@
 package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.service.MarkdownService;
+import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
@@ -84,7 +85,8 @@ public class MarkdownTabController {
                 } catch (Exception ex) {
                     log.warn("[Preview] failed to compute baseUri", ex);
                 }
-                return markdownService.convertHtmlToPdfBytes(htmlContent, baseUri, onMessage, onError);
+                PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(htmlContent);
+                return markdownService.convertHtmlToPdfBytes(mdEditorContentPayloads, baseUri, onMessage, onError);
             },
             this::updatePreviewUI,
             e -> onError.accept("PDF preview failed: " + e.getMessage()));
@@ -142,15 +144,15 @@ public class MarkdownTabController {
 
                 // 这是“同步”调用！
                 // 这个线程会在这里被阻塞，直到 JS 回调
-                String html = bridge.getHtmlSync(webEngine);
+                String json = bridge.getContentSync(webEngine);
 
-                log.debug("[JavaFX] 成功同步获取到 HTML！\n{}", html);
+                log.debug("[JavaFX] 成功同步获取到 HTML！}");
 
                 // 成功！现在我们拿到了 html
-                if (html == null) html = "";
-                if (!html.equals(editorHtmlContent)) {
-                    if (log.isDebugEnabled()) log.debug("html diff detected len={}", html.length());
-                    triggerPreviewIfChanged(html);
+                if (json == null) json = "";
+                if (!json.equals(editorHtmlContent)) {
+                    log.debug("diff detected len={}", json.length());
+                    triggerPreviewIfChanged(json);
                 }
 
             } catch (Exception e) {
@@ -166,14 +168,13 @@ public class MarkdownTabController {
 
     private void updatePreviewUI(byte[] pdfBytes) {
         final int RENDER_DPI = 120; // 降低 DPI 减少阻塞
-        if (log.isDebugEnabled()) log.debug("updatePreviewUI bytes={}", (pdfBytes == null ? 0 : pdfBytes.length));
+        log.debug("updatePreviewUI bytes={}", (pdfBytes == null ? 0 : pdfBytes.length));
         if (pdfBytes == null || pdfBytes.length == 0) {
             previewVBox.getChildren().clear();
             return;
         }
         // 将耗时 PDF 处理移到后台线程，避免阻塞 FX Thread 导致后续输入事件丢失
         new Thread(() -> {
-            long start = System.currentTimeMillis();
             try (PDDocument pdDocument = Loader.loadPDF(pdfBytes)) {
                 PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
                 int pageCount = pdDocument.getNumberOfPages();
@@ -227,7 +228,7 @@ public class MarkdownTabController {
             return;
         }
         editorHtmlContent = newContent;
-        if (log.isDebugEnabled()) log.debug("throttle trigger len={}", newContent.length());
+        log.debug("throttle trigger len={}", newContent.length());
         previewer.trigger(newContent);
         if (newContent.isEmpty()) {
             previewVBox.getChildren().clear();
@@ -283,9 +284,10 @@ public class MarkdownTabController {
 
         try {
             // Get the latest HTML content directly from the editor for maximum accuracy
-            String currentHtml = bridge.getHtmlSync(webEngine);
+            String json = bridge.getContentSync(webEngine);
+            PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(json);
 
-
+            String currentHtml = mdEditorContentPayloads.html();
             if (currentHtml == null || currentHtml.isBlank()) {
                 eventBus.post(new ShowMessageEvent("No HTML content to render.", Message.MessageType.WARNING));
                 return;
@@ -311,7 +313,7 @@ public class MarkdownTabController {
                 Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
                 Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-                markdownService.insertPageFromHtml(srcFile, destFile, currentHtml, insertPos, baseUri, onMessage, onError);
+                markdownService.insertPageFromHtml(srcFile, destFile, mdEditorContentPayloads, insertPos, baseUri, onMessage, onError);
 
                 eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS));
             } catch (IOException e) {

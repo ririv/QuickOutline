@@ -7,6 +7,7 @@ import com.itextpdf.layout.IPropertyContainer;
 import com.itextpdf.layout.element.Div;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.styledxmlparser.node.IElementNode;
+import com.itextpdf.svg.element.SvgImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +41,12 @@ public class MjxContainerTagWorker implements ITagWorker {
     public boolean processTagChild(ITagWorker childTagWorker, ProcessorContext context) {
         if (childTagWorker instanceof SvgTagWorker) {
             IPropertyContainer result = childTagWorker.getElementResult();
-            if (result instanceof Image) {
+            if (result instanceof SvgImage) {
                 if (isBlock) {
-                    blockResult.add((Image) result);
+                    blockResult.add((SvgImage) result);
                     log.info("Added SVG to block-level Div container.");
                 } else {
-                    this.inlineResult = (Image) result;
+                    this.inlineResult = (SvgImage) result;
                     log.info("Stored SVG as inline-level Image.");
                 }
             }

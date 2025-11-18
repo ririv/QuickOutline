@@ -36,6 +36,8 @@ module quickoutline {
     requires org.apache.xmlgraphics.batik.anim;
     requires styled.xml.parser;
     requires org.apache.xmlgraphics.batik.transcoder;
+    requires com.google.gson;
+    requires svg;
 
 //    requires org.bouncycastle.util;
 
@@ -79,4 +81,5 @@ module quickoutline {
     exports com.ririv.quickoutline.view.utils;
     opens com.ririv.quickoutline.view.utils to com.google.guice, javafx.fxml, javafx.graphics;
     exports com.ririv.quickoutline.view.icons;
+    opens com.ririv.quickoutline.utils to com.google.guice, javafx.fxml, javafx.graphics;
 }

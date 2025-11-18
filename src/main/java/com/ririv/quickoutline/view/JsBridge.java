@@ -15,7 +15,7 @@ public class JsBridge {
     private CompletableFuture<String> pendingFuture;
 
     // JS 将调用这个方法来"完成" pendingFuture
-    public void receiveHtml(String html) {
+    public void receiveSuccess(String html) {
         logger.debug("[JsBridge] 接收到 HTML");
         // 确保在 JavaFX 线程上完成 Future，这更安全
         Platform.runLater(() -> {
@@ -39,15 +39,15 @@ public class JsBridge {
      * @param webEngine
      * @return
      */
-    public String getHtmlSync(WebEngine webEngine) throws Exception {
+    public String getContentSync(WebEngine webEngine) throws Exception {
         // 1. 创建一个新的 Future 来等待
         this.pendingFuture = new CompletableFuture<>();
 
         // 2. 准备 JS 脚本，让它在完成后回调我们的 bridge
         String script = """
-            window.getHtml()
-                .then(html => {
-                    window.javaBridge.receiveHtml(html);
+            window.getPayloads()
+                .then(jsonContent => {
+                    window.javaBridge.receiveSuccess(jsonContent);
                 })
                 .catch(error => {
                     window.javaBridge.receiveError(String(error));

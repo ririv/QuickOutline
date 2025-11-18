@@ -3,6 +3,7 @@ package com.ririv.quickoutline.service;
 import com.ririv.quickoutline.pdfProcess.PdfPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextHtmlConverter;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextPdfPageGenerator;
+import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,21 +21,22 @@ public class MarkdownService {
     /**
      * 将 HTML 字符串转换为 PDF 字节数组。
      *
-     * @param htmlContent HTML 内容（由前端 Vditor 渲染产生）。
+     * @param mdEditorContentPayloads HTML 内容，包含Styles（由前端 Vditor 渲染产生）。
      * @param baseUri     Base URI 用于解析相对资源路径（图片等）。
      * @param onMessage   信息提示回调（字体下载等）。
      * @param onError     错误提示回调。
      */
-    public byte[] convertHtmlToPdfBytes(String htmlContent, String baseUri,
+    public byte[] convertHtmlToPdfBytes(PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads, String baseUri,
                                         Consumer<String> onMessage, Consumer<String> onError) {
+        String htmlContent = mdEditorContentPayloads.html();
         final String safeBody = htmlContent == null ? "" : htmlContent;
         if (safeBody.isBlank()) {
-            if (log.isDebugEnabled()) log.debug("skip empty html content");
+            log.debug("skip empty html content");
             return new byte[0];
         }
 
         // 将 Vditor 的 HTML 片段包装成完整文档，并内联一份适用于 PDF 的样式
-        String fullHtml = buildHtmlForPdf(safeBody, onError);
+        String fullHtml = buildHtmlForPdf(mdEditorContentPayloads, onError);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             // HtmlConverter 仍然由 ItextHtmlConverter 管理，使用 DownloadEvent 在下层上报字体下载
             htmlConverter.convertToPdf(
@@ -66,7 +68,7 @@ public class MarkdownService {
      *
      * 方案B：尽可能复用 Vditor 的 CSS，让 PDF 的视觉接近编辑器预览。
      */
-    private String buildHtmlForPdf(String bodyFragment, Consumer<String> onError) {
+    private String buildHtmlForPdf(PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads, Consumer<String> onError) {
         String vditorCss = "";
         try {
             // 方案 B：直接复用打包进来的 vditor.bundle.css，使 PDF 更接近 Vditor 预览效果
@@ -90,9 +92,10 @@ public class MarkdownService {
                 "<html><head>" +
                 "<meta charset=\"utf-8\"/>" +
                 "<style>" + vditorCss + "</style>" +
+                "<style>" + mdEditorContentPayloads.styles() + "</style>" +
                 "</head><body>" +
                 "<div class=\"vditor-reset\">" +
-                bodyFragment +
+                mdEditorContentPayloads.html() +
                 "</div>" +
                 "</body></html>";
     }
@@ -118,12 +121,12 @@ public class MarkdownService {
      */
     public void insertPageFromHtml(String srcFile,
                                    String destFile,
-                                   String htmlContent,
+                                   PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads,
                                    int insertPos,
                                    String baseUri,
                                    Consumer<String> onMessage,
                                    Consumer<String> onError) throws IOException {
-        byte[] pdfPageBytes = convertHtmlToPdfBytes(htmlContent, baseUri, onMessage, onError);
+        byte[] pdfPageBytes = convertHtmlToPdfBytes(mdEditorContentPayloads, baseUri, onMessage, onError);
         pdfPageGenerator.generateAndInsertPage(
                 srcFile, destFile, pdfPageBytes, insertPos);
     }
