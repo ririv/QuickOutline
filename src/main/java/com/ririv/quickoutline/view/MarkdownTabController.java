@@ -1,5 +1,7 @@
 package com.ririv.quickoutline.view;
 
+import javafx.scene.control.Button;
+import javafx.event.ActionEvent;
 import com.ririv.quickoutline.service.MarkdownService;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import com.ririv.quickoutline.view.controls.message.Message;
@@ -45,6 +47,9 @@ public class MarkdownTabController {
     private VBox previewVBox;
     @FXML
     private TextField insertPosTextField;
+
+    @FXML
+    private Button previewButton;
 
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
@@ -145,15 +150,9 @@ public class MarkdownTabController {
                 // 这是“同步”调用！
                 // 这个线程会在这里被阻塞，直到 JS 回调
                 String json = bridge.getContentSync(webEngine);
-
                 log.debug("[JavaFX] 成功同步获取到 HTML！}");
-
                 // 成功！现在我们拿到了 html
-                if (json == null) json = "";
-                if (!json.equals(editorHtmlContent)) {
-                    log.debug("diff detected len={}", json.length());
-                    triggerPreviewIfChanged(json);
-                }
+                triggerPreviewIfChanged(json);
 
             } catch (Exception e) {
                 // 处理超时或 JS 错误
@@ -201,28 +200,11 @@ public class MarkdownTabController {
         }, "pdf-render-bg").start();
     }
 
-    
-
-    /**
-     * Sets the content of the Markdown editor.
-     * @param content The new markdown content.
-     */
-    public void setMarkdown(String content) {
-        Platform.runLater(() -> {
-            if (webEngine.getLoadWorker().getState() == Worker.State.SUCCEEDED) {
-                // Escape the content to be safely passed into a JavaScript string
-                String escapedContent = content.replace("\\", "\\\\")
-                                               .replace("'", "\\'")
-                                               .replace("\n", "\\n")
-                                               .replace("\r", "\\r");
-                webEngine.executeScript("window.setContent('" + escapedContent + "')");
-            }
-        });
-    }
-
     // 不再使用 JavaCallback：仅依赖 Java 侧轮询
 
     private void triggerPreviewIfChanged(String newContent) {
+        // 成功！现在我们拿到了 html
+        if (newContent == null) newContent = "";
         if (newContent.equals(editorHtmlContent)) {
             // unchanged: skip redundant render
             return;
@@ -358,5 +340,18 @@ public class MarkdownTabController {
             log.error("Insert image into markdown failed", e);
             eventBus.post(new ShowMessageEvent("Failed to insert image: " + e.getMessage(), Message.MessageType.ERROR));
         }
+    }
+
+
+    @FXML
+    void manualPreviewAction(ActionEvent event) {
+        new Thread(() -> {
+            try {
+                String json = bridge.getContentSync(webEngine);
+                triggerPreviewIfChanged(json);
+            } catch (Exception e) {
+                log.error("Manual preview failed: " + e.getMessage());
+            }
+        }).start();
     }
 }
