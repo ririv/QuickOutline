@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "node build.js",
+    "serve": "live-server ../src/main/resources/web --port=9000 --entry-file=editor.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +16,7 @@
   "devDependencies": {
     "esbuild": "^0.27.0",
     "esbuild-plugin-copy": "^2.1.1",
+    "live-server": "^1.2.0",
     "typescript": "^5.9.3"
   },
   "description": ""
