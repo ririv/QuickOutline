@@ -20,7 +20,7 @@ public class ItextHtmlConverter implements com.ririv.quickoutline.pdfProcess.Htm
                              Consumer<DownloadEvent> onEvent) {
         try {
             ConverterProperties properties = new ConverterProperties();
-            properties.setCssApplierFactory(new CustomCssApplierFactory());
+//            properties.setCssApplierFactory(new CustomCssApplierFactory());
             properties.setTagWorkerFactory(new CustomTagWorkerFactory());
 
             // 这里直接拿 FontProvider，不再用 Optional.ifPresent

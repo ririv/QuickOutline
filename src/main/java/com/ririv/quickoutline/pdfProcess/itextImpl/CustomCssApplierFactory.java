@@ -14,12 +14,6 @@ public class CustomCssApplierFactory extends DefaultCssApplierFactory {
 
     @Override
     public ICssApplier getCustomCssApplier(IElementNode tag) {
-        if (SvgConstants.Tags.SVG.equalsIgnoreCase(tag.name())
-                && tag.parentNode() instanceof IElementNode // Ensure parent is an IElementNode
-                && "mjx-container".equalsIgnoreCase(((IElementNode) tag.parentNode()).name())) { // Cast to IElementNode
-            log.info("Handling MathJax SVG with CustomSvgCssApplier.");
-            return new MjxSvgCssApplier(tag);
-        }
         if ("mjx-container".equalsIgnoreCase(tag.name())) {
             log.info("Handling mjx-container css with BlockCssApplier.");
             return new BlockCssApplier();

@@ -80,17 +80,10 @@ public static float parseRelativeValue(final String relativeValue, final float b
 
 **结论**：iText 的 `parseRelativeValue` 方法，完全正确地实现了 `1ex ≈ 0.5em` 这个标准的近似换算。
 
-### 3. 检查我们的实现是否正确
+### 3. 我们的实现
 
-现在，我们回头看我们在 `CustomSvgCssApplier` 中的实现：
+见 MjxSvgTagWorker
 
-1.  我们从 `stylesContainer` 中获取了 `font-size` 的字符串。
-2.  我们用 `CssDimensionParsingUtils.parseAbsoluteLength(fontSizeStr)` 将其转换为了一个 `float` 类型的 `emValue`（单位是 `pt`）。**这个 `emValue` 就是 `parseRelativeValue` 方法需要的 `baseValue`。**
-3.  我们从 SVG 节点上获取了 `widthStr`（例如 `"5.8ex"`）。
-4.  我们调用了 `CssDimensionParsingUtils.parseRelativeValue(widthStr, emValue)`。
+## 行内公式对齐处理
 
-**这个调用是 100% 正确的。**
-
-我们将正确的 `relativeValue`（`"5.8ex"`）和正确的 `baseValue`（`emValue`）传递给了 iText 自己的工具方法，让它为我们完成了 `ex` 到 `pt` 的精确换算。
-
-所以，我们的最终实现，不仅解决了问题，而且是在 iText 的框架内，使用了它自己的标准工具，以最优雅、最正确的方式完成的。
+MathJax 自定义的标签 `<mjx-container>` 使用 MjxContainerTagWorker 处理，继承自 SpanTagWorker。注意，如果不继承自 SpanTagWorker，那么 `<mjx-container>` 的内容默认会占一行。我之前的的问题就是，`<mjx-container>` 的内容默认会占一行，会在上面一行，但左边的文字会在下方一行，但文字和公式左右时衔接的（正确），上下也是衔接的（不正确，不在同一行）。
