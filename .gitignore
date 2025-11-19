@@ -32,6 +32,7 @@ nodejs/
 
 src/main/resources/web/vditor.bundle.js
 src/main/resources/web/vditor.bundle.css
+src/main/resources/web/vditor/dist
 
 
 /.idea/jsLibraryMappings.xml

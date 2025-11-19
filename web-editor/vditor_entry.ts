@@ -26,6 +26,7 @@ window.initVditor = function (initialMarkdown: string): Vditor | undefined {
     return;
   }
   vditorInstance = new Vditor('vditor', {
+    cdn: './vditor',
     height: '100%',
     width: '100%',
     mode: 'sv',
@@ -122,6 +123,7 @@ window.getContentHtml = async function (): Promise<string> {
   try {
     await Vditor.preview(element, mdText, {
       mode: "light",
+      cdn: './vditor',
       math: {
         engine: 'MathJax',
         mathJaxOptions: {
@@ -160,3 +162,6 @@ window.getPayloads = async function (): Promise<string> {
     return JSON.stringify({ html: '', styles: '' });
   }
 };
+
+
+window.initVditor('');
