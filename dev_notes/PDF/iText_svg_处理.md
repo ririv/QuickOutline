@@ -86,4 +86,89 @@ public static float parseRelativeValue(final String relativeValue, final float b
 
 ## 行内公式对齐处理
 
+### 行内处理
 MathJax 自定义的标签 `<mjx-container>` 使用 MjxContainerTagWorker 处理，继承自 SpanTagWorker。注意，如果不继承自 SpanTagWorker，那么 `<mjx-container>` 的内容默认会占一行。我之前的的问题就是，`<mjx-container>` 的内容默认会占一行，会在上面一行，但左边的文字会在下方一行，但文字和公式左右时衔接的（正确），上下也是衔接的（不正确，不在同一行）。
+
+### 垂直向下偏移处理
+MathJax 行内公式默认是垂直向下偏移的，这个偏移量在 style 属性中定义了，如 `vertical-align: -0.691ex;`。
+
+这个偏移量处理本该在 BlockCssApplier.apply() 中调用 VerticalAlignmentApplierUtil.applyVerticalAlignmentForBlocks(cssProps, container, isInlineItem(tagWorker));处理
+
+BlockCssApplier.java
+```java
+    private static boolean isInlineItem(ITagWorker tagWorker) {
+        return tagWorker instanceof SpanTagWorker ||
+                tagWorker instanceof ImgTagWorker;
+    }
+```
+
+VerticalAlignmentApplierUtil.java
+```java
+
+    /**
+     * Apply vertical alignment to inline elements.
+     *
+     * @param cssProps the CSS properties
+     * @param element the styles container
+     * @param isInlineTag whether the origin is a tag that defaults to inline
+     */
+    public static void applyVerticalAlignmentForBlocks(Map<String, String> cssProps, IPropertyContainer element,
+            boolean isInlineTag ) {
+        String display = cssProps.get(CssConstants.DISPLAY);
+        if (isInlineTag || CssConstants.INLINE_BLOCK.equals(display)) {
+            String vAlignVal = cssProps.get(CssConstants.VERTICAL_ALIGN);
+            if (CssConstants.MIDDLE.equals(vAlignVal)) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT,
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.MIDDLE));
+            } else if (CssConstants.BOTTOM.equals(vAlignVal)) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.BOTTOM));
+            } else if (CssConstants.TOP.equals(vAlignVal)) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.TOP));
+            } else if (CssConstants.TEXT_BOTTOM.equals(vAlignVal)) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.TEXT_BOTTOM));
+            } else if (CssConstants.TEXT_TOP.equals(vAlignVal)) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.TEXT_TOP));
+            } else if ( CssConstants.SUPER.equals((vAlignVal))) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.SUPER));
+            } else if ( CssConstants.SUB.equals((vAlignVal))) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.SUB));
+            } else if ( CssTypesValidationUtils.isPercentageValue(vAlignVal) ) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.FRACTION,
+                        CssDimensionParsingUtils.parseRelativeValue(vAlignVal,1)));
+            } else if ( CssTypesValidationUtils.isValidNumericValue(vAlignVal) ) {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.FIXED,
+                        CssDimensionParsingUtils.parseAbsoluteLength(vAlignVal)));
+            } else {
+                element.setProperty(Property.INLINE_VERTICAL_ALIGNMENT, 
+                        new InlineVerticalAlignment(InlineVerticalAlignmentType.BASELINE));
+            }
+        }
+    }
+```
+
+首先目前的 `isInlineTag` 没处理 svg tag 为 false，其次 display 为没设置，所以为 `null`，不满足条件。
+
+此外，即使满足了条件进入了 `if ( CssTypesValidationUtils.isValidNumericValue(vAlignVal)`
+这里也只调用了 `CssDimensionParsingUtils.parseAbsoluteLength(vAlignVal)` ，没法处理 ex 单位的方法。
+
+修复
+错误 1
+`svgImage.setRelativePosition(0, 0, 0, offsetPt);`
+这个会修复偏移，但底部会截断
+
+错误 2
+`svgImage.setProperty(com.itextpdf.layout.properties.Property.TEXT_RISE, offsetPt);`
+这个不起作用
+
+正确
+`svgImage.setProperty(com.itextpdf.layout.properties.Property.INLINE_VERTICAL_ALIGNMENT, new InlineVerticalAlignment(InlineVerticalAlignmentType.FIXED, offsetPt));`
+
+注意offset值为负数
