@@ -74,31 +74,6 @@ window.setContent = function (markdown: string): void {
 };
 
 
-let resetMathjaxSvgActualSize = function (element: HTMLElement): void {
-    element.style.position = 'absolute';
-    element.style.top = '-9999px';
-    element.style.left = '-9999px';
-    element.style.visibility = 'hidden';
-    document.body.appendChild(element);
-
-    const mjxContainers = element.querySelectorAll('mjx-container');
-    if (mjxContainers.length > 0) {
-      for (const mjxContainer of mjxContainers) {
-        const svgElements = mjxContainer.querySelectorAll('svg');
-        console.log('[Vditor] allSvgParagraphs', svgElements);
-        const svgElement = svgElements[0];
-        if (svgElement) { // Ensure svgElement exists
-          const preciseHeight = svgElement.getBoundingClientRect().height;
-          const preciseWidth = svgElement.getBoundingClientRect().width;
-          console.log('[Vditor] svgElement', svgElement);
-          svgElement.setAttribute('width', preciseWidth + 'px');
-          svgElement.setAttribute('height', preciseHeight + 'px');
-        }
-      }
-    }
-    document.body.removeChild(element); // Clean up the temporary element
-}
-
 
 window.insertImageMarkdown = function (relativePath: string): void {
   if (!vditorInstance) return;
@@ -117,8 +92,6 @@ window.getContentHtml = async function (): Promise<string> {
 
   const element = document.createElement('div');
   element.setAttribute('id', 'preview');
-
-
 
   try {
     await Vditor.preview(element, mdText, {
@@ -145,6 +118,51 @@ window.getContentHtml = async function (): Promise<string> {
     return '';
   }
 };
+
+
+let resetMathjaxSvgActualSize = function (element: HTMLElement): void {
+  element.style.position = 'absolute';
+  element.style.top = '-9999px';
+  element.style.left = '-9999px';
+  element.style.visibility = 'hidden';
+  document.body.appendChild(element);
+
+  const mjxContainers = element.querySelectorAll('mjx-container');
+  if (mjxContainers.length > 0) {
+    for (const mjxContainer of mjxContainers) {
+      const svgElements = mjxContainer.querySelectorAll('svg');
+      console.log('[Vditor] allSvgParagraphs', svgElements);
+      const svgElement = svgElements[0];
+      if (svgElement) { // Ensure svgElement exists
+        console.log('[Vditor] svgElement', svgElement);
+
+        const rect = svgElement.getBoundingClientRect();
+        const computedStyle = window.getComputedStyle(svgElement);
+
+        // 拿到数据
+
+        // 没有带单位，但单位是px，需要补上 px
+        const rectWidth = rect.width + 'px';
+        const rectHeight = rect.height + 'px';
+
+        // 带了 px 单位
+        const cssWidth = computedStyle.width
+        const cssHeight = computedStyle.height
+        if (cssWidth && cssWidth.includes('px')) {
+          svgElement.setAttribute('width', cssWidth);
+          svgElement.style.width = cssWidth; // 双重保险
+        }
+
+        if (cssHeight && cssHeight.includes('px')) {
+          svgElement.setAttribute('height', cssHeight);
+          svgElement.style.height = cssHeight;
+        }
+      }
+
+    }
+  }
+  document.body.removeChild(element); // Clean up
+}
 
 
 window.getMathJaxStyles = function (): string {
