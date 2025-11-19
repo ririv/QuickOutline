@@ -111,7 +111,7 @@ public class MarkdownTabController {
                 window.setMember("javaBridge", bridge); // "javaBridge" 是 JS 中的名字
 
                 // 启动轻量轮询作为兜底，确保回调偶发丢失时仍能抓到变更
-                startContentPoller();
+//                startContentPoller();
             }
         });
 
@@ -256,10 +256,67 @@ public class MarkdownTabController {
     }
 
 
+    private void savePreviewAsNewPdf() {
+        new Thread(() -> {
+            try {
+                // 1. Get latest content from editor
+                String json = bridge.getContentSync(webEngine);
+                PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(json);
+                if (mdEditorContentPayloads.html() == null || mdEditorContentPayloads.html().isBlank()) {
+                    Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Markdown content is empty.", Message.MessageType.WARNING)));
+                    return;
+                }
+
+                // 2. Convert HTML to PDF bytes
+                Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+                Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+                byte[] pdfBytes = markdownService.convertHtmlToPdfBytes(mdEditorContentPayloads, null, onMessage, onError); // baseUri is null
+
+                if (pdfBytes == null || pdfBytes.length == 0) {
+                    Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to generate PDF from Markdown.", Message.MessageType.ERROR)));
+                    return;
+                }
+
+                // 3. Show FileChooser to get save path
+                Platform.runLater(() -> {
+                    javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+                    fileChooser.setTitle("Save New PDF");
+                    fileChooser.getExtensionFilters().add(
+                            new javafx.stage.FileChooser.ExtensionFilter("PDF Files", "*.pdf")
+                    );
+                    fileChooser.setInitialFileName("Untitled.pdf");
+                    java.io.File file = fileChooser.showSaveDialog(webView.getScene().getWindow());
+
+                    if (file != null) {
+                        // 4. Save the file in a background thread
+                        new Thread(() -> {
+                            try {
+                                Files.write(file.toPath(), pdfBytes);
+                                Platform.runLater(() -> {
+                                    eventBus.post(new ShowMessageEvent("Successfully saved new PDF to " + file.getAbsolutePath(), Message.MessageType.SUCCESS));
+                                    // TODO: Optionally, post an event to open this new file
+                                    // eventBus.post(new OpenFileEvent(file));
+                                });
+                            } catch (IOException e) {
+                                log.error("Failed to save new PDF file", e);
+                                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to save file: " + e.getMessage(), Message.MessageType.ERROR)));
+                            }
+                        }, "save-new-pdf-io").start();
+                    }
+                });
+
+            } catch (Exception e) {
+                log.error("Failed to save preview as new PDF", e);
+                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("An error occurred: " + e.getMessage(), Message.MessageType.ERROR)));
+            }
+        }, "save-new-pdf").start();
+    }
+
+
     @FXML
     void renderToPdfAction() {
         if (currentFileState.getSrcFile() == null) {
-            eventBus.post(new ShowMessageEvent("Please select a source PDF file first.", Message.MessageType.WARNING));
+            savePreviewAsNewPdf();
             return;
         }
         new Thread(() -> {
