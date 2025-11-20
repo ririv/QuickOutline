@@ -118,6 +118,10 @@ def args = [
     '-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox.rendering.GlyphCache=error',
     // 屏蔽PDFBox fontbox的字符串命令警告
     '-Dorg.slf4j.simpleLogger.log.org.apache.fontbox.cff.Type1CharString=error',
+    // 【新增】屏蔽 @keyframes 不支持的错误日志
+    // 将其级别设置为 OFF (完全关闭) 或者 FATAL (只有崩溃才报)
+    // 注意：类名必须完全匹配报错信息中的类名
+    '-Dorg.slf4j.simpleLogger.log.com.itextpdf.styledxmlparser.css.parse.syntax.CssParserStateController=OFF',
     // https://github.com/openjdk/jfx/blob/jfx25/doc-files/release-notes-24.md#javafx-applications-must-use---enable-native-access
     '--enable-native-access=javafx.graphics,javafx.web',
     '-Djavafx.enablePreview=true'

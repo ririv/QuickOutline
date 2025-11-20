@@ -7,6 +7,7 @@ module quickoutline {
 //    requires java.validation;
     requires javafx.swing;
     requires org.slf4j;
+    requires org.slf4j.simple; // jpackage 后没有这个会不写日志
     requires org.apache.commons.logging;
 
     // itext
