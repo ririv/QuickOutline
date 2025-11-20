@@ -4,8 +4,12 @@ module quickoutline {
     requires java.desktop;
     requires javafx.web;
     requires jdk.jsobject;
+    requires jdk.xml.dom;
 //    requires java.validation;
     requires javafx.swing;
+    requires jdk.httpserver;
+    requires jakarta.inject;
+
     requires org.slf4j;
     requires org.slf4j.simple; // jpackage 后没有这个会不写日志
     requires org.apache.commons.logging;
@@ -15,33 +19,31 @@ module quickoutline {
     requires layout;
     requires io;
     requires font.asian;
+    requires html2pdf;
+    requires commons;
+    requires svg;
+    requires styled.xml.parser;
 
 //    requires bouncy.castle.adapter;
 //    requires bouncy.castle.connector;
 //    requires org.bouncycastle.provider;
+//    requires org.bouncycastle.util;
     requires org.bouncycastle.pkix;
-    requires org.apache.pdfbox;
-    requires com.google.guice;
-    requires jakarta.inject;
+
+    requires xml.apis.ext;
+
 //    requires openai.java.core;
 //    requires openai.java.client.okhttp;
+
+    requires com.google.guice;
     requires com.google.common;
-    requires org.commonmark;
-    requires org.commonmark.ext.gfm.tables;
-    requires html2pdf;
-    requires commons;
-    requires xml.apis.ext;
-    requires jdk.xml.dom;
+    requires com.google.gson;
+
+    requires org.apache.pdfbox;
     requires org.apache.xmlgraphics.batik.svgdom;
     requires org.apache.xmlgraphics.batik.util;
     requires org.apache.xmlgraphics.batik.anim;
-    requires styled.xml.parser;
     requires org.apache.xmlgraphics.batik.transcoder;
-    requires com.google.gson;
-    requires svg;
-    requires jdk.httpserver;
-
-//    requires org.bouncycastle.util;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
     opens com.ririv.quickoutline.service to com.google.guice;

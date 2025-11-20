@@ -88,10 +88,6 @@ dependencies {
         exclude group: 'xml-apis', module: 'xml-apis'
     }
 
-    // Commonmark for Markdown processing
-    implementation 'org.commonmark:commonmark:0.27.0'
-    implementation 'org.commonmark:commonmark-ext-gfm-tables:0.27.0' // For table support
-
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.14.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.14.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.14.0'
@@ -219,7 +215,6 @@ node {
 // Make processResources depend on the npm_run_build task provided by the node-gradle plugin
 processResources.dependsOn 'npm_run_build'
 
-// ... (rest of the build.gradle file) ...
 
 test {
     useJUnitPlatform()
