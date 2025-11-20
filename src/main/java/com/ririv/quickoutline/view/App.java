@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.ririv.quickoutline.di.AppModule;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
+import com.ririv.quickoutline.view.state.CurrentFileState;
 import com.ririv.quickoutline.view.utils.LocalizationManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -11,16 +12,22 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 
 public class App extends Application {
 
     private Injector injector;
+
+    private MainController mainController; // 你需要持有主控制器的引用
+
+    private static final Logger logger = getLogger(App.class);
 
     @Override
     public void init() {
@@ -40,6 +47,7 @@ public class App extends Application {
             fxmlLoader.setControllerFactory(injector::getInstance);
 
             Parent root = fxmlLoader.load();
+            this.mainController = fxmlLoader.getController();
 
             Scene scene = new Scene(root, 1280, 800);
 
@@ -56,20 +64,42 @@ public class App extends Application {
 
     @Override
     public void stop() throws Exception {
-        // 获取 SyncWithExternalEditorService 实例并调用 shutdown
-        SyncWithExternalEditorService editorService = injector.getInstance(SyncWithExternalEditorService.class);
-        if (editorService != null) {
-            editorService.shutdown();
-        }
-        // 主动释放当前文件会话资源（PDDocument/渲染线程等）
-        try {
-            com.ririv.quickoutline.view.state.CurrentFileState currentFileState = injector.getInstance(com.ririv.quickoutline.view.state.CurrentFileState.class);
-            if (currentFileState != null) {
-                currentFileState.close();
+        logger.info("Application stopping...");
+
+        // 1. 【新增】关闭主控制器 (触发 MarkdownTabController -> LocalWebServer 的关闭)
+        if (mainController != null) {
+            try {
+                mainController.dispose();
+            } catch (Exception e) {
+                logger.error("Failed to dispose MainController", e);
             }
-        } catch (Exception ignore) {
         }
-        super.stop(); // 调用父类的 stop 方法
+
+        // 2. 关闭外部编辑器同步服务
+        if (injector != null) {
+            try {
+                SyncWithExternalEditorService editorService = injector.getInstance(SyncWithExternalEditorService.class);
+                if (editorService != null) {
+                    editorService.shutdown();
+                }
+            } catch (Exception ignore) {}
+
+            // 3. 释放文件会话资源
+            try {
+                CurrentFileState currentFileState = injector.getInstance(com.ririv.quickoutline.view.state.CurrentFileState.class);
+                if (currentFileState != null) {
+                    currentFileState.close();
+                }
+            } catch (Exception ignore) {}
+        }
+
+        super.stop();
+
+        logger.info("JVM Force Exit.");
+
+        // 【核心代码】 0 表示正常退出
+        // 这行代码会强制杀死所有残留线程（包括 WebServer 的线程），彻底关闭程序
+         System.exit(0);
     }
 
 

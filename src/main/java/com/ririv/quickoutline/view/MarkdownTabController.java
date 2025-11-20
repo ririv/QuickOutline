@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.utils.LocalWebServer;
 import javafx.scene.control.Button;
 import javafx.event.ActionEvent;
 import com.ririv.quickoutline.service.MarkdownService;
@@ -60,6 +61,8 @@ public class MarkdownTabController {
     private TrailingThrottlePreviewer<String, byte[]> previewer;
     private ScheduledExecutorService contentPoller;
 
+    private LocalWebServer webServer;
+
     JsBridge bridge = new JsBridge();
 
     @Inject
@@ -69,59 +72,86 @@ public class MarkdownTabController {
         this.markdownService = markdownService;
     }
 
+
     @FXML
     public void initialize() {
         log.debug("Controller initialize start");
+
+        // 1. 初始化 PDF 预览生成器 (Previewer)
+        setupPreviewer();
+
+        // 2. 配置 WebView 的基础设置和监听器 (JSBridge)
+        setupWebViewConfig();
+
+        // 3. 配置输入框格式化
+        setupInputFields();
+
+        // 4. 【核心】启动本地服务器并加载编辑器
+        loadEditor();
+
+        log.debug("Controller initialize complete");
+    }
+
+    /**
+     * 1. 初始化预览节流器 (TrailingThrottlePreviewer)
+     * 负责处理 Markdown -> HTML -> PDF 的转换逻辑
+     */
+    private void setupPreviewer() {
         final int PREVIEW_THROTTLE_MS = 250; // 节流延迟：在持续输入下确保周期性更新
 
-        // --- Previewer Setup ---
         Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
         Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
         // 使用 TrailingThrottlePreviewer：每次执行时动态读取当前 srcFile，确保 baseUri 始终与当前源 PDF 目录一致
         this.previewer = new TrailingThrottlePreviewer<>(PREVIEW_THROTTLE_MS,
-            htmlContent -> {
-                String baseUri = null;
-                try {
-                    if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
-                        baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
+                htmlContent -> {
+                    String baseUri = null;
+                    try {
+                        // 动态获取当前 PDF 所在的父目录作为 Base URI
+                        if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
+                            baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
+                        }
+                        log.info("[Preview] dynamic baseUri={}", baseUri);
+                    } catch (Exception ex) {
+                        log.warn("[Preview] failed to compute baseUri", ex);
                     }
-                    log.info("[Preview] dynamic baseUri={}", baseUri);
-                } catch (Exception ex) {
-                    log.warn("[Preview] failed to compute baseUri", ex);
-                }
-                PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(htmlContent);
-                return markdownService.convertHtmlToPdfBytes(mdEditorContentPayloads, baseUri, onMessage, onError);
-            },
-            this::updatePreviewUI,
-            e -> onError.accept("PDF preview failed: " + e.getMessage()));
 
-        // --- WebView Setup ---
+                    PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(htmlContent);
+                    return markdownService.convertHtmlToPdfBytes(mdEditorContentPayloads, baseUri, onMessage, onError);
+                },
+                this::updatePreviewUI, // 成功回调
+                e -> onError.accept("PDF preview failed: " + e.getMessage()) // 失败回调
+        );
+    }
+
+    /**
+     * 2. 配置 WebView 引擎和状态监听
+     * 负责注入 JSBridge
+     */
+    private void setupWebViewConfig() {
         webEngine = webView.getEngine();
         webEngine.setJavaScriptEnabled(true);
 
-        final URL url = getClass().getResource("/web/editor.html");
-
-        // --- WebView ready ---
+        // 监听加载状态，注入 Java 对象
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
                 log.info("WebView load succeeded");
-
                 JSObject window = (JSObject) webEngine.executeScript("window");
-                window.setMember("javaBridge", bridge); // "javaBridge" 是 JS 中的名字
+                window.setMember("javaBridge", bridge);
 
                 // 启动轻量轮询作为兜底，确保回调偶发丢失时仍能抓到变更
 //                startContentPoller();
+            } else if (newState == Worker.State.FAILED) {
+                log.error("WebView load failed");
             }
         });
+    }
 
-        if (url != null) {
-            webEngine.load(url.toExternalForm());
-        } else {
-            log.error("Failed to load editor.html resource");
-        }
-
-        // --- Input Field Setup ---
+    /**
+     * 3. 配置输入框
+     * 限制只能输入数字
+     */
+    private void setupInputFields() {
         UnaryOperator<TextFormatter.Change> integerFilter = change -> {
             String newText = change.getControlNewText();
             if (newText.matches("[0-9]*")) {
@@ -131,7 +161,63 @@ public class MarkdownTabController {
         };
         insertPosTextField.setTextFormatter(new TextFormatter<>(integerFilter));
         insertPosTextField.setText("1");
-    log.debug("Controller initialize complete");
+    }
+
+    /**
+     * 4. 【核心修改】启动本地 WebServer 并加载页面
+     * 替代了原先的 getClass().getResource() 方式，完美解决 jpackage 下的资源路径问题
+     */
+    private void loadEditor() {
+        String urlToLoad = null;
+        try {
+            // 初始化本地服务器
+            webServer = new com.ririv.quickoutline.utils.LocalWebServer();
+
+            // 启动服务器，根目录指向 classpath 下的 /web 文件夹
+            webServer.start("/web");
+
+            // 获取 http://127.0.0.1:端口/editor.html
+            urlToLoad = webServer.getBaseUrl() + "editor.html";
+            log.info("Local WebServer started. Loading: {}", urlToLoad);
+
+        } catch (Exception e) {
+            log.error("Failed to start LocalWebServer", e);
+
+            // 兜底策略：如果端口被占用或启动失败，回退到 IDE 模式的直接加载
+            // 注意：这在打包后可能无法正常显示图标，但至少能显示编辑器
+            URL fallback = getClass().getResource("/web/editor.html");
+            if (fallback != null) {
+                urlToLoad = fallback.toExternalForm();
+                log.warn("Falling back to classpath loading: {}", urlToLoad);
+            }
+        }
+
+        if (urlToLoad != null) {
+            webEngine.load(urlToLoad);
+        } else {
+            log.error("FATAL: Could not determine editor URL!");
+            eventBus.post(new ShowMessageEvent("Failed to load editor resources.", Message.MessageType.ERROR));
+        }
+    }
+
+    // 【重要】请确保在 Controller 销毁或 Tab 关闭时调用此方法
+    public void dispose() {
+
+        // 1. 关闭 WebServer
+        if (webServer != null) {
+            webServer.stop();
+            webServer = null;
+        }
+
+        // 2. 关闭轮询线程 (如果有)
+        if (contentPoller != null && !contentPoller.isShutdown()) {
+            contentPoller.shutdownNow();
+        }
+
+        // 3. 清理 WebView (可选，防止内存泄漏)
+        if (webView != null) {
+            webView.getEngine().load(null);
+        }
     }
 
     private void startContentPoller() {

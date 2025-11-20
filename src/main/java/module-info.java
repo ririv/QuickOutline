@@ -39,6 +39,7 @@ module quickoutline {
     requires org.apache.xmlgraphics.batik.transcoder;
     requires com.google.gson;
     requires svg;
+    requires jdk.httpserver;
 
 //    requires org.bouncycastle.util;
 

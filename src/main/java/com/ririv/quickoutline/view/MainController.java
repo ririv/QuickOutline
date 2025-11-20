@@ -63,6 +63,14 @@ public class MainController {
     @FXML
     private Node markdownTabView;
 
+
+//    命名规则 必须 是：<fx:id> + "Controller"。
+//    因为你现有的 Node 叫 markdownTabView，
+//    所以 Controller 的字段名必须叫 markdownTabViewController。
+    @FXML
+    private MarkdownTabController markdownTabViewController;
+
+
     public enum FnTab {
         bookmark, toc, setting, label, preview, tocGenerator, markdown
     }
@@ -176,6 +184,16 @@ public class MainController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void dispose() {
+        // 调用子组件的 dispose
+        if (markdownTabViewController != null) {
+            markdownTabViewController.dispose();
+        }
+
+        // 如果是多标签：
+        // for (var controller : tabControllers) { controller.dispose(); }
     }
     
 }
