@@ -17,9 +17,7 @@
     <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
         <WebView fx:id="webView"/>
         <StackPane>
-            <ScrollPane fitToWidth="true">
-                <VBox fx:id="previewVBox" alignment="TOP_CENTER" spacing="5"/>
-            </ScrollPane>
+            <WebView fx:id="previewWebView" minWidth="200" prefWidth="500" />
             <Button fx:id="previewButton" onAction="#manualPreviewAction" styleClass="graph-button, graph-button-basic" StackPane.alignment="BOTTOM_RIGHT">
                 <graphic>
                     <RefreshIcon prefWidth="15" prefHeight="15" />

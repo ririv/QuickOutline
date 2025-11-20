@@ -4,8 +4,10 @@ import javafx.scene.web.WebEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JsBridge {
 
@@ -71,5 +73,21 @@ public class JsBridge {
             logger.error("获取 HTML 失败 (超时或 JS 异常)");
             throw e;
         }
+    }
+
+    // 用来存放最新的 PDF Base64 字符串
+    private final AtomicReference<String> currentPdfBase64 = new AtomicReference<>("");
+
+    // Java 端调用：更新数据
+    public void setPdfData(byte[] pdfBytes) {
+        if (pdfBytes != null) {
+            this.currentPdfBase64.set(Base64.getEncoder().encodeToString(pdfBytes));
+        }
+    }
+
+    // JS 端调用：获取数据
+    // 注意：方法必须是 public
+    public String getPdfData() {
+        return currentPdfBase64.get();
     }
 }

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "prebuild": "node download-pdfjs.mjs",
     "build": "node build.js",
     "serve": "live-server ../src/main/resources/web --port=9000 --entry-file=editor.html",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,6 +15,7 @@
     "vditor": "^3.11.2"
   },
   "devDependencies": {
+    "download": "^8.0.0",
     "esbuild": "^0.27.0",
     "esbuild-plugin-copy": "^2.1.1",
     "live-server": "^1.2.0",

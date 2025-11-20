@@ -3,4 +3,9 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="21" />
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="QuickOutline.main" options="--add-exports javafx.web/com.sun.javafx.webkit=quickoutline" />
+    </option>
+  </component>
 </project>

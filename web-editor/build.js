@@ -49,6 +49,10 @@ esbuild.build({
                     from: './node_modules/vditor/dist/js/mathjax/input/**/*',
                     to: 'vditor/dist/js/mathjax/input/[path][name].[ext]'
                 },
+                {
+                    from: './assets/pdfjs/**/*',
+                    to: 'pdfjs'
+                },
             ],
             verbose: false // 关掉 verbose，因为 highlight.js 文件太多刷屏
         }),

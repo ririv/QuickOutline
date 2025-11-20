@@ -119,7 +119,7 @@ def args = [
     // 注意：类名必须完全匹配报错信息中的类名
     '-Dorg.slf4j.simpleLogger.log.com.itextpdf.styledxmlparser.css.parse.syntax.CssParserStateController=OFF',
     // https://github.com/openjdk/jfx/blob/jfx25/doc-files/release-notes-24.md#javafx-applications-must-use---enable-native-access
-    '--enable-native-access=javafx.graphics,javafx.web',
+    '--enable-native-access=javafx.graphics,javafx.web,javafx.media',
     '-Djavafx.enablePreview=true'
 ]
 
