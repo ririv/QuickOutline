@@ -86,4 +86,6 @@ module quickoutline {
     opens com.ririv.quickoutline.view.utils to com.google.guice, javafx.fxml, javafx.graphics;
     exports com.ririv.quickoutline.view.icons;
     opens com.ririv.quickoutline.utils to com.google.guice, javafx.fxml, javafx.graphics;
+    exports com.ririv.quickoutline.service.webserver;
+    opens com.ririv.quickoutline.service.webserver to com.google.guice, javafx.fxml, javafx.graphics;
 }

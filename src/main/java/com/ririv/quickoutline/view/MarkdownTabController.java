@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.utils.LocalWebServer;
+import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import javafx.scene.control.Button;
 import javafx.event.ActionEvent;
 import com.ririv.quickoutline.service.MarkdownService;
@@ -164,39 +164,64 @@ public class MarkdownTabController {
     }
 
     /**
-     * 4. 【核心修改】启动本地 WebServer 并加载页面
-     * 替代了原先的 getClass().getResource() 方式，完美解决 jpackage 下的资源路径问题
+     * 加载编辑器 HTML 资源。
+     * <p>
+     * 采用降级策略以兼容不同的运行环境：
+     * 1. 优先使用 LocalWebServer (HTTP协议): 完美解决 jpackage 打包后 WebView 对 jar/jrt 协议及相对路径支持不佳的问题。
+     * 2. 降级使用 Classpath 加载 (file/jar协议): 用于开发环境 (IDE) 或服务器启动失败时的兜底。
      */
     private void loadEditor() {
         String urlToLoad = null;
-        try {
-            // 初始化本地服务器
-            webServer = new com.ririv.quickoutline.utils.LocalWebServer();
 
-            // 启动服务器，根目录指向 classpath 下的 /web 文件夹
+        // ---------------------------------------------------------
+        // 策略 1 (首选): 启动本地 HTTP 服务器
+        // ---------------------------------------------------------
+        try {
+            // 懒加载服务器实例
+            if (webServer == null) {
+                webServer = new LocalWebServer();
+            }
+
+            // 启动服务器，映射 Classpath 下的 /web 目录
+            // 这一步在 jar 包环境中也能完美工作，直接读取 jar 内资源流
             webServer.start("/web");
 
-            // 获取 http://127.0.0.1:端口/editor.html
+            // 获取本地回环地址，例如 http://127.0.0.1:54321/editor.html
             urlToLoad = webServer.getBaseUrl() + "editor.html";
-            log.info("Local WebServer started. Loading: {}", urlToLoad);
+            log.info("[Load Strategy 1] Local WebServer started successfully. URL: {}", urlToLoad);
 
         } catch (Exception e) {
-            log.error("Failed to start LocalWebServer", e);
-
-            // 兜底策略：如果端口被占用或启动失败，回退到 IDE 模式的直接加载
-            // 注意：这在打包后可能无法正常显示图标，但至少能显示编辑器
-            URL fallback = getClass().getResource("/web/editor.html");
-            if (fallback != null) {
-                urlToLoad = fallback.toExternalForm();
-                log.warn("Falling back to classpath loading: {}", urlToLoad);
+            log.error("[Load Strategy 1] Failed to start LocalWebServer. Trying fallback...", e);
+            // 如果启动失败（极罕见，如端口耗尽），确保停止以释放资源
+            if (webServer != null) {
+                webServer.stop();
             }
         }
 
+        // ---------------------------------------------------------
+        // 策略 2 (兜底): 直接从 Classpath 加载
+        // ---------------------------------------------------------
+        if (urlToLoad == null) {
+            // 这种情况通常发生在 IDE 开发环境中，或者服务器启动意外失败
+            URL resource = getClass().getResource("/web/editor.html");
+            if (resource != null) {
+                urlToLoad = resource.toExternalForm();
+                log.warn("[Load Strategy 2] Falling back to direct Classpath loading. " +
+                        "Note: Icons/MathJax might fail in jpackage environment. URL: {}", urlToLoad);
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 执行加载
+        // ---------------------------------------------------------
         if (urlToLoad != null) {
+            log.info("WebView loading: {}", urlToLoad);
             webEngine.load(urlToLoad);
         } else {
-            log.error("FATAL: Could not determine editor URL!");
-            eventBus.post(new ShowMessageEvent("Failed to load editor resources.", Message.MessageType.ERROR));
+            // 致命错误：找不到资源文件
+            String errorMsg = "FATAL: Could not find 'editor.html' in resources!";
+            log.error(errorMsg);
+            eventBus.post(new ShowMessageEvent("Failed to load editor resources. Please check logs.", Message.MessageType.ERROR));
         }
     }
 

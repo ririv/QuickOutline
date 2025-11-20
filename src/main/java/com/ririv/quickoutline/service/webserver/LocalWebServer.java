@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.utils;
+package com.ririv.quickoutline.service.webserver;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
