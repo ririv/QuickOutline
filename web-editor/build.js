@@ -37,8 +37,13 @@ esbuild.build({
                 // 4. 【代码高亮】(修复了 EISDIR 错误)
                 // 使用 [path][name].[ext] 告诉插件保留原始目录结构
                 {
-                    from: './node_modules/vditor/dist/js/highlight.js/**/*',
-                    to: 'vditor/dist/js/highlight.js/[path][name].[ext]'
+                    from: './node_modules/vditor/dist/js/highlight.js/*',
+                    to: 'vditor/dist/js/highlight.js/[name].[ext]'
+                },
+                // 2. 显式拷贝 styles 文件夹
+                {
+                    from: './node_modules/vditor/dist/js/highlight.js/styles/*',
+                    to: 'vditor/dist/js/highlight.js/styles/[name].[ext]'
                 },
 
                 // 5. 【MathJax】(根据你之前的目录结构)

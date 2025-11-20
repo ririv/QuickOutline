@@ -84,6 +84,7 @@ dependencies {
     implementation "com.itextpdf:html2pdf:6.2.1"
 
     // Apache Batik for SVG rendering
+    implementation 'de.rototor.pdfbox:graphics2d:3.0.1'
     implementation('org.apache.xmlgraphics:batik-transcoder:1.19') {
         exclude group: 'xml-apis', module: 'xml-apis'
     }

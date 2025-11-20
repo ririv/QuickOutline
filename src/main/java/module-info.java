@@ -44,6 +44,9 @@ module quickoutline {
     requires org.apache.xmlgraphics.batik.util;
     requires org.apache.xmlgraphics.batik.anim;
     requires org.apache.xmlgraphics.batik.transcoder;
+    requires org.apache.xmlgraphics.batik.svggen;
+    requires de.rototor.pdfbox.graphics2d;
+    requires org.apache.xmlgraphics.batik.dom;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
     opens com.ririv.quickoutline.service to com.google.guice;

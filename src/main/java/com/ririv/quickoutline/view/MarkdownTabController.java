@@ -1,6 +1,8 @@
 package com.ririv.quickoutline.view;
 
+import com.google.gson.Gson;
 import com.ririv.quickoutline.service.MarkdownService;
+import com.ririv.quickoutline.service.PdfSvgService;
 import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import com.ririv.quickoutline.view.controls.message.Message;
@@ -148,16 +150,17 @@ public class MarkdownTabController {
                 window.setMember("javaBridge", bridge);
 
                 // 如果需要轮询兜底，可在此处启动
-//                 startContentPoller();
+                 startContentPoller();
             } else if (newState == Worker.State.FAILED) {
                 log.error("Editor WebView load failed");
             }
         });
     }
 
-    /**
-     * 3. 配置 预览 WebView
-     */
+    public class DebugBridge {
+        public void log(String msg) { log.info("[SVG-JS] {}", msg); }
+        public void error(String msg) { log.error("[SVG-JS Error] {}", msg); }
+    }
     /**
      * 3. 配置 预览 WebView
      * 包含 CSS 注入(隐藏进度条) 和 JS 注入(保持滚动位置)
@@ -168,84 +171,16 @@ public class MarkdownTabController {
             previewWebEngine.setJavaScriptEnabled(true);
             previewWebView.setContextMenuEnabled(false);
 
-            File pdfFile = new File("path/to/your.pdf");
-            previewWebEngine.load(pdfFile.toURI().toString());
-
+            // 监听加载状态
             previewWebEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
                 if (newState == Worker.State.SUCCEEDED) {
+                    // 注入调试桥
+                    JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                    window.setMember("debugBridge", new DebugBridge());
 
-                    // 1. CSS 优化 (保持不变，隐藏多余元素)
-                    String css =
-                            "#loadingBar { display: none !important; }" +
-                                    ".loadingIcon { display: none !important; }" +
-                                    "#errorWrapper { display: none !important; }";
-                    previewWebEngine.executeScript(
-                            "var style = document.createElement('style');" +
-                                    "style.innerHTML = '" + css + "';" +
-                                    "document.head.appendChild(style);"
-                    );
-
-                    // 2. 【核心优化】带"高度锁定"的 JS 加载器
-                    String jsGlue =
-                            "window.fetchAndReloadPdf = async function(url) {" +
-                                    "  var app = window.PDFViewerApplication;" +
-                                    "  if (!app) return;" +
-                                    "  " +
-                                    "  var container = document.getElementById('viewerContainer');" +
-                                    "  var currentScrollTop = container ? container.scrollTop : 0;" +
-                                    "  var currentScrollLeft = container ? container.scrollLeft : 0;" +
-                                    "  " +
-                                    "  // --- [步骤 A] 视觉冻结 --- " +
-                                    "  // 强行锁定容器高度，防止 PDF 销毁时页面塌陷导致闪烁" +
-                                    "  if (container) {" +
-                                    "      container.style.minHeight = container.clientHeight + 'px';" +
-                                    "      // 临时禁止滚动，防止渲染期间画面乱跳" +
-                                    "      container.style.overflow = 'hidden';" +
-                                    "  }" +
-                                    "  " +
-                                    "  try {" +
-                                    "    const response = await fetch(url);" +
-                                    "    const buffer = await response.arrayBuffer();" +
-                                    "    const data = new Uint8Array(buffer);" +
-                                    "    " +
-                                    "    // --- [步骤 B] 定义恢复回调 ---" +
-                                    "    // 监听 'pagesinit' 事件，这是页面结构重建完成的最早时刻" +
-                                    "    var restoreVisuals = function() {" +
-                                    "       // 恢复滚动位置" +
-                                    "       if (container) {" +
-                                    "           container.scrollTop = currentScrollTop;" +
-                                    "           container.scrollLeft = currentScrollLeft;" +
-                                    "           " +
-                                    "           // 解锁高度和滚动 (稍微延迟一点点，确保渲染引擎跟上)" +
-                                    "           setTimeout(function() {" +
-                                    "               container.style.minHeight = '';" +
-                                    "               container.style.overflow = 'auto';" +
-                                    "           }, 50);" + // 50ms 的肉眼不可见延迟，平滑过渡
-                                    "       }" +
-                                    "       app.eventBus.off('pagesinit', restoreVisuals);" +
-                                    "    };" +
-                                    "    " +
-                                    "    app.eventBus.on('pagesinit', restoreVisuals);" +
-                                    "    " +
-                                    "    // --- [步骤 C] 渲染数据 ---" +
-                                    "    // 此时容器高度是锁死的，用户不会感觉到旧文件消失" +
-                                    "    await app.open(data);" +
-                                    "    " +
-                                    "  } catch (e) {" +
-                                    "    console.error('Update failed', e);" +
-                                    "    // 出错也要解锁，防止界面卡死" +
-                                    "    if (container) {" +
-                                    "        container.style.minHeight = '';" +
-                                    "        container.style.overflow = 'auto';" +
-                                    "    }" +
-                                    "  }" +
-                                    "};";
-
-                    previewWebEngine.executeScript(jsGlue);
+                    log.info("Preview page loaded successfully.");
                 }
             });
-        } else {
-            log.error("FATAL: previewWebView is null.");
         }
     }
     /**
@@ -315,41 +250,69 @@ public class MarkdownTabController {
      * 【核心修改】更新预览界面
      * 使用 WebView + PDF.js 替代原本的 Image 预览，性能更好，且支持文字选择
      */
+    @Inject
+    private PdfSvgService pdfSvgService; // 注入服务
     private void updatePreviewUI(byte[] pdfBytes) {
         if (pdfBytes == null || pdfBytes.length == 0) return;
 
-        if (webServer != null) {
-            webServer.updatePdf(pdfBytes);
-        } else {
-            return;
-        }
-
-        Platform.runLater(() -> {
+        // 后台计算 Diff
+        new Thread(() -> {
             try {
-                if (previewWebEngine == null) return;
+                // 1. 生成 Diff
+                var updates = pdfSvgService.diffPdfToSvg(pdfBytes);
+                if (updates.isEmpty()) return;
 
-                String baseUrl = webServer.getBaseUrl();
+                // 2. 序列化 JSON
+                // 确保你使用了 Gson 或者 Jackson
+                String jsonString = new com.google.gson.Gson().toJson(updates);
 
-                // 1. 加上时间戳，强制浏览器认为是新文件
-                String timestamp = String.valueOf(System.currentTimeMillis());
-                String pdfUrlParam = URLEncoder.encode("/dynamic_preview.pdf?t=" + timestamp, StandardCharsets.UTF_8);
+                // 3. UI 线程更新
+                Platform.runLater(() -> {
+                    try {
+                        if (previewWebEngine == null) return;
 
-                // 2. 完整的 Viewer URL
-                String targetUrl = baseUrl + "pdfjs/web/viewer.html?file=" + pdfUrlParam;
+                        String svgPageUrl = webServer.getBaseUrl() + "svg_preview.html";
+                        String currentUrl = previewWebEngine.getLocation();
 
-                // 3. 执行加载
-                // 即使是第二次加载，我们也建议直接 load() 新的 URL
-                // 因为 v2.14 载入非常快，几乎无感，且能避免 open() API 的潜在状态残留
-                previewWebEngine.load(targetUrl);
+                        // 定义更新任务
+                        Runnable performUpdate = () -> {
+                            try {
+                                JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                                // 【核心】使用 call 方法直接传递 JSON 字符串，避免转义导致的 SyntaxError
+                                window.call("updateSvgPages", jsonString);
+                            } catch (Exception e) {
+                                log.error("Failed to call updateSvgPages", e);
+                            }
+                        };
 
-                // 如果你非常介意 load() 带来的微小闪烁，可以使用下面的 JS 方法 (仅限 v2.14 版本有效)
-                // String js = "try { PDFViewerApplication.open('/dynamic_preview.pdf?t=" + timestamp + "'); } catch(e) { window.location.reload(); }";
-                // previewWebEngine.executeScript(js);
+                        // 判断是否需要加载页面
+                        if (currentUrl == null || !currentUrl.startsWith(svgPageUrl)) {
+                            log.info("Loading SVG preview page...");
 
+                            // 添加一次性监听器，等待页面加载完再执行更新
+                            previewWebEngine.getLoadWorker().stateProperty().addListener(new javafx.beans.value.ChangeListener<>() {
+                                @Override
+                                public void changed(javafx.beans.value.ObservableValue<? extends Worker.State> obs, Worker.State old, Worker.State state) {
+                                    if (state == Worker.State.SUCCEEDED) {
+                                        performUpdate.run();
+                                        previewWebEngine.getLoadWorker().stateProperty().removeListener(this);
+                                    }
+                                }
+                            });
+
+                            previewWebEngine.load(svgPageUrl);
+                        } else {
+                            // 页面已就绪，直接更新
+                            performUpdate.run();
+                        }
+                    } catch (Exception e) {
+                        log.error("Error in UI update thread", e);
+                    }
+                });
             } catch (Exception e) {
-                log.error("Failed to update preview", e);
+                log.error("SVG generation failed", e);
             }
-        });
+        }).start();
     }
 
     /**
