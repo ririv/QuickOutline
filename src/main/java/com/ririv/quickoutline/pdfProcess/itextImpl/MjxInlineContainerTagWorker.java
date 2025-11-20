@@ -4,7 +4,6 @@ import com.itextpdf.html2pdf.attach.ITagWorker;
 import com.itextpdf.html2pdf.attach.ProcessorContext;
 import com.itextpdf.html2pdf.attach.impl.tags.SpanTagWorker;
 import com.itextpdf.layout.IPropertyContainer;
-import com.itextpdf.layout.element.Image;
 import com.itextpdf.styledxmlparser.node.IElementNode;
 import com.itextpdf.svg.element.SvgImage;
 import org.slf4j.Logger;
@@ -16,11 +15,11 @@ import org.slf4j.LoggerFactory;
  * 这不仅解决了 ClassCastException，还让 iText 确信这个容器就是一行文字（Span），
  * 从而强制其内部的图片（公式）必须在行内显示，绝不换行。
  */
-public class MjxContainerTagWorker extends SpanTagWorker {
+public class MjxInlineContainerTagWorker extends SpanTagWorker {
 
-    private static final Logger log = LoggerFactory.getLogger(MjxContainerTagWorker.class);
+    private static final Logger log = LoggerFactory.getLogger(MjxInlineContainerTagWorker.class);
 
-    public MjxContainerTagWorker(IElementNode element, ProcessorContext context) {
+    public MjxInlineContainerTagWorker(IElementNode element, ProcessorContext context) {
         // 必须调用父类构造函数，初始化内部的 Span 对象
         super(element, context);
     }
