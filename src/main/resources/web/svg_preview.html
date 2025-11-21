@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Preview</title>
+    <style>
+        body {
+            background-color: #525659; /* 深灰背景 */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .page-wrapper {
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: height 0.2s;
+            min-width: 100px;
+            min-height: 100px; /* 确保即使 SVG 没渲染也有个白框 */
+        }
+        svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+<div id="pages-container"></div>
+
+<script>
+    // 简单的日志桥接，防止报错
+    function log(msg) {
+        if(window.debugBridge) window.debugBridge.log(msg);
+        else console.log(msg);
+    }
+
+    window.updateSvgPages = function(jsonString) {
+        log("JS received update request. Length: " + jsonString.length);
+
+        let updates;
+        try {
+            updates = JSON.parse(jsonString);
+        } catch (e) {
+            log("JSON Parse Error: " + e.message);
+            return;
+        }
+
+        if (!updates || updates.length === 0) {
+            log("No updates found in JSON.");
+            return;
+        }
+
+        const container = document.getElementById('pages-container');
+        if (!container) {
+            log("Error: #pages-container not found!");
+            return;
+        }
+
+        const totalPages = updates[0].totalPages;
+        log("Total pages: " + totalPages);
+
+        // 1. 调整容器数量
+        while (container.children.length < totalPages) {
+            let div = document.createElement('div');
+            div.className = 'page-wrapper';
+            div.id = 'page-' + container.children.length;
+            container.appendChild(div);
+        }
+        while (container.children.length > totalPages) {
+            container.removeChild(container.lastChild);
+        }
+
+        // 2. 更新内容
+        updates.forEach(update => {
+            const pageDiv = document.getElementById('page-' + update.pageIndex);
+            if (pageDiv) {
+                pageDiv.innerHTML = update.svgContent;
+            }
+        });
+
+        log("Render complete.");
+    };
+</script>
+</body>
+</html>
