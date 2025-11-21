@@ -6,36 +6,36 @@
     <style>
         /* --- 1. 全局重置 --- */
         body {
-            background-color: #525659; /* PDF 深灰背景 */
+            background-color: #525659; /* PDF 阅读器经典深灰背景 */
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* 禁用 Body 滚动，完全交给 Viewport */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            user-select: none;
+            user-select: none; /* 防止拖拽时选中文本干扰体验 */
         }
 
-        /* --- 2. 悬浮工具栏 (保持 Ant Design 风格) --- */
+        /* --- 2. 悬浮工具栏 (胶囊样式 + 毛玻璃) --- */
         #toolbar-container {
             position: fixed;
-            bottom: 30px;
+            bottom: 30px; /* 悬浮在底部，不遮挡顶部内容 */
             left: 0;
             right: 0;
             display: flex;
             justify-content: center;
             z-index: 1000;
-            pointer-events: none;
+            pointer-events: none; /* 让容器本身不挡鼠标 */
         }
 
         #toolbar {
-            pointer-events: auto;
-            background-color: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(10px);
+            pointer-events: auto; /* 让工具栏内部可点击 */
+            background-color: rgba(0, 0, 0, 0.75); /* 半透明黑 */
+            backdrop-filter: blur(10px); /* 毛玻璃效果 */
             padding: 8px 20px;
-            border-radius: 50px;
+            border-radius: 50px; /* 胶囊圆角 */
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
@@ -44,6 +44,7 @@
             transition: opacity 0.3s;
         }
 
+        /* 圆形图标按钮 */
         .icon-btn {
             background: transparent;
             border: 1px solid transparent;
@@ -59,20 +60,29 @@
             transition: all 0.2s;
             font-weight: bold;
             line-height: 1;
+            padding: 0;
         }
-        .icon-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
-        .icon-btn:active { background: rgba(255, 255, 255, 0.2); transform: scale(0.95); }
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        .icon-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
 
+        /* 缩放数值标签 */
         #zoom-label {
             font-size: 14px;
-            font-variant-numeric: tabular-nums;
+            font-variant-numeric: tabular-nums; /* 数字等宽，防止跳动 */
             min-width: 45px;
             text-align: center;
             color: #fff;
         }
 
+        /* 文字按钮 (Reset) */
         .text-btn {
-            background: #1677ff;
+            background: #1677ff; /* Ant Design Blue */
             border: none;
             color: white;
             border-radius: 4px;
@@ -80,73 +90,90 @@
             font-size: 12px;
             cursor: pointer;
             margin-left: 5px;
+            font-family: inherit;
         }
         .text-btn:hover { background: #4096ff; }
         .text-btn:active { background: #0958d9; }
 
-        /* --- 滑动条样式 (Ant Design 风格) --- */
+        /* --- 3. Ant Design 风格滑动条 (CSS Magic) --- */
         input[type=range] {
-            -webkit-appearance: none;
+            -webkit-appearance: none; /* 清除默认样式 */
             width: 120px;
-            height: 4px;
+            height: 4px; /* 轨道高度 */
             background: transparent;
             cursor: pointer;
             outline: none;
+            margin: 0;
         }
+
+        /* 轨道 (Track) - 动态背景色由 JS 变量 --percent 控制 */
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
             border-radius: 2px;
             background: linear-gradient(to right, #1677ff 0%, #1677ff var(--percent), #5e5e5e var(--percent), #5e5e5e 100%);
         }
+
+        /* 滑块 (Thumb) */
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             height: 14px;
             width: 14px;
             border-radius: 50%;
             background: #ffffff;
-            border: 2px solid #1677ff;
-            margin-top: -5px;
+            border: 2px solid #1677ff; /* 蓝色边框 */
+            margin-top: -5px; /* 垂直居中修正: (轨道4 - 滑块14) / 2 */
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             transition: transform 0.1s;
         }
-        input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.2); }
-        input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.3); }
 
-        /* --- 3. 视口与内容 (核心修改) --- */
+        /* 滑块交互效果 */
+        input[type=range]:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.2); /* 蓝色光晕 */
+        }
+        input[type=range]:active::-webkit-slider-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.3);
+        }
+
+        /* --- 4. 视口与内容 (虚拟渲染核心 CSS) --- */
         #viewport {
             width: 100%;
             height: 100%;
-            overflow: auto; /* 滚动条由 viewport 产生 */
-            display: block; /* 改回 block，让 margin: 0 auto 生效 */
-            text-align: center; /* 让内部内容居中 */
+            overflow: auto; /* 滚动条在这里产生 */
+            display: block;
+            text-align: center; /* 让内部的 inline-block 容器居中 */
+            will-change: scroll-position; /* 提示浏览器优化滚动性能 */
         }
 
         #pages-container {
-            display: inline-block; /* 让容器紧贴内容宽度 */
+            display: inline-block; /* 紧贴内容宽度，配合 text-align center */
             padding: 40px 0 100px 0; /* 上下留白 */
-            /* 【核心改变】
-               移除 transform 和 transition
-               缩放将由 zoom 属性控制
-            */
+            /* 注意：这里移除了 transition，因为 zoom 属性通常不通过 transition 动画 */
         }
 
         .page-wrapper {
             background: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            /* 默认 A4，会被 JS 覆盖 */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4); /* 立体阴影 */
+            /* 默认尺寸，会被 JS 动态覆盖 */
             width: 595pt;
             height: 842pt;
             margin-bottom: 20px; /* 页间距 */
             overflow: hidden;
-            /* 保证内部 SVG 不会撑破容器 */
-            display: flex;
+            display: flex; /* 消除图片底部间隙 */
+
+            /* 【性能关键】CSS 隔离 */
+            /* 告诉浏览器：这个元素的内部布局与外部无关 */
+            /* 当我们频繁操作 innerHTML 时，这能防止全局重排 (Reflow) */
+            contain: content;
         }
 
         svg {
             display: block;
             width: 100%;
             height: 100%;
+            pointer-events: auto; /* 只有可见时才响应鼠标 */
         }
     </style>
 </head>
@@ -158,28 +185,62 @@
 
 <div id="toolbar-container">
     <div id="toolbar">
-        <button class="icon-btn" onclick="adjustZoom(-0.1)">−</button>
+        <button class="icon-btn" onclick="adjustZoom(-0.1)" title="缩小">−</button>
         <input type="range" id="zoom-slider" min="0.5" max="3.0" step="0.1" value="1.0" style="--percent: 20%;">
-        <button class="icon-btn" onclick="adjustZoom(0.1)">+</button>
+        <button class="icon-btn" onclick="adjustZoom(0.1)" title="放大">+</button>
 
         <span id="zoom-label">100%</span>
-        <button class="text-btn" onclick="resetZoom()">Reset</button>
+        <button class="text-btn" onclick="resetZoom()" title="恢复默认大小">Reset</button>
     </div>
 </div>
 
 <script>
+    // --- 状态管理 ---
     let currentScale = 1.0;
+    // 缓存池：{ pageIndex: { content: "svg string", width: 100, height: 200 } }
+    let pageCache = {};
+
     const slider = document.getElementById('zoom-slider');
     const label = document.getElementById('zoom-label');
     const container = document.getElementById('pages-container');
+    const viewport = document.getElementById('viewport');
 
+    // 初始化
     updateSliderBackground(1.0);
 
+    // --- 事件监听 ---
+
+    // 1. 滑动条拖动
     slider.addEventListener('input', function() {
         setZoom(parseFloat(this.value));
     });
 
+    // 2. 鼠标滚轮缩放 (Ctrl + Wheel)
+    viewport.addEventListener('wheel', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            // 向上滚放大，向下滚缩小
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            adjustZoom(delta);
+        }
+    }, { passive: false });
+
+    // 3. 滚动监听 (实现虚拟渲染)
+    let isScrolling = false;
+    viewport.addEventListener('scroll', () => {
+        if (!isScrolling) {
+            window.requestAnimationFrame(() => {
+                renderVisiblePages();
+                isScrolling = false;
+            });
+            isScrolling = true;
+        }
+    });
+
+    // --- 缩放逻辑 ---
+
     function adjustZoom(delta) {
+        // 解决浮点数精度问题 (0.1 + 0.2 = 0.300000004)
         let newScale = Math.round((currentScale + delta) * 10) / 10;
         newScale = Math.max(0.5, Math.min(3.0, newScale));
         setZoom(newScale);
@@ -192,18 +253,20 @@
     function setZoom(scale) {
         currentScale = scale;
 
-        // 【核心修改】使用 zoom 属性替代 transform
-        // zoom 会触发浏览器重新计算布局尺寸
-        // 1. 滚动条会自动适配缩放后的大小
-        // 2. 页面间距会等比缩放
-        // 3. 不会产生 transform 带来的幽灵空白
+        // 使用 WebKit 特有的 zoom 属性，它会触发真实的回流，
+        // 让滚动条和边距自动适配，体验比 transform: scale 更好
         container.style.zoom = currentScale;
 
+        // 更新 UI
         slider.value = currentScale;
         label.innerText = Math.round(currentScale * 100) + "%";
         updateSliderBackground(currentScale);
+
+        // 触发一次可见性检查，因为缩放可能导致更多页面进入视口
+        renderVisiblePages();
     }
 
+    // 计算滑动条背景色百分比
     function updateSliderBackground(val) {
         const min = parseFloat(slider.min);
         const max = parseFloat(slider.max);
@@ -211,43 +274,106 @@
         slider.style.setProperty('--percent', percent + '%');
     }
 
-    document.getElementById('viewport').addEventListener('wheel', function(e) {
-        if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            adjustZoom(delta);
-        }
-    });
+    // --- 核心业务逻辑：增量更新与虚拟渲染 ---
 
+    // Java 端调用的入口函数
     window.updateSvgPages = function(jsonString) {
         let updates;
-        try { updates = JSON.parse(jsonString); } catch (e) { return; }
-        if (!updates || updates.length === 0) return;
+        try { updates = JSON.parse(jsonString); } catch (e) { console.error(e); return; }
 
-        const container = document.getElementById('pages-container');
-        if (!container) return;
+        if (!updates || updates.length === 0) return;
 
         const totalPages = updates[0].totalPages;
 
+        // 1. 更新数据缓存
+        updates.forEach(u => {
+            pageCache[u.pageIndex] = {
+                content: u.svgContent,
+                width: u.widthPt,
+                height: u.heightPt
+            };
+        });
+
+        // 2. 调整 DOM 骨架 (只增删容器，不填充内容)
+        // 增加新页
         while (container.children.length < totalPages) {
             let div = document.createElement('div');
             div.className = 'page-wrapper';
             div.id = 'page-' + container.children.length;
+            div.dataset.loaded = "false"; // 标记为未加载
             container.appendChild(div);
         }
+        // 删除多余页
         while (container.children.length > totalPages) {
+            // 清理缓存引用，防止内存泄漏
+            delete pageCache[container.children.length - 1];
             container.removeChild(container.lastChild);
         }
 
+        // 3. 更新容器尺寸 (必须步骤)
+        // 即使内容没渲染，容器必须撑开正确的大小，否则滚动条是错的
         updates.forEach(u => {
             const pageDiv = document.getElementById('page-' + u.pageIndex);
             if (pageDiv) {
                 pageDiv.style.width = u.widthPt + 'px';
                 pageDiv.style.height = u.heightPt + 'px';
-                pageDiv.innerHTML = u.svgContent;
+
+                // 如果这一页当前正好在屏幕上显示 (loaded=true)，
+                // 那么它的内容变了，必须强制刷新 DOM
+                if (pageDiv.dataset.loaded === "true") {
+                    pageDiv.innerHTML = u.svgContent;
+                }
             }
         });
+
+        // 4. 触发渲染检查 (填充视口内的空白页)
+        renderVisiblePages();
     };
+
+    /**
+     * 虚拟渲染引擎
+     * 只渲染当前视口内的页面 SVG，视口外的清空为白板。
+     * 极大降低 DOM 节点数，解决卡顿。
+     */
+    function renderVisiblePages() {
+        // 获取视口边界
+        const viewTop = viewport.scrollTop;
+        const viewBottom = viewTop + viewport.clientHeight;
+
+        // 预加载缓冲区 (上下各多渲染 600px，防止快速滚动白屏)
+        // 注意：scrollTop 和 offsetTop 都会受 zoom 影响自动适配，直接比较即可
+        const buffer = 600;
+
+        const pages = container.children;
+
+        for (let i = 0; i < pages.length; i++) {
+            const pageDiv = pages[i];
+
+            // 获取页面位置
+            const pageTop = pageDiv.offsetTop;
+            const pageBottom = pageTop + pageDiv.offsetHeight;
+
+            // 碰撞检测
+            const isVisible = (pageBottom >= viewTop - buffer) && (pageTop <= viewBottom + buffer);
+
+            if (isVisible) {
+                // 应该显示：如果还没加载，从缓存读取并渲染
+                if (pageDiv.dataset.loaded === "false") {
+                    const data = pageCache[i];
+                    if (data && data.content) {
+                        pageDiv.innerHTML = data.content;
+                        pageDiv.dataset.loaded = "true";
+                    }
+                }
+            } else {
+                // 应该隐藏：如果已加载，清空内容，保留空壳
+                if (pageDiv.dataset.loaded === "true") {
+                    pageDiv.innerHTML = "";
+                    pageDiv.dataset.loaded = "false";
+                }
+            }
+        }
+    }
 </script>
 </body>
 </html>
