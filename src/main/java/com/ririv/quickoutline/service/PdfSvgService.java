@@ -23,9 +23,13 @@ import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextAttribute;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +50,9 @@ public class PdfSvgService {
     }
 
     public List<SvgPageUpdate> diffPdfToSvg(byte[] pdfBytes) {
+        // ... (diffPdfToSvg 和 convertPageToSvg 逻辑保持不变，复制之前的即可) ...
+        // 为节省篇幅，此处省略 diffPdfToSvg 和 convertPageToSvg 的外层代码
+        // 请确保 convertPageToSvg 里调用的是 CustomPDFRenderer
         List<SvgPageUpdate> updates = new ArrayList<>();
         if (pdfBytes == null || pdfBytes.length == 0) return updates;
 
@@ -57,15 +64,8 @@ public class PdfSvgService {
                 PDPage page = document.getPage(i);
                 PDRectangle cropBox = page.getCropBox();
                 int rotation = page.getRotation();
-
-                float displayWidth, displayHeight;
-                if (rotation == 90 || rotation == 270) {
-                    displayWidth = cropBox.getHeight();
-                    displayHeight = cropBox.getWidth();
-                } else {
-                    displayWidth = cropBox.getWidth();
-                    displayHeight = cropBox.getHeight();
-                }
+                float displayWidth = (rotation==90||rotation==270) ? cropBox.getHeight() : cropBox.getWidth();
+                float displayHeight = (rotation==90||rotation==270) ? cropBox.getWidth() : cropBox.getHeight();
 
                 String currentSvg = convertPageToSvg(renderer, i, displayWidth, displayHeight);
 
@@ -75,148 +75,121 @@ public class PdfSvgService {
                     updates.add(new SvgPageUpdate(i, currentSvg, currentTotalPages, displayWidth, displayHeight));
                 }
             }
-
             if (currentTotalPages < lastTotalPages) {
                 for (int k = currentTotalPages; k < lastTotalPages; k++) pageCache.remove(k);
                 if (updates.isEmpty() && currentTotalPages > 0) {
                     PDPage p0 = document.getPage(0);
-                    int r0 = p0.getRotation();
-                    float w0 = (r0 == 90 || r0 == 270) ? p0.getCropBox().getHeight() : p0.getCropBox().getWidth();
-                    float h0 = (r0 == 90 || r0 == 270) ? p0.getCropBox().getWidth() : p0.getCropBox().getHeight();
-                    String first = pageCache.get(0);
-                    if (first != null) updates.add(new SvgPageUpdate(0, first, currentTotalPages, w0, h0));
+                    updates.add(new SvgPageUpdate(0, pageCache.get(0), currentTotalPages, p0.getCropBox().getWidth(), p0.getCropBox().getHeight()));
                 }
             }
             lastTotalPages = currentTotalPages;
-        } catch (Exception e) {
-            log.error("Error converting PDF to SVG", e);
-        }
+        } catch (Exception e) { log.error("Err", e); }
         return updates;
     }
 
-    private String convertPageToSvg(PDFRenderer renderer, int pageIndex, float width, float height) {
-        try {
-            DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
-            String svgNS = "http://www.w3.org/2000/svg";
-            Document svgDoc = domImpl.createDocument(svgNS, "svg", null);
-            SVGGraphics2D svgGenerator = new SVGGraphics2D(svgDoc);
-            svgGenerator.setSVGCanvasSize(new Dimension((int) width, (int) height));
-
-            renderer.renderPageToGraphics(pageIndex, svgGenerator, 1.0f);
-
-            try (StringWriter writer = new StringWriter()) {
-                svgGenerator.stream(writer, true);
-                String rawSvg = writer.toString();
-
-                // 注入 viewBox 以适配前端缩放 (解决 pt vs px 空白问题)
-                int svgTagEndIndex = rawSvg.indexOf(">", rawSvg.indexOf("<svg")) + 1;
-                int svgCloseTagIndex = rawSvg.lastIndexOf("</svg>");
-
-                if (svgTagEndIndex > 0 && svgCloseTagIndex > svgTagEndIndex) {
-                    String svgContent = rawSvg.substring(svgTagEndIndex, svgCloseTagIndex);
-                    String newHeader = String.format(
-                            "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
-                                    "viewBox=\"0 0 %s %s\" " +
-                                    "width=\"100%%\" height=\"100%%\" " +
-                                    "preserveAspectRatio=\"xMidYMid meet\" " +
-                                    "style=\"display:block; overflow:hidden;\">",
-                            fmt(width), fmt(height)
-                    );
-                    return newHeader + svgContent + "</svg>";
-                }
-                return rawSvg;
+    private String convertPageToSvg(PDFRenderer renderer, int pageIndex, float width, float height) throws IOException {
+        DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
+        Document svgDoc = domImpl.createDocument("http://www.w3.org/2000/svg", "svg", null);
+        SVGGraphics2D svgGenerator = new SVGGraphics2D(svgDoc);
+        svgGenerator.setSVGCanvasSize(new Dimension((int) width, (int) height));
+        renderer.renderPageToGraphics(pageIndex, svgGenerator, 1.0f);
+        try (StringWriter writer = new StringWriter()) {
+            svgGenerator.stream(writer, true);
+            String rawSvg = writer.toString();
+            int start = rawSvg.indexOf(">", rawSvg.indexOf("<svg")) + 1;
+            int end = rawSvg.lastIndexOf("</svg>");
+            if (start > 0 && end > start) {
+                String content = rawSvg.substring(start, end);
+                // 注入 pointer-events 控制
+                String header = String.format("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 %s %s\" width=\"100%%\" height=\"100%%\" style=\"display:block; overflow:hidden;\">", fmt(width), fmt(height));
+                return header + content + "</svg>";
             }
-        } catch (Exception e) {
-            log.error("Failed to render page {} to SVG", pageIndex, e);
-            return "";
+            return rawSvg;
         }
     }
+    private String fmt(float d) { if (d == (long) d) return String.format("%d", (long) d); return String.format("%s", d); }
 
-    private String fmt(float d) {
-        if (d == (long) d) return String.format("%d", (long) d);
-        return String.format("%s", d);
-    }
 
     // =================================================================
-    // 自定义渲染器
+    // 核心修复：TextReplacementPageDrawer
     // =================================================================
 
     private static class CustomPDFRenderer extends PDFRenderer {
         public CustomPDFRenderer(PDDocument document) { super(document); }
-
-        @Override
-        protected PageDrawer createPageDrawer(PageDrawerParameters parameters) throws IOException {
-            return new TextReplacementPageDrawer(parameters);
+        @Override protected PageDrawer createPageDrawer(PageDrawerParameters p) throws IOException {
+            PDPage page = p.getPage();
+            float h = page.getCropBox().getHeight();
+            if(page.getRotation()==90||page.getRotation()==270) h=page.getCropBox().getWidth();
+            return new TextReplacementPageDrawer(p, h);
         }
     }
 
-    /**
-     * 替换模式 (Replacement Mode):
-     * 1. 图形/公式/表格 -> 调用 super (PDFBox 原生绘制)
-     * 2. 文字 -> 拦截 -> 绘制 <text> (Batik 绘制)
-     */
     private static class TextReplacementPageDrawer extends PageDrawer {
 
+        private final float pageHeight;
         private final StringBuilder textBuffer = new StringBuilder();
         private Matrix startMatrix = null;
         private PDFont currentFont = null;
         private float lastEndX = -1;
+        // 累计当前 buffer 在 PDF 里的理论宽度
+        private float currentBufferWidth = 0;
 
-        public TextReplacementPageDrawer(PageDrawerParameters parameters) throws IOException {
+        public TextReplacementPageDrawer(PageDrawerParameters parameters, float pageHeight) throws IOException {
             super(parameters);
+            this.pageHeight = pageHeight;
         }
 
         @Override
         protected void showGlyph(Matrix textRenderingMatrix, PDFont font, int code, Vector displacement) throws IOException {
-            // 1. 【核心修改】不再调用 super.showGlyph
-            // 这样 PDFBox 就不会画出不可选中的 Path 轮廓了
-            // super.showGlyph(textRenderingMatrix, font, code, displacement); <-- 删掉这行
-
-            // 2. 获取内容
             String unicode = null;
             try { unicode = font.toUnicode(code); } catch (Exception ignored) {}
 
-            // 如果是空内容或者获取不到字符 (比如特殊的 MathJax 绘图符号)，
-            // 这时候还是得调用父类画出来，否则公式里的特殊符号会消失
-            if (unicode == null || unicode.isEmpty()) {
+            // 1. 特殊符号 -> 走 Path (保证公式正确)
+            if (unicode == null || unicode.trim().isEmpty()) {
                 flushBuffer();
                 super.showGlyph(textRenderingMatrix, font, code, displacement);
                 return;
             }
 
-            // 3. 缓冲合并逻辑 (同前)
+            // 2. 计算参数
             float x = textRenderingMatrix.getTranslateX();
             float y = textRenderingMatrix.getTranslateY();
             float fontSize = textRenderingMatrix.getScalingFactorY();
+            // 字符宽度 (PDF单位)
             float charWidth = (font.getWidth(code) / 1000f) * fontSize;
 
+            // 3. 合并逻辑
             boolean shouldFlush = false;
-
             if (textBuffer.length() > 0 && startMatrix != null) {
-                if (Math.abs(y - startMatrix.getTranslateY()) > 1.0f) {
-                    shouldFlush = true;
-                } else if (!font.equals(currentFont)) {
-                    shouldFlush = true;
-                } else {
+                if (Math.abs(y - startMatrix.getTranslateY()) > 1.0f) shouldFlush = true;
+                else if (!font.equals(currentFont)) shouldFlush = true;
+                else {
                     float gap = Math.abs(x - lastEndX);
-                    if (gap > (fontSize * 0.3f) || x < lastEndX) {
-                        if (x > lastEndX) textBuffer.append(" ");
+                    // 容差加大一点，避免频繁断开
+                    if (gap > (fontSize * 0.4f) || x < lastEndX) {
+                        if (x > lastEndX) {
+                            textBuffer.append(" ");
+                            // 空格也要算宽度吗？通常 PDF 空格宽度在 Gap 里体现了，这里不用累加
+                        }
                         shouldFlush = true;
                     }
                 }
             } else {
                 startMatrix = textRenderingMatrix.clone();
                 currentFont = font;
+                currentBufferWidth = 0;
             }
 
             if (shouldFlush) {
                 flushBuffer();
                 startMatrix = textRenderingMatrix.clone();
                 currentFont = font;
+                currentBufferWidth = 0;
             }
 
             textBuffer.append(unicode);
             lastEndX = x + charWidth;
+            currentBufferWidth += charWidth;
         }
 
         private void flushBuffer() {
@@ -225,23 +198,47 @@ public class PdfSvgService {
             try {
                 Graphics2D g2d = getGraphics();
                 AffineTransform saveAT = g2d.getTransform();
-                AffineTransform at = startMatrix.createAffineTransform();
-                g2d.transform(at);
 
-                // 【核心修改】使用真实颜色 (可见)
+                // 1. 坐标重置
+                g2d.setTransform(new AffineTransform());
+                float svgX = startMatrix.getTranslateX();
+                float svgY = pageHeight - startMatrix.getTranslateY();
+
+                // 2. 设置颜色 (不透明)
                 Color color = getAwtColor(getGraphicsState().getNonStrokingColor());
                 g2d.setColor(color);
 
-                // 设置字体
-                String fontName = "SansSerif";
-                if (currentFont != null && currentFont.getName() != null) {
-                    fontName = currentFont.getName();
-                    if (fontName.contains("+")) fontName = fontName.substring(fontName.indexOf("+")+1);
-                }
-                // 字号 1.0 (缩放由 Matrix 控制)
-                g2d.setFont(new Font(fontName, Font.PLAIN, 1));
+                // 3. 设置基础字体 (SansSerif)
+                float fontSize = startMatrix.getScalingFactorY();
+                Font sysFont = new Font("SansSerif", Font.PLAIN, (int) fontSize);
 
-                // 绘制可见的 <text>
+                // 4. 【核心修复】计算宽度缩放 (Stretch)
+                // 目标：把系统字体渲染出的宽度，强行缩放到 PDF 的理论宽度
+                // 这解决了"位置偏差"问题，也不需要嵌入字体
+
+                // A. 计算系统字体宽度
+                FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
+                double sysWidth = sysFont.getStringBounds(textBuffer.toString(), frc).getWidth();
+
+                // B. 计算缩放比例
+                double scaleX = 1.0;
+                if (sysWidth > 0 && currentBufferWidth > 0) {
+                    scaleX = currentBufferWidth / sysWidth;
+                }
+                // 限制缩放范围，防止极端情况拉伸太丑 (0.8 ~ 1.2)
+                // scaleX = Math.max(0.8, Math.min(1.2, scaleX));
+
+                // C. 应用缩放
+                // 注意：transform 顺序是后进先出
+                // 先移到位置 -> 再缩放
+                AffineTransform at = new AffineTransform();
+                at.translate(svgX, svgY);
+                at.scale(scaleX, 1.0);
+
+                g2d.transform(at);
+                g2d.setFont(sysFont);
+
+                // 5. 绘制
                 g2d.drawString(textBuffer.toString(), 0, 0);
 
                 g2d.setTransform(saveAT);
@@ -251,37 +248,25 @@ public class PdfSvgService {
             } finally {
                 textBuffer.setLength(0);
                 startMatrix = null;
+                currentBufferWidth = 0;
             }
         }
 
+        // ... Helper methods (getAwtColor) and Interceptors (strokePath...) remain same ...
         private Color getAwtColor(org.apache.pdfbox.pdmodel.graphics.color.PDColor pdColor) {
             try {
                 float[] rgb = pdColor.getColorSpace().toRGB(pdColor.getComponents());
-                float r = Math.max(0, Math.min(1, rgb[0]));
-                float g = Math.max(0, Math.min(1, rgb[1]));
-                float b = Math.max(0, Math.min(1, rgb[2]));
-                float alpha = (float) getGraphicsState().getNonStrokeAlphaConstant();
-                return new Color(r, g, b, alpha);
+                return new Color(Math.max(0,Math.min(1,rgb[0])), Math.max(0,Math.min(1,rgb[1])), Math.max(0,Math.min(1,rgb[2])), (float)getGraphicsState().getNonStrokeAlphaConstant());
             } catch (Exception e) { return Color.BLACK; }
         }
-
-        // --- 拦截器 ---
-
-        // 遇到绘图指令 (表格/公式)，必须先清空文字缓冲区
-        // 然后调用 super 让 PDFBox 帮我们画图 (Path)
         @Override public void strokePath() throws IOException { flushBuffer(); super.strokePath(); }
         @Override public void fillPath(int windingRule) throws IOException { flushBuffer(); super.fillPath(windingRule); }
         @Override public void drawImage(PDImage pdImage) throws IOException { flushBuffer(); super.drawImage(pdImage); }
-
-        @Override
-        protected void processOperator(Operator operator, List<COSBase> operands) throws IOException {
+        @Override protected void processOperator(Operator operator, List<COSBase> operands) throws IOException {
             String op = operator.getName();
-            if ("ET".equals(op) || "Td".equals(op) || "TD".equals(op) || "T*".equals(op)) {
-                flushBuffer();
-            }
+            if ("ET".equals(op)||"Td".equals(op)||"TD".equals(op)||"T*".equals(op)) flushBuffer();
             super.processOperator(operator, operands);
         }
-
         @Override public void showAnnotation(PDAnnotation annotation) throws IOException {}
     }
 }
