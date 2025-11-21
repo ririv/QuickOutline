@@ -18,22 +18,17 @@ public class ItextHtmlConverter implements com.ririv.quickoutline.pdfProcess.Htm
                              String baseUri,
                              OutputStream outputStream,
                              Consumer<DownloadEvent> onEvent) {
-        try {
-            ConverterProperties properties = new ConverterProperties();
-            properties.setCssApplierFactory(new CustomCssApplierFactory());
-            properties.setTagWorkerFactory(new CustomTagWorkerFactory());
+        ConverterProperties properties = new ConverterProperties();
+        properties.setCssApplierFactory(new CustomCssApplierFactory());
+        properties.setTagWorkerFactory(new CustomTagWorkerFactory());
 
-            // 这里直接拿 FontProvider，不再用 Optional.ifPresent
-            properties.setFontProvider(fontManager.getFontProvider(onEvent));
+        // 这里直接拿 FontProvider，不再用 Optional.ifPresent
+        properties.setFontProvider(fontManager.getFontProvider(onEvent));
 
-            // Set base URI for resolving relative resources (e.g. images)
-            if (baseUri != null && !baseUri.isBlank()) {
-                properties.setBaseUri(baseUri);
-            }
-            HtmlConverter.convertToPdf(html, outputStream, properties);
-        } catch (IOException e) {
-            // 不在这一层做 UI 文案，交给 MarkdownService 的 catch 统一提示
-            throw new RuntimeException("Failed to setup font provider for HTML to PDF conversion", e);
+        // Set base URI for resolving relative resources (e.g. images)
+        if (baseUri != null && !baseUri.isBlank()) {
+            properties.setBaseUri(baseUri);
         }
+        HtmlConverter.convertToPdf(html, outputStream, properties);
     }
 }

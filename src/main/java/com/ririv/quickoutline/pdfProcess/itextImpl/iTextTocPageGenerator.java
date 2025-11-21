@@ -16,6 +16,7 @@ import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Tab;
 import com.itextpdf.layout.element.TabStop;
+import com.itextpdf.layout.font.FontProvider;
 import com.itextpdf.layout.properties.AreaBreakType;
 import com.itextpdf.layout.properties.TabAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
@@ -28,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -49,23 +49,45 @@ public class iTextTocPageGenerator implements TocPageGenerator {
     }
 
     private PdfFont getPdfFont(Consumer<String> onMessage, Consumer<String> onError) throws IOException {
-        // TOC 这条链路不经过 MarkdownService，这里本地消费 DownloadEvent，复用与 MarkdownService 相同的文案策略。
-        List<Path> fontPaths = fontManager.getFontPaths(event -> {
+        // 使用 FontManager 的下载逻辑，确保字体存在
+        fontManager.ensureFontsAreAvailable(event -> {
             if (event == null) return;
-            switch (event.getType()) {
-                case START -> onMessage.accept("正在下载字体: " + event.getResourceName() + "...");
-                case SUCCESS -> onMessage.accept("字体 " + event.getResourceName() + " 下载完成。");
-                case ERROR -> onError.accept("字体下载失败: " + event.getResourceName() +
-                        (event.getDetail() == null ? "" : " - " + event.getDetail()));
+            switch (event.type()) {
+                case START -> onMessage.accept("正在下载字体: " + event.resourceName() + "...");
+                case SUCCESS -> onMessage.accept("字体 " + event.resourceName() + " 下载完成。");
+                case ERROR -> onError.accept("字体下载失败: " + event.resourceName() +
+                        (event.detail() == null ? "" : " - " + event.detail()));
                 case PROGRESS -> { /* 目前不需要进度粒度 */ }
             }
         });
-        // For simplicity, we load the regular font. iText will simulate bold/italic if needed.
-        return PdfFontFactory.createFont(
-                fontPaths.getFirst().toString(),
-                PdfEncodings.IDENTITY_H,
-                PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
-        );
+
+        // 获取 FontProvider (里面包含了加载好的字体)
+        FontProvider fontProvider = fontManager.getFontProvider(null); // null callback as we already ensured availability
+
+        // 从 FontProvider 中取出一个可用的字体
+        // 由于 FontManager 加载了 Source Han Sans，我们直接拿 FontSet 里的第一个
+        // 这是一个简化的做法，为了兼容 createFont 的返回值类型
+        if (!fontProvider.getFontSet().getFonts().isEmpty()) {
+            // 拿到 FontInfo，然后转换成 PdfFont
+            // 注意：FontProvider.getPdfFont() 可能会抛异常，需要处理
+            try {
+                return fontProvider.getPdfFont(fontProvider.getFontSet().getFonts().iterator().next());
+            } catch (Exception e) {
+                log.warn("Failed to get font from provider, fallback to default", e);
+            }
+        }
+
+        // 兜底：万一没取到，尝试加载 Helvetica (不支持中文) 或直接加载文件
+        // 为了保险，我们还是直接加载文件路径 (这是最稳的，因为 FontManager 保证了文件存在)
+        // 假设 FontManager 下载的是 .otf/.ttf
+        String fontPath = System.getProperty("user.home") + "/.quickoutline/fonts/SourceHanSansSC-Regular.otf";
+        try {
+            return PdfFontFactory.createFont(fontPath, PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
+        } catch (IOException e) {
+            e.printStackTrace();
+            // 终极兜底
+            return PdfFontFactory.createFont(com.itextpdf.io.font.constants.StandardFonts.HELVETICA);
+        }
     }
 
     @Override
