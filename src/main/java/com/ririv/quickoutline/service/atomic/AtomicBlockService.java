@@ -102,43 +102,88 @@ public class AtomicBlockService {
     }
 
     /**
+     * 获取元素的边距值 (pt)
+     * @param element iText 元素 (如 Paragraph, Table)
+     * @param propertyId 属性 ID (如 Property.MARGIN_TOP)
+     * @return 边距值，如果不存在或非数值则返回 0
+     */
+    private float getMargin(IElement element, int propertyId) {
+        // 只有块级元素才有 margin
+        if (element instanceof IBlockElement) {
+            // 获取属性值 (iText 已经把 CSS 解析成了 UnitValue)
+            UnitValue uv = element.getProperty(propertyId);
+
+            // 确保值存在且是绝对数值 (Point Value)
+            // 注意：iText 这里的 getValue() 通常已经是转换后的 pt 值
+            if (uv != null && uv.isPointValue()) {
+                return uv.getValue();
+            }
+        }
+        return 0f; // 默认无边距
+    }
+
+    /**
      * 将单个 iText Element 渲染为 DocumentBlock
      */
     private List<DocumentBlock> renderElement(IElement element) {
         List<DocumentBlock> blocks = new ArrayList<>();
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(1024 * 10)) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(1024 * 50)) {
             PdfWriter writer = new PdfWriter(baos);
             writer.setCompressionLevel(0);
 
             try (PdfDocument pdfDoc = new PdfDocument(writer)) {
-                // 使用 A4 页面，允许 iText 自然切分
                 pdfDoc.setDefaultPageSize(PageSize.A4);
 
                 com.itextpdf.layout.Document doc = new com.itextpdf.layout.Document(pdfDoc);
-                // 移除 Document 默认边距，让 Element 填满
-                doc.setMargins(0, 0, 0, 0);
+                // 保持与骨架布局一致的边距
+                doc.setMargins(MARGIN, MARGIN, MARGIN, MARGIN);
 
-                // 添加元素
-                doc.add((IBlockElement) element);
+                if (element instanceof IBlockElement) {
+                    doc.add((IBlockElement) element);
+                } else if (element instanceof com.itextpdf.layout.element.ILeafElement) {
+                    doc.add(new Paragraph().add((com.itextpdf.layout.element.ILeafElement) element));
+                }
             }
 
             baos.flush();
             byte[] pdfBytes = baos.toByteArray();
 
-            // 处理结果 (支持多页切分)
+            // 计算页面有效内容高度 (842 - 36 - 36 = 770)
+            float maxContentHeight = PAGE_H - MARGIN * 2;
+
             try (org.apache.pdfbox.pdmodel.PDDocument pdDoc = org.apache.pdfbox.Loader.loadPDF(pdfBytes)) {
-                for (int i = 0; i < pdDoc.getNumberOfPages(); i++) {
+                int totalPages = pdDoc.getNumberOfPages();
+
+                for (int i = 0; i < totalPages; i++) {
                     var res = pdfSvgService.convertPageInPdfToSvg(pdDoc, i);
 
-                    DocumentBlock b = new DocumentBlock(""); // HTML 内容不再重要，因为已经对象化
+                    DocumentBlock b = new DocumentBlock("");
                     b.svgContent = res.svg();
-                    b.heightPt = res.heightPt();
 
-                    // 【核心修复】从 Element 读取真实的边距
-                    // 解决行距过大问题
-                    b.marginTop = getMargin(element, Property.MARGIN_TOP);
-                    b.marginBottom = getMargin(element, Property.MARGIN_BOTTOM);
+                    // 【修复 1】高度安全钳：消除 +2pt 误差导致的换页
+                    // 如果计算出的高度略微超过了最大内容高度，强制修剪为最大高度
+                    // 0.1f 是浮点容差
+                    if (res.heightPt() > maxContentHeight + 0.1f) {
+                        b.heightPt = maxContentHeight;
+                    } else {
+                        b.heightPt = res.heightPt();
+                    }
+
+                    // 【修复 2】智能边距分配
+                    // 只有第一页保留上边距
+                    if (i == 0) {
+                        b.marginTop = getMargin(element, Property.MARGIN_TOP);
+                    } else {
+                        b.marginTop = 0; // 中间/结尾页没有上边距
+                    }
+
+                    // 只有最后一页保留下边距
+                    if (i == totalPages - 1) {
+                        b.marginBottom = getMargin(element, Property.MARGIN_BOTTOM);
+                    } else {
+                        b.marginBottom = 0; // 开头/中间页没有下边距，紧贴底部
+                    }
 
                     blocks.add(b);
                 }
@@ -150,64 +195,69 @@ public class AtomicBlockService {
         return blocks;
     }
 
-    // 读取样式属性的辅助方法
-    private float getMargin(IElement element, int propertyId) {
-        if (element instanceof IBlockElement) {
-            UnitValue uv = element.getProperty(propertyId);
-            if (uv != null && uv.isPointValue()) {
-                return uv.getValue();
-            }
-        }
-        return 0f; // 默认无边距
-    }
-
     /**
      * 骨架布局：使用 iText 模拟排版
      */
     private void doSkeletonLayout(List<DocumentBlock> blocks) {
         int currentPage = 1;
+        // 注意：PDF坐标系 Y=0 在底部。内容区顶部 Y = 842 - 36 = 806
         float currentY = PAGE_H - MARGIN;
         final float CONTENT_W = PAGE_W - MARGIN * 2;
+        final float CONTENT_H = PAGE_H - MARGIN * 2;
 
         for (DocumentBlock block : blocks) {
+            // ... 创建 placeholder 代码不变 ...
             Div placeholder = new Div();
             placeholder.setHeight(block.heightPt);
             placeholder.setWidth(CONTENT_W);
-
-            // 【核心】使用从 Element 读取到的真实边距
+            // 还原 margin
             placeholder.setMarginTop(block.marginTop);
             placeholder.setMarginBottom(block.marginBottom);
-
             placeholder.setKeepTogether(true);
 
             IRenderer renderer = placeholder.createRendererSubTree();
 
-            // 模拟布局... (逻辑同前，略微精简)
-            float remainingHeight = currentY - MARGIN;
+            // 第一次尝试：在当前页剩余空间布局
+            float remainingHeight = currentY - MARGIN; // 到底部的距离
             LayoutArea area = new LayoutArea(currentPage, new Rectangle(MARGIN, MARGIN, CONTENT_W, remainingHeight));
             LayoutContext context = new LayoutContext(area);
             LayoutResult result = renderer.layout(context);
 
+            // 如果放不下 (NOT_FITTING 或 SPLIT 但我们要求 keepTogether)，换页
             if (result.getStatus() != LayoutResult.FULL) {
                 currentPage++;
                 currentY = PAGE_H - MARGIN;
-                area = new LayoutArea(currentPage, new Rectangle(MARGIN, MARGIN, CONTENT_W, PAGE_H - MARGIN * 2));
+
+                // 新页面：给足完整的 Content Height
+                area = new LayoutArea(currentPage, new Rectangle(MARGIN, MARGIN, CONTENT_W, CONTENT_H));
                 context = new LayoutContext(area);
                 result = renderer.layout(context);
             }
 
-            Rectangle occupied = result.getOccupiedArea().getBBox();
-            block.pageNumber = currentPage;
-            block.topPt = PAGE_H - (occupied.getY() + occupied.getHeight());
+            // 【核心修复】NPE 防御
+            // 如果换了页还是放不下 (说明这个块本身高度 > CONTENT_H)，iText 可能会返回 null occupiedArea
+            if (result.getOccupiedArea() == null) {
+                log.warn("Block too large for page! Force placing. ID: {}, Height: {}", block.id, block.heightPt);
+                // 强制放置策略：虽然溢出，但至少算出一个坐标让它显示出来
+                block.pageNumber = currentPage;
+                block.topPt = MARGIN; // 顶格放
 
-            // 更新游标：减去高度和下边距
-            // 注意：OccupiedArea 包含了 Padding 和 Border，但不包含 Margin
-            // 我们需要手动处理 Margin 对下一个元素位置的影响
-            // 简单算法：用 occupied.getY() - margin_bottom
-            currentY = occupied.getY() - block.marginBottom;
+                // 游标直接到底，强制下一个块换页
+                currentY = MARGIN;
+            } else {
+                // 正常逻辑
+                Rectangle occupied = result.getOccupiedArea().getBBox();
+                block.pageNumber = result.getOccupiedArea().getPageNumber(); // 使用 iText 实际决定的页码
+                block.topPt = PAGE_H - (occupied.getY() + occupied.getHeight());
+
+                // 更新游标
+                // 考虑 margin-bottom 对光标的影响
+                // iText 的 layout 结果通常已经消耗了 margin 空间，occupied area 是包含 margin 的盒子吗？
+                // 不，getBBox() 通常是 Border Box。我们需要手动减去 Margin。
+                currentY = occupied.getY() - block.marginBottom;
+            }
         }
     }
-
     // 必须保留 wrapHtmlWithContext 来注入 CSS，否则 convertToElements 解析出的对象没有样式
     private String wrapHtmlWithContext(String fragmentHtml) {
         String css = getGlobalCss();
