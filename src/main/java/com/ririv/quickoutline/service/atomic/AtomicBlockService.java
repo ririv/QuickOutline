@@ -13,12 +13,10 @@ import com.itextpdf.layout.layout.LayoutContext;
 import com.itextpdf.layout.layout.LayoutResult;
 import com.itextpdf.layout.properties.Property;
 import com.itextpdf.layout.properties.UnitValue;
-import com.itextpdf.layout.renderer.DivRenderer;
 import com.itextpdf.layout.renderer.IRenderer;
 import com.ririv.quickoutline.pdfProcess.itextImpl.CustomCssApplierFactory;
 import com.ririv.quickoutline.pdfProcess.itextImpl.CustomTagWorkerFactory;
 import com.ririv.quickoutline.service.FontManager;
-import com.ririv.quickoutline.service.PdfSvgService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -32,7 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+// 想实现增量级更新，未完成，现在没有做到增量
 @Singleton
+@Deprecated
 public class AtomicBlockService {
     private static final Logger log = LoggerFactory.getLogger(AtomicBlockService.class);
 
@@ -40,7 +41,7 @@ public class AtomicBlockService {
     private final Map<Integer, List<DocumentBlock>> blockCache = new ConcurrentHashMap<>();
     private static String CACHED_CSS = null;
 
-    @Inject private PdfSvgService pdfSvgService;
+    @Inject private AtomicPdfSvgService atomicPdfSvgService;
     private final FontProvider sharedFontProvider;
     private final ConverterProperties converterProperties;
 
@@ -50,8 +51,8 @@ public class AtomicBlockService {
     private static final float MARGIN = 36f;
 
     @Inject
-    public AtomicBlockService(FontManager fontManager, PdfSvgService pdfSvgService) {
-        this.pdfSvgService = pdfSvgService;
+    public AtomicBlockService(FontManager fontManager, AtomicPdfSvgService atomicPdfSvgService) {
+        this.atomicPdfSvgService = atomicPdfSvgService;
         this.sharedFontProvider = fontManager.getFontProvider(null);
         loadGlobalCss();
 
@@ -156,7 +157,7 @@ public class AtomicBlockService {
                 int totalPages = pdDoc.getNumberOfPages();
 
                 for (int i = 0; i < totalPages; i++) {
-                    var res = pdfSvgService.convertPageInPdfToSvg(pdDoc, i);
+                    var res = atomicPdfSvgService.convertPageInPdfToSvg(pdDoc, i);
 
                     DocumentBlock b = new DocumentBlock("");
                     b.svgContent = res.svg();

@@ -3,6 +3,7 @@ package com.ririv.quickoutline.view;
 import com.google.gson.Gson;
 import com.ririv.quickoutline.service.MarkdownService;
 import com.ririv.quickoutline.service.PdfSvgService;
+import com.ririv.quickoutline.service.atomic.AtomicPdfSvgService;
 import com.ririv.quickoutline.service.atomic.AtomicBlockService;
 import com.ririv.quickoutline.service.atomic.DocumentBlock;
 import com.ririv.quickoutline.service.webserver.LocalWebServer;
@@ -22,14 +23,9 @@ import javafx.scene.input.*;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -66,7 +62,7 @@ public class MarkdownTabController {
     private String editorHtmlContent = ""; // 缓存前端内容，防止重复渲染
     // 修改泛型：输入 String (HTML)，输出 String (JSON)
     // 为什么输出 JSON？因为序列化可能会耗时，我们放在后台线程做
-    private TrailingThrottlePreviewer<String, String> previewer;
+    private TrailingThrottlePreviewer<String, byte[]> previewer;
 
     private ScheduledExecutorService contentPoller;
 
@@ -75,10 +71,9 @@ public class MarkdownTabController {
 
     JsBridge bridge = new JsBridge();
 
+
     @Inject
-    private AtomicBlockService atomicBlockService; // 注入新服务
-
-
+    private PdfSvgService pdfSvgService; // 注入服务
 
     @Inject
     public MarkdownTabController(CurrentFileState currentFileState, AppEventBus eventBus, MarkdownService markdownService) {
@@ -163,37 +158,40 @@ public class MarkdownTabController {
     /**
      * 1. 初始化预览节流器 (Atomic Block 版)
      */
+    /**
+     * 1. 初始化预览节流器
+     * 负责调度：Markdown (前端JSON) -> 解析 -> PDF byte[] -> Update UI
+     */
     private void setupPreviewer() {
-        final int PREVIEW_THROTTLE_MS = 250;
+        final int PREVIEW_THROTTLE_MS = 500; // 建议设大一点 (500ms)，给 iText 缓冲时间
 
         Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
-        Consumer<String> onError = msg -> Platform.runLater(() -> {
-            eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR));
-            log.error(msg);
-        });
+        Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
+        // <String, byte[]> : 输入是 JSON 字符串，输出是 PDF 字节数组
         this.previewer = new TrailingThrottlePreviewer<>(PREVIEW_THROTTLE_MS,
-                json -> {
+                jsonString -> { // 【注意】这里接收到的是 JSON 字符串
+
+                    // 1. 计算 Base URI (用于加载图片)
                     String baseUri = null;
                     try {
                         if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
                             baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
                         }
                     } catch (Exception ex) {
-                        log.warn("Base URI error", ex);
+                        log.warn("[Preview] failed to compute baseUri", ex);
                     }
 
-                    // --- 【核心逻辑变更】 ---
-                    // 1. 调用 AtomicService 处理 HTML -> List<DocumentBlock>
+                    // 2. 【关键步骤】解析 JSON
+                    // 前端传回的数据结构: { "html": "...", "styles": "..." }
+                    // 必须解析成对象，否则 iText 会把 JSON 括号当成文本渲染
+                    PayloadsJsonParser.MdEditorContentPayloads payloads = PayloadsJsonParser.parseJson(jsonString);
 
-                    PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(json);
-                    List<DocumentBlock> blocks = atomicBlockService.processHtml(mdEditorContentPayloads.html(), baseUri);
-
-                    // 2. 在后台线程序列化为 JSON，减轻 UI 线程负担
-                    return new Gson().toJson(blocks);
+                    // 3. 生成 PDF (耗时操作)
+                    return markdownService.convertHtmlToPdfBytes(payloads, baseUri, onMessage, onError);
                 },
-                this::updatePreviewUI, // 成功回调
-                e -> onError.accept("Preview failed: " + e.getMessage())
+                this::updatePreviewUI, // 成功回调：调用 SVG Diff 更新逻辑
+                e -> onError.accept("PDF preview failed: " + e.getMessage())
         );
     }
 
@@ -382,62 +380,56 @@ public class MarkdownTabController {
         }
     }
 
-    /**
-     * 【核心修改】更新预览界面
-     * 使用 WebView + PDF.js 替代原本的 Image 预览，性能更好，且支持文字选择
-     */
-    @Inject
-    private PdfSvgService pdfSvgService; // 注入服务
-    /**
-     * 更新预览 UI (Atomic Block 版)
-     * 接收 JSON 字符串，推送到前端
-     */
-    private void updatePreviewUI(String blocksJson) {
-        if (blocksJson == null || blocksJson.isEmpty()) return;
+    private void updatePreviewUI(byte[] pdfBytes) {
+        if (pdfBytes == null) return;
 
-        Platform.runLater(() -> {
+        // 后台计算 Diff
+        new Thread(() -> {
             try {
-                if (previewWebEngine == null) return;
+                // 1. 计算 Diff
+                var updates = pdfSvgService.diffPdfToSvg(pdfBytes);
 
-                String targetUrl = webServer.getBaseUrl() + "atomic_preview.html";
-                String currentLoc = previewWebEngine.getLocation();
+                if (updates.isEmpty()) return; // 无变化，不打扰 UI
 
-                // 定义更新动作
-                Runnable doUpdate = () -> {
-                    try {
-                        JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                        // 调用前端的 renderAtomicBlocks
-                        window.call("renderAtomicBlocks", blocksJson);
-                    } catch (Exception e) {
-                        log.error("JS Call failed", e);
-                    }
-                };
+                // 2. 序列化
+                String jsonString = new com.google.gson.Gson().toJson(updates);
 
-                // 判断是否需要加载页面
-                if (currentLoc == null || !currentLoc.startsWith(targetUrl)) {
-                    log.info("Loading Atomic Preview: {}", targetUrl);
+                // 3. 推送前端
+                Platform.runLater(() -> {
+                    if (previewWebEngine == null) return;
 
-                    // 一次性监听器
-                    javafx.beans.value.ChangeListener<Worker.State> listener = new javafx.beans.value.ChangeListener<>() {
-                        @Override
-                        public void changed(javafx.beans.value.ObservableValue<? extends Worker.State> obs, Worker.State old, Worker.State state) {
-                            if (state == Worker.State.SUCCEEDED) {
-                                doUpdate.run();
-                                previewWebEngine.getLoadWorker().stateProperty().removeListener(this);
-                            }
+                    String svgUrl = webServer.getBaseUrl() + "svg_preview.html";
+                    String currentLoc = previewWebEngine.getLocation();
+
+                    Runnable doUpdate = () -> {
+                        try {
+                            JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                            // 使用 call 避免转义问题
+                            window.call("updateSvgPages", jsonString);
+                        } catch (Exception e) {
+                            log.error("JS Update failed", e);
                         }
                     };
-                    previewWebEngine.getLoadWorker().stateProperty().addListener(listener);
-                    previewWebEngine.load(targetUrl);
-                } else {
-                    // 页面已就绪，直接推送数据
-                    doUpdate.run();
-                }
 
+                    // 确保页面加载
+                    if (currentLoc == null || !currentLoc.startsWith(svgUrl)) {
+                        previewWebEngine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
+                            if (state == Worker.State.SUCCEEDED) {
+                                // 注入 Bridge 方便调试 (可选)
+                                JSObject win = (JSObject) previewWebEngine.executeScript("window");
+                                win.setMember("debugBridge", new DebugBridge());
+                                doUpdate.run();
+                            }
+                        });
+                        previewWebEngine.load(svgUrl);
+                    } else {
+                        doUpdate.run();
+                    }
+                });
             } catch (Exception e) {
-                log.error("Failed to update UI", e);
+                log.error("SVG Diff failed", e);
             }
-        });
+        }).start();
     }
 
     /**
