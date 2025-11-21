@@ -45,11 +45,11 @@ public class MarkdownService {
                     baos,
                     event -> {
                         if (event == null) return;
-                        switch (event.getType()) {
-                            case START -> onMessage.accept("正在下载字体: " + event.getResourceName() + "...");
-                            case SUCCESS -> onMessage.accept("字体 " + event.getResourceName() + " 下载完成。");
-                            case ERROR -> onError.accept("字体下载失败: " + event.getResourceName() +
-                                    (event.getDetail() == null ? "" : " - " + event.getDetail()));
+                        switch (event.type()) {
+                            case START -> onMessage.accept("正在下载字体: " + event.resourceName() + "...");
+                            case SUCCESS -> onMessage.accept("字体 " + event.resourceName() + " 下载完成。");
+                            case ERROR -> onError.accept("字体下载失败: " + event.resourceName() +
+                                    (event.detail() == null ? "" : " - " + event.detail()));
                             case PROGRESS -> { /* currently unused */ }
                         }
                     }

@@ -3,6 +3,8 @@ package com.ririv.quickoutline.view;
 import com.google.gson.Gson;
 import com.ririv.quickoutline.service.MarkdownService;
 import com.ririv.quickoutline.service.PdfSvgService;
+import com.ririv.quickoutline.service.atomic.AtomicBlockService;
+import com.ririv.quickoutline.service.atomic.DocumentBlock;
 import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import com.ririv.quickoutline.view.controls.message.Message;
@@ -32,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -62,13 +65,21 @@ public class MarkdownTabController {
     private WebEngine previewWebEngine; // 预览引擎
 
     private String editorHtmlContent = ""; // 缓存前端内容，防止重复渲染
-    private TrailingThrottlePreviewer<String, byte[]> previewer;
+    // 修改泛型：输入 String (HTML)，输出 String (JSON)
+    // 为什么输出 JSON？因为序列化可能会耗时，我们放在后台线程做
+    private TrailingThrottlePreviewer<String, String> previewer;
+
     private ScheduledExecutorService contentPoller;
 
     // 每个 Controller 实例独享一个 Server，避免多 Tab 数据冲突
     private LocalWebServer webServer;
 
     JsBridge bridge = new JsBridge();
+
+    @Inject
+    private AtomicBlockService atomicBlockService; // 注入新服务
+
+
 
     @Inject
     public MarkdownTabController(CurrentFileState currentFileState, AppEventBus eventBus, MarkdownService markdownService) {
@@ -106,32 +117,40 @@ public class MarkdownTabController {
      * 1. 初始化预览节流器 (TrailingThrottlePreviewer)
      * 防止用户输入过快导致频繁生成 PDF
      */
+    /**
+     * 1. 初始化预览节流器 (Atomic Block 版)
+     */
     private void setupPreviewer() {
-        final int PREVIEW_THROTTLE_MS = 250; // 节流延迟
+        final int PREVIEW_THROTTLE_MS = 250;
 
         Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
-        Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+        Consumer<String> onError = msg -> Platform.runLater(() -> {
+            eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR));
+            log.error(msg);
+        });
 
         this.previewer = new TrailingThrottlePreviewer<>(PREVIEW_THROTTLE_MS,
-                htmlContent -> {
+                json -> {
                     String baseUri = null;
                     try {
-                        // 动态获取当前 PDF 所在的父目录作为 Base URI (用于解析图片相对路径)
                         if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
                             baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
                         }
-                        log.info("[Preview] dynamic baseUri={}", baseUri);
                     } catch (Exception ex) {
-                        log.warn("[Preview] failed to compute baseUri", ex);
+                        log.warn("Base URI error", ex);
                     }
 
-                    // 解析前端传来的 JSON
-                    PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(htmlContent);
-                    // 生成 PDF 字节流 (耗时操作，在后台线程运行)
-                    return markdownService.convertHtmlToPdfBytes(mdEditorContentPayloads, baseUri, onMessage, onError);
+                    // --- 【核心逻辑变更】 ---
+                    // 1. 调用 AtomicService 处理 HTML -> List<DocumentBlock>
+
+                    PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(json);
+                    List<DocumentBlock> blocks = atomicBlockService.processHtml(mdEditorContentPayloads.html(), baseUri);
+
+                    // 2. 在后台线程序列化为 JSON，减轻 UI 线程负担
+                    return new Gson().toJson(blocks);
                 },
-                this::updatePreviewUI, // 成功回调：更新 PDF.js
-                e -> onError.accept("PDF preview failed: " + e.getMessage()) // 失败回调
+                this::updatePreviewUI, // 成功回调
+                e -> onError.accept("Preview failed: " + e.getMessage())
         );
     }
 
@@ -150,7 +169,7 @@ public class MarkdownTabController {
                 window.setMember("javaBridge", bridge);
 
                 // 如果需要轮询兜底，可在此处启动
-                 startContentPoller();
+//                 startContentPoller();
             } else if (newState == Worker.State.FAILED) {
                 log.error("Editor WebView load failed");
             }
@@ -252,67 +271,56 @@ public class MarkdownTabController {
      */
     @Inject
     private PdfSvgService pdfSvgService; // 注入服务
-    private void updatePreviewUI(byte[] pdfBytes) {
-        if (pdfBytes == null || pdfBytes.length == 0) return;
+    /**
+     * 更新预览 UI (Atomic Block 版)
+     * 接收 JSON 字符串，推送到前端
+     */
+    private void updatePreviewUI(String blocksJson) {
+        if (blocksJson == null || blocksJson.isEmpty()) return;
 
-        // 后台计算 Diff
-        new Thread(() -> {
+        Platform.runLater(() -> {
             try {
-                // 1. 生成 Diff
-                var updates = pdfSvgService.diffPdfToSvg(pdfBytes);
-                if (updates.isEmpty()) return;
+                if (previewWebEngine == null) return;
 
-                // 2. 序列化 JSON
-                // 确保你使用了 Gson 或者 Jackson
-                String jsonString = new com.google.gson.Gson().toJson(updates);
+                String targetUrl = webServer.getBaseUrl() + "atomic_preview.html";
+                String currentLoc = previewWebEngine.getLocation();
 
-                // 3. UI 线程更新
-                Platform.runLater(() -> {
+                // 定义更新动作
+                Runnable doUpdate = () -> {
                     try {
-                        if (previewWebEngine == null) return;
-
-                        String svgPageUrl = webServer.getBaseUrl() + "svg_preview.html";
-                        String currentUrl = previewWebEngine.getLocation();
-
-                        // 定义更新任务
-                        Runnable performUpdate = () -> {
-                            try {
-                                JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                                // 【核心】使用 call 方法直接传递 JSON 字符串，避免转义导致的 SyntaxError
-                                window.call("updateSvgPages", jsonString);
-                            } catch (Exception e) {
-                                log.error("Failed to call updateSvgPages", e);
-                            }
-                        };
-
-                        // 判断是否需要加载页面
-                        if (currentUrl == null || !currentUrl.startsWith(svgPageUrl)) {
-                            log.info("Loading SVG preview page...");
-
-                            // 添加一次性监听器，等待页面加载完再执行更新
-                            previewWebEngine.getLoadWorker().stateProperty().addListener(new javafx.beans.value.ChangeListener<>() {
-                                @Override
-                                public void changed(javafx.beans.value.ObservableValue<? extends Worker.State> obs, Worker.State old, Worker.State state) {
-                                    if (state == Worker.State.SUCCEEDED) {
-                                        performUpdate.run();
-                                        previewWebEngine.getLoadWorker().stateProperty().removeListener(this);
-                                    }
-                                }
-                            });
-
-                            previewWebEngine.load(svgPageUrl);
-                        } else {
-                            // 页面已就绪，直接更新
-                            performUpdate.run();
-                        }
+                        JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                        // 调用前端的 renderAtomicBlocks
+                        window.call("renderAtomicBlocks", blocksJson);
                     } catch (Exception e) {
-                        log.error("Error in UI update thread", e);
+                        log.error("JS Call failed", e);
                     }
-                });
+                };
+
+                // 判断是否需要加载页面
+                if (currentLoc == null || !currentLoc.startsWith(targetUrl)) {
+                    log.info("Loading Atomic Preview: {}", targetUrl);
+
+                    // 一次性监听器
+                    javafx.beans.value.ChangeListener<Worker.State> listener = new javafx.beans.value.ChangeListener<>() {
+                        @Override
+                        public void changed(javafx.beans.value.ObservableValue<? extends Worker.State> obs, Worker.State old, Worker.State state) {
+                            if (state == Worker.State.SUCCEEDED) {
+                                doUpdate.run();
+                                previewWebEngine.getLoadWorker().stateProperty().removeListener(this);
+                            }
+                        }
+                    };
+                    previewWebEngine.getLoadWorker().stateProperty().addListener(listener);
+                    previewWebEngine.load(targetUrl);
+                } else {
+                    // 页面已就绪，直接推送数据
+                    doUpdate.run();
+                }
+
             } catch (Exception e) {
-                log.error("SVG generation failed", e);
+                log.error("Failed to update UI", e);
             }
-        }).start();
+        });
     }
 
     /**
@@ -419,7 +427,10 @@ public class MarkdownTabController {
                         baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
                     }
                     Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
-                    Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+                    Consumer<String> onError = msg -> Platform.runLater(() -> {
+                        log.error(msg);
+                        eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR));
+                    });
 
                     markdownService.insertPageFromHtml(srcFile, destFile, mdEditorContentPayloads, insertPos, baseUri, onMessage, onError);
 
@@ -480,7 +491,10 @@ public class MarkdownTabController {
                 });
             } catch (Exception e) {
                 log.error("Failed to save preview as new PDF", e);
-                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("An error occurred: " + e.getMessage(), Message.MessageType.ERROR)));
+                Platform.runLater(() -> {
+                    eventBus.post(new ShowMessageEvent("An error occurred: " + e.getMessage(), Message.MessageType.ERROR));
+                    e.printStackTrace();
+                });
             }
         }, "save-new-pdf").start();
     }
