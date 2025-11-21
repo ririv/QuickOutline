@@ -82,6 +82,7 @@ public class TrailingThrottlePreviewer<T, R> {
                     Platform.runLater(() -> onSuccess.accept(result));
                 }
             } catch (Throwable ex) {
+                ex.printStackTrace();
                 if (onError != null) onError.accept(ex); else log.error("throttle task failed", ex);
             } finally {
                 running = false;

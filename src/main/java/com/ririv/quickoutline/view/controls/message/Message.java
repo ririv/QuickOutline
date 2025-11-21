@@ -100,7 +100,7 @@ public class Message extends StackPane {
         fadeIn.play();
 
         // --- Disappearance Animation ---
-        FadeTransition fadeOut = new FadeTransition(Duration.millis(500), this);
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(5000), this);
         fadeOut.setToValue(0);
         fadeOut.setInterpolator(Interpolator.EASE_IN);
 

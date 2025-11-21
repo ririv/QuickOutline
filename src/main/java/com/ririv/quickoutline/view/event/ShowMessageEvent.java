@@ -10,4 +10,10 @@ public class ShowMessageEvent {
         this.message = message;
         this.messageType = messageType;
     }
+
+    public ShowMessageEvent(Exception e) {
+        e.printStackTrace();
+        this.message = e.getMessage();
+        this.messageType = Message.MessageType.ERROR;
+    }
 }

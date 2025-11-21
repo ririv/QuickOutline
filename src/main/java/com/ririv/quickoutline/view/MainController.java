@@ -145,11 +145,14 @@ public class MainController {
                 currentFileState.setSrcFileValidated(newFilePath);
             } catch (java.io.IOException e) {
                 messageManager.showMessage(bundle.getString("message.cannotOpenDoc") + e.getMessage(), Message.MessageType.ERROR);
+                logger.error(String.valueOf(e));
             } catch (EncryptedPdfException e) {
                 messageManager.showMessage(bundle.getString("message.encryptedDoc"), Message.MessageType.WARNING);
+                logger.warn(String.valueOf(e));
             } catch (com.itextpdf.io.exceptions.IOException e) {
                 logger.info(String.valueOf(e));
                 messageManager.showMessage(bundle.getString("message.corruptedDoc") + e.getMessage(), Message.MessageType.ERROR);
+                logger.error(String.valueOf(e));
             }
         }, "open-file-validate");
         t.setDaemon(true);
