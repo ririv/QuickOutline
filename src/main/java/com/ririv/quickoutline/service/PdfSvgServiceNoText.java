@@ -20,9 +20,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// 性能不行，且文字无法选中，不要用，仅做参考
+@Deprecated
 @Singleton
-public class PdfSvgService2 {
-    private static final Logger log = LoggerFactory.getLogger(PdfSvgService2.class);
+public class PdfSvgServiceNoText {
+    private static final Logger log = LoggerFactory.getLogger(PdfSvgServiceNoText.class);
 
     // 缓存：Key=页码, Value=SVG内容
     private final Map<Integer, String> pageCache = new HashMap<>();
