@@ -2,17 +2,226 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>SVG Preview</title>
     <style>
-        body { background-color: #525659; margin: 0; padding: 30px 0; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-        .page-wrapper { background: white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        svg { display: block; width: 100%; height: 100%; }
+        /* --- 1. 全局重置 --- */
+        body {
+            background-color: #525659; /* PDF 深灰背景 */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            user-select: none;
+        }
+
+        /* --- 2. 悬浮工具栏 (保持 Ant Design 风格) --- */
+        #toolbar-container {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        #toolbar {
+            pointer-events: auto;
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #fff;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.85);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+        .icon-btn:active { background: rgba(255, 255, 255, 0.2); transform: scale(0.95); }
+
+        #zoom-label {
+            font-size: 14px;
+            font-variant-numeric: tabular-nums;
+            min-width: 45px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .text-btn {
+            background: #1677ff;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .text-btn:hover { background: #4096ff; }
+        .text-btn:active { background: #0958d9; }
+
+        /* --- 滑动条样式 (Ant Design 风格) --- */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 120px;
+            height: 4px;
+            background: transparent;
+            cursor: pointer;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: linear-gradient(to right, #1677ff 0%, #1677ff var(--percent), #5e5e5e var(--percent), #5e5e5e 100%);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #1677ff;
+            margin-top: -5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.2); }
+        input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.3); }
+
+        /* --- 3. 视口与内容 (核心修改) --- */
+        #viewport {
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* 滚动条由 viewport 产生 */
+            display: block; /* 改回 block，让 margin: 0 auto 生效 */
+            text-align: center; /* 让内部内容居中 */
+        }
+
+        #pages-container {
+            display: inline-block; /* 让容器紧贴内容宽度 */
+            padding: 40px 0 100px 0; /* 上下留白 */
+            /* 【核心改变】
+               移除 transform 和 transition
+               缩放将由 zoom 属性控制
+            */
+        }
+
+        .page-wrapper {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            /* 默认 A4，会被 JS 覆盖 */
+            width: 595pt;
+            height: 842pt;
+            margin-bottom: 20px; /* 页间距 */
+            overflow: hidden;
+            /* 保证内部 SVG 不会撑破容器 */
+            display: flex;
+        }
+
+        svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
-<div id="pages-container"></div>
+
+<div id="viewport">
+    <div id="pages-container"></div>
+</div>
+
+<div id="toolbar-container">
+    <div id="toolbar">
+        <button class="icon-btn" onclick="adjustZoom(-0.1)">−</button>
+        <input type="range" id="zoom-slider" min="0.5" max="3.0" step="0.1" value="1.0" style="--percent: 20%;">
+        <button class="icon-btn" onclick="adjustZoom(0.1)">+</button>
+
+        <span id="zoom-label">100%</span>
+        <button class="text-btn" onclick="resetZoom()">Reset</button>
+    </div>
+</div>
+
 <script>
+    let currentScale = 1.0;
+    const slider = document.getElementById('zoom-slider');
+    const label = document.getElementById('zoom-label');
+    const container = document.getElementById('pages-container');
+
+    updateSliderBackground(1.0);
+
+    slider.addEventListener('input', function() {
+        setZoom(parseFloat(this.value));
+    });
+
+    function adjustZoom(delta) {
+        let newScale = Math.round((currentScale + delta) * 10) / 10;
+        newScale = Math.max(0.5, Math.min(3.0, newScale));
+        setZoom(newScale);
+    }
+
+    function resetZoom() {
+        setZoom(1.0);
+    }
+
+    function setZoom(scale) {
+        currentScale = scale;
+
+        // 【核心修改】使用 zoom 属性替代 transform
+        // zoom 会触发浏览器重新计算布局尺寸
+        // 1. 滚动条会自动适配缩放后的大小
+        // 2. 页面间距会等比缩放
+        // 3. 不会产生 transform 带来的幽灵空白
+        container.style.zoom = currentScale;
+
+        slider.value = currentScale;
+        label.innerText = Math.round(currentScale * 100) + "%";
+        updateSliderBackground(currentScale);
+    }
+
+    function updateSliderBackground(val) {
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const percent = ((val - min) / (max - min)) * 100;
+        slider.style.setProperty('--percent', percent + '%');
+    }
+
+    document.getElementById('viewport').addEventListener('wheel', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            adjustZoom(delta);
+        }
+    });
+
     window.updateSvgPages = function(jsonString) {
-        const updates = JSON.parse(jsonString);
+        let updates;
+        try { updates = JSON.parse(jsonString); } catch (e) { return; }
         if (!updates || updates.length === 0) return;
 
         const container = document.getElementById('pages-container');
@@ -20,7 +229,6 @@
 
         const totalPages = updates[0].totalPages;
 
-        // 调整页数
         while (container.children.length < totalPages) {
             let div = document.createElement('div');
             div.className = 'page-wrapper';
@@ -31,13 +239,11 @@
             container.removeChild(container.lastChild);
         }
 
-        // 更新内容
         updates.forEach(u => {
             const pageDiv = document.getElementById('page-' + u.pageIndex);
             if (pageDiv) {
-                // 设置真实物理尺寸 (pt)
-                pageDiv.style.width = u.widthPt + 'pt';
-                pageDiv.style.height = u.heightPt + 'pt';
+                pageDiv.style.width = u.widthPt + 'px';
+                pageDiv.style.height = u.heightPt + 'px';
                 pageDiv.innerHTML = u.svgContent;
             }
         });

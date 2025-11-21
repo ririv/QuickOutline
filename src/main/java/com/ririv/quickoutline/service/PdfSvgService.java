@@ -48,24 +48,37 @@ public class PdfSvgService {
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
             int currentTotalPages = document.getNumberOfPages();
 
-            // 使用官方标准渲染器
+            // 使用官方标准渲染器 (保证视觉绝对正确)
             PDFRenderer renderer = new PDFRenderer(document);
 
             for (int i = 0; i < currentTotalPages; i++) {
                 PDPage page = document.getPage(i);
                 // 获取物理尺寸
+                // --- 计算视觉尺寸 (考虑旋转) ---
                 PDRectangle cropBox = page.getCropBox();
-                float width = cropBox.getWidth();
-                float height = cropBox.getHeight();
+                int rotation = page.getRotation();
 
-                // 转换 SVG (标准转换，文字转曲线)
-                String currentSvg = convertPageToSvg(renderer, i, width, height);
+                float displayWidth;
+                float displayHeight;
 
-                // Diff 逻辑
+                // 如果旋转了 90 或 270 度，交换宽高
+                if (rotation == 90 || rotation == 270) {
+                    displayWidth = cropBox.getHeight();
+                    displayHeight = cropBox.getWidth();
+                } else {
+                    displayWidth = cropBox.getWidth();
+                    displayHeight = cropBox.getHeight();
+                }
+
+                // 1. 转换 SVG (传入视觉尺寸)
+                String currentSvg = convertPageToSvg(renderer, i, displayWidth, displayHeight);
+
+                // 2. Diff 逻辑
                 String cachedSvg = pageCache.get(i);
                 if (cachedSvg == null || !cachedSvg.equals(currentSvg)) {
                     pageCache.put(i, currentSvg);
-                    updates.add(new SvgPageUpdate(i, currentSvg, currentTotalPages, width, height));
+                    // 3. 推送更新 (包含修正后的宽高)
+                    updates.add(new SvgPageUpdate(i, currentSvg, currentTotalPages, displayWidth, displayHeight));
                 }
             }
 
@@ -78,9 +91,13 @@ public class PdfSvgService {
                 if (updates.isEmpty() && currentTotalPages > 0) {
                     String first = pageCache.get(0);
                     if (first != null) {
+                        // 同样需要获取第一页的正确尺寸
                         PDPage p0 = document.getPage(0);
-                        updates.add(new SvgPageUpdate(0, first, currentTotalPages,
-                                p0.getCropBox().getWidth(), p0.getCropBox().getHeight()));
+                        int r0 = p0.getRotation();
+                        float w0 = (r0 == 90 || r0 == 270) ? p0.getCropBox().getHeight() : p0.getCropBox().getWidth();
+                        float h0 = (r0 == 90 || r0 == 270) ? p0.getCropBox().getWidth() : p0.getCropBox().getHeight();
+
+                        updates.add(new SvgPageUpdate(0, first, currentTotalPages, w0, h0));
                     }
                 }
             }
@@ -105,7 +122,8 @@ public class PdfSvgService {
 
             SVGGraphics2D svgGenerator = new SVGGraphics2D(svgDoc);
 
-            // 设置画布大小
+            // 【关键】设置画布大小为视觉尺寸 (旋转后的)
+            // PDFRenderer 会自动处理内部的内容旋转，适配这个画布
             svgGenerator.setSVGCanvasSize(new Dimension((int) width, (int) height));
 
             // 2. 核心渲染
