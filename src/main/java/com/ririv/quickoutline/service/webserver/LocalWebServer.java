@@ -1,8 +1,10 @@
 package com.ririv.quickoutline.service.webserver;
 
+import com.ririv.quickoutline.service.PdfImageService;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +14,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLConnection;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class LocalWebServer {
@@ -22,6 +25,19 @@ public class LocalWebServer {
 
     // 用于线程安全地存储最新的 PDF 字节数据
     private final AtomicReference<byte[]> currentPdfBytes = new AtomicReference<>(new byte[0]);
+
+    @Inject
+    private PdfImageService pdfImageService; // 需要注入 Service 获取数据
+
+    // 如果无法注入 (LocalWebServer 是手动 new 的)，可以改为静态单例访问，或者传入 Service 实例
+    // 建议：在 MarkdownTabController 创建 Server 时，把 Service 传进去，或者通过静态 map 共享
+
+    // 简单实现：在 LocalWebServer 内部加一个 Map
+    private static final Map<String, byte[]> imageBuffer = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static void putImage(String path, byte[] data) {
+        imageBuffer.put(path, data);
+    }
 
     /**
      * 更新内存中的 PDF 数据，供 WebView 里的 PDF.js 读取
@@ -84,6 +100,29 @@ public class LocalWebServer {
             log.error("Failed to start local web server", e);
             throw new RuntimeException("Could not start internal web server", e);
         }
+        // 注册图片 Handler
+        server.createContext("/page_images/", exchange -> {
+            // URL 类似: /page_images/0.png?v=123456
+            String path = exchange.getRequestURI().getPath();
+            String key = path.substring("/page_images/".length()); // "0.png"
+
+            byte[] data = imageBuffer.get(key);
+            if (data == null) {
+                exchange.sendResponseHeaders(404, 0);
+                exchange.close();
+                return;
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", "image/png");
+            // 强缓存控制：因为 URL 带了 version，我们可以让浏览器永久缓存这个 URL
+            // 这样滚动回去时不需要重新下载
+            exchange.getResponseHeaders().set("Cache-Control", "public, max-age=31536000");
+
+            exchange.sendResponseHeaders(200, data.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(data);
+            }
+        });
     }
 
     public void stop() {

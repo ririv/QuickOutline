@@ -2,6 +2,7 @@ package com.ririv.quickoutline.view;
 
 import com.google.gson.Gson;
 import com.ririv.quickoutline.service.MarkdownService;
+import com.ririv.quickoutline.service.PdfImageService;
 import com.ririv.quickoutline.service.PdfSvgService;
 import com.ririv.quickoutline.service.atomic.AtomicPdfSvgService;
 import com.ririv.quickoutline.service.atomic.AtomicBlockService;
@@ -74,6 +75,9 @@ public class MarkdownTabController {
 
     @Inject
     private PdfSvgService pdfSvgService; // 注入服务
+
+    @Inject
+    private PdfImageService pdfImageService; // 记得加这个注入
 
     @Inject
     public MarkdownTabController(CurrentFileState currentFileState, AppEventBus eventBus, MarkdownService markdownService) {
@@ -380,7 +384,7 @@ public class MarkdownTabController {
         }
     }
 
-    private void updatePreviewUI(byte[] pdfBytes) {
+    private void updatePreviewUISvg(byte[] pdfBytes) {
         if (pdfBytes == null) return;
 
         // 后台计算 Diff
@@ -432,6 +436,74 @@ public class MarkdownTabController {
         }).start();
     }
 
+    /**
+     * 更新预览 (图片流方案)
+     * 流程：PDF -> 高清图片 -> 存入Server -> 通知前端 -> 前端静默预加载 -> 切换
+     */
+    private void updatePreviewUI(byte[] pdfBytes) {
+        if (pdfBytes == null) return;
+
+        new Thread(() -> {
+            try {
+                // 1. 计算 Diff 并渲染为图片
+                // 返回的 updates 只包含元数据 (页码, version, 宽高)，不包含二进制图片数据
+                var updates = pdfImageService.diffPdfToImages(pdfBytes);
+
+                if (updates.isEmpty()) return;
+
+                // 2. 将图片数据放入 WebServer 的内存缓存
+                for (var update : updates) {
+                    String imageKey = update.pageIndex() + ".png";
+
+                    // 【核心修正】从 Service 获取二进制数据
+                    byte[] imgData = pdfImageService.getImageData(update.pageIndex());
+
+                    if (imgData != null) {
+                        LocalWebServer.putImage(imageKey, imgData);
+                    }
+                }
+
+                // 3. 序列化元数据为 JSON
+                String jsonString = new com.google.gson.Gson().toJson(updates);
+
+                // 4. UI 线程通知前端
+                Platform.runLater(() -> {
+                    try {
+                        if (previewWebEngine == null) return;
+
+                        String previewUrl = webServer.getBaseUrl() + "image_preview.html";
+                        String currentLoc = previewWebEngine.getLocation();
+
+                        Runnable doUpdate = () -> {
+                            try {
+                                JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                                window.call("updateImagePages", jsonString);
+                            } catch (Exception e) {
+                                log.error("JS update failed", e);
+                            }
+                        };
+
+                        if (currentLoc == null || !currentLoc.startsWith(previewUrl)) {
+                            log.info("Loading Image Preview Engine...");
+                            previewWebEngine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
+                                if (state == Worker.State.SUCCEEDED) {
+                                    doUpdate.run();
+                                }
+                            });
+                            previewWebEngine.load(previewUrl);
+                        } else {
+                            doUpdate.run();
+                        }
+                    } catch (Exception e) {
+                        log.error("UI update failed", e);
+                    }
+                });
+
+            } catch (Exception e) {
+                log.error("Image generation failed", e);
+            }
+        }).start();
+    }
     /**
      * 【重要】资源释放
      * 必须在 App 退出或 Tab 关闭时调用，释放端口

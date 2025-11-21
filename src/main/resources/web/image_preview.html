@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Preview</title>
+    <style>
+        /* --- 1. 全局重置 --- */
+        body {
+            background-color: #525659;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            user-select: none;
+        }
+
+        /* --- 2. 悬浮工具栏 (Ant Design 风格) --- */
+        #toolbar-container {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        #toolbar {
+            pointer-events: auto;
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #fff;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.85);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: bold;
+            line-height: 1;
+            padding: 0;
+        }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+        .icon-btn:active { background: rgba(255, 255, 255, 0.2); transform: scale(0.95); }
+
+        #zoom-label {
+            font-size: 14px;
+            font-variant-numeric: tabular-nums;
+            min-width: 45px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .text-btn {
+            background: #1677ff;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .text-btn:hover { background: #4096ff; }
+        .text-btn:active { background: #0958d9; }
+
+        /* 滑动条样式 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 120px;
+            height: 4px;
+            background: transparent;
+            cursor: pointer;
+            outline: none;
+            margin: 0;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: linear-gradient(to right, #1677ff 0%, #1677ff var(--percent), #5e5e5e var(--percent), #5e5e5e 100%);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #1677ff;
+            margin-top: -5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.2); }
+        input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.3); }
+
+        /* --- 3. 视口与内容 --- */
+        #viewport {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            display: block;
+            text-align: center;
+            will-change: scroll-position;
+        }
+
+        #pages-container {
+            display: inline-block;
+            padding: 40px 0 100px 0;
+        }
+
+        .page-wrapper {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+            /* 相对定位，为了让内部图片绝对定位重叠 */
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 图片样式 */
+        /* 图片样式 */
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+
+            position: absolute;
+            top: 0;
+            left: 0;
+
+            /* 【修正】移除过时的私有属性 */
+            /* 现代 WebKit 默认的缩放算法 (auto) 对于 High-DPI 图片缩小显示效果最佳 */
+            /* 它会自动进行平滑插值，达到 Retina 屏幕般的清晰度 */
+            image-rendering: auto;
+            /* 或者显式指定高质量 (虽然 auto 通常就是这个效果) */
+            /*image-rendering: high-quality;*/
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+<div id="viewport">
+    <div id="pages-container"></div>
+</div>
+
+<div id="toolbar-container">
+    <div id="toolbar">
+        <button class="icon-btn" onclick="adjustZoom(-0.1)">−</button>
+        <input type="range" id="zoom-slider" min="0.5" max="3.0" step="0.1" value="1.0" style="--percent: 20%;">
+        <button class="icon-btn" onclick="adjustZoom(0.1)">+</button>
+        <span id="zoom-label">100%</span>
+        <button class="text-btn" onclick="resetZoom()">Reset</button>
+    </div>
+</div>
+
+<script>
+    // --- 缩放逻辑 (和之前一样) ---
+    let currentScale = 1.0;
+    const slider = document.getElementById('zoom-slider');
+    const label = document.getElementById('zoom-label');
+    const container = document.getElementById('pages-container');
+    const viewport = document.getElementById('viewport');
+
+    updateSliderBackground(1.0);
+
+    slider.addEventListener('input', function() { setZoom(parseFloat(this.value)); });
+
+    function adjustZoom(delta) {
+        let newScale = Math.round((currentScale + delta) * 10) / 10;
+        newScale = Math.max(0.5, Math.min(3.0, newScale));
+        setZoom(newScale);
+    }
+
+    function resetZoom() { setZoom(1.0); }
+
+    function setZoom(scale) {
+        currentScale = scale;
+        container.style.zoom = currentScale;
+        slider.value = currentScale;
+        label.innerText = Math.round(currentScale * 100) + "%";
+        updateSliderBackground(currentScale);
+    }
+
+    function updateSliderBackground(val) {
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const percent = ((val - min) / (max - min)) * 100;
+        slider.style.setProperty('--percent', percent + '%');
+    }
+
+    document.getElementById('viewport').addEventListener('wheel', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            adjustZoom(e.deltaY > 0 ? -0.1 : 0.1);
+        }
+    }, { passive: false });
+
+    // --- 核心：图片流无感更新逻辑 ---
+
+    window.updateImagePages = function(jsonString) {
+        let updates;
+        try { updates = JSON.parse(jsonString); } catch (e) { console.error(e); return; }
+        if (!updates || updates.length === 0) return;
+
+        const totalPages = updates[0].totalPages;
+
+        // 1. 调整容器结构
+        while (container.children.length < totalPages) {
+            let div = document.createElement('div');
+            div.className = 'page-wrapper';
+            div.id = 'page-' + container.children.length;
+            container.appendChild(div);
+        }
+        while (container.children.length > totalPages) {
+            container.removeChild(container.lastChild);
+        }
+
+        // 2. 智能更新
+        updates.forEach(u => {
+            const pageDiv = document.getElementById('page-' + u.pageIndex);
+            if (pageDiv) {
+                pageDiv.style.width = u.widthPx + 'px';
+                pageDiv.style.height = u.heightPx + 'px';
+
+                // 构建图片 URL (必须带版本号/时间戳，否则浏览器缓存不更新)
+                // LocalWebServer 映射路径: /page_images/
+                const newUrl = '/page_images/' + u.pageIndex + '.png?v=' + u.version;
+
+                // 检查当前图片是否已经是最新
+                // 查找当前显示的图片 (可能有多个img，找到 class="current" 的)
+                const currentImg = pageDiv.querySelector('img.current');
+                if (currentImg && currentImg.src.endsWith(u.version)) {
+                    return; // 版本一致，无需更新
+                }
+
+                // 【双缓冲预加载】
+                // 1. 创建新图片对象 (在内存中加载，用户看不见)
+                const newImg = new Image();
+                newImg.className = 'preload';
+
+                newImg.onload = function() {
+                    // 2. 加载完毕，插入 DOM
+                    newImg.className = 'current';
+                    pageDiv.appendChild(newImg);
+
+                    // 3. 移除旧图片 (无缝衔接)
+                    // 此时新图片正好覆盖在旧图片上面 (absolute定位)
+                    // 移除旧图片时，用户眼睛看到的是新图片，没有任何闪烁
+                    if (currentImg) {
+                        pageDiv.removeChild(currentImg);
+                    } else {
+                        // 如果没有旧图片(第一次加载)，可能有多余的预加载图片，清理一下
+                        const oldImages = pageDiv.querySelectorAll('img:not(.current)');
+                        oldImages.forEach(img => pageDiv.removeChild(img));
+                    }
+                };
+
+                // 触发加载
+                newImg.src = newUrl;
+            }
+        });
+    };
+</script>
+</body>
+</html>
