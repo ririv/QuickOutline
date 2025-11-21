@@ -4,6 +4,7 @@ import 'vditor/dist/index.css';
 // Define a custom interface for the Window object to add Vditor-related functions
 declare global {
   interface Window {
+    insertContent: (text: string) => void;
     initVditor: (initialMarkdown: string) => Vditor | undefined;
     getContent: () => string;
     setContent: (markdown: string) => void;
@@ -15,6 +16,13 @@ declare global {
 }
 
 let vditorInstance: Vditor | null = null;
+
+// 【新增】实现插入逻辑
+window.insertContent = function (text: string): void {
+  if (!vditorInstance) return;
+  // Vditor 的 insertValue 会在光标处插入内容，并自动处理 Markdown 格式
+  vditorInstance.insertValue(text);
+};
 
 window.initVditor = function (initialMarkdown: string): Vditor | undefined {
   if (vditorInstance) {
