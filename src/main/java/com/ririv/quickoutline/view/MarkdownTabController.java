@@ -1,12 +1,8 @@
 package com.ririv.quickoutline.view;
 
-import com.google.gson.Gson;
 import com.ririv.quickoutline.service.MarkdownService;
 import com.ririv.quickoutline.service.PdfImageService;
 import com.ririv.quickoutline.service.PdfSvgService;
-import com.ririv.quickoutline.service.atomic.AtomicPdfSvgService;
-import com.ririv.quickoutline.service.atomic.AtomicBlockService;
-import com.ririv.quickoutline.service.atomic.DocumentBlock;
 import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import com.ririv.quickoutline.view.controls.message.Message;
@@ -30,7 +26,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -194,7 +189,7 @@ public class MarkdownTabController {
                     // 3. 生成 PDF (耗时操作)
                     return markdownService.convertHtmlToPdfBytes(payloads, baseUri, onMessage, onError);
                 },
-                this::updatePreviewUI, // 成功回调：调用 SVG Diff 更新逻辑
+                this::updatePreviewUISvg, // 成功回调：调用 SVG Diff 更新逻辑
                 e -> onError.accept("PDF preview failed: " + e.getMessage())
         );
     }
@@ -440,7 +435,7 @@ public class MarkdownTabController {
      * 更新预览 (图片流方案)
      * 流程：PDF -> 高清图片 -> 存入Server -> 通知前端 -> 前端静默预加载 -> 切换
      */
-    private void updatePreviewUI(byte[] pdfBytes) {
+    private void updatePreviewUIImg(byte[] pdfBytes) {
         if (pdfBytes == null) return;
 
         new Thread(() -> {

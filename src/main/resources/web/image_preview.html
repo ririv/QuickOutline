@@ -245,8 +245,8 @@
         updates.forEach(u => {
             const pageDiv = document.getElementById('page-' + u.pageIndex);
             if (pageDiv) {
-                pageDiv.style.width = u.widthPx + 'px';
-                pageDiv.style.height = u.heightPx + 'px';
+                pageDiv.style.width = u.widthPt + 'pt';
+                pageDiv.style.height = u.heightPt + 'pt';
 
                 // 构建图片 URL (必须带版本号/时间戳，否则浏览器缓存不更新)
                 // LocalWebServer 映射路径: /page_images/

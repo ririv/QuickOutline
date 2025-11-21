@@ -32,7 +32,7 @@ public class PdfImageService {
 
     // 数据载体
     // version: 用于前端强制刷新缓存 (利用时间戳)
-    public record ImagePageUpdate(int pageIndex, long version, int totalPages, float widthPx, float heightPx) {}
+    public record ImagePageUpdate(int pageIndex, long version, int totalPages, float widthPt, float heightPt) {}
 
     public void clearCache() {
         pageCache.clear();
