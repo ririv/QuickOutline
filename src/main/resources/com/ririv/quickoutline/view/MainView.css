@@ -29,6 +29,7 @@
     -fx-border-width: 0 0 1 0; /* 只在底部添加边框 */
     -fx-border-color: #909090; /* 下划线颜色 */
     -fx-border-radius: 0;
+    -fx-background-color: white;
 }
 
 

@@ -21,7 +21,6 @@ import javafx.collections.FXCollections;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.image.ImageView;
@@ -52,7 +51,7 @@ public class TocGeneratorTabController {
     @FXML
     private EditorTextArea tocContentTextArea;
     @FXML
-    private TextArea titleTextArea;
+    private TextField titleText;
     @FXML
     private VBox previewVBox;
     @FXML
@@ -90,13 +89,13 @@ public class TocGeneratorTabController {
                 e -> onError.accept("TOC preview failed: " + e.getMessage()));
 
         tocContentTextArea.textProperty().addListener((obs, ov, nv) -> triggerPreview());
-        titleTextArea.textProperty().addListener((obs, ov, nv) -> triggerPreview());
+        titleText.textProperty().addListener((obs, ov, nv) -> triggerPreview());
         numberingStyleComboBox.valueProperty().addListener((obs, ov, nv) -> triggerPreview());
     }
 
     private void triggerPreview() {
         String tocContent = tocContentTextArea.getText();
-        String title = titleTextArea.getText();
+        String title = titleText.getText();
         PageLabelNumberingStyle style = PageLabel.STYLE_MAP.get(numberingStyleComboBox.getValue());
 
         if (tocContent == null || tocContent.isBlank()) {
@@ -148,7 +147,7 @@ public class TocGeneratorTabController {
     }
 
     private void setupBookmarkBindings() {
-        titleTextArea.setText("Table of Contents");
+        titleText.setText("Table of Contents");
         Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
         if (rootBookmark != null) {
             tocContentTextArea.setText(rootBookmark.toOutlineString());
@@ -200,7 +199,7 @@ public class TocGeneratorTabController {
             return;
         }
 
-        String title = titleTextArea.getText();
+        String title = titleText.getText();
         if (title == null || title.isBlank()) {
             title = "Table of Contents";
         }

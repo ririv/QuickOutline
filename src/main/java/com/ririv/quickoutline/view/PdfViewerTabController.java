@@ -15,8 +15,6 @@ public class PdfViewerTabController {
     @FXML
     private ImageView imageView;
     @FXML
-    private ScrollPane scrollPane;
-    @FXML
     private Button prevButton;
     @FXML
     private Button nextButton;

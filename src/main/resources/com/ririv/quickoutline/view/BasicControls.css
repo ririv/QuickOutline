@@ -12,7 +12,7 @@
 .text-area {
     -fx-background-insets: 0;
     -fx-background-color: transparent;
-    -fx-border-color: white;
+    -fx-border-color: transparent;  /* 边框必须有，否则选中时，出现边框，内容会发生偏移 */
     -fx-border-radius: 4px;
     -fx-border-width: 1px;
     -fx-font-size: 14px;
@@ -33,6 +33,29 @@
     -fx-background-color: white;
 }
 
+.text-area .scroll-pane {
+    /*默认也是有边框的，不设为透明，能看到textArea的边框里面包含了一个边框，导致出现两条线*/
+    -fx-border-color: transparent;
+}
+
+
+.text-field {
+    -fx-background-insets: 0;
+    -fx-border-color: white;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #333333;
+}
+
+.text-field:hover {
+    -fx-border-color: -el-color-primary;
+}
+
+.text-field:focused {
+    -fx-border-color: -el-color-primary;
+    -fx-effect: dropshadow(gaussian, -el-color-primary-shadow, 5, 0.2, 0, 0);
+}
 
 /* 滚动条 */
 
@@ -368,10 +391,6 @@
 
 .graph-button-basic:pressed .icon{
     -fx-background-color: rgba(150, 150, 150, 0.9);
-}
-
-.text-field{
-    -fx-background-color: white;
 }
 
 /*该css需要添加class使用*/
