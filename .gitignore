@@ -40,3 +40,6 @@ src/main/resources/web/vditor/dist
 
 /.idea/jsLibraryMappings.xml
 /.settings/org.eclipse.buildship.core.prefs
+
+
+dist/
