@@ -167,6 +167,10 @@
             /* 告诉浏览器：这个元素的内部布局与外部无关 */
             /* 当我们频繁操作 innerHTML 时，这能防止全局重排 (Reflow) */
             contain: content;
+
+            /*开启层级合成 (Layer Compositing)*/
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
         }
 
         svg {
@@ -174,6 +178,19 @@
             width: 100%;
             height: 100%;
             pointer-events: auto; /* 只有可见时才响应鼠标 */
+
+            /* 1. 形状渲染：优化速度 */
+            /* 默认是 geometricPrecision (精度优先)，改为 optimizeSpeed 可能有锯齿，但滚动更快 */
+            /* 建议：平时用 auto，如果滚动极卡，可以尝试改为 optimizeSpeed */
+            shape-rendering: auto;
+
+            /* 2. 文本渲染：我们之前设为了 geometricPrecision 以保位置准确 */
+            /* 千万别改这个，改了会导致文字错位 */
+            text-rendering: geometricPrecision;
+
+            /* 3. 显卡加速提示 */
+            /* 告诉浏览器这个 SVG 不需要复杂的合成运算 */
+            mix-blend-mode: normal;
         }
     </style>
 </head>

@@ -121,7 +121,13 @@ def args = [
     '-Dorg.slf4j.simpleLogger.log.com.itextpdf.styledxmlparser.css.parse.syntax.CssParserStateController=OFF',
     // https://github.com/openjdk/jfx/blob/jfx25/doc-files/release-notes-24.md#javafx-applications-must-use---enable-native-access
     '--enable-native-access=javafx.graphics,javafx.web,javafx.media',
-    '-Djavafx.enablePreview=true'
+    '-Djavafx.enablePreview=true',
+//    '-Dprism.order=es2,d3d',
+//    '-Dprism.verbose=true', // 开发时开启，发布时关掉
+//    '-Dprism.lcdtext=false' // 视效果而定
+    '-Djavafx.animation.fullspeed=true',
+    '-Djavafx.pulseLogger=false',
+    '-Dprism.lcdtext=false'
 ]
 
 tasks.withType(JavaCompile).configureEach {
