@@ -1,8 +1,8 @@
 package com.ririv.quickoutline.view;
 
 import com.ririv.quickoutline.service.MarkdownService;
-import com.ririv.quickoutline.service.PdfImageService;
-import com.ririv.quickoutline.service.PdfSvgService;
+import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
+import com.ririv.quickoutline.service.pdfpreview.PdfSvgService;
 import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import com.ririv.quickoutline.view.controls.message.Message;

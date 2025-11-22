@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.service;
+package com.ririv.quickoutline.service.pdfpreview;
 
 import jakarta.inject.Singleton;
 import org.apache.batik.dom.GenericDOMImplementation;

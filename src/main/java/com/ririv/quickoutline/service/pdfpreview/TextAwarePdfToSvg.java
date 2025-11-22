@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.service;
+package com.ririv.quickoutline.service.pdfpreview;
 
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
