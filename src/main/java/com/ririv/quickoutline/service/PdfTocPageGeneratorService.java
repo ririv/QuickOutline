@@ -21,14 +21,14 @@ public class PdfTocPageGeneratorService {
     }
 
     public void createTocPage(String srcFilePath, String destFilePath, String title, int insertPos,
-                              PageLabelNumberingStyle style, List<Bookmark> bookmarks,
+                              PageLabelNumberingStyle style, Bookmark rootBookmark,
                               Consumer<String> onMessage, Consumer<String> onError) throws IOException {
-        tocPageGenerator.generateAndInsertToc(srcFilePath, destFilePath, title, insertPos, style, bookmarks, onMessage, onError);
+        tocPageGenerator.generateAndInsertToc(srcFilePath, destFilePath, title, insertPos, style, rootBookmark, onMessage, onError);
     }
 
-    public void createTocPagePreview(String title, PageLabelNumberingStyle style, List<Bookmark> bookmarks,
+    public void createTocPagePreview(String title, PageLabelNumberingStyle style, Bookmark rootBookmark,
                                      OutputStream outputStream,
                                      Consumer<String> onMessage, Consumer<String> onError) throws IOException {
-        tocPageGenerator.generateTocPagePreview(title, style, bookmarks, outputStream, onMessage, onError);
+        tocPageGenerator.generateTocPagePreview(title, style, rootBookmark, outputStream, onMessage, onError);
     }
 }

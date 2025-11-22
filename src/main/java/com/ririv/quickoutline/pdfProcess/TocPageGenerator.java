@@ -10,10 +10,10 @@ import java.util.function.Consumer;
 
 public interface TocPageGenerator {
     void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos,
-                              PageLabelNumberingStyle style, List<Bookmark> bookmarks,
+                              PageLabelNumberingStyle style, Bookmark rootBookmark,
                               Consumer<String> onMessage, Consumer<String> onError) throws IOException;
 
-    void generateTocPagePreview(String title, PageLabelNumberingStyle style, List<Bookmark> bookmarks,
+    void generateTocPagePreview(String title, PageLabelNumberingStyle style, Bookmark rootBookmark,
                                 OutputStream outputStream,
                                 Consumer<String> onMessage, Consumer<String> onError) throws IOException;
 }

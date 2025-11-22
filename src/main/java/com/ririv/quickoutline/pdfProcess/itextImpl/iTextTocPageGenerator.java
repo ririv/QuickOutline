@@ -92,8 +92,9 @@ public class iTextTocPageGenerator implements TocPageGenerator {
 
     @Override
     public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos,
-                                     PageLabelNumberingStyle style, List<Bookmark> bookmarks,
+                                     PageLabelNumberingStyle style, Bookmark rootBookmark,
                                      Consumer<String> onMessage, Consumer<String> onError) throws IOException {
+        List<Bookmark> bookmarks = rootBookmark.flattenToList();
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
         // 记录原始文档的页数
         int originalPageNum = pdfDoc.getNumberOfPages();
@@ -101,10 +102,8 @@ public class iTextTocPageGenerator implements TocPageGenerator {
 
         PdfFont font = getPdfFont(onMessage, onError);
 
-        if (style != PageLabelNumberingStyle.NONE) {
-            pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new PageNumberEventHandler(doc, style, font, insertPos, -1)); // We don't know total pages yet
-        }
-
+        // 1. 设置页码监听器
+        registerPageNumberHandler(pdfDoc, doc, style, font, insertPos);
         // ======================= !!! FINAL, DEFINITIVE FIX !!! =======================
         // 这是一个两步操作，以确保我们总是在文档的末尾添加新页面
         // 1. 首先，显式地将布局引擎的光标移动到现有文档的“最后一页”。
@@ -113,31 +112,8 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         doc.add(new AreaBreak());
         // 这个两步过程保证了无论 Document 的初始状态如何，目录总是从文档末尾的一个干净页面开始。
         // ==============================================================================
-
-        Paragraph titleParagraph = new Paragraph(title)
-                .setFont(font)
-                .setTextAlignment(TextAlignment.CENTER)
-                .setFontSize(20)
-                .setMarginBottom(20);
-        doc.add(titleParagraph);
-
-        // 设置制表符
-        List<TabStop> tabStops = new ArrayList<>();
-        tabStops.add(new TabStop(580, TabAlignment.RIGHT, new DottedLine()));
-
-        // Add TOC entries
-        for (Bookmark bookmark : bookmarks) {
-            int pageNumInDest = bookmark.getPageNum().orElse(1);
-            Paragraph p = new Paragraph()
-                    .addTabStops(tabStops)
-                    .setFont(font)
-                    .setPaddingLeft((bookmark.getLevel() - 1) * 20) // Indent based on level
-                    .add(bookmark.getTitle())
-                    .add(new Tab())
-                    .add(String.valueOf(bookmark.getPageNum().orElse(0)))
-                    .setAction(PdfAction.createGoTo(PdfExplicitDestination.createFit(pdfDoc.getPage(pageNumInDest))));
-            doc.add(p);
-        }
+        // 3. 绘制目录内容 (公共逻辑: 开启链接生成)
+        drawTocContent(doc, pdfDoc, title, bookmarks, font, true);
 
         // 添加完TOC后，计算TOC所占的页数
         int totalPages = pdfDoc.getNumberOfPages();
@@ -154,18 +130,42 @@ public class iTextTocPageGenerator implements TocPageGenerator {
     }
 
     @Override
-    public void generateTocPagePreview(String title, PageLabelNumberingStyle style, List<Bookmark> bookmarks,
+    public void generateTocPagePreview(String title, PageLabelNumberingStyle style, Bookmark rootBookmark,
                                        java.io.OutputStream outputStream,
                                        Consumer<String> onMessage, Consumer<String> onError) throws IOException {
+        List<Bookmark> bookmarks = rootBookmark.flattenToList();
         PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outputStream));
         Document doc = new Document(pdfDoc);
 
         PdfFont font = getPdfFont(onMessage, onError);
 
-        if (style != null && style != PageLabelNumberingStyle.NONE) {
-            pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new PageNumberEventHandler(doc, style, font, 1, -1));
-        }
+        // 1. 设置页码监听器 (预览模式默认从第1页开始)
+        registerPageNumberHandler(pdfDoc, doc, style, font, 1);
 
+        // 2. 绘制目录内容 (公共逻辑: 关闭链接生成，因为预览流没有目标页)
+        drawTocContent(doc, pdfDoc, title, bookmarks, font, false);
+        doc.close();
+    }
+
+    /**
+     * 注册页码事件监听器
+     */
+    private void registerPageNumberHandler(PdfDocument pdfDoc, Document doc, PageLabelNumberingStyle style,
+                                           PdfFont font, int startPageNum) {
+        if (style != null && style != PageLabelNumberingStyle.NONE) {
+            // totalTocPages 传 -1，让 Handler 自己去获取或计算
+            pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE,
+                    new PageNumberEventHandler(doc, style, font, startPageNum, -1));
+        }
+    }
+
+    /**
+     * 绘制目录的核心内容：标题 + 列表
+     * @param generateLinks 是否生成点击跳转链接 (Insert时需要，Preview时不需要)
+     */
+    private void drawTocContent(Document doc, PdfDocument pdfDoc, String title, List<Bookmark> bookmarks,
+                                PdfFont font, boolean generateLinks) {
+        // 添加标题
         Paragraph titleParagraph = new Paragraph(title)
                 .setFont(font)
                 .setTextAlignment(TextAlignment.CENTER)
@@ -173,22 +173,35 @@ public class iTextTocPageGenerator implements TocPageGenerator {
                 .setMarginBottom(20);
         doc.add(titleParagraph);
 
+        // 设置制表符
         List<TabStop> tabStops = new ArrayList<>();
         tabStops.add(new TabStop(580, TabAlignment.RIGHT, new DottedLine()));
 
+        // 添加条目
         for (Bookmark bookmark : bookmarks) {
             Paragraph p = new Paragraph()
                     .addTabStops(tabStops)
                     .setFont(font)
-                    .setPaddingLeft((bookmark.getLevel() - 1) * 20)
+                    .setPaddingLeft((bookmark.getLevel() - 1) * 20) // 缩进
                     .add(bookmark.getTitle())
                     .add(new Tab())
                     .add(String.valueOf(bookmark.getPageNum().orElse(0)));
+
+            // 只有在需要生成链接且能够获取目标页时才添加 Action
+            if (generateLinks) {
+                int pageNumInDest = bookmark.getPageNum().orElse(1);
+                // 确保页面存在以避免越界异常
+                if (pageNumInDest > 0 && pageNumInDest <= pdfDoc.getNumberOfPages()) {
+                    p.setAction(PdfAction.createGoTo(
+                            PdfExplicitDestination.createFit(pdfDoc.getPage(pageNumInDest))
+                    ));
+                }
+            }
+
             doc.add(p);
         }
-
-        doc.close();
     }
+
 
     private static class PageNumberEventHandler extends AbstractPdfDocumentEventHandler {
         private final Document doc;

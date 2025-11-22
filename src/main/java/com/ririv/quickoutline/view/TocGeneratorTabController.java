@@ -116,7 +116,7 @@ public class TocGeneratorTabController {
         }
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            pdfTocPageGeneratorService.createTocPagePreview(input.title(), input.style(), rootBookmark.getChildren(), baos, onMessage, onError);
+            pdfTocPageGeneratorService.createTocPagePreview(input.title(), input.style(), rootBookmark, baos, onMessage, onError);
             return baos.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException("Failed to generate TOC preview bytes", e);
@@ -225,7 +225,7 @@ public class TocGeneratorTabController {
             String destFile = currentFileState.getDestFile().toString();
             Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
             Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
-            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark.getChildren(), onMessage, onError);
+            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark, onMessage, onError);
             eventBus.post(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS));
         } catch (IOException e) {
             eventBus.post(new ShowMessageEvent("Failed to generate TOC page: " + e.getMessage(), Message.MessageType.ERROR));
