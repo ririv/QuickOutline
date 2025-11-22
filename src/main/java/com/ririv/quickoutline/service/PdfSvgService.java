@@ -124,12 +124,16 @@ public class PdfSvgService {
                     styleBlock = "<style>" + fontCss + "</style>";
                 }
 
+                // text-rendering: optimizeSpeed;：最关键。告诉浏览器不要计算复杂的字距（Kerning）和连字，追求速度。这在移动端能带来巨大的性能提升。
+                // shape-rendering: crispEdges;：关闭反锯齿（如果对画质要求没那么高），可以提速。
                 String newHeader = String.format(
                         "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
                                 "viewBox=\"0 0 %s %s\" " +
                                 "width=\"100%%\" height=\"100%%\" " +
                                 "preserveAspectRatio=\"xMidYMid meet\" " +
-                                "style=\"display:block; overflow:hidden; text-rendering:geometricPrecision;\">",
+                                "style=\"display:block; overflow:hidden; " +
+                                "text-rendering: optimizeSpeed; shape-rendering: crispEdges; ...\">",
+//                                "text-rendering:geometricPrecision;\">",
                         fmt(width), fmt(height));
 
                 return newHeader + styleBlock + svgContent + "</svg>";
