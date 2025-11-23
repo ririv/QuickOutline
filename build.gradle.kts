@@ -23,10 +23,10 @@ repositories {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
-kotlin.jvmToolchain(21)
+kotlin.jvmToolchain(25)
 
 dependencies {
     // ------------------- 核心修正 START -------------------
