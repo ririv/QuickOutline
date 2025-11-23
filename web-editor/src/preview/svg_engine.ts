@@ -15,6 +15,23 @@ interface PageCacheItem {
 
 // --- 内部状态 ---
 const pageCache: Record<number, PageCacheItem> = {};
+let isDoubleBufferingEnabled = true;
+
+export function setDoubleBuffering(enable: boolean) {
+    isDoubleBufferingEnabled = enable;
+    const container = document.getElementById('pages-container');
+    if (container) {
+        if (enable) {
+            container.classList.add('double-buffer');
+        } else {
+            container.classList.remove('double-buffer');
+        }
+    }
+    console.log(`[SVG] Double buffering set to: ${enable}`);
+}
+
+// 初始化时设置默认状态
+setDoubleBuffering(isDoubleBufferingEnabled);
 
 /**
  * 核心：处理 Java 传来的 SVG JSON 数据
@@ -54,7 +71,7 @@ export function handleSvgUpdate(jsonString: string, container: HTMLElement, view
 
             // 如果当前正好在显示，强制刷新内容
             if (pageDiv.dataset.loaded === "true") {
-                pageDiv.innerHTML = u.svgContent;
+                renderPageNode(pageDiv, u.svgContent);
             }
         }
     });
@@ -115,7 +132,7 @@ function renderVisiblePages(container: HTMLElement, viewport: HTMLElement) {
             if (pageDiv.dataset.loaded === "false") {
                 const data = pageCache[i];
                 if (data && data.content) {
-                    pageDiv.innerHTML = data.content;
+                    renderPageNode(pageDiv, data.content);
                     pageDiv.dataset.loaded = "true";
                 }
             }
@@ -124,6 +141,41 @@ function renderVisiblePages(container: HTMLElement, viewport: HTMLElement) {
                 pageDiv.innerHTML = ""; // 卸载 DOM 节省内存
                 pageDiv.dataset.loaded = "false";
             }
+        }
+    }
+}
+
+/**
+ * 统一渲染逻辑：支持双缓冲和直接替换
+ */
+function renderPageNode(pageDiv: HTMLElement, svgContent: string) {
+    if (isDoubleBufferingEnabled) {
+        // --- 双缓冲加载逻辑 ---
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgContent, "image/svg+xml");
+        const newSvg = doc.documentElement;
+
+        if (newSvg.tagName.toLowerCase() === 'svg') {
+            newSvg.classList.add('preload');
+            pageDiv.appendChild(newSvg);
+
+            requestAnimationFrame(() => {
+                newSvg.classList.add('current');
+                newSvg.classList.remove('preload');
+
+                const oldSvgs = Array.from(pageDiv.querySelectorAll('svg')).filter(el => el !== newSvg);
+                if (oldSvgs.length > 0) {
+                    setTimeout(() => oldSvgs.forEach(el => el.remove()), 300);
+                }
+            });
+        }
+    } else {
+        // --- 直接替换逻辑 (Single Buffer) ---
+        pageDiv.innerHTML = svgContent;
+        // 必须添加 .current 类，否则 CSS 默认 opacity 为 0
+        const svg = pageDiv.querySelector('svg');
+        if (svg) {
+            svg.classList.add('current');
         }
     }
 }

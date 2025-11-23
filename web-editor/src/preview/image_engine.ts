@@ -11,6 +11,11 @@ interface ImagePageUpdateData {
  * 核心：处理 Java 传来的图片 JSON 数据
  */
 export function handleImageUpdate(jsonString: string, container: HTMLElement) {
+    // 确保容器拥有 .double-buffer 类以激活 CSS 双缓冲样式
+    if (!container.classList.contains('double-buffer')) {
+        container.classList.add('double-buffer');
+    }
+
     let updates: ImagePageUpdateData[];
     try {
         updates = JSON.parse(jsonString);

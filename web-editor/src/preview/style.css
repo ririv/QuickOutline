@@ -173,7 +173,7 @@ input[type=range]:active::-webkit-slider-thumb {
 }
 
 /* 图片样式 */
-.page-wrapper svg {
+svg {
     display: block;
     width: 100%;
     height: 100%;
@@ -197,7 +197,7 @@ input[type=range]:active::-webkit-slider-thumb {
 
 
 
-.page-wrapper img {
+img {
     display: block;
     width: 100%;
     height: 100%;
@@ -213,21 +213,23 @@ input[type=range]:active::-webkit-slider-thumb {
     image-rendering: auto;
     /* 或者显式指定高质量 (虽然 auto 通常就是这个效果) */
     /*image-rendering: high-quality;*/
+}
 
-    /* 默认透明，通过动画淡入 */
+/* --- 双缓冲通用类 (仅在启用时生效) --- */
+.double-buffer .page-wrapper svg,
+.double-buffer .page-wrapper img {
+    position: absolute;
+    top: 0;
+    left: 0;
     opacity: 0;
     transition: opacity 0.2s ease-in;
 }
 
-
-
-/* 当前显示的图片（加载完成） */
-.page-wrapper .current {
+.double-buffer .page-wrapper .current {
     opacity: 1;
     z-index: 1;
 }
 
-/* 正在预加载的图片 */
-.page-wrapper .preload {
-    z-index: 2; /* 放在上面，加载完后通过 opacity 盖住旧图 */
+.double-buffer .page-wrapper .preload {
+    z-index: 2;
 }

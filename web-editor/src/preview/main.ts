@@ -2,7 +2,7 @@
 import './style.css';
 
 // 引入子引擎
-import { handleSvgUpdate, onSvgViewChange } from './svg_engine';
+import { handleSvgUpdate, onSvgViewChange, setDoubleBuffering } from './svg_engine';
 import { handleImageUpdate } from './image_engine';
 
 // --- 全局定义 ---
@@ -10,6 +10,7 @@ declare global {
     interface Window {
         updateSvgPages: (jsonString: string) => void;
         updateImagePages: (jsonString: string) => void;
+        setSvgDoubleBuffering: (enable: boolean) => void; // 仅对svg有效，img只有双缓冲模式
     }
 }
 
@@ -42,6 +43,11 @@ window.updateSvgPages = (jsonString: string) => {
 // 图片入口
 window.updateImagePages = (jsonString: string) => {
     handleImageUpdate(jsonString, container);
+};
+
+// 双缓冲开关入口
+window.setSvgDoubleBuffering = (enable: boolean) => {
+    setDoubleBuffering(enable);
 };
 
 
