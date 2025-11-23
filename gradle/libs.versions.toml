@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.2.10"
+kotlin = "2.2.21"
 compose = "1.8.2"
 coroutinesSwing = "1.8.0"
 kermit = "2.0.3"

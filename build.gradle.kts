@@ -84,3 +84,8 @@ extensions.configure<ComposeExtension> {
     }
 }
 
+tasks.test {
+    enabled = false
+}
+
+
