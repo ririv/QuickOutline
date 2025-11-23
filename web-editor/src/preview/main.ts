@@ -1,6 +1,5 @@
 // 引入样式
 import './style.css';
-import './image.css';
 
 // 引入子引擎
 import { handleSvgUpdate, onSvgViewChange } from './svg_engine';
