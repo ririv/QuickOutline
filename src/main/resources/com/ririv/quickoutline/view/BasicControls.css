@@ -1,5 +1,10 @@
 @import "colors.css";
 
+*{
+    -fx-highlight-fill: #feeabf; /* 文字选中时背景颜色 */
+    -fx-highlight-text-fill: black; /* 文字选中时颜色 */
+}
+
 /*阴影效果*/
 /*去掉了，界面简洁点*/
 .out-shadow{
@@ -7,7 +12,9 @@
     -fx-background-color: white;
 }
 
-
+.scroll-pane {
+    -fx-border-width: 0;
+}
 
 .text-area {
     -fx-background-insets: 0;
@@ -38,10 +45,16 @@
     -fx-border-color: transparent;
 }
 
+.text-area:focused .content {
+    /*-fx-border-width: 0;*/
+    /*-fx-background-color: white;*/
+}
+
+
+
 
 .text-field {
     -fx-background-insets: 0;
-    -fx-border-color: white;
     -fx-border-radius: 4px;
     -fx-border-width: 1px;
     -fx-font-size: 14px;
@@ -357,16 +370,17 @@
     /*会影响图形大小,但同时也会影响tooltip文字大小*/
     /*-fx-font-size: 12;*/
     /*snow 与 white 不是一个颜色，snow更红一点*/
+    -my-hover-selected-bg-color: rgba(219, 220, 222);
 }
 
 
 .graph-toggle-button:hover{
-    -fx-background-color: rgba(210, 210, 210, 0.9);
+    -fx-background-color: -my-hover-selected-bg-color;
 }
 
 
 .graph-toggle-button:selected{
-    -fx-background-color: rgba(210, 210, 210, 0.9);
+    -fx-background-color: -my-hover-selected-bg-color;
 }
 
 .graph-toggle-button:selected>.icon, .graph-toggle-button:pressed>.icon{
@@ -411,7 +425,11 @@
     -fx-border-color: -el-color-primary;
 }
 
-
+.split-pane {
+    /*默认有paddding。并且背景有颜色，取消掉z*/
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
 
 .split-pane > .split-pane-divider {
     -fx-padding: 2;

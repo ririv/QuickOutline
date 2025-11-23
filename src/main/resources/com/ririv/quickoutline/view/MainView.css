@@ -7,7 +7,14 @@
     -my-accent-color-transparent: rgba(64, 158, 255, 0.3); /* 主色的30%透明版本 */
     -icon-size-tab: 20px;
     -icon-size-bottom-menu: 18px;
+    /*-my-window-color: #f8f8f8;*/
+    -my-window-color: rgba(247, 248, 250);
 }
+
+#root{
+    -fx-background-color: transparent;
+}
+
 
 
 #filepathTF{
@@ -37,6 +44,7 @@
     -fx-border-color: black; /* 下划线颜色 */
 }
 
+
 /*聚焦，聚焦并悬浮*/
 .underlineTF:focused, .underlineTF:focused:hover {
     -fx-border-color: #0093EF; /* 下划线颜色 */
@@ -44,13 +52,13 @@
 
 #topPane{
     -fx-view-order: -1.0;
-    -fx-background-color: rgba(242, 242, 242);
+    -fx-background-color: -my-window-color;
 }
 
 
 #leftPane{
     -fx-view-order: 1.0;
-    -fx-background-color: #f8f8f8;
+    -fx-background-color: -my-window-color;
     -fx-border-width: 0 1 0 0;
     -fx-border-color: -my-color-divding-line;
 }
@@ -62,7 +70,7 @@
 
 #bottomPane{
     -fx-view-order: -1.0;
-    -fx-background-color: #f8f8f8;
+    -fx-background-color: -my-window-color;
 }
 
 
@@ -106,5 +114,4 @@
 .view-scale-button-padding{
     -fx-padding: 0;
 }
-
 
