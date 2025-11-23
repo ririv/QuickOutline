@@ -8,4 +8,7 @@
       <module name="QuickOutline.main" options="--add-exports javafx.web/com.sun.javafx.webkit=quickoutline" />
     </option>
   </component>
+  <component name="TypeScriptCompiler">
+    <option name="typeScriptCompilerParams" value="~/my/Proj/QuickOutline/web-editor/tsconfig.json" />
+  </component>
 </project>

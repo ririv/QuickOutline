@@ -65,7 +65,7 @@ public class LocalWebServer {
                 return t;
             }));
 
-            // 3. 注册静态资源处理器 (处理 editor.html, vditor, pdf.js 等)
+            // 3. 注册静态资源处理器 (处理 html, js，css 等)
             server.createContext("/", new ClasspathHandler(baseResourcePath));
 
             // 4. 注册动态 PDF 处理器 (处理预览数据)
@@ -155,7 +155,7 @@ public class LocalWebServer {
 
             // 默认首页
             if (requestPath.equals("/")) {
-                requestPath = "/editor.html";
+                requestPath = "/vditor.html";
             }
 
             // 拼接资源路径：/web + /path/to/file.js

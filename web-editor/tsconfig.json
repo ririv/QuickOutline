@@ -8,9 +8,12 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    // 核心库定义：这是解决 includes 报错的关键
+    // 包含 DOM (浏览器环境) 和 ES2020 (JS 新语法)
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
   },
   "include": [
-    "vditor_entry.ts"
+    "src/vditor/vditor_entry.ts"
   ]
 }

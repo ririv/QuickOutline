@@ -347,8 +347,8 @@ public class MarkdownTabController {
             // 直接读取 Jar 包内资源，无需解压
             webServer.start("/web");
 
-            // 获取 http://127.0.0.1:端口/editor.html
-            urlToLoad = webServer.getBaseUrl() + "editor.html";
+            // 获取 http://127.0.0.1:端口/vditor.html
+            urlToLoad = webServer.getBaseUrl() + "vditor.html";
             log.info("[Load Strategy 1] Local WebServer started successfully. URL: {}", urlToLoad);
 
         } catch (Exception e) {
@@ -373,7 +373,7 @@ public class MarkdownTabController {
             log.info("WebView loading: {}", urlToLoad);
             webEngine.load(urlToLoad);
         } else {
-            String errorMsg = "FATAL: Could not find 'editor.html' in resources!";
+            String errorMsg = "FATAL: Could not find 'vditor.html' in resources!";
             log.error(errorMsg);
             eventBus.post(new ShowMessageEvent("Failed to load editor resources. Please check logs.", Message.MessageType.ERROR));
         }

@@ -1,0 +1,59 @@
+/* 引入基础样式 (仅作示意，实际由 main.ts import 进来) */
+
+/* --- 页面容器与布局 --- */
+#viewport {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    display: block;
+    text-align: center;
+    will-change: scroll-position;
+}
+
+#pages-container {
+    display: inline-block;
+    padding: 40px 0 100px 0;
+    /* 使用 CSS 变量或 JS 控制 zoom */
+    transform-origin: top center;
+}
+
+.page-wrapper {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    margin-bottom: 20px;
+    /* 关键：相对定位，为了让内部图片绝对定位重叠 */
+    position: relative;
+    overflow: hidden;
+
+    /* 避免图片加载时的布局抖动，默认给一个白色背景 */
+    background-color: #fff;
+}
+
+/* --- 图片双缓冲样式 --- */
+.page-wrapper img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    /* 优化渲染质量 */
+    image-rendering: auto;
+
+    /* 默认透明，通过动画淡入 */
+    opacity: 0;
+    transition: opacity 0.2s ease-in;
+}
+
+/* 当前显示的图片（加载完成） */
+.page-wrapper img.current {
+    opacity: 1;
+    z-index: 1;
+}
+
+/* 正在预加载的图片 */
+.page-wrapper img.preload {
+    z-index: 2; /* 放在上面，加载完后通过 opacity 盖住旧图 */
+}
