@@ -9,7 +9,9 @@ import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.state.CurrentFileState;
+import com.ririv.quickoutline.view.utils.MarkdownImageHandler;
 import com.ririv.quickoutline.view.utils.TrailingThrottlePreviewer;
+import com.ririv.quickoutline.view.utils.WebViewEditorSupport;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -106,50 +108,6 @@ public class MarkdownTabController {
         log.debug("Controller initialize complete");
     }
 
-    private void performPaste() {
-        Clipboard clipboard = Clipboard.getSystemClipboard();
-        if (clipboard.hasString()) {
-            String text = clipboard.getString();
-            if (text == null) return;
-
-            // 转义，防止 JS 语法错误
-            String safeText = text.replace("\\", "\\\\")
-                    .replace("'", "\\'")
-                    .replace("\n", "\\n")
-                    .replace("\r", "");
-
-            // 调用 Vditor 的插入接口
-            webEngine.executeScript("window.insertContent && window.insertContent('" + safeText + "')");
-        }
-    }
-
-    /**
-     * 执行复制逻辑 (JS 获取选区 -> Java 剪贴板)
-     */
-    private void performCopy() {
-        // 获取网页中选中的文本
-        Object selection = webEngine.executeScript("window.getSelection().toString()");
-        if (selection != null) {
-            String selectedText = selection.toString();
-            if (!selectedText.isEmpty()) {
-                ClipboardContent content = new ClipboardContent();
-                content.putString(selectedText);
-                Clipboard.getSystemClipboard().setContent(content);
-            }
-        }
-    }
-
-    /**
-     * 执行剪切逻辑 (复制 -> JS 删除)
-     */
-    private void performCut() {
-        // 1. 先复制
-        performCopy();
-        // 2. 再调用 JS 删除选中内容 (Vditor 或是普通 contenteditable 都支持 execCommand delete)
-        // 或者使用 Vditor 的 delete API，但最通用的是这个：
-        webEngine.executeScript("document.execCommand('delete')");
-    }
-
     /**
      * 1. 初始化预览节流器 (TrailingThrottlePreviewer)
      * 防止用户输入过快导致频繁生成 PDF
@@ -215,79 +173,8 @@ public class MarkdownTabController {
             }
         });
 
-        // 1. 【关键】禁用 WebView 自带的那个没用的右键菜单
-        webView.setContextMenuEnabled(false);
-
-        // 2. 创建我们自己的 JavaFX 右键菜单
-        ContextMenu contextMenu = new ContextMenu();
-
-        MenuItem cutItem = new MenuItem("剪切"); // 或从 bundle 获取本地化字符串
-        MenuItem copyItem = new MenuItem("复制");
-        MenuItem pasteItem = new MenuItem("粘贴");
-
-        // 绑定动作
-        cutItem.setOnAction(e -> performCut());
-        copyItem.setOnAction(e -> performCopy());
-        pasteItem.setOnAction(e -> performPaste());
-
-        contextMenu.getItems().addAll(cutItem, copyItem, new SeparatorMenuItem(), pasteItem);
-
-        // 3. 监听鼠标事件，手动弹出菜单
-        webView.setOnMousePressed(e -> {
-            if (e.getButton() == MouseButton.SECONDARY) {
-                // 优化：根据是否有选中文本，禁用/启用 复制和剪切
-                boolean hasSelection = false;
-                try {
-                    String sel = (String) webEngine.executeScript("window.getSelection().toString()");
-                    hasSelection = sel != null && !sel.isEmpty();
-                } catch (Exception ignore) {}
-
-                cutItem.setDisable(!hasSelection);
-                copyItem.setDisable(!hasSelection);
-
-                // 优化：根据剪贴板是否有内容，禁用/启用 粘贴
-                pasteItem.setDisable(!Clipboard.getSystemClipboard().hasString());
-
-                // 弹出菜单
-                contextMenu.show(webView, e.getScreenX(), e.getScreenY());
-            } else {
-                // 点击左键隐藏菜单
-                contextMenu.hide();
-            }
-        });
-
-        // ... JSBridge 监听器保持不变 ...
-
-        // 4. 键盘事件监听器 (复用逻辑)
-        webView.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (isPasteShortcut(event)) {
-                performPaste();
-                event.consume();
-            } else if (isCopyShortcut(event)) {
-                performCopy();
-                event.consume();
-            }
-            // Cut 的快捷键通常是 Ctrl+X
-            else if (isCutShortcut(event)) {
-                performCut();
-                event.consume();
-            }
-        });
-    }
-
-    // 辅助方法：判断剪切快捷键
-    private boolean isCutShortcut(KeyEvent event) {
-        return (event.isShortcutDown() && event.getCode() == KeyCode.X);
-    }
-
-    // 辅助方法：判断粘贴快捷键 (兼容 Windows Ctrl+V 和 Mac Cmd+V)
-    private boolean isPasteShortcut(KeyEvent event) {
-        return (event.isShortcutDown() && event.getCode() == KeyCode.V);
-    }
-
-    // 辅助方法：判断复制快捷键
-    private boolean isCopyShortcut(KeyEvent event) {
-        return (event.isShortcutDown() && event.getCode() == KeyCode.C);
+        // 安装编辑器增强功能（右键菜单、剪贴板快捷键）
+        new WebViewEditorSupport(webView).install();
     }
 
     public class DebugBridge {
@@ -529,35 +416,8 @@ public class MarkdownTabController {
 
     @FXML
     void insertImageIntoMarkdown() {
-        if (currentFileState.getSrcFile() == null) {
-            eventBus.post(new ShowMessageEvent("Please select a source PDF file first.", Message.MessageType.WARNING));
-            return;
-        }
-
-        javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
-        chooser.setTitle("Select Image");
-        chooser.getExtensionFilters().addAll(
-                new javafx.stage.FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.svg")
-        );
-
-        // 【修复】使用 webView 获取当前窗口句柄 (之前使用的是 previewVBox)
         javafx.stage.Window owner = webView.getScene() != null ? webView.getScene().getWindow() : null;
-        java.io.File file = chooser.showOpenDialog(owner);
-
-        if (file == null) return;
-
-        try {
-            Path chosen = file.toPath();
-            Path finalFile = ensureUnderPdfImages(chosen);
-            String relPath = relativizeToPdfDir(finalFile);
-            // 路径转义 (Markdown 偏好正斜杠)
-            String escaped = relPath.replace("\\", "/").replace("'", "\\'");
-            String js = "window.insertImageMarkdown('" + escaped + "')";
-            webEngine.executeScript(js);
-        } catch (IOException e) {
-            log.error("Insert image into markdown failed", e);
-            eventBus.post(new ShowMessageEvent("Failed to insert image: " + e.getMessage(), Message.MessageType.ERROR));
-        }
+        new MarkdownImageHandler(currentFileState, eventBus).insertImage(owner, webEngine);
     }
 
     @FXML
@@ -673,34 +533,6 @@ public class MarkdownTabController {
                 });
             }
         }, "save-new-pdf").start();
-    }
-
-    private String relativizeToPdfDir(Path file) {
-        Path src = currentFileState.getSrcFile();
-        if (src == null) return file.getFileName().toString();
-        Path pdfDir = src.getParent();
-        try {
-            String rel = pdfDir.relativize(file).toString();
-            return rel.replace('\\', '/');
-        } catch (IllegalArgumentException e) {
-            return file.getFileName().toString();
-        }
-    }
-
-    private Path ensureUnderPdfImages(Path chosenFile) throws IOException {
-        Path src = currentFileState.getSrcFile();
-        if (src == null) return chosenFile;
-        Path pdfDir = src.getParent();
-        Path normalizedPdfDir = pdfDir.toAbsolutePath().normalize();
-        Path normalizedChosen = chosenFile.toAbsolutePath().normalize();
-        if (normalizedChosen.startsWith(normalizedPdfDir)) {
-            return normalizedChosen;
-        }
-        Path imagesDir = normalizedPdfDir.resolve("images");
-        Files.createDirectories(imagesDir);
-        Path dest = imagesDir.resolve(chosenFile.getFileName());
-        Files.copy(chosenFile, dest, StandardCopyOption.REPLACE_EXISTING);
-        return dest;
     }
 
     private void startContentPoller() {
