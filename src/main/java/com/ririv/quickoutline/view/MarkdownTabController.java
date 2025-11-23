@@ -284,7 +284,7 @@ public class MarkdownTabController {
                 Platform.runLater(() -> {
                     if (previewWebEngine == null) return;
 
-                    String svgUrl = webServer.getBaseUrl() + "svg_preview.html";
+                    String svgUrl = webServer.getBaseUrl() + "preview.html";
                     String currentLoc = previewWebEngine.getLocation();
 
                     Runnable doUpdate = () -> {
@@ -353,7 +353,7 @@ public class MarkdownTabController {
                     try {
                         if (previewWebEngine == null) return;
 
-                        String previewUrl = webServer.getBaseUrl() + "image_preview.html";
+                        String previewUrl = webServer.getBaseUrl() + "preview.html";
                         String currentLoc = previewWebEngine.getLocation();
 
                         Runnable doUpdate = () -> {

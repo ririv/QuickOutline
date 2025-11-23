@@ -8,7 +8,7 @@ console.log('Start building...');
 // 1. 提取 entryPoints 配置
 const entryPoints = {
     'vditor': 'src/vditor/main.ts',
-    'svg_preview': 'src/svg_preview/main.ts'
+    'preview': 'src/preview/main.ts'
     // 以后增加页面只需要在这里加一行，HTML 会自动处理
 };
 

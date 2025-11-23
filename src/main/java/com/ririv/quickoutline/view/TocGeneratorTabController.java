@@ -118,7 +118,7 @@ public class TocGeneratorTabController {
                 webServer = new LocalWebServer();
             }
             webServer.start("/web");
-            String urlToLoad = webServer.getBaseUrl() + "image_preview.html";
+            String urlToLoad = webServer.getBaseUrl() + "preview.html";
             log.info("Loading TOC Preview page: {}", urlToLoad);
             previewWebEngine.load(urlToLoad);
         } catch (Exception e) {
@@ -191,7 +191,7 @@ public class TocGeneratorTabController {
                 Platform.runLater(() -> {
                     try {
                         if (previewWebEngine == null) return;
-                        String previewUrl = webServer.getBaseUrl() + "image_preview.html";
+                        String previewUrl = webServer.getBaseUrl() + "preview.html";
                         String currentLoc = previewWebEngine.getLocation();
 
                         Runnable doUpdate = () -> {
