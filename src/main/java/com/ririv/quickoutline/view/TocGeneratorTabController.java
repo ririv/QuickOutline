@@ -5,6 +5,8 @@ import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
+import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
+import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.view.utils.DebouncedPreviewer;
 import com.ririv.quickoutline.view.controls.EditorTextArea;
@@ -18,18 +20,17 @@ import com.ririv.quickoutline.view.utils.LocalizationManager;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.embed.swing.SwingFXUtils;
+import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Objects;
@@ -39,6 +40,8 @@ import java.util.function.UnaryOperator;
 
 public class TocGeneratorTabController {
 
+    private static final Logger log = LoggerFactory.getLogger(TocGeneratorTabController.class);
+
     private record TocPreviewInput(String tocContent, String title, PageLabelNumberingStyle style) {}
 
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
@@ -46,6 +49,7 @@ public class TocGeneratorTabController {
     private final BookmarkSettingsState bookmarkSettingsState;
     private final AppEventBus eventBus;
     private final PdfOutlineService pdfOutlineService;
+    private final PdfImageService pdfImageService;
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
 
     @FXML
@@ -53,7 +57,7 @@ public class TocGeneratorTabController {
     @FXML
     private TextField titleText;
     @FXML
-    private VBox previewVBox;
+    private WebView previewWebView;
     @FXML
     private TextField offsetTF;
     @FXML
@@ -62,14 +66,17 @@ public class TocGeneratorTabController {
     private StyledSelect<String> numberingStyleComboBox;
 
     private DebouncedPreviewer<TocPreviewInput, byte[]> previewer;
+    private WebEngine previewWebEngine;
+    private LocalWebServer webServer;
 
     @Inject
-    public TocGeneratorTabController(PdfTocPageGeneratorService pdfTocPageGeneratorService, CurrentFileState currentFileState, BookmarkSettingsState bookmarkSettingsState, AppEventBus eventBus, PdfOutlineService pdfOutlineService) {
+    public TocGeneratorTabController(PdfTocPageGeneratorService pdfTocPageGeneratorService, CurrentFileState currentFileState, BookmarkSettingsState bookmarkSettingsState, AppEventBus eventBus, PdfOutlineService pdfOutlineService, PdfImageService pdfImageService) {
         this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
         this.currentFileState = currentFileState;
         this.bookmarkSettingsState = bookmarkSettingsState;
         this.eventBus = eventBus;
         this.pdfOutlineService = pdfOutlineService;
+        this.pdfImageService = pdfImageService;
     }
 
     @FXML
@@ -77,6 +84,46 @@ public class TocGeneratorTabController {
         setupBookmarkBindings();
         setupInputFormatters();
         setupDebouncedPreviewer();
+        setupPreviewWebViewConfig();
+        loadPreviewPage();
+    }
+
+    private void setupPreviewWebViewConfig() {
+        if (previewWebView != null) {
+            previewWebEngine = previewWebView.getEngine();
+            previewWebEngine.setJavaScriptEnabled(true);
+            previewWebView.setContextMenuEnabled(false);
+
+            // 监听加载状态
+            previewWebEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+                if (newState == Worker.State.SUCCEEDED) {
+                    // 注入调试桥
+                    JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                    window.setMember("debugBridge", new DebugBridge());
+
+                    log.info("TOC Preview page loaded successfully.");
+                }
+            });
+        }
+    }
+
+    public class DebugBridge {
+        public void log(String msg) { log.info("[TOC-JS] {}", msg); }
+        public void error(String msg) { log.error("[TOC-JS Error] {}", msg); }
+    }
+
+    private void loadPreviewPage() {
+        try {
+            if (webServer == null) {
+                webServer = new LocalWebServer();
+            }
+            webServer.start("/web");
+            String urlToLoad = webServer.getBaseUrl() + "image_preview.html";
+            log.info("Loading TOC Preview page: {}", urlToLoad);
+            previewWebEngine.load(urlToLoad);
+        } catch (Exception e) {
+            log.error("Failed to start LocalWebServer for TOC preview", e);
+        }
     }
 
     private void setupDebouncedPreviewer() {
@@ -99,7 +146,7 @@ public class TocGeneratorTabController {
         PageLabelNumberingStyle style = PageLabel.STYLE_MAP.get(numberingStyleComboBox.getValue());
 
         if (tocContent == null || tocContent.isBlank()) {
-            previewVBox.getChildren().clear();
+            // Clear preview? Maybe send empty bytes or handle in updatePreviewUI
             return;
         }
         if (title == null || title.isBlank()) {
@@ -125,19 +172,64 @@ public class TocGeneratorTabController {
 
     private void updatePreviewUI(byte[] pdfBytes) {
         if (pdfBytes == null) return;
-        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
-            PDFRenderer renderer = new PDFRenderer(document);
-            previewVBox.getChildren().clear();
-            for (int i = 0; i < document.getNumberOfPages(); i++) {
-                BufferedImage bufferedImage = renderer.renderImageWithDPI(i, 150);
-                ImageView imageView = new ImageView(SwingFXUtils.toFXImage(bufferedImage, null));
-                imageView.setPreserveRatio(true);
-                imageView.setFitWidth(previewVBox.getWidth() > 20 ? previewVBox.getWidth() - 20 : 400);
-                previewVBox.getChildren().add(imageView);
+
+        new Thread(() -> {
+            try {
+                var updates = pdfImageService.diffPdfToImages(pdfBytes);
+                if (updates.isEmpty()) return;
+
+                for (var update : updates) {
+                    String imageKey = update.pageIndex() + ".png";
+                    byte[] imgData = pdfImageService.getImageData(update.pageIndex());
+                    if (imgData != null) {
+                        LocalWebServer.putImage(imageKey, imgData);
+                    }
+                }
+
+                String jsonString = new com.google.gson.Gson().toJson(updates);
+
+                Platform.runLater(() -> {
+                    try {
+                        if (previewWebEngine == null) return;
+                        String previewUrl = webServer.getBaseUrl() + "image_preview.html";
+                        String currentLoc = previewWebEngine.getLocation();
+
+                        Runnable doUpdate = () -> {
+                            try {
+                                JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                                window.call("updateImagePages", jsonString);
+                            } catch (Exception e) {
+                                log.error("JS update failed", e);
+                            }
+                        };
+
+                        if (currentLoc == null || !currentLoc.startsWith(previewUrl)) {
+                            previewWebEngine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
+                                if (state == Worker.State.SUCCEEDED) {
+                                    doUpdate.run();
+                                }
+                            });
+                            previewWebEngine.load(previewUrl);
+                        } else {
+                            doUpdate.run();
+                        }
+                    } catch (Exception e) {
+                        log.error("UI update failed", e);
+                    }
+                });
+            } catch (Exception e) {
+                log.error("Image generation failed", e);
             }
-        } catch (IOException e) {
-            Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to render TOC preview: " + e.getMessage(), Message.MessageType.ERROR)));
-            e.printStackTrace();
+        }).start();
+    }
+
+    public void dispose() {
+        if (webServer != null) {
+            webServer.stop();
+            webServer = null;
+        }
+        if (previewWebView != null) {
+            previewWebView.getEngine().load(null);
         }
     }
 

@@ -13,6 +13,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.web.WebView?>
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController">
     <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
@@ -21,13 +22,7 @@
             <EditorTextArea fx:id="tocContentTextArea" VBox.vgrow="ALWAYS" promptText="%tocContentTextArea.prompt"/>
         </VBox>
         <StackPane>
-            <ScrollPane fitToWidth="true">
-                <VBox fx:id="previewVBox" alignment="TOP_CENTER">
-                    <padding>
-                        <Insets top="10" right="10" bottom="10" left="10"/>
-                    </padding>
-                </VBox>
-            </ScrollPane>
+            <WebView fx:id="previewWebView" minWidth="200" prefWidth="500"/>
             <Button onAction="#previewTocPageAction" styleClass="graph-button, graph-button-basic" StackPane.alignment="BOTTOM_RIGHT">
                 <graphic>
                     <RefreshIcon prefWidth="15" prefHeight="15" />
