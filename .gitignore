@@ -33,9 +33,10 @@ nodejs/
 pdfjs/
 *.log
 
-src/main/resources/web/vditor.bundle.js
-src/main/resources/web/vditor.bundle.css
+# bundle文件均为自动生成
+src/main/resources/web/*.bundle.*
 src/main/resources/web/vditor/dist
+
 
 
 /.idea/jsLibraryMappings.xml
