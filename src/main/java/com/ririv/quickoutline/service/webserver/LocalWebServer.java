@@ -23,34 +23,58 @@ public class LocalWebServer {
     private HttpServer server;
     private int port;
 
-    // 用于线程安全地存储最新的 PDF 字节数据
-    private final AtomicReference<byte[]> currentPdfBytes = new AtomicReference<>(new byte[0]);
+    // 单例实例
+    private static LocalWebServer instance;
 
+    public static synchronized LocalWebServer getInstance() {
+        if (instance == null) {
+            instance = new LocalWebServer();
+        }
+        return instance;
+    }
 
+    // 默认文档 ID，用于向后兼容
+    public static final String DEFAULT_DOC_ID = "default";
 
-    // 如果无法注入 (LocalWebServer 是手动 new 的)，可以改为静态单例访问，或者传入 Service 实例
-    // 建议：在 MarkdownTabController 创建 Server 时，把 Service 传进去，或者通过静态 map 共享
+    // 存储每个文档的 PDF 数据: DocID -> PDF Bytes
+    private final Map<String, byte[]> documentPdfBytes = new java.util.concurrent.ConcurrentHashMap<>();
 
-    // 简单实现：在 LocalWebServer 内部加一个 Map
-    private static final Map<String, byte[]> imageBuffer = new java.util.concurrent.ConcurrentHashMap<>();
+    // 存储每个文档的图片数据: DocID -> (PageKey -> Bytes)
+    private final Map<String, Map<String, byte[]>> documentImages = new java.util.concurrent.ConcurrentHashMap<>();
 
+    public void putImage(String docId, String path, byte[] data) {
+        documentImages.computeIfAbsent(docId, k -> new java.util.concurrent.ConcurrentHashMap<>()).put(path, data);
+    }
+
+    // 兼容旧 API
     public static void putImage(String path, byte[] data) {
-        imageBuffer.put(path, data);
+        getInstance().putImage(DEFAULT_DOC_ID, path, data);
     }
 
     /**
-     * 更新内存中的 PDF 数据，供 WebView 里的 PDF.js 读取
+     * 更新内存中的 PDF 数据
+     * @param docId 文档 ID
      * @param bytes PDF 文件的二进制数据
      */
+    public void updatePdf(String docId, byte[] bytes) {
+        documentPdfBytes.put(docId, bytes);
+    }
+
+    // 兼容旧 API
     public void updatePdf(byte[] bytes) {
-        this.currentPdfBytes.set(bytes);
+        updatePdf(DEFAULT_DOC_ID, bytes);
     }
 
     /**
      * 启动服务器
      * @param baseResourcePath Classpath 下的 Web 根目录，例如 "/web"
      */
-    public void start(String baseResourcePath) {
+    public synchronized void start(String baseResourcePath) {
+        if (server != null) {
+            log.info("Local Web Server is already running at {}", getBaseUrl());
+            return;
+        }
+
         try {
             // 1. 绑定到本地回环地址 (localhost)，端口设为 0 表示自动分配空闲端口
             // 防止防火墙拦截公网访问，增强安全性
@@ -68,8 +92,23 @@ public class LocalWebServer {
             server.createContext("/", new ClasspathHandler(baseResourcePath));
 
             // 4. 注册动态 PDF 处理器 (处理预览数据)
-            server.createContext("/dynamic_preview.pdf", exchange -> {
-                byte[] data = currentPdfBytes.get();
+            // 支持 /dynamic_preview.pdf (默认) 和 /dynamic_preview/{docId}.pdf
+            server.createContext("/dynamic_preview", exchange -> {
+                String path = exchange.getRequestURI().getPath();
+                String docId = DEFAULT_DOC_ID;
+                
+                if (path.endsWith(".pdf") && path.length() > "/dynamic_preview/".length()) {
+                     // 解析 /dynamic_preview/abc-123.pdf -> abc-123
+                     String fileName = path.substring("/dynamic_preview/".length());
+                     docId = fileName.substring(0, fileName.length() - 4);
+                }
+
+                byte[] data = documentPdfBytes.get(docId);
+                if (data == null && DEFAULT_DOC_ID.equals(docId)) {
+                     // 尝试回退到旧逻辑的默认值（虽然现在统一用 map 了，但可以给个空数组防空指针）
+                     data = new byte[0]; 
+                }
+
                 if (data == null || data.length == 0) {
                     String msg = "PDF generating...";
                     exchange.sendResponseHeaders(404, msg.length());
@@ -100,12 +139,28 @@ public class LocalWebServer {
             throw new RuntimeException("Could not start internal web server", e);
         }
         // 注册图片 Handler
+        // 支持 /page_images/0.png (默认) 和 /page_images/{docId}/0.png
         server.createContext("/page_images/", exchange -> {
-            // URL 类似: /page_images/0.png?v=123456
+            // URL 类似: /page_images/0.png?v=123456  或者 /page_images/doc-123/0.png?v=...
             String path = exchange.getRequestURI().getPath();
-            String key = path.substring("/page_images/".length()); // "0.png"
+            String subPath = path.substring("/page_images/".length()); 
+            
+            String docId = DEFAULT_DOC_ID;
+            String key = subPath;
 
-            byte[] data = imageBuffer.get(key);
+            // 简单判断：如果包含斜杠，说明是 {docId}/{key} 格式
+            if (subPath.contains("/")) {
+                int slashIndex = subPath.indexOf("/");
+                docId = subPath.substring(0, slashIndex);
+                key = subPath.substring(slashIndex + 1);
+            }
+
+            byte[] data = null;
+            Map<String, byte[]> pages = documentImages.get(docId);
+            if (pages != null) {
+                data = pages.get(key);
+            }
+
             if (data == null) {
                 exchange.sendResponseHeaders(404, 0);
                 exchange.close();

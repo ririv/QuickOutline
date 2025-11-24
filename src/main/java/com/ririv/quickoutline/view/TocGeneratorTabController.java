@@ -68,7 +68,9 @@ public class TocGeneratorTabController {
 
     private DebouncedPreviewer<TocPreviewInput, byte[]> previewer;
     private WebEngine previewWebEngine;
-    private LocalWebServer webServer;
+    
+    // 移除本地 webServer 字段，改用单例
+    // private LocalWebServer webServer;
 
     @Inject
     public TocGeneratorTabController(PdfTocPageGeneratorService pdfTocPageGeneratorService, CurrentFileState currentFileState, BookmarkSettingsState bookmarkSettingsState, AppEventBus eventBus, PdfOutlineService pdfOutlineService, PdfImageService pdfImageService) {
@@ -111,11 +113,13 @@ public class TocGeneratorTabController {
 
     private void loadPreviewPage() {
         try {
-            if (webServer == null) {
-                webServer = new LocalWebServer();
-            }
-            webServer.start("/web");
-            String urlToLoad = webServer.getBaseUrl() + "toc-tab.html";
+            LocalWebServer server = LocalWebServer.getInstance();
+            
+            // 启动服务器
+            server.start("/web");
+            
+            // 使用单例 Server 的 BaseUrl
+            String urlToLoad = server.getBaseUrl() + "toc-tab.html";
             log.info("Loading TOC Preview page: {}", urlToLoad);
             previewWebEngine.load(urlToLoad);
         } catch (Exception e) {
@@ -175,11 +179,13 @@ public class TocGeneratorTabController {
                 var updates = pdfImageService.diffPdfToImages(pdfBytes);
                 if (updates.isEmpty()) return;
 
+                LocalWebServer server = LocalWebServer.getInstance();
                 for (var update : updates) {
                     String imageKey = update.pageIndex() + ".png";
                     byte[] imgData = pdfImageService.getImageData(update.pageIndex());
                     if (imgData != null) {
-                        LocalWebServer.putImage(imageKey, imgData);
+                        // 使用新的带 ID 的 API (目前是默认 ID)
+                        server.putImage(LocalWebServer.DEFAULT_DOC_ID, imageKey, imgData);
                     }
                 }
 
@@ -188,7 +194,11 @@ public class TocGeneratorTabController {
                 Platform.runLater(() -> {
                     try {
                         if (previewWebEngine == null) return;
-                        String previewUrl = webServer.getBaseUrl() + "toc-tab.html";
+                        
+                        // 这里的逻辑稍微有点奇怪，因为 toc-tab.html 的加载逻辑应该已经统一在 loadPreviewPage 里了
+                        // 但这里的检查是为了确保页面未加载时先加载。
+                        // 既然我们用了单例 server，BaseUrl 是固定的。
+                        String previewUrl = server.getBaseUrl() + "toc-tab.html";
                         String currentLoc = previewWebEngine.getLocation();
 
                         Runnable doUpdate = () -> {
@@ -221,10 +231,13 @@ public class TocGeneratorTabController {
     }
 
     public void dispose() {
-        if (webServer != null) {
-            webServer.stop();
-            webServer = null;
-        }
+        // 1. 关闭 WebServer (释放端口) -> 单例模式下不应关闭
+        // if (webServer != null) {
+        //    webServer.stop();
+        //    webServer = null;
+        // }
+        
+        // 3. 清理 WebView (防止内存泄漏)
         if (previewWebView != null) {
             previewWebView.getEngine().load(null);
         }

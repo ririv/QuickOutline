@@ -61,8 +61,8 @@ public class MarkdownTabController {
 
     private ScheduledExecutorService contentPoller;
 
-    // 每个 Controller 实例独享一个 Server，避免多 Tab 数据冲突
-    private LocalWebServer webServer;
+    // 移除本地 webServer 字段，改用单例
+    // private LocalWebServer webServer;
 
     JsBridge bridge = new JsBridge();
 
@@ -104,13 +104,6 @@ public class MarkdownTabController {
     /**
      * 1. 初始化预览节流器 (TrailingThrottlePreviewer)
      * 防止用户输入过快导致频繁生成 PDF
-     */
-    /**
-     * 1. 初始化预览节流器 (Atomic Block 版)
-     */
-    /**
-     * 1. 初始化预览节流器
-     * 负责调度：Markdown (前端JSON) -> 解析 -> PDF byte[] -> Update UI
      */
     private void setupPreviewer() {
         final int PREVIEW_THROTTLE_MS = 500; // 建议设大一点 (500ms)，给 iText 缓冲时间
@@ -195,24 +188,19 @@ public class MarkdownTabController {
 
         // --- 策略 1: 本地 HTTP 服务器 (推荐) ---
         try {
-            if (webServer == null) {
-                webServer = new LocalWebServer();
-            }
+            LocalWebServer server = LocalWebServer.getInstance();
+            
             // 启动服务器，映射 classpath:/web 目录
             // 直接读取 Jar 包内资源，无需解压
-            webServer.start("/web");
+            server.start("/web");
 
             // 获取 http://127.0.0.1:端口/markdown-tab.html
-            urlToLoad = webServer.getBaseUrl() + "markdown-tab.html";
+            urlToLoad = server.getBaseUrl() + "markdown-tab.html";
             log.info("[Load Strategy 1] Local WebServer started successfully. URL: {}", urlToLoad);
 
         } catch (Exception e) {
             log.error("[Load Strategy 1] Failed to start LocalWebServer. Trying fallback...", e);
-            // 确保清理资源
-            if (webServer != null) {
-                webServer.stop();
-                webServer = null;
-            }
+            // Server 单例模式下一般不会失败，除非端口耗尽等严重错误
         }
 
         // --- 策略 2: Classpath 直接加载 (IDE 兜底) ---
@@ -282,6 +270,7 @@ public class MarkdownTabController {
                 if (updates.isEmpty()) return;
 
                 // 2. 将图片数据放入 WebServer 的内存缓存
+                LocalWebServer server = LocalWebServer.getInstance();
                 for (var update : updates) {
                     String imageKey = update.pageIndex() + ".png";
 
@@ -289,7 +278,8 @@ public class MarkdownTabController {
                     byte[] imgData = pdfImageService.getImageData(update.pageIndex());
 
                     if (imgData != null) {
-                        LocalWebServer.putImage(imageKey, imgData);
+                        // 使用新的带 ID 的 API (目前是默认 ID)
+                        server.putImage(LocalWebServer.DEFAULT_DOC_ID, imageKey, imgData);
                     }
                 }
 
@@ -318,10 +308,11 @@ public class MarkdownTabController {
      */
     public void dispose() {
         // 1. 关闭 WebServer (释放端口)
-        if (webServer != null) {
-            webServer.stop();
-            webServer = null;
-        }
+        // 单例模式下不应由 Controller 关闭
+        // if (webServer != null) {
+        //    webServer.stop();
+        //    webServer = null;
+        // }
 
         // 2. 关闭轮询线程
         if (contentPoller != null && !contentPoller.isShutdown()) {
