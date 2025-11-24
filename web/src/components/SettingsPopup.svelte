@@ -1,0 +1,98 @@
+<script lang="ts">
+  import StyleList from './StyleList.svelte';
+
+  interface Props {
+    type: 'offset' | 'pos' | 'style';
+    offset?: number;
+    insertPos?: number;
+    style?: string;
+    onchange?: () => void;
+  }
+
+  let { 
+    type, 
+    offset = $bindable(0),
+    insertPos = $bindable(1),
+    style = $bindable('None'),
+    onchange 
+  }: Props = $props();
+
+  function handleStyleSelect(s: string) {
+      style = s;
+      onchange?.();
+  }
+</script>
+
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="popup-card {type === 'style' ? 'is-list' : ''}" onclick={(e) => e.stopPropagation()}>
+  {#if type === 'offset'}
+      <!-- svelte-ignore a11y_label_has_associated_control -->
+      <label>Page Offset</label>
+      <!-- svelte-ignore a11y_autofocus -->
+      <input type="number" bind:value={offset} oninput={onchange} class="styled-input" autofocus />
+      <div class="hint">Adjusts the starting page number.</div>
+  {:else if type === 'pos'}
+      <!-- svelte-ignore a11y_label_has_associated_control -->
+      <label>Insert Position</label>
+      <input type="number" bind:value={insertPos} class="styled-input" />
+      <div class="hint">Page number to insert TOC at.</div>
+  {:else if type === 'style'}
+      <StyleList selected={style} onselect={handleStyleSelect} />
+  {/if}
+</div>
+
+<style>
+  .popup-card {
+      position: absolute;
+      bottom: 36px; /* status bar height + gap */
+      background: #fff;
+      border: 1px solid #e1e4e8;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      border-radius: 6px;
+      padding: 12px 15px; /* Adjust padding for better spacing */
+      z-index: 100;
+      min-width: 180px; /* Reduced width for compactness */
+      animation: popupFade 0.15s ease-out;
+  }
+  
+  .popup-card.is-list {
+      min-width: auto; /* Auto width for list */
+      padding: 4px; /* Compact padding for list */
+  }
+  
+  @keyframes popupFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+  }
+
+  label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px; /* Slightly less margin */
+      color: #333;
+      font-size: 13px;
+  }
+  
+  .hint {
+      margin-top: 6px; /* Slightly less margin */
+      font-size: 11px;
+      color: #888;
+      line-height: 1.4;
+  }
+
+  .styled-input {
+      width: 100%;
+      padding: 6px 8px; /* Slightly less padding */
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border 0.2s;
+  }
+  .styled-input:focus {
+      border-color: #1677ff;
+      box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+  }
+</style>
