@@ -100,6 +100,24 @@ public class JsBridge {
         }
     }
 
+    // Clipboard support
+    public void copyText(String text) {
+        // Directly access clipboard on the current thread (which is FX thread for WebView bridge calls)
+        // to ensure synchronous update and avoid race conditions.
+        javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+        content.putString(text);
+        javafx.scene.input.Clipboard.getSystemClipboard().setContent(content);
+    }
+
+    public String getClipboardText() {
+        // WebEngine executes JS bridge calls on the JavaFX Application Thread,
+        // so it is safe to access the Clipboard directly.
+        if (javafx.scene.input.Clipboard.getSystemClipboard().hasString()) {
+            return javafx.scene.input.Clipboard.getSystemClipboard().getString();
+        }
+        return "";
+    }
+
     // 用来存放最新的 PDF Base64 字符串
     private final AtomicReference<String> currentPdfBase64 = new AtomicReference<>("");
 

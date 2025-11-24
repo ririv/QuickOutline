@@ -115,6 +115,57 @@
         // The original code had window.initVditor(initialMarkdown).
         // We can just init empty here.
         init('');
+        
+        // 强力拦截：在捕获阶段拦截 Tab，防止 WebView 焦点跳转
+        const captureTab = (e: KeyboardEvent) => {
+            if (e.key === 'Tab' || e.code === 'Tab' || e.keyCode === 9) {
+                // 检查焦点是否在编辑器内
+                if (element && element.contains(e.target as Node)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (!e.shiftKey && vditorInstance) {
+                        // 手动插入缩进
+                        vditorInstance.insertValue('    ');
+                    }
+                }
+            }
+        };
+        
+        // 强力拦截：在捕获阶段拦截剪贴板，走 Java Bridge
+        const captureClipboard = (e: ClipboardEvent) => {
+            if (!element || !element.contains(e.target as Node)) return;
+            if (!window.javaBridge) return; // 如果没 Bridge (浏览器调试)，走默认行为
+
+            if (e.type === 'copy' || e.type === 'cut') {
+                e.preventDefault();
+                e.stopPropagation();
+                const text = window.getSelection()?.toString() || '';
+                window.javaBridge.copyText(text);
+                if (e.type === 'cut') document.execCommand('delete');
+            } else if (e.type === 'paste') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (window.javaBridge.getClipboardText) {
+                    const text = window.javaBridge.getClipboardText();
+                    if (text && vditorInstance) {
+                        vditorInstance.insertValue(text);
+                    }
+                }
+            }
+        };
+        
+        window.addEventListener('keydown', captureTab, true); // true = capture phase
+        window.addEventListener('copy', captureClipboard, true);
+        window.addEventListener('cut', captureClipboard, true);
+        window.addEventListener('paste', captureClipboard, true);
+        
+        return () => {
+            window.removeEventListener('keydown', captureTab, true);
+            window.removeEventListener('copy', captureClipboard, true);
+            window.removeEventListener('cut', captureClipboard, true);
+            window.removeEventListener('paste', captureClipboard, true);
+        };
     });
 
     onDestroy(() => {
@@ -122,6 +173,10 @@
             vditorInstance.destroy();
         }
     });
+
+    function handleKeydown(e: KeyboardEvent) {
+        // Fallback for bubbling phase if capture missed (unlikely for Tab)
+    }
 </script>
 
 <div class="editor-container" bind:this={element}></div>

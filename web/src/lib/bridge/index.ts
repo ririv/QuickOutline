@@ -23,6 +23,9 @@ declare global {
       // Toc Tab specific
       previewToc: (json: string) => void;
       generateToc: (json: string) => void;
+      // Clipboard
+      copyText: (text: string) => void;
+      getClipboardText: () => string;
     };
     debugBridge?: any;
   }
@@ -79,8 +82,11 @@ export type BridgeHandlers = {
                 }
             }
         }
-    }, true); // Capture phase
+    }, true); // Capture phase to run before libraries
 })();
+
+// Disable context menu
+window.addEventListener('contextmenu', e => e.preventDefault());
 
 /**
  * 初始化桥接：将全局 Window 方法路由到具体的组件逻辑

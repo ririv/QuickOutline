@@ -12,7 +12,6 @@ import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import com.ririv.quickoutline.view.utils.MarkdownImageHandler;
 import com.ririv.quickoutline.view.utils.TrailingThrottlePreviewer;
-import com.ririv.quickoutline.view.webview.WebViewEditorSupport;
 import com.ririv.quickoutline.view.webview.JsBridge;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
@@ -155,9 +154,6 @@ public class MarkdownTabController {
                 log.error("WebView load failed");
             }
         });
-
-        // 安装编辑器增强功能（右键菜单、剪贴板快捷键）
-        new WebViewEditorSupport(webView).install();
     }
 
     /**
