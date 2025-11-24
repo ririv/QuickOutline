@@ -32,6 +32,9 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
 
+import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
+
 @Singleton
 public class PdfSvgService {
     private static final Logger log = LoggerFactory.getLogger(PdfSvgService.class);
@@ -46,11 +49,11 @@ public class PdfSvgService {
         lastTotalPages = 0;
     }
 
-    public List<SvgPageUpdate> diffPdfToSvg(byte[] pdfBytes) {
+    public List<SvgPageUpdate> diffPdfToSvg(FastByteArrayOutputStream pdfStream) {
         List<SvgPageUpdate> updates = new ArrayList<>();
-        if (pdfBytes == null || pdfBytes.length == 0) return updates;
+        if (pdfStream == null || pdfStream.size() == 0) return updates;
 
-        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+        try (PDDocument document = Loader.loadPDF(new RandomAccessReadBuffer(pdfStream.getBuffer()))) {
             int currentTotalPages = document.getNumberOfPages();
             CustomPDFRenderer renderer = new CustomPDFRenderer(document);
 

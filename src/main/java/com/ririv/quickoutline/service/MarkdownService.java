@@ -3,6 +3,7 @@ package com.ririv.quickoutline.service;
 import com.ririv.quickoutline.pdfProcess.PdfPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextHtmlConverter;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextPdfPageGenerator;
+import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,25 +20,28 @@ public class MarkdownService {
     private final PdfPageGenerator pdfPageGenerator = new iTextPdfPageGenerator();
     private final ItextHtmlConverter htmlConverter = new ItextHtmlConverter();
     /**
-     * 将 HTML 字符串转换为 PDF 字节数组。
+     * 将 HTML 字符串转换为 PDF 字节流 (使用 FastByteArrayOutputStream 以支持零拷贝读取)。
      *
      * @param mdEditorContentPayloads HTML 内容，包含Styles（由前端 Vditor 渲染产生）。
      * @param baseUri     Base URI 用于解析相对资源路径（图片等）。
      * @param onMessage   信息提示回调（字体下载等）。
      * @param onError     错误提示回调。
      */
-    public byte[] convertHtmlToPdfBytes(PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads, String baseUri,
+    public FastByteArrayOutputStream convertHtmlToPdfStream(PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads, String baseUri,
                                         Consumer<String> onMessage, Consumer<String> onError) {
         String htmlContent = mdEditorContentPayloads.html();
         final String safeBody = htmlContent == null ? "" : htmlContent;
         if (safeBody.isBlank()) {
             log.debug("skip empty html content");
-            return new byte[0];
+            return new FastByteArrayOutputStream(0);
         }
 
         // 将 Vditor 的 HTML 片段包装成完整文档，并内联一份适用于 PDF 的样式
         String fullHtml = buildHtmlForPdf(mdEditorContentPayloads, onError);
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+        
+        // 使用 FastByteArrayOutputStream
+        FastByteArrayOutputStream baos = new FastByteArrayOutputStream();
+        try {
             // HtmlConverter 仍然由 ItextHtmlConverter 管理，使用 DownloadEvent 在下层上报字体下载
             htmlConverter.convertToPdf(
                     fullHtml,
@@ -54,13 +58,27 @@ public class MarkdownService {
                         }
                     }
             );
-            return baos.toByteArray();
+            return baos;
         } catch (Exception e) {
             String msg = "Failed to convert HTML to PDF: " + e.getMessage();
             log.error(msg, e);
             onError.accept(msg);
             throw new RuntimeException(msg, e);
         }
+    }
+
+    /**
+     * 兼容旧接口 (为了不破坏某些未修改的调用，虽然本项目中主要调用者都会被修改)
+     */
+    public byte[] convertHtmlToPdfBytes(PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads, String baseUri,
+                                        Consumer<String> onMessage, Consumer<String> onError) {
+        FastByteArrayOutputStream stream = convertHtmlToPdfStream(mdEditorContentPayloads, baseUri, onMessage, onError);
+        // 注意：这里仍然会发生拷贝，如果调用者需要 byte[]。
+        // 但对于我们新的优化路径，我们会使用 stream.getBuffer()
+        // FastByteArrayOutputStream 没有 toByteArray()，我们需要手动实现一个安全的转换或者直接用 Arrays.copyOf
+        byte[] result = new byte[stream.size()];
+        System.arraycopy(stream.getBuffer(), 0, result, 0, stream.size());
+        return result;
     }
 
     /**
@@ -88,16 +106,18 @@ public class MarkdownService {
         }
 
         // bodyFragment 是 Vditor 的预览 HTML 片段，这里将它包在一个带有 vditor-reset 的容器中
-        return "<!DOCTYPE html>" +
-                "<html><head>" +
-                "<meta charset=\"utf-8\"/>" +
-                "<style>" + vditorCss + "</style>" +
-                "<style>" + mdEditorContentPayloads.styles() + "</style>" +
-                "</head><body>" +
-                "<div class=\"vditor-reset\">" +
-                mdEditorContentPayloads.html() +
-                "</div>" +
-                "</body></html>";
+        return """
+                <!DOCTYPE html>
+                <html><head>
+                <meta charset="utf-8"/>
+                <style>%s</style>
+                <style>%s</style>
+                </head><body>
+                <div class="vditor-reset">
+                %s
+                </div>
+                </body></html>
+                """.formatted(vditorCss, mdEditorContentPayloads.styles(), mdEditorContentPayloads.html());
     }
 
     /**

@@ -8,6 +8,7 @@ import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
 import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import com.ririv.quickoutline.textProcess.methods.Method;
+import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import com.ririv.quickoutline.view.utils.DebouncedPreviewer;
 import com.ririv.quickoutline.view.controls.EditorTextArea;
 import com.ririv.quickoutline.view.controls.message.Message;
@@ -66,10 +67,10 @@ public class TocGeneratorTabController {
     @FXML
     private StyledSelect<String> numberingStyleComboBox;
 
-    private DebouncedPreviewer<TocPreviewInput, byte[]> previewer;
+    // Update Previewer type to use FastByteArrayOutputStream
+    private DebouncedPreviewer<TocPreviewInput, FastByteArrayOutputStream> previewer;
     private WebEngine previewWebEngine;
     
-    // 移除本地 webServer 字段，改用单例
     // private LocalWebServer webServer;
 
     @Inject
@@ -156,27 +157,31 @@ public class TocGeneratorTabController {
         previewer.trigger(new TocPreviewInput(tocContent, title, style));
     }
 
-    private byte[] generatePreviewBytes(TocPreviewInput input, Consumer<String> onMessage, Consumer<String> onError) {
+    // Update return type to FastByteArrayOutputStream
+    private FastByteArrayOutputStream generatePreviewBytes(TocPreviewInput input, Consumer<String> onMessage, Consumer<String> onError) {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(input.tocContent(), Method.INDENT);
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
             Platform.runLater(() -> eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING)));
             return null;
         }
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+        // Use FastByteArrayOutputStream directly
+        try (FastByteArrayOutputStream baos = new FastByteArrayOutputStream()) {
             pdfTocPageGeneratorService.createTocPagePreview(input.title(), input.style(), rootBookmark, baos, onMessage, onError);
-            return baos.toByteArray();
+            return baos;
         } catch (IOException e) {
             throw new RuntimeException("Failed to generate TOC preview bytes", e);
         }
     }
 
-    private void updatePreviewUI(byte[] pdfBytes) {
-        if (pdfBytes == null) return;
+    // Update parameter type to FastByteArrayOutputStream
+    private void updatePreviewUI(FastByteArrayOutputStream pdfStream) {
+        if (pdfStream == null || pdfStream.size() == 0) return;
 
         new Thread(() -> {
             try {
-                var updates = pdfImageService.diffPdfToImages(pdfBytes);
+                // pdfImageService now accepts FastByteArrayOutputStream
+                var updates = pdfImageService.diffPdfToImages(pdfStream);
                 if (updates.isEmpty()) return;
 
                 LocalWebServer server = LocalWebServer.getInstance();
@@ -195,9 +200,6 @@ public class TocGeneratorTabController {
                     try {
                         if (previewWebEngine == null) return;
                         
-                        // 这里的逻辑稍微有点奇怪，因为 toc-tab.html 的加载逻辑应该已经统一在 loadPreviewPage 里了
-                        // 但这里的检查是为了确保页面未加载时先加载。
-                        // 既然我们用了单例 server，BaseUrl 是固定的。
                         String previewUrl = server.getBaseUrl() + "toc-tab.html";
                         String currentLoc = previewWebEngine.getLocation();
 

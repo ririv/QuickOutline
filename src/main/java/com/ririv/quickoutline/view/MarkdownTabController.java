@@ -1,12 +1,11 @@
 package com.ririv.quickoutline.view;
 
-import com.ririv.quickoutline.model.SvgPageMetadata;
 import com.ririv.quickoutline.service.MarkdownService;
 import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
 import com.ririv.quickoutline.service.pdfpreview.PdfSvgService;
 import com.ririv.quickoutline.service.webserver.LocalWebServer;
+import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
-import com.ririv.quickoutline.model.SvgPageMetadata;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
@@ -25,10 +24,14 @@ import javafx.scene.input.*;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
+import com.ririv.quickoutline.model.SvgPageMetadata;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -55,14 +58,10 @@ public class MarkdownTabController {
     private WebEngine webEngine;      // 统一引擎
 
     private String editorHtmlContent = ""; // 缓存前端内容，防止重复渲染
-    // 修改泛型：输入 String (HTML)，输出 String (JSON)
-    // 为什么输出 JSON？因为序列化可能会耗时，我们放在后台线程做
-    private TrailingThrottlePreviewer<String, byte[]> previewer;
+    // 修改泛型：输入 String (HTML)，输出 FastByteArrayOutputStream (零拷贝流)
+    private TrailingThrottlePreviewer<String, FastByteArrayOutputStream> previewer;
 
     private ScheduledExecutorService contentPoller;
-
-    // 移除本地 webServer 字段，改用单例
-    // private LocalWebServer webServer;
 
     JsBridge bridge = new JsBridge();
 
@@ -85,7 +84,7 @@ public class MarkdownTabController {
         log.debug("Controller initialize start");
 
         // 1. 初始化 PDF 预览生成器 (Previewer)
-        // 负责调度：Markdown -> HTML -> PDF byte[] -> Update UI
+        // 负责调度：Markdown -> HTML -> PDF Stream -> Update UI
         setupPreviewer();
 
         // 2. 配置 WebView (编辑器 + 预览)
@@ -103,7 +102,6 @@ public class MarkdownTabController {
 
     /**
      * 1. 初始化预览节流器 (TrailingThrottlePreviewer)
-     * 防止用户输入过快导致频繁生成 PDF
      */
     private void setupPreviewer() {
         final int PREVIEW_THROTTLE_MS = 500; // 建议设大一点 (500ms)，给 iText 缓冲时间
@@ -111,7 +109,7 @@ public class MarkdownTabController {
         Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
         Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-        // <String, byte[]> : 输入是 JSON 字符串，输出是 PDF 字节数组
+        // 输入是 JSON 字符串，输出是 FastByteArrayOutputStream
         this.previewer = new TrailingThrottlePreviewer<>(PREVIEW_THROTTLE_MS,
                 jsonString -> { // 【注意】这里接收到的是 JSON 字符串
 
@@ -126,12 +124,10 @@ public class MarkdownTabController {
                     }
 
                     // 2. 【关键步骤】解析 JSON
-                    // 前端传回的数据结构: { "html": "...", "styles": "..." }
-                    // 必须解析成对象，否则 iText 会把 JSON 括号当成文本渲染
                     PayloadsJsonParser.MdEditorContentPayloads payloads = PayloadsJsonParser.parseJson(jsonString);
 
                     // 3. 生成 PDF (耗时操作)
-                    return markdownService.convertHtmlToPdfBytes(payloads, baseUri, onMessage, onError);
+                    return markdownService.convertHtmlToPdfStream(payloads, baseUri, onMessage, onError);
                 },
                 this::updatePreviewUISvg, // 成功回调：调用 SVG Diff 更新逻辑
                 e -> onError.accept("PDF preview failed: " + e.getMessage())
@@ -181,7 +177,6 @@ public class MarkdownTabController {
 
     /**
      * 4. 加载编辑器资源 (含 Server 启动)
-     * 解决 jpackage 打包后资源路径协议 (jar:/jrt:) 不兼容问题
      */
     private void loadEditor() {
         String urlToLoad = null;
@@ -189,18 +184,11 @@ public class MarkdownTabController {
         // --- 策略 1: 本地 HTTP 服务器 (推荐) ---
         try {
             LocalWebServer server = LocalWebServer.getInstance();
-            
-            // 启动服务器，映射 classpath:/web 目录
-            // 直接读取 Jar 包内资源，无需解压
             server.start("/web");
-
-            // 获取 http://127.0.0.1:端口/markdown-tab.html
             urlToLoad = server.getBaseUrl() + "markdown-tab.html";
             log.info("[Load Strategy 1] Local WebServer started successfully. URL: {}", urlToLoad);
-
         } catch (Exception e) {
             log.error("[Load Strategy 1] Failed to start LocalWebServer. Trying fallback...", e);
-            // Server 单例模式下一般不会失败，除非端口耗尽等严重错误
         }
 
         // --- 策略 2: Classpath 直接加载 (IDE 兜底) ---
@@ -222,21 +210,14 @@ public class MarkdownTabController {
         }
     }
 
-
-
-    // ... (keep existing imports and code)
-
-    // Remove internal record
-    // private record SvgPageMetadata(int pageIndex, int totalPages, float widthPt, float heightPt, long version) {}
-
-    private void updatePreviewUISvg(byte[] pdfBytes) {
-        if (pdfBytes == null) return;
+    private void updatePreviewUISvg(FastByteArrayOutputStream pdfStream) {
+        if (pdfStream == null || pdfStream.size() == 0) return;
 
         // 后台计算 Diff
         new Thread(() -> {
             try {
-                // 1. 计算 Diff
-                var updates = pdfSvgService.diffPdfToSvg(pdfBytes);
+                // 1. 计算 Diff (使用 Fast Stream)
+                var updates = pdfSvgService.diffPdfToSvg(pdfStream);
 
                 if (updates.isEmpty()) return; // 无变化，不打扰 UI
 
@@ -247,8 +228,7 @@ public class MarkdownTabController {
                 var metadataList = new java.util.ArrayList<SvgPageMetadata>();
 
                 for (var update : updates) {
-                    // 存入 SVG 内容 (key = pageIndex)
-                    // 注意：这里我们使用简单的 pageIndex 作为 key，前端 fetch 时也用这个
+                    // 存入 SVG 内容
                     server.putSvg(LocalWebServer.DEFAULT_DOC_ID, String.valueOf(update.pageIndex()), update.svgContent());
                     
                     metadataList.add(new SvgPageMetadata(
@@ -268,7 +248,6 @@ public class MarkdownTabController {
                     if (webEngine == null) return;
                     try {
                         JSObject window = (JSObject) webEngine.executeScript("window");
-                        // 使用 call 避免转义问题
                         window.call("updateSvgPages", jsonString);
                     } catch (Exception e) {
                         log.error("JS Update failed", e);
@@ -281,38 +260,28 @@ public class MarkdownTabController {
     }
 
     /**
-     * 更新预览 (图片流方案)
-     * 流程：PDF -> 高清图片 -> 存入Server -> 通知前端 -> 前端静默预加载 -> 切换
+     * 更新预览 (图片流方案) - 保留但需要适配类型
      */
-    private void updatePreviewUIImg(byte[] pdfBytes) {
-        if (pdfBytes == null) return;
+    private void updatePreviewUIImg(FastByteArrayOutputStream pdfStream) {
+        if (pdfStream == null || pdfStream.size() == 0) return;
 
         new Thread(() -> {
             try {
-                // 1. 计算 Diff 并渲染为图片
-                // 返回的 updates 只包含元数据 (页码, version, 宽高)，不包含二进制图片数据
-                var updates = pdfImageService.diffPdfToImages(pdfBytes);
+                var updates = pdfImageService.diffPdfToImages(pdfStream);
 
                 if (updates.isEmpty()) return;
 
-                // 2. 将图片数据放入 WebServer 的内存缓存
                 LocalWebServer server = LocalWebServer.getInstance();
                 for (var update : updates) {
                     String imageKey = update.pageIndex() + ".png";
-
-                    // 【核心修正】从 Service 获取二进制数据
                     byte[] imgData = pdfImageService.getImageData(update.pageIndex());
-
                     if (imgData != null) {
-                        // 使用新的带 ID 的 API (目前是默认 ID)
                         server.putImage(LocalWebServer.DEFAULT_DOC_ID, imageKey, imgData);
                     }
                 }
 
-                // 3. 序列化元数据为 JSON
                 String jsonString = new com.google.gson.Gson().toJson(updates);
 
-                // 4. UI 线程通知前端
                 Platform.runLater(() -> {
                     try {
                         if (webEngine == null) return;
@@ -328,24 +297,11 @@ public class MarkdownTabController {
             }
         }).start();
     }
-    /**
-     * 【重要】资源释放
-     * 必须在 App 退出或 Tab 关闭时调用，释放端口
-     */
+    
     public void dispose() {
-        // 1. 关闭 WebServer (释放端口)
-        // 单例模式下不应由 Controller 关闭
-        // if (webServer != null) {
-        //    webServer.stop();
-        //    webServer = null;
-        // }
-
-        // 2. 关闭轮询线程
         if (contentPoller != null && !contentPoller.isShutdown()) {
             contentPoller.shutdownNow();
         }
-
-        // 3. 清理 WebView (防止内存泄漏)
         if (webView != null) {
             webView.getEngine().load(null);
         }
@@ -435,9 +391,11 @@ public class MarkdownTabController {
 
                 Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
                 Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
-                byte[] pdfBytes = markdownService.convertHtmlToPdfBytes(mdEditorContentPayloads, null, onMessage, onError);
+                
+                // 使用 FastStream 获取数据
+                FastByteArrayOutputStream pdfStream = markdownService.convertHtmlToPdfStream(mdEditorContentPayloads, null, onMessage, onError);
 
-                if (pdfBytes == null || pdfBytes.length == 0) {
+                if (pdfStream == null || pdfStream.size() == 0) {
                     Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to generate PDF from Markdown.", Message.MessageType.ERROR)));
                     return;
                 }
@@ -453,8 +411,9 @@ public class MarkdownTabController {
 
                     if (file != null) {
                         new Thread(() -> {
-                            try {
-                                Files.write(file.toPath(), pdfBytes);
+                            try (FileOutputStream fos = new FileOutputStream(file)) {
+                                // 写入文件
+                                fos.write(pdfStream.getBuffer(), 0, pdfStream.size());
                                 Platform.runLater(() -> {
                                     eventBus.post(new ShowMessageEvent("Successfully saved new PDF to " + file.getAbsolutePath(), Message.MessageType.SUCCESS));
                                 });

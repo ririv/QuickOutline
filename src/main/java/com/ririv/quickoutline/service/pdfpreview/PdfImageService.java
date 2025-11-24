@@ -18,6 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
+
 @Singleton
 public class PdfImageService {
     private static final Logger log = LoggerFactory.getLogger(PdfImageService.class);
@@ -39,11 +42,11 @@ public class PdfImageService {
         lastTotalPages = 0;
     }
 
-    public List<ImagePageUpdate> diffPdfToImages(byte[] pdfBytes) {
+    public List<ImagePageUpdate> diffPdfToImages(FastByteArrayOutputStream pdfStream) {
         List<ImagePageUpdate> updates = new ArrayList<>();
-        if (pdfBytes == null || pdfBytes.length == 0) return updates;
+        if (pdfStream == null || pdfStream.size() == 0) return updates;
 
-        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+        try (PDDocument document = Loader.loadPDF(new RandomAccessReadBuffer(pdfStream.getBuffer()))) {
             int currentTotalPages = document.getNumberOfPages();
             PDFRenderer renderer = new PDFRenderer(document);
 
