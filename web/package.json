@@ -1,25 +1,26 @@
 {
   "name": "web-editor",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "prebuild": "node download-pdfjs.mjs",
-    "build": "node build.js",
-    "serve": "live-server ../src/main/resources/web --port=9000 --entry-file=editor.html",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "vditor": "^3.11.2"
   },
   "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tsconfig/svelte": "^5.0.0",
     "download": "^8.0.0",
-    "esbuild": "^0.27.0",
-    "esbuild-plugin-copy": "^2.1.1",
-    "live-server": "^1.2.0",
-    "typescript": "^5.9.3"
-  },
-  "description": ""
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "tslib": "^2.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0",
+    "vite-plugin-static-copy": "^3.1.4"
+  }
 }

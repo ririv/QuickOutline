@@ -33,7 +33,7 @@ export function handleImageUpdate(jsonString: string, container: HTMLElement) {
 
     // 2. 更新页面
     updates.forEach(u => {
-        const pageDiv = document.getElementById('page-' + u.pageIndex);
+        const pageDiv = container.querySelector('#page-' + u.pageIndex) as HTMLElement;
         if (!pageDiv) return;
 
         // 设置尺寸

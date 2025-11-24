@@ -21,7 +21,6 @@
 /fx/
 /.idea/copilot.data.migration.*.xml
 
-
 # Node 依赖
 node_modules/
 # esbuild 的分析产物（--metafile 输出）
@@ -33,14 +32,13 @@ nodejs/
 pdfjs/
 *.log
 
-# bundle文件均为自动生成
-src/main/resources/web/*.bundle.*
-src/main/resources/web/vditor/dist
-
+#自动生成
+/src/main/resources/web/
 
 
 /.idea/jsLibraryMappings.xml
 /.settings/org.eclipse.buildship.core.prefs
 
-
 dist/
+
+

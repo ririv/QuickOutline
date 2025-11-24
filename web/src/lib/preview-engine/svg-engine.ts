@@ -1,5 +1,5 @@
 // --- 类型定义 ---
-interface SvgPageUpdateData {
+export interface SvgPageUpdateData {
     pageIndex: number;
     svgContent: string;
     widthPt: number;
@@ -29,9 +29,6 @@ export function setDoubleBuffering(enable: boolean) {
     }
     console.log(`[SVG] Double buffering set to: ${enable}`);
 }
-
-// 初始化时设置默认状态
-setDoubleBuffering(isDoubleBufferingEnabled);
 
 /**
  * 核心：处理 Java 传来的 SVG JSON 数据
@@ -63,7 +60,7 @@ export function handleSvgUpdate(jsonString: string, container: HTMLElement, view
 
     // 3. 更新尺寸 & 强制刷新可视区
     updates.forEach(u => {
-        const pageDiv = document.getElementById('page-' + u.pageIndex);
+        const pageDiv = container.querySelector('#page-' + u.pageIndex) as HTMLElement;
         if (pageDiv) {
             // 注意：SVG 通常使用 px 或 pt，这里保持逻辑一致性
             pageDiv.style.width = u.widthPt + 'px';

@@ -1,19 +1,18 @@
 {
+  "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
-    "forceConsistentCasingInFileNames": true,
     "target": "ESNext",
-    "module": "NodeNext",
-    "outDir": "./dist",
-    "rootDir": "./",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
     "isolatedModules": true,
-    // 核心库定义：这是解决 includes 报错的关键
-    // 包含 DOM (浏览器环境) 和 ES2020 (JS 新语法)
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": [
-    "src/vditor/vditor_entry.ts"
-  ]
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

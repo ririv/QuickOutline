@@ -40,10 +40,7 @@ public class MarkdownTabController {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MarkdownTabController.class);
 
     @FXML
-    private WebView webView; // 左侧：Markdown 编辑器 (Vditor)
-
-    @FXML
-    private WebView previewWebView; // 右侧：PDF 预览 (PDF.js)，替代了原来的 VBox
+    private WebView webView; // 统一的 WebView (包含编辑器和预览)
 
     @FXML
     private TextField insertPosTextField;
@@ -55,8 +52,7 @@ public class MarkdownTabController {
     private final AppEventBus eventBus;
     private final MarkdownService markdownService;
 
-    private WebEngine webEngine;      // 编辑器引擎
-    private WebEngine previewWebEngine; // 预览引擎
+    private WebEngine webEngine;      // 统一引擎
 
     private String editorHtmlContent = ""; // 缓存前端内容，防止重复渲染
     // 修改泛型：输入 String (HTML)，输出 String (JSON)
@@ -92,17 +88,13 @@ public class MarkdownTabController {
         // 负责调度：Markdown -> HTML -> PDF byte[] -> Update UI
         setupPreviewer();
 
-        // 2. 配置 编辑器 WebView (左侧)
+        // 2. 配置 WebView (编辑器 + 预览)
         setupWebViewConfig();
 
-        // 3. 配置 预览 WebView (右侧)
-        // 【注意】必须初始化预览引擎，否则 updatePreviewUI 会报空指针
-        setupPreviewWebViewConfig();
-
-        // 4. 配置输入框格式化
+        // 3. 配置输入框格式化
         setupInputFields();
 
-        // 5. 【核心】启动本地服务器并加载编辑器
+        // 4. 【核心】启动本地服务器并加载页面
         // Server 必须在加载任何页面之前启动，以确保资源路径可达
         loadEditor();
 
@@ -154,7 +146,7 @@ public class MarkdownTabController {
     }
 
     /**
-     * 2. 配置 编辑器 WebView
+     * 2. 配置 WebView
      */
     private void setupWebViewConfig() {
         webEngine = webView.getEngine();
@@ -163,14 +155,15 @@ public class MarkdownTabController {
         // 监听加载状态，注入 Java 对象 (JSBridge)
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
-                log.info("Editor WebView load succeeded");
+                log.info("WebView load succeeded");
                 JSObject window = (JSObject) webEngine.executeScript("window");
                 window.setMember("javaBridge", bridge);
+                window.setMember("debugBridge", new JsBridge.DebugBridge()); // 同时也注入 debugBridge
 
                 // 如果需要轮询兜底，可在此处启动
 //                 startContentPoller();
             } else if (newState == Worker.State.FAILED) {
-                log.error("Editor WebView load failed");
+                log.error("WebView load failed");
             }
         });
 
@@ -179,29 +172,7 @@ public class MarkdownTabController {
     }
 
     /**
-     * 3. 配置 预览 WebView
-     * 包含 CSS 注入(隐藏进度条) 和 JS 注入(保持滚动位置)
-     */
-    private void setupPreviewWebViewConfig() {
-        if (previewWebView != null) {
-            previewWebEngine = previewWebView.getEngine();
-            previewWebEngine.setJavaScriptEnabled(true);
-            previewWebView.setContextMenuEnabled(false);
-
-            // 监听加载状态
-            previewWebEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-                if (newState == Worker.State.SUCCEEDED) {
-                    // 注入调试桥
-                    JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                    window.setMember("debugBridge", new JsBridge.DebugBridge());
-
-                    log.info("Preview page loaded successfully.");
-                }
-            });
-        }
-    }
-    /**
-     * 4. 配置输入框
+     * 3. 配置输入框
      */
     private void setupInputFields() {
         UnaryOperator<TextFormatter.Change> integerFilter = change -> {
@@ -216,7 +187,7 @@ public class MarkdownTabController {
     }
 
     /**
-     * 5. 加载编辑器资源 (含 Server 启动)
+     * 4. 加载编辑器资源 (含 Server 启动)
      * 解决 jpackage 打包后资源路径协议 (jar:/jrt:) 不兼容问题
      */
     private void loadEditor() {
@@ -231,8 +202,8 @@ public class MarkdownTabController {
             // 直接读取 Jar 包内资源，无需解压
             webServer.start("/web");
 
-            // 获取 http://127.0.0.1:端口/vditor.html
-            urlToLoad = webServer.getBaseUrl() + "vditor.html";
+            // 获取 http://127.0.0.1:端口/markdown-tab.html
+            urlToLoad = webServer.getBaseUrl() + "markdown-tab.html";
             log.info("[Load Strategy 1] Local WebServer started successfully. URL: {}", urlToLoad);
 
         } catch (Exception e) {
@@ -246,7 +217,7 @@ public class MarkdownTabController {
 
         // --- 策略 2: Classpath 直接加载 (IDE 兜底) ---
         if (urlToLoad == null) {
-            URL resource = getClass().getResource("/web/editor.html");
+            URL resource = getClass().getResource("/web/markdown-tab.html");
             if (resource != null) {
                 urlToLoad = resource.toExternalForm();
                 log.warn("[Load Strategy 2] Falling back to direct Classpath loading. Note: Icons/MathJax might fail in jpackage environment. URL: {}", urlToLoad);
@@ -257,7 +228,7 @@ public class MarkdownTabController {
             log.info("WebView loading: {}", urlToLoad);
             webEngine.load(urlToLoad);
         } else {
-            String errorMsg = "FATAL: Could not find 'vditor.html' in resources!";
+            String errorMsg = "FATAL: Could not find 'markdown-tab.html' in resources!";
             log.error(errorMsg);
             eventBus.post(new ShowMessageEvent("Failed to load editor resources. Please check logs.", Message.MessageType.ERROR));
         }
@@ -279,34 +250,14 @@ public class MarkdownTabController {
 
                 // 3. 推送前端
                 Platform.runLater(() -> {
-                    if (previewWebEngine == null) return;
-
-                    String svgUrl = webServer.getBaseUrl() + "preview.html";
-                    String currentLoc = previewWebEngine.getLocation();
-
-                    Runnable doUpdate = () -> {
-                        try {
-                            JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                            // 使用 call 避免转义问题
-                            window.call("updateSvgPages", jsonString);
-                        } catch (Exception e) {
-                            log.error("JS Update failed", e);
-                        }
-                    };
-
-                    // 确保页面加载
-                    if (currentLoc == null || !currentLoc.startsWith(svgUrl)) {
-                        previewWebEngine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
-                            if (state == Worker.State.SUCCEEDED) {
-                                // 注入 Bridge 方便调试 (可选)
-                                JSObject win = (JSObject) previewWebEngine.executeScript("window");
-                                win.setMember("debugBridge", new JsBridge.DebugBridge());
-                                doUpdate.run();
-                            }
-                        });
-                        previewWebEngine.load(svgUrl);
-                    } else {
-                        doUpdate.run();
+                    if (webEngine == null) return;
+                    // 页面已经加载好了，直接调用
+                    try {
+                        JSObject window = (JSObject) webEngine.executeScript("window");
+                        // 使用 call 避免转义问题
+                        window.call("updateSvgPages", jsonString);
+                    } catch (Exception e) {
+                        log.error("JS Update failed", e);
                     }
                 });
             } catch (Exception e) {
@@ -348,31 +299,9 @@ public class MarkdownTabController {
                 // 4. UI 线程通知前端
                 Platform.runLater(() -> {
                     try {
-                        if (previewWebEngine == null) return;
-
-                        String previewUrl = webServer.getBaseUrl() + "preview.html";
-                        String currentLoc = previewWebEngine.getLocation();
-
-                        Runnable doUpdate = () -> {
-                            try {
-                                JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                                window.call("updateImagePages", jsonString);
-                            } catch (Exception e) {
-                                log.error("JS update failed", e);
-                            }
-                        };
-
-                        if (currentLoc == null || !currentLoc.startsWith(previewUrl)) {
-                            log.info("Loading Image Preview Engine...");
-                            previewWebEngine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
-                                if (state == Worker.State.SUCCEEDED) {
-                                    doUpdate.run();
-                                }
-                            });
-                            previewWebEngine.load(previewUrl);
-                        } else {
-                            doUpdate.run();
-                        }
+                        if (webEngine == null) return;
+                        JSObject window = (JSObject) webEngine.executeScript("window");
+                        window.call("updateImagePages", jsonString);
                     } catch (Exception e) {
                         log.error("UI update failed", e);
                     }
@@ -402,9 +331,6 @@ public class MarkdownTabController {
         // 3. 清理 WebView (防止内存泄漏)
         if (webView != null) {
             webView.getEngine().load(null);
-        }
-        if (previewWebView != null) {
-            previewWebView.getEngine().load(null);
         }
     }
 
