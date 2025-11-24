@@ -42,6 +42,13 @@ public class LocalWebServer {
     // 存储每个文档的图片数据: DocID -> (PageKey -> Bytes)
     private final Map<String, Map<String, byte[]>> documentImages = new java.util.concurrent.ConcurrentHashMap<>();
 
+    // 存储每个文档的 SVG 数据: DocID -> (PageKey -> String)
+    private final Map<String, Map<String, String>> documentSvgs = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void putSvg(String docId, String path, String svgContent) {
+        documentSvgs.computeIfAbsent(docId, k -> new java.util.concurrent.ConcurrentHashMap<>()).put(path, svgContent);
+    }
+
     public void putImage(String docId, String path, byte[] data) {
         documentImages.computeIfAbsent(docId, k -> new java.util.concurrent.ConcurrentHashMap<>()).put(path, data);
     }
@@ -49,6 +56,11 @@ public class LocalWebServer {
     // 兼容旧 API
     public static void putImage(String path, byte[] data) {
         getInstance().putImage(DEFAULT_DOC_ID, path, data);
+    }
+
+    // 兼容旧 API
+    public static void putSvg(String path, String svgContent) {
+        getInstance().putSvg(DEFAULT_DOC_ID, path, svgContent);
     }
 
     /**
@@ -138,6 +150,49 @@ public class LocalWebServer {
             log.error("Failed to start local web server", e);
             throw new RuntimeException("Could not start internal web server", e);
         }
+
+        // 注册 SVG Handler
+        // 支持 /page_svg/0.svg (默认) 和 /page_svg/{docId}/0.svg
+        server.createContext("/page_svg/", exchange -> {
+            String path = exchange.getRequestURI().getPath();
+            String subPath = path.substring("/page_svg/".length());
+            
+            String docId = DEFAULT_DOC_ID;
+            String key = subPath;
+
+            if (subPath.contains("/")) {
+                int slashIndex = subPath.indexOf("/");
+                docId = subPath.substring(0, slashIndex);
+                key = subPath.substring(slashIndex + 1);
+            }
+
+            if (key.endsWith(".svg")) {
+                key = key.substring(0, key.length() - 4);
+            }
+
+            String svgContent = null;
+            Map<String, String> pages = documentSvgs.get(docId);
+            if (pages != null) {
+                svgContent = pages.get(key);
+            }
+
+            if (svgContent == null) {
+                exchange.sendResponseHeaders(404, 0);
+                exchange.close();
+                return;
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", "image/svg+xml");
+            // SVG 通常较小且频繁更新，版本控制很重要。这里假设前端会在 URL 后加 ?v=...
+            exchange.getResponseHeaders().set("Cache-Control", "public, max-age=31536000");
+
+            byte[] data = svgContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, data.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(data);
+            }
+        });
+
         // 注册图片 Handler
         // 支持 /page_images/0.png (默认) 和 /page_images/{docId}/0.png
         server.createContext("/page_images/", exchange -> {

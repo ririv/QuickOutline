@@ -1,10 +1,12 @@
 package com.ririv.quickoutline.view;
 
+import com.ririv.quickoutline.model.SvgPageMetadata;
 import com.ririv.quickoutline.service.MarkdownService;
 import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
 import com.ririv.quickoutline.service.pdfpreview.PdfSvgService;
 import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
+import com.ririv.quickoutline.model.SvgPageMetadata;
 import com.ririv.quickoutline.view.controls.message.Message;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
@@ -27,8 +29,6 @@ import netscape.javascript.JSObject;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -222,6 +222,13 @@ public class MarkdownTabController {
         }
     }
 
+
+
+    // ... (keep existing imports and code)
+
+    // Remove internal record
+    // private record SvgPageMetadata(int pageIndex, int totalPages, float widthPt, float heightPt, long version) {}
+
     private void updatePreviewUISvg(byte[] pdfBytes) {
         if (pdfBytes == null) return;
 
@@ -233,13 +240,32 @@ public class MarkdownTabController {
 
                 if (updates.isEmpty()) return; // 无变化，不打扰 UI
 
-                // 2. 序列化
-                String jsonString = new com.google.gson.Gson().toJson(updates);
+                // 2. 将 SVG 内容存入 Server，并准备元数据
+                LocalWebServer server = LocalWebServer.getInstance();
+                long version = System.currentTimeMillis(); // 简单版本号，强制刷新缓存
 
-                // 3. 推送前端
+                var metadataList = new java.util.ArrayList<SvgPageMetadata>();
+
+                for (var update : updates) {
+                    // 存入 SVG 内容 (key = pageIndex)
+                    // 注意：这里我们使用简单的 pageIndex 作为 key，前端 fetch 时也用这个
+                    server.putSvg(LocalWebServer.DEFAULT_DOC_ID, String.valueOf(update.pageIndex()), update.svgContent());
+                    
+                    metadataList.add(new SvgPageMetadata(
+                        update.pageIndex(), 
+                        update.totalPages(), 
+                        update.widthPt(), 
+                        update.heightPt(),
+                        version
+                    ));
+                }
+
+                // 3. 序列化元数据
+                String jsonString = new com.google.gson.Gson().toJson(metadataList);
+
+                // 4. 推送前端
                 Platform.runLater(() -> {
                     if (webEngine == null) return;
-                    // 页面已经加载好了，直接调用
                     try {
                         JSObject window = (JSObject) webEngine.executeScript("window");
                         // 使用 call 避免转义问题
