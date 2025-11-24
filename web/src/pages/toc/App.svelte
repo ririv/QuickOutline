@@ -128,6 +128,13 @@
     border-radius: 4px;
     box-sizing: border-box;
     text-align: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .title-input:focus {
+    border-color: #1677ff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
   }
 
   .editor-wrapper {
