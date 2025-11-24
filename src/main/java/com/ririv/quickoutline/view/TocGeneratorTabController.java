@@ -23,6 +23,8 @@ import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,9 +76,6 @@ public class TocGeneratorTabController {
         setupDebouncedPreviewer();
         setupPreviewWebViewConfig();
         loadPreviewPage();
-        
-        // Initial sync of bookmark settings to frontend could be done here if Bridge allowed pushing data
-        // For now, frontend starts with default state
     }
 
     private void setupPreviewWebViewConfig() {
@@ -95,9 +94,6 @@ public class TocGeneratorTabController {
                     window.setMember("javaBridge", bridge); // Inject bridge
 
                     log.info("TOC Preview page loaded successfully.");
-                    
-                    // Optional: Send initial bookmark state to frontend if needed
-                    // pushInitialState(); 
                 }
             });
         }
@@ -119,7 +115,7 @@ public class TocGeneratorTabController {
         Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
         Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-        this.previewer = new DebouncedPreviewer<>(500,
+        this.previewer = new DebouncedPreviewer<>(50,
                 input -> generatePreviewBytes(input, onMessage, onError),
                 this::updatePreviewUI,
                 e -> onError.accept("TOC preview failed: " + e.getMessage()));
@@ -133,13 +129,10 @@ public class TocGeneratorTabController {
             // Update settings state
             Platform.runLater(() -> {
                 bookmarkSettingsState.setOffset(payload.offset());
-                // Update other settings if they were in state...
             });
 
             String styleStr = payload.style() != null ? payload.style() : "None";
-            PageLabelNumberingStyle style = PageLabel.STYLE_MAP.getOrDefault(styleStr, PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS); // Default fallback? PageLabel map uses "Decimal" key but enum is DECIMAL... check map keys.
-            // PageLabel.STYLE_MAP keys are like "Decimal", "Roman Lower" etc.
-            // If payload.style() matches keys, it's fine.
+            PageLabelNumberingStyle style = PageLabel.STYLE_MAP.getOrDefault(styleStr, PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
             
             if (payload.tocContent() == null || payload.tocContent().isBlank()) {
                 return;
@@ -167,8 +160,6 @@ public class TocGeneratorTabController {
     private FastByteArrayOutputStream generatePreviewBytes(TocPreviewInput input, Consumer<String> onMessage, Consumer<String> onError) {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(input.tocContent(), Method.INDENT);
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
-            // Platform.runLater(() -> eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING)));
-            // Don't spam warnings on every keystroke preview
             return null;
         }
 
