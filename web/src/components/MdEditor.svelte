@@ -86,6 +86,7 @@
                 'quote', 'code', 'inline-code', 'code-theme', '|',
                 'table', 'preview', 'outline'
             ],
+            tab: '    ', // 4 spaces
             resize: {
                 enable: false, // 禁用自带的调整大小手柄，由外部容器控制
             },

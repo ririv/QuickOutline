@@ -42,6 +42,46 @@ export type BridgeHandlers = {
   onGetPayloads?: () => Promise<string>;
 };
 
+// --- JavaFX WebView Keyboard Event Polyfill ---
+// 修复 JavaFX WebView 中 e.key 为空的问题
+(function polyfillKeyboardEvent() {
+    const keyMap: Record<number, string> = {
+        8: 'Backspace', 9: 'Tab', 13: 'Enter', 27: 'Escape',
+        32: ' ', 33: 'PageUp', 34: 'PageDown', 35: 'End', 36: 'Home',
+        37: 'ArrowLeft', 38: 'ArrowUp', 39: 'ArrowRight', 40: 'ArrowDown',
+        45: 'Insert', 46: 'Delete',
+        189: '-', 187: '=', 219: '[', 221: ']', 220: '\\',
+        186: ';', 222: "'", 188: ',', 190: '.', 191: '/'
+    };
+
+    window.addEventListener('keydown', (e) => {
+        if (!e.key) {
+            let key = keyMap[e.keyCode];
+            
+            // Fallback for alphanumeric keys (A-Z, 0-9)
+            if (!key) {
+                // A-Z
+                if (e.keyCode >= 65 && e.keyCode <= 90) {
+                    key = String.fromCharCode(e.keyCode);
+                    if (!e.shiftKey) key = key.toLowerCase();
+                } 
+                // 0-9
+                else if (e.keyCode >= 48 && e.keyCode <= 57) {
+                    key = String.fromCharCode(e.keyCode);
+                }
+            }
+            
+            if (key) {
+                try {
+                    Object.defineProperty(e, 'key', { get: () => key });
+                } catch (err) {
+                    console.warn('[Polyfill] Failed to patch e.key', err);
+                }
+            }
+        }
+    }, true); // Capture phase
+})();
+
 /**
  * 初始化桥接：将全局 Window 方法路由到具体的组件逻辑
  */
