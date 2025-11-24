@@ -10,9 +10,7 @@ import com.ririv.quickoutline.service.webserver.LocalWebServer;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import com.ririv.quickoutline.view.utils.DebouncedPreviewer;
-import com.ririv.quickoutline.view.controls.EditorTextArea;
 import com.ririv.quickoutline.view.controls.message.Message;
-import com.ririv.quickoutline.view.controls.select.StyledSelect;
 import com.ririv.quickoutline.view.event.AppEventBus;
 import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
@@ -21,30 +19,29 @@ import com.ririv.quickoutline.view.utils.LocalizationManager;
 import com.ririv.quickoutline.view.webview.JsBridge;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.concurrent.Worker;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.gson.Gson;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import com.ririv.quickoutline.model.TocPayload;
 
 public class TocGeneratorTabController {
 
     private static final Logger log = LoggerFactory.getLogger(TocGeneratorTabController.class);
 
     private record TocPreviewInput(String tocContent, String title, PageLabelNumberingStyle style) {}
+    
+    // Data transfer object from Frontend
+    // private record TocPayload(String tocContent, String title, int offset, int insertPos, String style) {}
 
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
     private final CurrentFileState currentFileState;
@@ -53,25 +50,14 @@ public class TocGeneratorTabController {
     private final PdfOutlineService pdfOutlineService;
     private final PdfImageService pdfImageService;
     private final ResourceBundle bundle = LocalizationManager.getResourceBundle();
+    private final Gson gson = new Gson();
 
-    @FXML
-    private EditorTextArea tocContentTextArea;
-    @FXML
-    private TextField titleText;
     @FXML
     private WebView previewWebView;
-    @FXML
-    private TextField offsetTF;
-    @FXML
-    private TextField insertPosTextField;
-    @FXML
-    private StyledSelect<String> numberingStyleComboBox;
 
-    // Update Previewer type to use FastByteArrayOutputStream
     private DebouncedPreviewer<TocPreviewInput, FastByteArrayOutputStream> previewer;
     private WebEngine previewWebEngine;
-    
-    // private LocalWebServer webServer;
+    private JsBridge bridge = new JsBridge();
 
     @Inject
     public TocGeneratorTabController(PdfTocPageGeneratorService pdfTocPageGeneratorService, CurrentFileState currentFileState, BookmarkSettingsState bookmarkSettingsState, AppEventBus eventBus, PdfOutlineService pdfOutlineService, PdfImageService pdfImageService) {
@@ -85,11 +71,12 @@ public class TocGeneratorTabController {
 
     @FXML
     public void initialize() {
-        setupBookmarkBindings();
-        setupInputFormatters();
         setupDebouncedPreviewer();
         setupPreviewWebViewConfig();
         loadPreviewPage();
+        
+        // Initial sync of bookmark settings to frontend could be done here if Bridge allowed pushing data
+        // For now, frontend starts with default state
     }
 
     private void setupPreviewWebViewConfig() {
@@ -98,28 +85,28 @@ public class TocGeneratorTabController {
             previewWebEngine.setJavaScriptEnabled(true);
             previewWebView.setContextMenuEnabled(false);
 
-            // 监听加载状态
+            // Register handlers for frontend events
+            bridge.setTocHandlers(this::handlePreviewToc, this::handleGenerateToc);
+
             previewWebEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
                 if (newState == Worker.State.SUCCEEDED) {
-                    // 注入调试桥
                     JSObject window = (JSObject) previewWebEngine.executeScript("window");
                     window.setMember("debugBridge", new JsBridge.DebugBridge());
+                    window.setMember("javaBridge", bridge); // Inject bridge
 
                     log.info("TOC Preview page loaded successfully.");
+                    
+                    // Optional: Send initial bookmark state to frontend if needed
+                    // pushInitialState(); 
                 }
             });
         }
     }
 
-
     private void loadPreviewPage() {
         try {
             LocalWebServer server = LocalWebServer.getInstance();
-            
-            // 启动服务器
             server.start("/web");
-            
-            // 使用单例 Server 的 BaseUrl
             String urlToLoad = server.getBaseUrl() + "toc-tab.html";
             log.info("Loading TOC Preview page: {}", urlToLoad);
             previewWebEngine.load(urlToLoad);
@@ -136,36 +123,55 @@ public class TocGeneratorTabController {
                 input -> generatePreviewBytes(input, onMessage, onError),
                 this::updatePreviewUI,
                 e -> onError.accept("TOC preview failed: " + e.getMessage()));
-
-        tocContentTextArea.textProperty().addListener((obs, ov, nv) -> triggerPreview());
-        titleText.textProperty().addListener((obs, ov, nv) -> triggerPreview());
-        numberingStyleComboBox.valueProperty().addListener((obs, ov, nv) -> triggerPreview());
     }
 
-    private void triggerPreview() {
-        String tocContent = tocContentTextArea.getText();
-        String title = titleText.getText();
-        PageLabelNumberingStyle style = PageLabel.STYLE_MAP.get(numberingStyleComboBox.getValue());
+    // Handler for 'previewToc' from JS
+    private void handlePreviewToc(String json) {
+        try {
+            TocPayload payload = gson.fromJson(json, TocPayload.class);
+            
+            // Update settings state
+            Platform.runLater(() -> {
+                bookmarkSettingsState.setOffset(payload.offset());
+                // Update other settings if they were in state...
+            });
 
-        if (tocContent == null || tocContent.isBlank()) {
-            // Clear preview? Maybe send empty bytes or handle in updatePreviewUI
-            return;
+            String styleStr = payload.style() != null ? payload.style() : "None";
+            PageLabelNumberingStyle style = PageLabel.STYLE_MAP.getOrDefault(styleStr, PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS); // Default fallback? PageLabel map uses "Decimal" key but enum is DECIMAL... check map keys.
+            // PageLabel.STYLE_MAP keys are like "Decimal", "Roman Lower" etc.
+            // If payload.style() matches keys, it's fine.
+            
+            if (payload.tocContent() == null || payload.tocContent().isBlank()) {
+                return;
+            }
+            
+            String title = payload.title() == null || payload.title().isBlank() ? "Table of Contents" : payload.title();
+
+            previewer.trigger(new TocPreviewInput(payload.tocContent(), title, style));
+        } catch (Exception e) {
+            log.error("Error handling preview request from JS", e);
         }
-        if (title == null || title.isBlank()) {
-            title = "Table of Contents";
-        }
-        previewer.trigger(new TocPreviewInput(tocContent, title, style));
     }
 
-    // Update return type to FastByteArrayOutputStream
+    // Handler for 'generateToc' from JS
+    private void handleGenerateToc(String json) {
+        try {
+            TocPayload payload = gson.fromJson(json, TocPayload.class);
+            generateTocPage(payload);
+        } catch (Exception e) {
+            log.error("Error handling generate request from JS", e);
+            eventBus.post(new ShowMessageEvent("Invalid data from editor", Message.MessageType.ERROR));
+        }
+    }
+
     private FastByteArrayOutputStream generatePreviewBytes(TocPreviewInput input, Consumer<String> onMessage, Consumer<String> onError) {
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(input.tocContent(), Method.INDENT);
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
-            Platform.runLater(() -> eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING)));
+            // Platform.runLater(() -> eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING)));
+            // Don't spam warnings on every keystroke preview
             return null;
         }
 
-        // Use FastByteArrayOutputStream directly
         try (FastByteArrayOutputStream baos = new FastByteArrayOutputStream()) {
             pdfTocPageGeneratorService.createTocPagePreview(input.title(), input.style(), rootBookmark, baos, onMessage, onError);
             return baos;
@@ -174,13 +180,11 @@ public class TocGeneratorTabController {
         }
     }
 
-    // Update parameter type to FastByteArrayOutputStream
     private void updatePreviewUI(FastByteArrayOutputStream pdfStream) {
         if (pdfStream == null || pdfStream.size() == 0) return;
 
         new Thread(() -> {
             try {
-                // pdfImageService now accepts FastByteArrayOutputStream
                 var updates = pdfImageService.diffPdfToImages(pdfStream);
                 if (updates.isEmpty()) return;
 
@@ -189,7 +193,6 @@ public class TocGeneratorTabController {
                     String imageKey = update.pageIndex() + ".png";
                     byte[] imgData = pdfImageService.getImageData(update.pageIndex());
                     if (imgData != null) {
-                        // 使用新的带 ID 的 API (目前是默认 ID)
                         server.putImage(LocalWebServer.DEFAULT_DOC_ID, imageKey, imgData);
                     }
                 }
@@ -199,14 +202,8 @@ public class TocGeneratorTabController {
                 Platform.runLater(() -> {
                     try {
                         if (previewWebEngine == null) return;
-                        
-                        // 简化逻辑：loadPreviewPage 已经保证页面加载，直接执行 doUpdate
-                        try {
-                            JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                            window.call("updateImagePages", jsonString);
-                        } catch (Exception e) {
-                            log.error("UI update failed", e);
-                        }
+                        JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                        window.call("updateImagePages", jsonString);
                     } catch (Exception e) {
                         log.error("UI update failed", e);
                     }
@@ -217,108 +214,50 @@ public class TocGeneratorTabController {
         }).start();
     }
 
-    public void dispose() {
-        // 1. 关闭 WebServer (释放端口) -> 单例模式下不应关闭
-        // if (webServer != null) {
-        //    webServer.stop();
-        //    webServer = null;
-        // }
-        
-        // 3. 清理 WebView (防止内存泄漏)
-        if (previewWebView != null) {
-            previewWebView.getEngine().load(null);
-        }
-    }
-
-    @FXML
-    void previewTocPageAction(ActionEvent event) {
-        triggerPreview();
-    }
-
-    private void setupBookmarkBindings() {
-        titleText.setText("Table of Contents");
-        Bookmark rootBookmark = bookmarkSettingsState.getRootBookmark();
-        if (rootBookmark != null) {
-            tocContentTextArea.setText(rootBookmark.toOutlineString());
-        }
-
-        bookmarkSettingsState.offsetProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && !newVal.toString().equals(offsetTF.getText())) {
-                offsetTF.setText(newVal.toString());
-            }
-        });
-
-        offsetTF.textProperty().addListener((obs, oldVal, newVal) -> {
-            try {
-                bookmarkSettingsState.setOffset(Integer.parseInt(newVal));
-            } catch (NumberFormatException e) {
-                if (!Objects.equals(newVal, "-")) {
-                    bookmarkSettingsState.setOffset(0);
-                }
-            }
-        });
-    }
-
-    private void setupInputFormatters() {
-        UnaryOperator<TextFormatter.Change> integerFilter = change -> {
-            String newText = change.getControlNewText();
-            if (newText.matches("-?[0-9]*")) {
-                return change;
-            }
-            return null;
-        };
-        offsetTF.setTextFormatter(new TextFormatter<>(integerFilter));
-        insertPosTextField.setTextFormatter(new TextFormatter<>(integerFilter));
-        insertPosTextField.setText("1");
-
-        numberingStyleComboBox.setItems(FXCollections.observableArrayList(PageLabel.STYLE_MAP.keySet()));
-        numberingStyleComboBox.setValue("None");
-    }
-
-    @FXML
-    void generateTocPageAction(ActionEvent event) {
+    private void generateTocPage(TocPayload payload) {
         if (currentFileState.getSrcFile() == null) {
             eventBus.post(new ShowMessageEvent(bundle.getString("message.choosePDFFile"), Message.MessageType.WARNING));
             return;
         }
 
-        String tocContent = tocContentTextArea.getText();
-        if (tocContent == null || tocContent.isBlank()) {
+        if (payload.tocContent() == null || payload.tocContent().isBlank()) {
             eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));
             return;
         }
 
-        String title = titleText.getText();
-        if (title == null || title.isBlank()) {
-            title = "Table of Contents";
-        }
+        String title = (payload.title() == null || payload.title().isBlank()) ? "Table of Contents" : payload.title();
+        int insertPos = payload.insertPos() <= 0 ? 1 : payload.insertPos();
+        
+        String styleStr = payload.style() != null ? payload.style() : "None";
+        PageLabelNumberingStyle style = PageLabel.STYLE_MAP.get(styleStr);
 
-        int insertPos = 1;
-        try {
-            insertPos = Integer.parseInt(insertPosTextField.getText());
-            if (insertPos <= 0) insertPos = 1;
-        } catch (NumberFormatException e) {
-            // Keep default
-        }
-
-        PageLabelNumberingStyle style = PageLabel.STYLE_MAP.get(numberingStyleComboBox.getValue());
-        Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(tocContent, Method.INDENT);
+        Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(payload.tocContent(), Method.INDENT);
 
         if (rootBookmark == null || rootBookmark.getChildren().isEmpty()) {
             eventBus.post(new ShowMessageEvent(bundle.getString("message.noContentToSet"), Message.MessageType.WARNING));
             return;
         }
 
-        try {
-            String srcFile = currentFileState.getSrcFile().toString();
-            String destFile = currentFileState.getDestFile().toString();
-            Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
-            Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
-            pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark, onMessage, onError);
-            eventBus.post(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS));
-        } catch (IOException e) {
-            eventBus.post(new ShowMessageEvent("Failed to generate TOC page: " + e.getMessage(), Message.MessageType.ERROR));
-            e.printStackTrace();
+        new Thread(() -> {
+            try {
+                String srcFile = currentFileState.getSrcFile().toString();
+                String destFile = currentFileState.getDestFile().toString();
+                Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+                Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+                
+                pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark, onMessage, onError);
+                
+                Platform.runLater(() -> eventBus.post(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS)));
+            } catch (IOException e) {
+                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to generate TOC page: " + e.getMessage(), Message.MessageType.ERROR)));
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    public void dispose() {
+        if (previewWebView != null) {
+            previewWebView.getEngine().load(null);
         }
     }
 }

@@ -1,12 +1,12 @@
 <script lang="ts">
   import SplitPane from '../../components/SplitPane.svelte';
-  import Editor from '../../components/Editor.svelte';
+  import MdEditor from '../../components/MdEditor.svelte';
   import Preview from '../../components/Preview.svelte';
   import { initBridge } from '../../lib/bridge';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
 
-  let editorComponent: Editor;
+  let editorComponent: MdEditor;
   let previewComponent: Preview;
 
   onMount(() => {
@@ -32,7 +32,7 @@
 <main>
   <SplitPane initialSplit={50}>
     <div slot="left" class="h-full">
-      <Editor bind:this={editorComponent} />
+      <MdEditor bind:this={editorComponent} />
     </div>
     <div slot="right" class="h-full">
       <Preview bind:this={previewComponent} mode="combined" />

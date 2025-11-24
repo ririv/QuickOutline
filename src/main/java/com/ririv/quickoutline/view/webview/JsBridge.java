@@ -8,10 +8,35 @@ import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class JsBridge {
 
     private static final Logger log = LoggerFactory.getLogger(JsBridge.class);
+
+    private Consumer<String> onPreviewToc;
+    private Consumer<String> onGenerateToc;
+
+    public void setTocHandlers(Consumer<String> onPreview, Consumer<String> onGenerate) {
+        this.onPreviewToc = onPreview;
+        this.onGenerateToc = onGenerate;
+    }
+
+    // Called by JS
+    public void previewToc(String json) {
+        if (onPreviewToc != null) {
+            // Ensure callback runs on JavaFX thread if not already
+            // But Platform.runLater is safe even if already on FX thread
+            Platform.runLater(() -> onPreviewToc.accept(json));
+        }
+    }
+
+    // Called by JS
+    public void generateToc(String json) {
+        if (onGenerateToc != null) {
+            Platform.runLater(() -> onGenerateToc.accept(json));
+        }
+    }
 
     // 这个 Future 将用来“挂起”等待 JS 的结果
     private CompletableFuture<String> pendingFuture;

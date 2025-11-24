@@ -1,55 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.ririv.quickoutline.view.controls.EditorTextArea?>
-<?import com.ririv.quickoutline.view.controls.select.StyledSelect?>
-<?import com.ririv.quickoutline.view.icons.RefreshIcon?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Tooltip?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController">
-    <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
-        <VBox>
-            <TextField fx:id="titleText" prefHeight="40.0" promptText="%tocTitleTextArea.prompt" alignment="CENTER"/>
-            <EditorTextArea fx:id="tocContentTextArea" VBox.vgrow="ALWAYS" promptText="%tocContentTextArea.prompt"/>
-        </VBox>
-        <StackPane>
-            <WebView fx:id="previewWebView" minWidth="200" prefWidth="500"/>
-            <Button onAction="#previewTocPageAction" styleClass="graph-button, graph-button-basic" StackPane.alignment="BOTTOM_RIGHT">
-                <graphic>
-                    <RefreshIcon prefWidth="15" prefHeight="15" />
-                </graphic>
-                <StackPane.margin>
-                    <Insets right="10" bottom="10"/>
-                </StackPane.margin>
-            </Button>
-        </StackPane>
-    </SplitPane>
-    <HBox alignment="CENTER" prefHeight="40.0" spacing="10">
-        <padding>
-            <Insets top="5" bottom="5" left="10" right="10"/>
-        </padding>
-        <TextField fx:id="offsetTF" styleClass="underlineTF" prefWidth="100" promptText="%offsetTF.prompt" >
-            <tooltip>
-                <Tooltip text="%offsetTF.tooltip" />
-            </tooltip>
-        </TextField>
-        <TextField fx:id="insertPosTextField" styleClass="underlineTF"  prefWidth="100" promptText="%insertPosTextField.prompt">
-            <tooltip>
-                <Tooltip text="%insertPosTextField.tooltip" />
-            </tooltip>
-        </TextField>
-        <StyledSelect fx:id="numberingStyleComboBox" prefWidth="100" />
-        <Region HBox.hgrow="ALWAYS" />
-        <Button text="Generate TOC Page" onAction="#generateTocPageAction"
-                styleClass="my-button,plain-button-primary"/>
-    </HBox>
+      fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController" alignment="CENTER">
+    <WebView fx:id="previewWebView" VBox.vgrow="ALWAYS"/>
 </VBox>

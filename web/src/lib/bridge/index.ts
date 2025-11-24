@@ -18,8 +18,11 @@ declare global {
     
     // Bridge Objects injected by Java
     javaBridge?: {
-      // Define methods if you call Java from JS directly via this object
-      // e.g., log: (msg: string) => void;
+      receiveSuccess: (data: string) => void;
+      receiveError: (error: string) => void;
+      // Toc Tab specific
+      previewToc: (json: string) => void;
+      generateToc: (json: string) => void;
     };
     debugBridge?: any;
   }
