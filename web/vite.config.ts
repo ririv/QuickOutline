@@ -83,7 +83,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src')
+      '@': resolve(__dirname, './src'),
+      '/node_modules': resolve(__dirname, './node_modules')
     }
   }
 });

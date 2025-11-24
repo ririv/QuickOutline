@@ -6,6 +6,11 @@
     let vditorInstance: Vditor;
     let element: HTMLDivElement;
 
+    // Use correct CDN path based on environment
+    console.log('[MdEditor] Mode:', import.meta.env.MODE, 'DEV:', import.meta.env.DEV);
+    const cdnPath = import.meta.env.DEV ? '/node_modules/vditor' : './vditor';
+    console.log('[MdEditor] cdnPath:', cdnPath);
+
     // Expose methods
     export const getValue = () => vditorInstance?.getValue() || '';
     export const setValue = (val: string) => vditorInstance?.setValue(val);
@@ -34,7 +39,7 @@
         try {
             await Vditor.preview(previewDiv, mdText, {
                 mode: "light",
-                cdn: './vditor', // Important for local loading
+                cdn: cdnPath, // Important for local loading
                 math: {
                     engine: 'MathJax',
                     mathJaxOptions: {
@@ -67,7 +72,7 @@
         if (vditorInstance) return;
         
         vditorInstance = new Vditor(element, {
-            cdn: './vditor', // Use local resources copied by plugin
+            cdn: cdnPath, // Use local resources copied by plugin
             height: '100%',
             width: '100%',
             mode: 'sv', // Split view or instant rendering? Original was 'sv'
