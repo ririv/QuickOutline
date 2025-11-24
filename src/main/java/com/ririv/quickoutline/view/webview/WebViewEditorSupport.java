@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view.utils;
+package com.ririv.quickoutline.view.webview;
 
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;

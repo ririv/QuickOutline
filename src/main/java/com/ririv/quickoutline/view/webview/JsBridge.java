@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.view;
+package com.ririv.quickoutline.view.webview;
 import javafx.application.Platform;
 import javafx.scene.web.WebEngine;
 import org.slf4j.Logger;
@@ -11,14 +11,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class JsBridge {
 
-    private static final Logger logger = LoggerFactory.getLogger(JsBridge.class);
+    private static final Logger log = LoggerFactory.getLogger(JsBridge.class);
 
     // 这个 Future 将用来“挂起”等待 JS 的结果
     private CompletableFuture<String> pendingFuture;
 
     // JS 将调用这个方法来"完成" pendingFuture
     public void receiveSuccess(String html) {
-        logger.debug("[JsBridge] 接收到 HTML");
+        log.debug("[JsBridge] 接收到 HTML");
         // 确保在 JavaFX 线程上完成 Future，这更安全
         Platform.runLater(() -> {
             if (pendingFuture != null && !pendingFuture.isDone()) {
@@ -70,7 +70,7 @@ public class JsBridge {
         try {
             return pendingFuture.get(10, TimeUnit.SECONDS);
         } catch (Exception e) {
-            logger.error("获取 HTML 失败 (超时或 JS 异常)");
+            log.error("获取 HTML 失败 (超时或 JS 异常)");
             throw e;
         }
     }
@@ -89,5 +89,11 @@ public class JsBridge {
     // 注意：方法必须是 public
     public String getPdfData() {
         return currentPdfBase64.get();
+    }
+
+    public static class DebugBridge {
+        public void log(String msg) {
+            log.info("[TOC-JS] {}", msg); }
+        public void error(String msg) { log.error("[TOC-JS Error] {}", msg); }
     }
 }

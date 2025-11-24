@@ -26,8 +26,7 @@ public class LocalWebServer {
     // 用于线程安全地存储最新的 PDF 字节数据
     private final AtomicReference<byte[]> currentPdfBytes = new AtomicReference<>(new byte[0]);
 
-    @Inject
-    private PdfImageService pdfImageService; // 需要注入 Service 获取数据
+
 
     // 如果无法注入 (LocalWebServer 是手动 new 的)，可以改为静态单例访问，或者传入 Service 实例
     // 建议：在 MarkdownTabController 创建 Server 时，把 Service 传进去，或者通过静态 map 共享

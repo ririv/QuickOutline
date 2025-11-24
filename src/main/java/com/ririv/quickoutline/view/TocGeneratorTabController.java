@@ -17,6 +17,7 @@ import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.state.BookmarkSettingsState;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import com.ririv.quickoutline.view.utils.LocalizationManager;
+import com.ririv.quickoutline.view.webview.JsBridge;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -99,7 +100,7 @@ public class TocGeneratorTabController {
                 if (newState == Worker.State.SUCCEEDED) {
                     // 注入调试桥
                     JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                    window.setMember("debugBridge", new DebugBridge());
+                    window.setMember("debugBridge", new JsBridge.DebugBridge());
 
                     log.info("TOC Preview page loaded successfully.");
                 }
@@ -107,10 +108,6 @@ public class TocGeneratorTabController {
         }
     }
 
-    public class DebugBridge {
-        public void log(String msg) { log.info("[TOC-JS] {}", msg); }
-        public void error(String msg) { log.error("[TOC-JS Error] {}", msg); }
-    }
 
     private void loadPreviewPage() {
         try {

@@ -11,7 +11,8 @@ import com.ririv.quickoutline.view.event.ShowMessageEvent;
 import com.ririv.quickoutline.view.state.CurrentFileState;
 import com.ririv.quickoutline.view.utils.MarkdownImageHandler;
 import com.ririv.quickoutline.view.utils.TrailingThrottlePreviewer;
-import com.ririv.quickoutline.view.utils.WebViewEditorSupport;
+import com.ririv.quickoutline.view.webview.WebViewEditorSupport;
+import com.ririv.quickoutline.view.webview.JsBridge;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -177,10 +178,6 @@ public class MarkdownTabController {
         new WebViewEditorSupport(webView).install();
     }
 
-    public class DebugBridge {
-        public void log(String msg) { log.info("[SVG-JS] {}", msg); }
-        public void error(String msg) { log.error("[SVG-JS Error] {}", msg); }
-    }
     /**
      * 3. 配置 预览 WebView
      * 包含 CSS 注入(隐藏进度条) 和 JS 注入(保持滚动位置)
@@ -196,7 +193,7 @@ public class MarkdownTabController {
                 if (newState == Worker.State.SUCCEEDED) {
                     // 注入调试桥
                     JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                    window.setMember("debugBridge", new DebugBridge());
+                    window.setMember("debugBridge", new JsBridge.DebugBridge());
 
                     log.info("Preview page loaded successfully.");
                 }
@@ -303,7 +300,7 @@ public class MarkdownTabController {
                             if (state == Worker.State.SUCCEEDED) {
                                 // 注入 Bridge 方便调试 (可选)
                                 JSObject win = (JSObject) previewWebEngine.executeScript("window");
-                                win.setMember("debugBridge", new DebugBridge());
+                                win.setMember("debugBridge", new JsBridge.DebugBridge());
                                 doUpdate.run();
                             }
                         });
