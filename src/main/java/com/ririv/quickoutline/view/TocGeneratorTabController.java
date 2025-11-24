@@ -200,27 +200,12 @@ public class TocGeneratorTabController {
                     try {
                         if (previewWebEngine == null) return;
                         
-                        String previewUrl = server.getBaseUrl() + "toc-tab.html";
-                        String currentLoc = previewWebEngine.getLocation();
-
-                        Runnable doUpdate = () -> {
-                            try {
-                                JSObject window = (JSObject) previewWebEngine.executeScript("window");
-                                window.call("updateImagePages", jsonString);
-                            } catch (Exception e) {
-                                log.error("JS update failed", e);
-                            }
-                        };
-
-                        if (currentLoc == null || !currentLoc.startsWith(previewUrl)) {
-                            previewWebEngine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
-                                if (state == Worker.State.SUCCEEDED) {
-                                    doUpdate.run();
-                                }
-                            });
-                            previewWebEngine.load(previewUrl);
-                        } else {
-                            doUpdate.run();
+                        // 简化逻辑：loadPreviewPage 已经保证页面加载，直接执行 doUpdate
+                        try {
+                            JSObject window = (JSObject) previewWebEngine.executeScript("window");
+                            window.call("updateImagePages", jsonString);
+                        } catch (Exception e) {
+                            log.error("UI update failed", e);
                         }
                     } catch (Exception e) {
                         log.error("UI update failed", e);

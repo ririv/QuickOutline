@@ -250,7 +250,7 @@ public class MarkdownTabController {
                         JSObject window = (JSObject) webEngine.executeScript("window");
                         window.call("updateSvgPages", jsonString);
                     } catch (Exception e) {
-                        log.error("JS Update failed", e);
+                        log.error("UI Update failed", e);
                     }
                 });
             } catch (Exception e) {
@@ -259,44 +259,6 @@ public class MarkdownTabController {
         }).start();
     }
 
-    /**
-     * 更新预览 (图片流方案) - 保留但需要适配类型
-     */
-    private void updatePreviewUIImg(FastByteArrayOutputStream pdfStream) {
-        if (pdfStream == null || pdfStream.size() == 0) return;
-
-        new Thread(() -> {
-            try {
-                var updates = pdfImageService.diffPdfToImages(pdfStream);
-
-                if (updates.isEmpty()) return;
-
-                LocalWebServer server = LocalWebServer.getInstance();
-                for (var update : updates) {
-                    String imageKey = update.pageIndex() + ".png";
-                    byte[] imgData = pdfImageService.getImageData(update.pageIndex());
-                    if (imgData != null) {
-                        server.putImage(LocalWebServer.DEFAULT_DOC_ID, imageKey, imgData);
-                    }
-                }
-
-                String jsonString = new com.google.gson.Gson().toJson(updates);
-
-                Platform.runLater(() -> {
-                    try {
-                        if (webEngine == null) return;
-                        JSObject window = (JSObject) webEngine.executeScript("window");
-                        window.call("updateImagePages", jsonString);
-                    } catch (Exception e) {
-                        log.error("UI update failed", e);
-                    }
-                });
-
-            } catch (Exception e) {
-                log.error("Image generation failed", e);
-            }
-        }).start();
-    }
     
     public void dispose() {
         if (contentPoller != null && !contentPoller.isShutdown()) {
