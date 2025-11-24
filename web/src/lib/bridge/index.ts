@@ -90,3 +90,24 @@ export function initBridge(handlers: BridgeHandlers) {
 
   console.log('[Bridge] Initialized.');
 }
+
+// --- 兜底初始化 (Stubs) ---
+// 防止 Java 在 Svelte 组件挂载前调用报错
+(function initStubs() {
+    if (!window.getPayloads) {
+        window.getPayloads = async () => {
+            console.warn('[Bridge Stub] getPayloads called before initialization.');
+            return JSON.stringify({ html: '', styles: '' });
+        };
+    }
+    if (!window.getContent) {
+        window.getContent = () => '';
+    }
+    if (!window.initVditor) {
+        window.initVditor = (md) => console.warn('[Bridge Stub] initVditor called early with:', md);
+    }
+    // 其他 void 函数不需要 stub，undefined 调用会报错，但通常这些是单向通知，Java 不会立即调用
+    // 除非 Java 真的在加载完成后毫秒级调用 updateSvgPages
+    if (!window.updateSvgPages) window.updateSvgPages = () => {};
+    if (!window.updateImagePages) window.updateImagePages = () => {};
+})();

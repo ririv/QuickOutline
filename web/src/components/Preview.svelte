@@ -70,6 +70,8 @@
 
   onMount(() => {
       updateSliderBackground(currentScale);
+      // Explicitly set double buffering to true on mount to ensure class is added
+      setDoubleBuffer(true);
   });
 
 </script>
@@ -100,6 +102,26 @@
 </div>
 
 <style>
+    /* --- 双缓冲通用类 (仅在启用时生效) --- */
+    /* 使用 :global() 包裹，因为 .double-buffer 类和内部的 svg/img 是动态生成的 */
+    :global(.double-buffer .page-wrapper svg),
+    :global(.double-buffer .page-wrapper img) {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        transition: opacity 0.2s ease-in;
+    }
+
+    :global(.double-buffer .page-wrapper .current) {
+        opacity: 1;
+        z-index: 1;
+    }
+
+    :global(.double-buffer .page-wrapper .preload) {
+        z-index: 2;
+    }
+
     .preview-root {
         position: relative;
         width: 100%;

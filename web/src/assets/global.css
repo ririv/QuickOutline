@@ -98,21 +98,4 @@ img {
     /*image-rendering: high-quality;*/
 }
 
-/* --- 双缓冲通用类 (仅在启用时生效) --- */
-.double-buffer .page-wrapper svg,
-.double-buffer .page-wrapper img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    opacity: 0;
-    transition: opacity 0.2s ease-in;
-}
 
-.double-buffer .page-wrapper .current {
-    opacity: 1;
-    z-index: 1;
-}
-
-.double-buffer .page-wrapper .preload {
-    z-index: 2;
-}
