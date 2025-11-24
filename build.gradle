@@ -214,9 +214,9 @@ jlink {
 node {
     version = '22.21.1' // LTS
     download = true
-    workDir = file("${project.projectDir}/web-editor/nodejs")
-    npmWorkDir = file("${project.projectDir}/web-editor/npm")
-    nodeProjectDir = file("${project.projectDir}/web-editor")
+    workDir = file("${project.projectDir}/web/nodejs")
+    npmWorkDir = file("${project.projectDir}/web/npm")
+    nodeProjectDir = file("${project.projectDir}/web")
 }
 
 // Make processResources depend on the npm_run_build task provided by the node-gradle plugin
