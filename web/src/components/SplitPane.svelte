@@ -7,8 +7,7 @@
     
     function startResize(e: MouseEvent) {
         isResizing = true;
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
+        document.body.classList.add('is-resizing'); // 关键：添加全局标记
         
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', stopResize);
@@ -26,8 +25,8 @@
 
     function stopResize() {
         isResizing = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
+        document.body.classList.remove('is-resizing'); // 移除标记
+        
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', stopResize);
     }
@@ -60,7 +59,7 @@
     .resizer {
         width: 5px;
         background: #ddd;
-        cursor: col-resize;
+        cursor: col-resize; /* 重新添加 */
         z-index: 10;
         transition: background 0.2s;
     }

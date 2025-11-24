@@ -124,5 +124,6 @@
     .editor-container {
         height: 100%;
         width: 100%;
+        user-select: text; /* 允许在编辑器内选中文本（覆盖全局禁止） */
     }
 </style>

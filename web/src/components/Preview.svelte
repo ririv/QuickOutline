@@ -122,6 +122,11 @@
         z-index: 2;
     }
 
+    /* 允许用户选中页面内容 */
+    :global(#pages-container) {
+        user-select: text;
+    }
+
     .preview-root {
         position: relative;
         width: 100%;

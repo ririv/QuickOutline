@@ -9,7 +9,7 @@ body {
     height: 100vh;
     overflow: hidden; /* 禁用 Body 滚动，完全交给 Viewport */
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    user-select: none; /* 防止拖拽时选中文本干扰体验 */
+
 }
 
 
@@ -96,6 +96,18 @@ img {
     image-rendering: auto;
     /* 或者显式指定高质量 (虽然 auto 通常就是这个效果) */
     /*image-rendering: high-quality;*/
+}
+
+/* --- 拖拽时的全局保护层 --- */
+/* 当 SplitPane 正在调整大小时，禁用页面上所有元素的交互 */
+/* 这防止了 iframe (编辑器) 吞噬鼠标事件，也防止了意外选中文字 */
+body.is-resizing {
+    cursor: col-resize !important;
+}
+
+body.is-resizing * {
+    pointer-events: none !important;
+    user-select: none !important;
 }
 
 
