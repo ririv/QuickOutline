@@ -14,6 +14,8 @@
   let insertPos = 1;
   // style is not used in Markdown tab currently, but binding is required by StatusBar prop
   let style = 'None';
+  
+  let debounceTimer: number; // For live preview debounce
 
   onMount(() => {
     // Initialize Bridge to route Java calls to components
@@ -33,6 +35,17 @@
       onGetPayloads: () => editorComponent?.getPayloads(),
     });
   });
+
+  async function triggerPreview() {
+      if (!editorComponent) return;
+      const json = await editorComponent.getPayloads(); // {html, styles}
+      // Assuming Java bridge has updatePreview method that accepts {html, styles}
+      if (window.javaBridge && window.javaBridge.updatePreview) {
+          window.javaBridge.updatePreview(json);
+      } else {
+          console.warn('Java Bridge updatePreview not available', json);
+      }
+  }
 
   async function handleGenerate() {
       if (!editorComponent) return;
@@ -64,7 +77,7 @@
           <MdEditor bind:this={editorComponent} />
         </div>
         <div slot="right" class="h-full">
-          <Preview bind:this={previewComponent} mode="combined" />
+          <Preview bind:this={previewComponent} mode="combined" onrefresh={triggerPreview} />
         </div>
       </SplitPane>
   </div>

@@ -70,7 +70,7 @@
         </div>
         
         <div slot="right" class="h-full">
-          <Preview bind:this={previewComponent} mode="preview-only" />
+          <Preview bind:this={previewComponent} mode="preview-only" onrefresh={triggerPreview} />
         </div>
       </SplitPane>
   </div>

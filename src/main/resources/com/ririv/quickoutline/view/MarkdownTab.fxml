@@ -16,15 +16,5 @@
     <!-- 只要一个 WebView，前端负责分栏 -->
     <StackPane VBox.vgrow="ALWAYS">
         <WebView fx:id="webView"/>
-        
-        <!-- 手动刷新按钮保留在右下角，依然覆盖在 WebView 上 -->
-<!--        <Button fx:id="previewButton" onAction="#manualPreviewAction" styleClass="graph-button, graph-button-basic" StackPane.alignment="BOTTOM_RIGHT">-->
-<!--            <graphic>-->
-<!--                <RefreshIcon prefWidth="15" prefHeight="15" />-->
-<!--            </graphic>-->
-<!--            <StackPane.margin>-->
-<!--                <Insets right="10" bottom="10"/>-->
-<!--            </StackPane.margin>-->
-<!--        </Button>-->
     </StackPane>
 </VBox>

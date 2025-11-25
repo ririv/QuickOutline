@@ -17,6 +17,7 @@ public class JsBridge {
     private Consumer<String> onPreviewToc;
     private Consumer<String> onGenerateToc;
     private Consumer<String> onRenderPdf;
+    private Consumer<String> onUpdatePreview;
 
     public void setTocHandlers(Consumer<String> onPreview, Consumer<String> onGenerate) {
         this.onPreviewToc = onPreview;
@@ -25,6 +26,10 @@ public class JsBridge {
 
     public void setRenderPdfHandler(Consumer<String> handler) {
         this.onRenderPdf = handler;
+    }
+
+    public void setUpdatePreviewHandler(Consumer<String> handler) {
+        this.onUpdatePreview = handler;
     }
 
     // Called by JS
@@ -43,10 +48,17 @@ public class JsBridge {
         }
     }
 
-    // Called by JS (Markdown Tab)
+    // Called by JS (Markdown Tab - Generate File)
     public void renderPdf(String json) {
         if (onRenderPdf != null) {
             Platform.runLater(() -> onRenderPdf.accept(json));
+        }
+    }
+
+    // Called by JS (Markdown Tab - Live Preview)
+    public void updatePreview(String json) {
+        if (onUpdatePreview != null) {
+            Platform.runLater(() -> onUpdatePreview.accept(json));
         }
     }
 

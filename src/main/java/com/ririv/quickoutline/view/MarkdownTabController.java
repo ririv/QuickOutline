@@ -122,6 +122,7 @@ public class MarkdownTabController {
         
         // Register handlers
         bridge.setRenderPdfHandler(this::handleRenderPdf);
+        bridge.setUpdatePreviewHandler(this::handleUpdatePreview);
 
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
@@ -219,6 +220,11 @@ public class MarkdownTabController {
     void insertImageIntoMarkdown() {
         javafx.stage.Window owner = webView.getScene() != null ? webView.getScene().getWindow() : null;
         new MarkdownImageHandler(currentFileState, eventBus).insertImage(owner, webEngine);
+    }
+
+    private void handleUpdatePreview(String json) {
+        // json contains {html, styles} (from MdEditor.getPayloads)
+        previewer.trigger(json);
     }
 
     private void handleRenderPdf(String json) {
