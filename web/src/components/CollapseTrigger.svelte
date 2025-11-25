@@ -24,6 +24,10 @@
   title={expanded ? `Hide ${label}` : `Show ${label}`}
 >
   <div class="indicator-line"></div>
+  
+  <!-- Persistent hint dot (centered) when collapsed and not hovered -->
+  <div class="center-dot" class:visible={hasContent && !expanded}></div>
+
   <div class="content">
     <span class="icon-wrapper">
         <span class="icon {expanded ? 'rotated' : ''}">
@@ -33,7 +37,11 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
             {/if}
         </span>
-        <span class="dot {hasContent && !expanded ? 'visible' : ''}"></span>
+        <!-- Inner dot (follows icon) for hover/expanded state -->
+        <span 
+          class="dot" 
+          class:has-content={hasContent}
+        ></span>
     </span>
     <span class="hint-text">{label}</span>
   </div>
@@ -144,21 +152,64 @@
       font-weight: 500;
   }
 
+  /* Center Dot (Default State) */
+  .center-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 5px;
+      height: 5px;
+      background-color: #ccc; /* Subtle gray */
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 5;
+  }
+  
+  .center-dot.visible {
+      opacity: 1;
+  }
+  
+  /* Hide center dot on hover or expand */
+  .collapse-trigger:hover .center-dot,
+  .collapse-trigger.expanded .center-dot {
+      opacity: 0 !important;
+  }
+
+  /* Inner Dot (Hover/Expanded State) */
   .dot {
       position: absolute;
       top: 50%;
-      left: -8px; /* Adjust as needed for spacing */
+      left: -8px; 
       transform: translateY(-50%);
       width: 5px;
       height: 5px;
-      background-color: #1677ff;
+      background-color: #1677ff; /* Bright blue */
       border-radius: 50%;
       opacity: 0;
       transition: opacity 0.2s;
       pointer-events: none;
   }
   
-  .dot.visible {
-      opacity: 1;
+  /* Only show inner dot if has-content is true AND (hovered OR expanded) */
+  /* Note: .content itself handles the fade-in of the wrapper. 
+     We just need to ensure .dot is visible within that. */
+  
+  .dot.has-content {
+      /* Default hidden inside content */
+      opacity: 1; 
+  }
+  
+  /* If content is hidden (opacity 0), dot is hidden. 
+     If content is visible (hover/expanded), dot is visible. 
+     But we want to hide dot when expanded? 
+     "expanded state: hide the dot if it's there, as editor is visible" - user said previously.
+  */
+  
+  /* If expanded, hide the dot because the full editor is open */
+  .collapse-trigger.expanded .dot {
+      opacity: 0;
   }
 </style>
