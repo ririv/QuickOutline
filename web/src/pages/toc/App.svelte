@@ -4,9 +4,11 @@
   import SimpleEditor from '../../components/SimpleEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
   import SectionEditor from '../../components/SectionEditor.svelte';
+  import CollapseTrigger from '../../components/CollapseTrigger.svelte';
   import { initBridge } from '../../lib/bridge';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
+  import { slide } from 'svelte/transition';
 
   let previewComponent: Preview;
   
@@ -20,7 +22,14 @@
   let headerConfig = { left: '', center: '', right: '', inner: '', outer: '' };
   let footerConfig = { left: '', center: '{p}', right: '', inner: '', outer: '' };
   
+  let showHeader = false;
+  let showFooter = false;
+  
   let debounceTimer: number;
+
+  function hasContent(config: typeof headerConfig) {
+      return Object.values(config).some(v => v && v.trim().length > 0 && v !== '{p}');
+  }
 
   onMount(() => {
     initBridge({
@@ -68,12 +77,23 @@
   <div class="content-area">
       <SplitPane initialSplit={40}>
         <div slot="left" class="left-panel">
-          <!-- Header Settings (Above Title) -->
-          <SectionEditor 
-            type="header"
-            bind:config={headerConfig} 
-            onchange={triggerPreview} 
+          <!-- Header Trigger & Editor -->
+          <CollapseTrigger 
+            position="top" 
+            label="Header" 
+            expanded={showHeader} 
+            hasContent={hasContent(headerConfig)}
+            ontoggle={() => showHeader = !showHeader} 
           />
+          {#if showHeader}
+            <div transition:slide={{ duration: 200 }}>
+              <SectionEditor 
+                type="header"
+                bind:config={headerConfig} 
+                onchange={triggerPreview} 
+              />
+            </div>
+          {/if}
 
           <div class="header">
             <input type="text" bind:value={title} oninput={triggerPreview} placeholder="Title" class="title-input"/>
@@ -83,11 +103,22 @@
             <SimpleEditor bind:value={tocContent} onchange={triggerPreview} placeholder="Enter TOC here..." />
           </div>
 
-          <!-- Footer Settings (Below Content) -->
-          <SectionEditor 
-            type="footer"
-            bind:config={footerConfig} 
-            onchange={triggerPreview} 
+          <!-- Footer Trigger & Editor -->
+          {#if showFooter}
+            <div transition:slide={{ duration: 200 }}>
+              <SectionEditor 
+                type="footer"
+                bind:config={footerConfig} 
+                onchange={triggerPreview} 
+              />
+            </div>
+          {/if}
+          <CollapseTrigger 
+            position="bottom" 
+            label="Footer" 
+            expanded={showFooter} 
+            hasContent={hasContent(footerConfig)}
+            ontoggle={() => showFooter = !showFooter} 
           />
         </div>
         
