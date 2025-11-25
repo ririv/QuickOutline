@@ -6,12 +6,8 @@ import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.action.PdfAction;
 import com.itextpdf.kernel.pdf.canvas.draw.DottedLine;
-import com.itextpdf.kernel.geom.Rectangle; // Added import
-import com.itextpdf.kernel.pdf.event.AbstractPdfDocumentEvent;
-import com.itextpdf.kernel.pdf.event.AbstractPdfDocumentEventHandler;
 import com.itextpdf.kernel.pdf.event.PdfDocumentEvent;
 import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
-import com.itextpdf.layout.Canvas;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Paragraph;
@@ -22,7 +18,7 @@ import com.itextpdf.layout.properties.AreaBreakType;
 import com.itextpdf.layout.properties.TabAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.model.SectionConfig; // Added import
+import com.ririv.quickoutline.model.SectionConfig;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.service.FontManager;
@@ -33,13 +29,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer; // Added import
 import java.util.function.Consumer;
 
-import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlphabetNumberLowerCase;
-import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlphabetNumberUpperCase;
-import static com.itextpdf.kernel.numbering.RomanNumbering.toRomanLowerCase;
-import static com.itextpdf.kernel.numbering.RomanNumbering.toRomanUpperCase;
 
 public class iTextTocPageGenerator implements TocPageGenerator {
 
@@ -155,10 +146,11 @@ public class iTextTocPageGenerator implements TocPageGenerator {
      */
     private void registerPageNumberHandler(PdfDocument pdfDoc, Document doc, PageLabelNumberingStyle style,
                                            PdfFont font, int startPageNum, SectionConfig header, SectionConfig footer) {
-        if (style != null && style != PageLabelNumberingStyle.NONE) {
+        // Even if style is NONE, we might have header/footer content, so we should register the handler if header/footer exists
+        if ((style != null && style != PageLabelNumberingStyle.NONE) || header != null || footer != null) {
             // totalTocPages 传 -1，让 Handler 自己去获取或计算
             pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE,
-                    new PageNumberEventHandler(doc, style, font, startPageNum, -1, header, footer));
+                    new HeaderFooterEventHandler(doc, style, font, startPageNum, -1, header, footer));
         }
     }
 
@@ -202,129 +194,6 @@ public class iTextTocPageGenerator implements TocPageGenerator {
             }
 
             doc.add(p);
-        }
-    }
-
-
-    private static class PageNumberEventHandler extends AbstractPdfDocumentEventHandler {
-        private final Document doc;
-        private final PageLabelNumberingStyle style;
-        private final PdfFont font;
-        private final int startPageNum;
-        private int totalTocPages;
-        private final SectionConfig headerConfig;
-        private final SectionConfig footerConfig;
-
-        private static final float DEFAULT_FONT_SIZE = 10f;
-        private static final float HEADER_Y_OFFSET = 36f; // From top edge
-        private static final float FOOTER_Y_OFFSET = 36f; // From bottom edge (replaces doc.getBottomMargin())
-
-        public PageNumberEventHandler(Document doc, PageLabelNumberingStyle style, PdfFont font, int startPageNum, int totalTocPages, SectionConfig header, SectionConfig footer) {
-            this.doc = doc;
-            this.style = style;
-            this.font = font;
-            this.startPageNum = startPageNum;
-            this.totalTocPages = totalTocPages;
-            this.headerConfig = header;
-            this.footerConfig = footer;
-        }
-
-        @Override
-        public void onAcceptedEvent(AbstractPdfDocumentEvent currentEvent) {
-            PdfDocumentEvent docEvent = (PdfDocumentEvent) currentEvent;
-            PdfDocument pdfDoc = docEvent.getDocument();
-            PdfPage page = docEvent.getPage();
-            int pageNum = pdfDoc.getPageNumber(page);
-
-            if (totalTocPages == -1) {
-                totalTocPages = pdfDoc.getNumberOfPages();
-            }
-
-            // Only add page numbers to the TOC pages
-            if (pageNum >= startPageNum && pageNum < startPageNum + totalTocPages) {
-                // Current page number relative to TOC start (for placeholders like {p})
-                int currentTocPageNum = pageNum - startPageNum + 1;
-                String formattedPageNumber = formatPageNumber(currentTocPageNum);
-                
-                Canvas canvas = new Canvas(docEvent.getPage(), page.getPageSize());
-                canvas.setFont(font)
-                        .setFontSize(DEFAULT_FONT_SIZE);
-
-                // Draw Header
-                if (headerConfig != null) {
-                    drawSectionContent(canvas, page.getPageSize(), headerConfig, true, pageNum, currentTocPageNum, formattedPageNumber);
-                }
-
-                // Draw Footer
-                if (footerConfig != null) {
-                    drawSectionContent(canvas, page.getPageSize(), footerConfig, false, pageNum, currentTocPageNum, formattedPageNumber);
-                }
-                
-                canvas.close();
-            }
-        }
-
-        private void drawSectionContent(Canvas canvas, Rectangle pageSize, SectionConfig config, boolean isHeader, 
-                                        int absolutePageNum, int relativePageNum, String formattedPageNumber) {
-            
-            float y;
-            if (isHeader) {
-                y = pageSize.getTop() - HEADER_Y_OFFSET;
-            } else {
-                y = FOOTER_Y_OFFSET;
-            }
-
-            boolean isOddPage = absolutePageNum % 2 == 1; // Assuming 1-indexed for physical pages
-            float leftMargin = doc.getLeftMargin();
-            float rightMargin = doc.getRightMargin();
-            float pageWidth = pageSize.getWidth();
-
-            // Helper to process and draw text
-            BiConsumer<String, TextAlignment> drawText = (text, alignment) -> {
-                if (text == null || text.isBlank()) return;
-                String processedText = text.replace("{p}", formattedPageNumber != null ? formattedPageNumber : "");
-
-                float x;
-                switch (alignment) {
-                    case LEFT:
-                        x = leftMargin;
-                        break;
-                    case CENTER:
-                        x = pageWidth / 2;
-                        break;
-                    case RIGHT:
-                        x = pageWidth - rightMargin;
-                        break;
-                    default: // Should not happen
-                        x = leftMargin;
-                }
-                canvas.showTextAligned(processedText, x, y, alignment);
-            };
-
-            // Draw Left, Center, Right
-            drawText.accept(config.left(), TextAlignment.LEFT);
-            drawText.accept(config.center(), TextAlignment.CENTER);
-            drawText.accept(config.right(), TextAlignment.RIGHT);
-
-            // Draw Inner/Outer
-            if (isOddPage) { // Right-hand page
-                drawText.accept(config.inner(), TextAlignment.LEFT); // Inner is Left
-                drawText.accept(config.outer(), TextAlignment.RIGHT); // Outer is Right
-            } else { // Left-hand page
-                drawText.accept(config.inner(), TextAlignment.RIGHT); // Inner is Right
-                drawText.accept(config.outer(), TextAlignment.LEFT); // Outer is Left
-            }
-        }
-        
-        private String formatPageNumber(int number) {
-            return switch (style) {
-                case DECIMAL_ARABIC_NUMERALS -> String.valueOf(number);
-                case UPPERCASE_ROMAN_NUMERALS -> toRomanUpperCase(number);
-                case LOWERCASE_ROMAN_NUMERALS -> toRomanLowerCase(number);
-                case UPPERCASE_LETTERS -> toLatinAlphabetNumberUpperCase(number);
-                case LOWERCASE_LETTERS -> toLatinAlphabetNumberLowerCase(number);
-                default -> null;
-            };
         }
     }
 }
