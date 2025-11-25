@@ -3,6 +3,7 @@
   import Preview from '../../components/Preview.svelte';
   import SimpleEditor from '../../components/SimpleEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
+  import SectionEditor from '../../components/SectionEditor.svelte';
   import { initBridge } from '../../lib/bridge';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
@@ -15,6 +16,9 @@
   let offset = 0;
   let insertPos = 1;
   let style = 'None';
+  
+  let headerConfig = { left: '', center: '', right: '' };
+  let footerConfig = { left: '', center: '{p}', right: '' };
   
   let debounceTimer: number;
 
@@ -33,7 +37,9 @@
         tocContent,
         title,
         offset,
-        style
+        style,
+        header: headerConfig,
+        footer: footerConfig
       });
       if (window.javaBridge && window.javaBridge.previewToc) {
         window.javaBridge.previewToc(payload);
@@ -47,7 +53,9 @@
         title,
         offset,
         insertPos,
-        style
+        style,
+        header: headerConfig,
+        footer: footerConfig
       });
       if (window.javaBridge && window.javaBridge.generateToc) {
         window.javaBridge.generateToc(payload);
@@ -60,6 +68,13 @@
   <div class="content-area">
       <SplitPane initialSplit={40}>
         <div slot="left" class="left-panel">
+          <!-- Header Settings (Above Title) -->
+          <SectionEditor 
+            type="header"
+            bind:config={headerConfig} 
+            onchange={triggerPreview} 
+          />
+
           <div class="header">
             <input type="text" bind:value={title} oninput={triggerPreview} placeholder="Title" class="title-input"/>
           </div>
@@ -67,6 +82,13 @@
           <div class="editor-wrapper">
             <SimpleEditor bind:value={tocContent} onchange={triggerPreview} placeholder="Enter TOC here..." />
           </div>
+
+          <!-- Footer Settings (Below Content) -->
+          <SectionEditor 
+            type="footer"
+            bind:config={footerConfig} 
+            onchange={triggerPreview} 
+          />
         </div>
         
         <div slot="right" class="h-full">
