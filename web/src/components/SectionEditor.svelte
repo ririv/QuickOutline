@@ -44,6 +44,13 @@
     }
     return true;
   }
+  // Trigger element references for autoPosition action
+  let leftBtnEl: HTMLElement = $state();
+  let centerBtnEl: HTMLElement = $state();
+  let rightBtnEl: HTMLElement = $state();
+  let innerBtnEl: HTMLElement = $state();
+  let outerBtnEl: HTMLElement = $state();
+
 </script>
 
 <div class="section-editor {type}">
@@ -52,6 +59,7 @@
     <div class="pos-group">
       <div class="btn-wrapper">
         <button 
+          bind:this={leftBtnEl}
           class="pos-btn {activePos === 'left' ? 'active' : ''}" 
           onclick={() => setActive('left')} 
           title="Left Aligned"
@@ -59,13 +67,14 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
           {#if hasContent('left')}<span class="dot"></span>{/if}
         </button>
-        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup" triggerEl={leftBtnEl}>
             <PositionDiagram type={type} pos="left" />
         </ArrowPopup>
       </div>
       
       <div class="btn-wrapper">
         <button 
+          bind:this={centerBtnEl}
           class="pos-btn {activePos === 'center' ? 'active' : ''}" 
           onclick={() => setActive('center')} 
           title="Center Aligned"
@@ -73,13 +82,14 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>
           {#if hasContent('center')}<span class="dot"></span>{/if}
         </button>
-        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup" triggerEl={centerBtnEl}>
             <PositionDiagram type={type} pos="center" />
         </ArrowPopup>
       </div>
 
       <div class="btn-wrapper">
         <button 
+          bind:this={rightBtnEl}
           class="pos-btn {activePos === 'right' ? 'active' : ''}" 
           onclick={() => setActive('right')} 
           title="Right Aligned"
@@ -87,7 +97,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
           {#if hasContent('right')}<span class="dot"></span>{/if}
         </button>
-        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup" triggerEl={rightBtnEl}>
             <PositionDiagram type={type} pos="right" />
         </ArrowPopup>
       </div>
@@ -99,6 +109,7 @@
     <div class="pos-group relative-group">
       <div class="btn-wrapper">
           <button 
+            bind:this={innerBtnEl}
             class="pos-btn {activePos === 'inner' ? 'active' : ''}" 
             onclick={() => setActive('inner')} 
             title="Inner Side"
@@ -106,13 +117,14 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
             {#if hasContent('inner')}<span class="dot"></span>{/if}
           </button>
-          <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+          <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup" triggerEl={innerBtnEl}>
               <PositionDiagram type={type} pos="inner" />
           </ArrowPopup>
       </div>
 
       <div class="btn-wrapper">
           <button 
+            bind:this={outerBtnEl}
             class="pos-btn {activePos === 'outer' ? 'active' : ''}" 
             onclick={() => setActive('outer')} 
             title="Outer Side"
@@ -120,7 +132,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
             {#if hasContent('outer')}<span class="dot"></span>{/if}
           </button>
-          <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+          <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup" triggerEl={outerBtnEl}>
               <PositionDiagram type={type} pos="outer" />
           </ArrowPopup>
       </div>

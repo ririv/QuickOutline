@@ -1,5 +1,6 @@
 <script lang="ts">
   import { type Snippet } from 'svelte';
+  import { autoPosition } from '../lib/actions/autoPosition';
 
   interface Props {
     placement?: 'top' | 'bottom'; // top: popup is above trigger (arrow points down); bottom: popup is below trigger (arrow points up)
@@ -7,6 +8,7 @@
     padding?: string;
     className?: string;
     children?: Snippet;
+    triggerEl?: HTMLElement; // The element that triggers the popup, for positioning
   }
 
   let { 
@@ -14,7 +16,8 @@
     minWidth = '140px',
     padding = '8px',
     className = '',
-    children
+    children,
+    triggerEl // Destructure the new prop
   }: Props = $props();
 </script>
 
@@ -25,6 +28,7 @@
   style:--min-width={minWidth}
   style:--padding={padding}
   onclick={(e) => e.stopPropagation()}
+  use:autoPosition={{ triggerEl }}
 >
   {@render children?.()}
 </div>
@@ -40,23 +44,22 @@
     min-width: var(--min-width);
     padding: var(--padding);
     
-    /* Center horizontally relative to parent wrapper */
-    left: 50%;
-    transform: translateX(-50%);
+    /* Initial state: managed by autoPosition */
+    left: 0; 
+    /* No default transform/centering */
     
+    /* Animation only for opacity/vertical slide, NOT horizontal */
     animation: popupFade 0.15s ease-out;
   }
 
   @keyframes popupFade {
-      from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
   }
 
   /* 
      Placement: TOP
-     Popup is ABOVE the trigger. 
-     Arrow should be at the BOTTOM of the popup, pointing DOWN.
-     Margin-bottom ensures space from trigger.
+     Arrow points DOWN at bottom.
   */
   .arrow-popup.top {
     bottom: 100%;
@@ -65,19 +68,19 @@
   .arrow-popup.top::after {
     content: "";
     position: absolute;
-    top: 100%; /* Arrow at bottom of popup */
-    left: 50%;
+    top: 100%; 
+    /* Dynamic Arrow Position */
+    left: var(--arrow-x, 50%);
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
     border-color: #fff transparent transparent transparent;
   }
-  /* Border outline for arrow */
   .arrow-popup.top::before {
     content: "";
     position: absolute;
     top: 100%;
-    left: 50%;
+    left: var(--arrow-x, 50%);
     margin-left: -6px;
     border-width: 6px;
     border-style: solid;
@@ -86,9 +89,7 @@
 
   /* 
      Placement: BOTTOM
-     Popup is BELOW the trigger.
-     Arrow should be at the TOP of the popup, pointing UP.
-     Margin-top ensures space from trigger.
+     Arrow points UP at top.
   */
   .arrow-popup.bottom {
     top: 100%;
@@ -97,19 +98,19 @@
   .arrow-popup.bottom::after {
     content: "";
     position: absolute;
-    bottom: 100%; /* Arrow at top of popup */
-    left: 50%;
+    bottom: 100%;
+    /* Dynamic Arrow Position */
+    left: var(--arrow-x, 50%);
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
     border-color: transparent transparent #fff transparent;
   }
-  /* Border outline for arrow */
   .arrow-popup.bottom::before {
     content: "";
     position: absolute;
     bottom: 100%;
-    left: 50%;
+    left: var(--arrow-x, 50%);
     margin-left: -6px;
     border-width: 6px;
     border-style: solid;

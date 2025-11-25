@@ -8,6 +8,7 @@
     insertPos?: number;
     style?: string;
     onchange?: () => void;
+    triggerEl?: HTMLElement; // Prop for positioning
   }
 
   let { 
@@ -15,7 +16,8 @@
     offset = $bindable(0),
     insertPos = $bindable(1),
     style = $bindable('None'),
-    onchange 
+    onchange,
+    triggerEl
   }: Props = $props();
 
   function handleStyleSelect(s: string) {
@@ -28,6 +30,7 @@
   placement="top" 
   minWidth={type === 'style' ? 'auto' : '180px'} 
   padding={type === 'style' ? '4px' : '12px 15px'}
+  triggerEl={triggerEl}
 >
   {#if type === 'offset'}
       <!-- svelte-ignore a11y_label_has_associated_control -->

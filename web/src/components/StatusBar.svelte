@@ -23,6 +23,11 @@
 
   let activePopup: 'offset' | 'pos' | 'style' | null = $state(null);
   let barElement: HTMLElement;
+  
+  // Trigger elements for popups
+  let offsetBtnEl: HTMLElement = $state();
+  let posBtnEl: HTMLElement = $state();
+  let styleBtnEl: HTMLElement = $state();
 
   function togglePopup(type: 'offset' | 'pos' | 'style') {
       if (activePopup === type) {
@@ -56,13 +61,18 @@
       <div class="status-item-wrapper">
           <!-- svelte-ignore a11y_click_events_have_key_events -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <div class="status-item {activePopup === 'offset' ? 'active' : ''}" onclick={() => togglePopup('offset')} title="Set Page Offset">
+          <div 
+            bind:this={offsetBtnEl}
+            class="status-item {activePopup === 'offset' ? 'active' : ''}" 
+            onclick={() => togglePopup('offset')} 
+            title="Set Page Offset"
+          >
               <span class="icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
               </span> Offset: {offset}
           </div>
           {#if activePopup === 'offset'}
-              <SettingsPopup type="offset" bind:offset bind:insertPos bind:style onchange={onParamChange} />
+              <SettingsPopup type="offset" bind:offset bind:insertPos bind:style onchange={onParamChange} triggerEl={offsetBtnEl} />
           {/if}
       </div>
   {/if}
@@ -70,13 +80,18 @@
   <div class="status-item-wrapper">
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="status-item {activePopup === 'pos' ? 'active' : ''}" onclick={() => togglePopup('pos')} title="Set Insert Position">
+      <div 
+        bind:this={posBtnEl}
+        class="status-item {activePopup === 'pos' ? 'active' : ''}" 
+        onclick={() => togglePopup('pos')} 
+        title="Set Insert Position"
+      >
           <span class="icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
           </span> Pos: {insertPos}
       </div>
       {#if activePopup === 'pos'}
-          <SettingsPopup type="pos" bind:offset bind:insertPos bind:style />
+          <SettingsPopup type="pos" bind:offset bind:insertPos bind:style triggerEl={posBtnEl} />
       {/if}
   </div>
 
@@ -84,13 +99,18 @@
   <div class="status-item-wrapper">
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="status-item {activePopup === 'style' ? 'active' : ''}" onclick={() => togglePopup('style')} title="Set Numbering Style">
+      <div 
+        bind:this={styleBtnEl}
+        class="status-item {activePopup === 'style' ? 'active' : ''}" 
+        onclick={() => togglePopup('style')} 
+        title="Set Numbering Style"
+      >
           <span class="icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
           </span> Page Num: {style}
       </div>
       {#if activePopup === 'style'}
-          <SettingsPopup type="style" bind:offset bind:insertPos bind:style onchange={onPopupChange} />
+          <SettingsPopup type="style" bind:offset bind:insertPos bind:style onchange={onPopupChange} triggerEl={styleBtnEl} />
       {/if}
   </div>
   {/if}
