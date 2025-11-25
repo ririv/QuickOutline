@@ -1,8 +1,12 @@
 <script lang="ts">
+  import PositionTooltip from './PositionTooltip.svelte';
+
   interface SectionConfig {
     left: string;
     center: string;
     right: string;
+    inner: string;
+    outer: string;
   }
 
   interface Props {
@@ -12,14 +16,14 @@
   }
 
   let { 
-    config = $bindable({ left: '', center: '', right: '' }), 
+    config = $bindable({ left: '', center: '', right: '', inner: '', outer: '' }), 
     type = 'header',
     onchange 
   }: Props = $props();
 
-  let activePos: 'left' | 'center' | 'right' = $state('center');
+  let activePos: 'left' | 'center' | 'right' | 'inner' | 'outer' = $state('center');
 
-  function setActive(pos: 'left' | 'center' | 'right') {
+  function setActive(pos: 'left' | 'center' | 'right' | 'inner' | 'outer') {
     activePos = pos;
   }
 
@@ -28,7 +32,7 @@
   }
 
   // Helper to check if a position has content (for dot indicator)
-  function hasContent(pos: 'left' | 'center' | 'right') {
+  function hasContent(pos: 'left' | 'center' | 'right' | 'inner' | 'outer') {
     const value = config[pos];
     if (!value || value.trim().length === 0) {
       return false;
@@ -42,8 +46,9 @@
 </script>
 
 <div class="section-editor {type}">
-  <div class="controls">
-    <div class="pos-selector">
+  <div class="toolbar">
+    <!-- Absolute Positions -->
+    <div class="pos-group">
       <button 
         class="pos-btn {activePos === 'left' ? 'active' : ''}" 
         onclick={() => setActive('left')} 
@@ -69,21 +74,50 @@
         {#if hasContent('right')}<span class="dot"></span>{/if}
       </button>
     </div>
-    
-    <div class="input-wrapper">
-      <input 
-        type="text" 
-        bind:value={config[activePos]} 
-        oninput={handleInput}
-        placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) (e.g. &lbrace;p&rbrace;)..." 
-      />
-      {#if type === 'footer' && activePos !== 'left'}
-        <div class="tooltip-container">
-            <span class="hint-icon">?</span>
-            <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
-        </div>
-      {/if}
+
+    <div class="divider"></div>
+
+    <!-- Relative Positions -->
+    <div class="pos-group relative-group">
+      <div class="btn-wrapper">
+          <button 
+            class="pos-btn {activePos === 'inner' ? 'active' : ''}" 
+            onclick={() => setActive('inner')} 
+            title="Inner Side"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            {#if hasContent('inner')}<span class="dot"></span>{/if}
+          </button>
+          <PositionTooltip type={type} pos="inner" />
+      </div>
+
+      <div class="btn-wrapper">
+          <button 
+            class="pos-btn {activePos === 'outer' ? 'active' : ''}" 
+            onclick={() => setActive('outer')} 
+            title="Outer Side"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            {#if hasContent('outer')}<span class="dot"></span>{/if}
+          </button>
+          <PositionTooltip type={type} pos="outer" />
+      </div>
     </div>
+  </div>
+    
+  <div class="input-wrapper">
+    <input 
+      type="text" 
+      bind:value={config[activePos]} 
+      oninput={handleInput}
+      placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) (e.g. &lbrace;p&rbrace;)..." 
+    />
+    {#if type === 'footer' && activePos !== 'left' && activePos !== 'inner'}
+      <div class="tooltip-container">
+          <span class="hint-icon">?</span>
+          <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -91,31 +125,38 @@
   .section-editor {
     background: #f8f9fa;
     border-bottom: 1px solid #e1e4e8;
-    padding: 6px 10px;
+    padding: 8px 10px;
   }
 
   .section-editor.footer {
     border-bottom: none;
     border-top: 1px solid #e1e4e8;
   }
-
-  .controls {
+  
+  .toolbar {
     display: flex;
     align-items: center;
-    gap: 8px;
+    margin-bottom: 8px;
   }
 
-  .pos-selector {
+  .pos-group {
     display: flex;
     background: #e1e4e8;
     border-radius: 4px;
     padding: 2px;
   }
 
+  .divider {
+    width: 1px;
+    height: 20px;
+    background-color: #d0d4d9;
+    margin: 0 10px;
+  }
+
   .pos-btn {
     background: transparent;
     border: none;
-    padding: 4px 6px;
+    padding: 4px 8px;
     cursor: pointer;
     border-radius: 3px;
     display: flex;
@@ -146,9 +187,23 @@
     background-color: #ff4d4f;
     border-radius: 50%;
   }
+  
+  .relative-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .btn-wrapper {
+      position: relative;
+  }
+
+  .btn-wrapper:hover :global(.info-tooltip) {
+      visibility: visible;
+      opacity: 1;
+  }
 
   .input-wrapper {
-    flex: 1;
     position: relative;
     display: flex;
     align-items: center;
@@ -156,7 +211,7 @@
 
   input {
     width: 100%;
-    padding: 4px 8px;
+    padding: 6px 8px;
     padding-right: 24px; /* Space for hint icon */
     border: 1px solid #ddd;
     border-radius: 4px;

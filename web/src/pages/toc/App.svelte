@@ -17,8 +17,8 @@
   let insertPos = 1;
   let style = 'None';
   
-  let headerConfig = { left: '', center: '', right: '' };
-  let footerConfig = { left: '', center: '{p}', right: '' };
+  let headerConfig = { left: '', center: '', right: '', inner: '', outer: '' };
+  let footerConfig = { left: '', center: '{p}', right: '', inner: '', outer: '' };
   
   let debounceTimer: number;
 
