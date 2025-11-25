@@ -47,6 +47,9 @@ module quickoutline {
     requires org.apache.xmlgraphics.batik.svggen;
     requires de.rototor.pdfbox.graphics2d;
     requires org.apache.xmlgraphics.batik.dom;
+    requires org.apache.pdfbox.io;
+
+    requires org.jfree.svg;
 
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
     opens com.ririv.quickoutline.service to com.google.guice;
@@ -96,4 +99,6 @@ module quickoutline {
     opens com.ririv.quickoutline.service.pdfpreview to com.google.guice;
     exports com.ririv.quickoutline.view.webview;
     opens com.ririv.quickoutline.view.webview to com.google.guice, javafx.fxml, javafx.graphics;
+    exports com.ririv.quickoutline.service.pdfpreview.strategy;
+    opens com.ririv.quickoutline.service.pdfpreview.strategy to com.google.guice;
 }

@@ -89,11 +89,7 @@ dependencies {
         exclude group: 'xml-apis', module: 'xml-apis'
     }
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.14.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.14.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.14.0'
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.14.0"
-    
+    implementation 'org.jfree:org.jfree.svg:5.0.7'
 }
 
 repositories {

@@ -1,39 +1,54 @@
 package com.ririv.quickoutline.service.pdfpreview;
 
+import com.ririv.quickoutline.service.pdfpreview.strategy.BatikSvgStrategy;
+import com.ririv.quickoutline.service.pdfpreview.strategy.JFreeSvgStrategy;
+import com.ririv.quickoutline.service.pdfpreview.strategy.SvgGenerator;
+import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import jakarta.inject.Singleton;
-import org.apache.batik.dom.GenericDOMImplementation;
-import org.apache.batik.svggen.SVGGraphics2D;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.DOMImplementation;
-import org.w3c.dom.Document;
 
-import java.awt.*;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
-import org.apache.pdfbox.io.RandomAccessReadBuffer;
+import java.util.Map;
 
 @Singleton
 public class PdfSvgService {
     private static final Logger log = LoggerFactory.getLogger(PdfSvgService.class);
+
+    // 开关：控制使用哪个引擎，JFreeSvg 会更快一点，但注意License为GPL 3.0
+    // 默认使用 JFreeSVG (true)
+    private boolean useJFreeSvg = false;
 
     private final Map<Integer, String> pageCache = new HashMap<>();
     private int lastTotalPages = 0;
 
     public record SvgPageUpdate(int pageIndex, String svgContent, int totalPages, float widthPt, float heightPt) {}
 
+    public void setUseJFreeSvg(boolean useJFreeSvg) {
+        this.useJFreeSvg = useJFreeSvg;
+    }
+
     public void clearCache() {
         pageCache.clear();
         lastTotalPages = 0;
+    }
+
+    // 工厂方法：创建策略
+    private SvgGenerator createSvgGenerator(float width, float height) {
+        if (this.useJFreeSvg) {
+            return new JFreeSvgStrategy(width, height);
+        } else {
+            return new BatikSvgStrategy(width, height);
+        }
     }
 
     public List<SvgPageUpdate> diffPdfToSvg(FastByteArrayOutputStream pdfStream) {
@@ -58,7 +73,8 @@ public class PdfSvgService {
                     displayHeight = cropBox.getHeight();
                 }
 
-                String currentSvg = convertPageToSvg(renderer, i, displayWidth, displayHeight);
+                // 核心变化：逻辑解耦
+                String currentSvg = renderPage(renderer, i, displayWidth, displayHeight);
 
                 String cachedSvg = pageCache.get(i);
                 if (cachedSvg == null || !cachedSvg.equals(currentSvg)) {
@@ -67,15 +83,8 @@ public class PdfSvgService {
                 }
             }
 
-            // 处理页数减少的情况（清理缓存）
             if (currentTotalPages < lastTotalPages) {
                 for (int k = currentTotalPages; k < lastTotalPages; k++) pageCache.remove(k);
-                // 如果变为空或减少，确保至少返回第一页（如果存在）
-                if (updates.isEmpty() && currentTotalPages > 0) {
-                    PDPage p0 = document.getPage(0);
-                    // 简单处理，重新触发第一页更新以防前端状态不一致
-                    // 这里逻辑视具体业务需求而定
-                }
             }
             lastTotalPages = currentTotalPages;
 
@@ -85,56 +94,64 @@ public class PdfSvgService {
         return updates;
     }
 
-    private String convertPageToSvg(PDFRenderer renderer, int pageIndex, float width, float height) throws IOException {
-        DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
-        Document svgDoc = domImpl.createDocument("http://www.w3.org/2000/svg", "svg", null);
-        SVGGraphics2D svgGenerator = new SVGGraphics2D(svgDoc);
-        svgGenerator.setSVGCanvasSize(new Dimension((int) width, (int) height));
+    private String renderPage(PDFRenderer renderer, int pageIndex, float width, float height) throws IOException {
+        // 1. 获取策略实例
+        SvgGenerator generator = createSvgGenerator(width, height);
 
-        renderer.renderPageToGraphics(pageIndex, svgGenerator, 1.0f);
+        try {
+            // 2. 渲染 (PDFBox 负责画，Generator 负责记录)
+            renderer.renderPageToGraphics(pageIndex, generator.getGraphics2D(), 1.0f);
 
-        // 获取该页生成的 CSS (字体嵌入)
-        String fontCss = "";
-        if (renderer instanceof CustomPDFRenderer customRenderer) {
-            fontCss = customRenderer.getCurrentPageFontCss();
-        }
+            // 3. 获取原始 SVG
+            String rawSvg = generator.getRawSvgString();
 
-        try (StringWriter writer = new StringWriter()) {
-            svgGenerator.stream(writer, true);
-            String rawSvg = writer.toString();
-
-            int svgTagEndIndex = rawSvg.indexOf(">", rawSvg.indexOf("<svg")) + 1;
-            int svgCloseTagIndex = rawSvg.lastIndexOf("</svg>");
-
-            if (svgTagEndIndex > 0 && svgCloseTagIndex > svgTagEndIndex) {
-                String svgContent = rawSvg.substring(svgTagEndIndex, svgCloseTagIndex);
-
-                String styleBlock = "";
-                if (!fontCss.isEmpty()) {
-                    styleBlock = "<style>" + fontCss + "</style>";
-                }
-
-                // text-rendering: optimizeSpeed;：最关键。告诉浏览器不要计算复杂的字距（Kerning）和连字，追求速度。这在移动端能带来巨大的性能提升。
-                // shape-rendering: crispEdges;：关闭反锯齿（如果对画质要求没那么高），可以提速。
-                String newHeader = String.format(
-                        "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
-                                "viewBox=\"0 0 %s %s\" " +
-                                "width=\"100%%\" height=\"100%%\" " +
-                                "preserveAspectRatio=\"xMidYMid meet\" " +
-                                "style=\"display:block; overflow:hidden; " +
-                                "text-rendering: optimizeSpeed; shape-rendering: crispEdges; ...\">",
-//                                "text-rendering:geometricPrecision;\">",
-                        fmt(width), fmt(height));
-
-                return newHeader + styleBlock + svgContent + "</svg>";
+            // 4. 获取字体 CSS (如果有)
+            String fontCss = "";
+            if (renderer instanceof CustomPDFRenderer customRenderer) {
+                fontCss = customRenderer.getCurrentPageFontCss();
             }
-            return rawSvg;
+
+            // 5. 统一包装处理 (这部分逻辑对两个库是通用的)
+            return wrapSvgWithOptimizedHeader(rawSvg, fontCss, width, height);
+        } finally {
+            generator.dispose();
         }
+    }
+
+    /**
+     * 统一的 SVG 包装逻辑：剥离原始标签，注入高性能 Header 和 CSS
+     */
+    private String wrapSvgWithOptimizedHeader(String rawSvg, String fontCss, float width, float height) {
+        // 简单的 XML 解析，提取 <svg> 内部的内容
+        int svgTagEndIndex = rawSvg.indexOf(">") + 1;
+        int svgCloseTagIndex = rawSvg.lastIndexOf("</svg>");
+
+        if (svgTagEndIndex > 0 && svgCloseTagIndex > svgTagEndIndex) {
+            String svgContent = rawSvg.substring(svgTagEndIndex, svgCloseTagIndex);
+
+            String styleBlock = "";
+//            if (fontCss != null && !fontCss.isEmpty()) {
+//                styleBlock = "<style>" + fontCss + "</style>";
+//            }
+
+            // 高性能 Header
+            String newHeader = String.format(
+                    "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
+                            "viewBox=\"0 0 %s %s\" " +
+                            "width=\"100%%\" height=\"100%%\" " +
+                            "preserveAspectRatio=\"xMidYMid meet\" " +
+                            "style=\"display:block; overflow:hidden; " +
+                            "text-rendering: optimizeSpeed; shape-rendering: crispEdges;\">",
+//                            "text-rendering: geometricPrecision; shape-rendering: geometricPrecision;\">",
+                    fmt(width), fmt(height));
+
+            return newHeader + styleBlock + svgContent + "</svg>";
+        }
+        return rawSvg; // Fallback
     }
 
     private String fmt(float d) {
         if (d == (long) d) return String.format("%d", (long) d);
         return String.format("%s", d);
     }
-
 }
