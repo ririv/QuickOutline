@@ -1,5 +1,6 @@
 <script lang="ts">
-  import PositionTooltip from './PositionTooltip.svelte';
+  import ArrowPopup from './ArrowPopup.svelte';
+  import PositionDiagram from './PositionDiagram.svelte';
 
   interface SectionConfig {
     left: string;
@@ -58,7 +59,9 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
           {#if hasContent('left')}<span class="dot"></span>{/if}
         </button>
-        <PositionTooltip type={type} pos="left" />
+        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+            <PositionDiagram type={type} pos="left" />
+        </ArrowPopup>
       </div>
       
       <div class="btn-wrapper">
@@ -70,7 +73,9 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>
           {#if hasContent('center')}<span class="dot"></span>{/if}
         </button>
-        <PositionTooltip type={type} pos="center" />
+        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+            <PositionDiagram type={type} pos="center" />
+        </ArrowPopup>
       </div>
 
       <div class="btn-wrapper">
@@ -82,7 +87,9 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
           {#if hasContent('right')}<span class="dot"></span>{/if}
         </button>
-        <PositionTooltip type={type} pos="right" />
+        <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+            <PositionDiagram type={type} pos="right" />
+        </ArrowPopup>
       </div>
     </div>
 
@@ -99,7 +106,9 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
             {#if hasContent('inner')}<span class="dot"></span>{/if}
           </button>
-          <PositionTooltip type={type} pos="inner" />
+          <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+              <PositionDiagram type={type} pos="inner" />
+          </ArrowPopup>
       </div>
 
       <div class="btn-wrapper">
@@ -111,7 +120,9 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
             {#if hasContent('outer')}<span class="dot"></span>{/if}
           </button>
-          <PositionTooltip type={type} pos="outer" />
+          <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup">
+              <PositionDiagram type={type} pos="outer" />
+          </ArrowPopup>
       </div>
     </div>
   </div>
@@ -209,7 +220,16 @@
       position: relative;
   }
 
-  .btn-wrapper:hover :global(.info-tooltip) {
+  /* Hide popup by default */
+  .btn-wrapper :global(.hover-popup) {
+      visibility: hidden;
+      opacity: 0;
+      transition: all 0.2s;
+      pointer-events: none;
+  }
+
+  /* Show popup on hover */
+  .btn-wrapper:hover :global(.hover-popup) {
       visibility: visible;
       opacity: 1;
   }

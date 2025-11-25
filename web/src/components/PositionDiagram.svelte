@@ -72,7 +72,7 @@
   }
 </script>
 
-<div class="info-tooltip {type}">
+<div class="diagram-content">
   <div class="tooltip-title">{title}</div>
   <svg width="120" height="80" viewBox="0 0 120 80" class="diagram">
       {#if isDoublePage}
@@ -99,55 +99,10 @@
 </div>
 
 <style>
-  /* Tooltip Base */
-  .info-tooltip {
-      visibility: hidden;
-      opacity: 0;
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #fff;
-      border: 1px solid #e1e4e8;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      border-radius: 6px;
-      padding: 8px;
-      width: 140px;
-      z-index: 100;
-      transition: all 0.2s;
-      pointer-events: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-  }
-  
-  /* Header: Tooltip appears BELOW */
-  .info-tooltip.header {
-      top: 120%;
-  }
-  .info-tooltip.header::after {
-      content: "";
-      position: absolute;
-      bottom: 100%; /* Arrow at top */
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: transparent transparent #fff transparent;
-  }
-
-  /* Footer: Tooltip appears ABOVE */
-  .info-tooltip.footer {
-      bottom: 120%;
-  }
-  .info-tooltip.footer::after {
-      content: "";
-      position: absolute;
-      top: 100%; /* Arrow at bottom */
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: #fff transparent transparent transparent;
+  .diagram-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
   .tooltip-title {
