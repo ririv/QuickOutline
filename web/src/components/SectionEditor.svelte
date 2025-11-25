@@ -49,30 +49,41 @@
   <div class="toolbar">
     <!-- Absolute Positions -->
     <div class="pos-group">
-      <button 
-        class="pos-btn {activePos === 'left' ? 'active' : ''}" 
-        onclick={() => setActive('left')} 
-        title="Left Aligned"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
-        {#if hasContent('left')}<span class="dot"></span>{/if}
-      </button>
-      <button 
-        class="pos-btn {activePos === 'center' ? 'active' : ''}" 
-        onclick={() => setActive('center')} 
-        title="Center Aligned"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>
-        {#if hasContent('center')}<span class="dot"></span>{/if}
-      </button>
-      <button 
-        class="pos-btn {activePos === 'right' ? 'active' : ''}" 
-        onclick={() => setActive('right')} 
-        title="Right Aligned"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
-        {#if hasContent('right')}<span class="dot"></span>{/if}
-      </button>
+      <div class="btn-wrapper">
+        <button 
+          class="pos-btn {activePos === 'left' ? 'active' : ''}" 
+          onclick={() => setActive('left')} 
+          title="Left Aligned"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
+          {#if hasContent('left')}<span class="dot"></span>{/if}
+        </button>
+        <PositionTooltip type={type} pos="left" />
+      </div>
+      
+      <div class="btn-wrapper">
+        <button 
+          class="pos-btn {activePos === 'center' ? 'active' : ''}" 
+          onclick={() => setActive('center')} 
+          title="Center Aligned"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>
+          {#if hasContent('center')}<span class="dot"></span>{/if}
+        </button>
+        <PositionTooltip type={type} pos="center" />
+      </div>
+
+      <div class="btn-wrapper">
+        <button 
+          class="pos-btn {activePos === 'right' ? 'active' : ''}" 
+          onclick={() => setActive('right')} 
+          title="Right Aligned"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
+          {#if hasContent('right')}<span class="dot"></span>{/if}
+        </button>
+        <PositionTooltip type={type} pos="right" />
+      </div>
     </div>
 
     <div class="divider"></div>
