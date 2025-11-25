@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
-<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController" alignment="CENTER">
-    <WebView fx:id="previewWebView" VBox.vgrow="ALWAYS"/>
-</VBox>
+<?import javafx.scene.layout.StackPane?>
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.ririv.quickoutline.view.TocGeneratorTabController">
+    <WebView fx:id="previewWebView" />
+</StackPane>
