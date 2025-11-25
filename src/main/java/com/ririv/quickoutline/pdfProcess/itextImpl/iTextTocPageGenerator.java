@@ -6,6 +6,7 @@ import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.action.PdfAction;
 import com.itextpdf.kernel.pdf.canvas.draw.DottedLine;
+import com.itextpdf.kernel.geom.Rectangle; // Added import
 import com.itextpdf.kernel.pdf.event.AbstractPdfDocumentEvent;
 import com.itextpdf.kernel.pdf.event.AbstractPdfDocumentEventHandler;
 import com.itextpdf.kernel.pdf.event.PdfDocumentEvent;
@@ -21,6 +22,7 @@ import com.itextpdf.layout.properties.AreaBreakType;
 import com.itextpdf.layout.properties.TabAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.model.SectionConfig; // Added import
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.service.FontManager;
@@ -31,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer; // Added import
 import java.util.function.Consumer;
 
 import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlphabetNumberLowerCase;
@@ -92,7 +95,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
 
     @Override
     public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos,
-                                     PageLabelNumberingStyle style, Bookmark rootBookmark,
+                                     PageLabelNumberingStyle style, Bookmark rootBookmark, SectionConfig header, SectionConfig footer,
                                      Consumer<String> onMessage, Consumer<String> onError) throws IOException {
         List<Bookmark> bookmarks = rootBookmark.flattenToList();
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));
@@ -103,7 +106,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         PdfFont font = getPdfFont(onMessage, onError);
 
         // 1. 设置页码监听器
-        registerPageNumberHandler(pdfDoc, doc, style, font, insertPos);
+        registerPageNumberHandler(pdfDoc, doc, style, font, insertPos, header, footer);
         // ======================= !!! FINAL, DEFINITIVE FIX !!! =======================
         // 这是一个两步操作，以确保我们总是在文档的末尾添加新页面
         // 1. 首先，显式地将布局引擎的光标移动到现有文档的“最后一页”。
@@ -131,7 +134,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
 
     @Override
     public void generateTocPagePreview(String title, PageLabelNumberingStyle style, Bookmark rootBookmark,
-                                       java.io.OutputStream outputStream,
+                                       java.io.OutputStream outputStream, SectionConfig header, SectionConfig footer,
                                        Consumer<String> onMessage, Consumer<String> onError) throws IOException {
         List<Bookmark> bookmarks = rootBookmark.flattenToList();
         PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outputStream));
@@ -140,7 +143,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         PdfFont font = getPdfFont(onMessage, onError);
 
         // 1. 设置页码监听器 (预览模式默认从第1页开始)
-        registerPageNumberHandler(pdfDoc, doc, style, font, 1);
+        registerPageNumberHandler(pdfDoc, doc, style, font, 1, header, footer);
 
         // 2. 绘制目录内容 (公共逻辑: 关闭链接生成，因为预览流没有目标页)
         drawTocContent(doc, pdfDoc, title, bookmarks, font, false);
@@ -151,11 +154,11 @@ public class iTextTocPageGenerator implements TocPageGenerator {
      * 注册页码事件监听器
      */
     private void registerPageNumberHandler(PdfDocument pdfDoc, Document doc, PageLabelNumberingStyle style,
-                                           PdfFont font, int startPageNum) {
+                                           PdfFont font, int startPageNum, SectionConfig header, SectionConfig footer) {
         if (style != null && style != PageLabelNumberingStyle.NONE) {
             // totalTocPages 传 -1，让 Handler 自己去获取或计算
             pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE,
-                    new PageNumberEventHandler(doc, style, font, startPageNum, -1));
+                    new PageNumberEventHandler(doc, style, font, startPageNum, -1, header, footer));
         }
     }
 
@@ -209,13 +212,21 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         private final PdfFont font;
         private final int startPageNum;
         private int totalTocPages;
+        private final SectionConfig headerConfig;
+        private final SectionConfig footerConfig;
 
-        public PageNumberEventHandler(Document doc, PageLabelNumberingStyle style, PdfFont font, int startPageNum, int totalTocPages) {
+        private static final float DEFAULT_FONT_SIZE = 10f;
+        private static final float HEADER_Y_OFFSET = 36f; // From top edge
+        private static final float FOOTER_Y_OFFSET = 36f; // From bottom edge (replaces doc.getBottomMargin())
+
+        public PageNumberEventHandler(Document doc, PageLabelNumberingStyle style, PdfFont font, int startPageNum, int totalTocPages, SectionConfig header, SectionConfig footer) {
             this.doc = doc;
             this.style = style;
             this.font = font;
             this.startPageNum = startPageNum;
             this.totalTocPages = totalTocPages;
+            this.headerConfig = header;
+            this.footerConfig = footer;
         }
 
         @Override
@@ -231,16 +242,80 @@ public class iTextTocPageGenerator implements TocPageGenerator {
 
             // Only add page numbers to the TOC pages
             if (pageNum >= startPageNum && pageNum < startPageNum + totalTocPages) {
-                String pageNumberText = formatPageNumber(pageNum - startPageNum + 1);
-                if (pageNumberText == null) return;
+                // Current page number relative to TOC start (for placeholders like {p})
+                int currentTocPageNum = pageNum - startPageNum + 1;
+                String formattedPageNumber = formatPageNumber(currentTocPageNum);
+                
                 Canvas canvas = new Canvas(docEvent.getPage(), page.getPageSize());
                 canvas.setFont(font)
-                        .setFontSize(10)
-                        .showTextAligned(pageNumberText, page.getPageSize().getWidth() / 2, doc.getBottomMargin(), TextAlignment.CENTER)
-                        .close();
+                        .setFontSize(DEFAULT_FONT_SIZE);
+
+                // Draw Header
+                if (headerConfig != null) {
+                    drawSectionContent(canvas, page.getPageSize(), headerConfig, true, pageNum, currentTocPageNum, formattedPageNumber);
+                }
+
+                // Draw Footer
+                if (footerConfig != null) {
+                    drawSectionContent(canvas, page.getPageSize(), footerConfig, false, pageNum, currentTocPageNum, formattedPageNumber);
+                }
+                
+                canvas.close();
             }
         }
 
+        private void drawSectionContent(Canvas canvas, Rectangle pageSize, SectionConfig config, boolean isHeader, 
+                                        int absolutePageNum, int relativePageNum, String formattedPageNumber) {
+            
+            float y;
+            if (isHeader) {
+                y = pageSize.getTop() - HEADER_Y_OFFSET;
+            } else {
+                y = FOOTER_Y_OFFSET;
+            }
+
+            boolean isOddPage = absolutePageNum % 2 == 1; // Assuming 1-indexed for physical pages
+            float leftMargin = doc.getLeftMargin();
+            float rightMargin = doc.getRightMargin();
+            float pageWidth = pageSize.getWidth();
+
+            // Helper to process and draw text
+            BiConsumer<String, TextAlignment> drawText = (text, alignment) -> {
+                if (text == null || text.isBlank()) return;
+                String processedText = text.replace("{p}", formattedPageNumber != null ? formattedPageNumber : "");
+
+                float x;
+                switch (alignment) {
+                    case LEFT:
+                        x = leftMargin;
+                        break;
+                    case CENTER:
+                        x = pageWidth / 2;
+                        break;
+                    case RIGHT:
+                        x = pageWidth - rightMargin;
+                        break;
+                    default: // Should not happen
+                        x = leftMargin;
+                }
+                canvas.showTextAligned(processedText, x, y, alignment);
+            };
+
+            // Draw Left, Center, Right
+            drawText.accept(config.left(), TextAlignment.LEFT);
+            drawText.accept(config.center(), TextAlignment.CENTER);
+            drawText.accept(config.right(), TextAlignment.RIGHT);
+
+            // Draw Inner/Outer
+            if (isOddPage) { // Right-hand page
+                drawText.accept(config.inner(), TextAlignment.LEFT); // Inner is Left
+                drawText.accept(config.outer(), TextAlignment.RIGHT); // Outer is Right
+            } else { // Left-hand page
+                drawText.accept(config.inner(), TextAlignment.RIGHT); // Inner is Right
+                drawText.accept(config.outer(), TextAlignment.LEFT); // Outer is Left
+            }
+        }
+        
         private String formatPageNumber(int number) {
             return switch (style) {
                 case DECIMAL_ARABIC_NUMERALS -> String.valueOf(number);

@@ -29,6 +29,7 @@ import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
+import com.ririv.quickoutline.model.SectionConfig; // Added import
 
 import java.io.IOException;
 import java.util.ResourceBundle;
@@ -40,7 +41,7 @@ public class TocGeneratorTabController {
 
     private static final Logger log = LoggerFactory.getLogger(TocGeneratorTabController.class);
 
-    private record TocPreviewInput(String tocContent, String title, PageLabelNumberingStyle style) {}
+    private record TocPreviewInput(String tocContent, String title, PageLabelNumberingStyle style, SectionConfig header, SectionConfig footer) {}
     
     // Data transfer object from Frontend
     // private record TocPayload(String tocContent, String title, int offset, int insertPos, String style) {}
@@ -140,7 +141,7 @@ public class TocGeneratorTabController {
             
             String title = payload.title() == null || payload.title().isBlank() ? "Table of Contents" : payload.title();
 
-            previewer.trigger(new TocPreviewInput(payload.tocContent(), title, style));
+            previewer.trigger(new TocPreviewInput(payload.tocContent(), title, style, payload.header(), payload.footer()));
         } catch (Exception e) {
             log.error("Error handling preview request from JS", e);
         }
@@ -164,7 +165,7 @@ public class TocGeneratorTabController {
         }
 
         try (FastByteArrayOutputStream baos = new FastByteArrayOutputStream()) {
-            pdfTocPageGeneratorService.createTocPagePreview(input.title(), input.style(), rootBookmark, baos, onMessage, onError);
+            pdfTocPageGeneratorService.createTocPagePreview(input.title(), input.style(), rootBookmark, baos, input.header(), input.footer(), onMessage, onError);
             return baos;
         } catch (IOException e) {
             throw new RuntimeException("Failed to generate TOC preview bytes", e);
@@ -236,7 +237,7 @@ public class TocGeneratorTabController {
                 Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
                 Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
                 
-                pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark, onMessage, onError);
+                pdfTocPageGeneratorService.createTocPage(srcFile, destFile, title, insertPos, style, rootBookmark, payload.header(), payload.footer(), onMessage, onError);
                 
                 Platform.runLater(() -> eventBus.post(new ShowMessageEvent(bundle.getString("alert.FileSavedAt") + destFile, Message.MessageType.SUCCESS)));
             } catch (IOException e) {

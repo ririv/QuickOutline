@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.pdfProcess;
 
+import com.ririv.quickoutline.model.SectionConfig;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 
@@ -10,10 +11,10 @@ import java.util.function.Consumer;
 
 public interface TocPageGenerator {
     void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos,
-                              PageLabelNumberingStyle style, Bookmark rootBookmark,
+                              PageLabelNumberingStyle style, Bookmark rootBookmark, SectionConfig header, SectionConfig footer,
                               Consumer<String> onMessage, Consumer<String> onError) throws IOException;
 
     void generateTocPagePreview(String title, PageLabelNumberingStyle style, Bookmark rootBookmark,
-                                OutputStream outputStream,
+                                OutputStream outputStream, SectionConfig header, SectionConfig footer,
                                 Consumer<String> onMessage, Consumer<String> onError) throws IOException;
 }
