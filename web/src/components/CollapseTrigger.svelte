@@ -29,21 +29,11 @@
       <span class="dot"></span>
     {/if}
     <span class="icon-wrapper">
-        <!-- Default Icon (Top: Down, Bottom: Up) -->
-        <span class="icon default {expanded ? 'fade-out' : 'fade-in'}">
+        <span class="icon {expanded ? 'rotated' : ''}">
             {#if position === 'top'}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             {:else}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
-            {/if}
-        </span>
-        
-        <!-- Expanded Icon (Top: Up, Bottom: Down) -->
-        <span class="icon expanded {expanded ? 'fade-in' : 'fade-out'}">
-            {#if position === 'top'}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
-            {:else}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             {/if}
         </span>
     </span>
@@ -129,31 +119,18 @@
       justify-content: center;
       width: 16px;
       height: 16px;
-      position: relative; /* Important for absolute positioning of children */
   }
 
   .icon {
-      font-size: 10px;
+      font-size: 10px; /* Keep font-size to avoid affecting SVG directly */
       color: #666;
-      position: absolute; /* Stack icons */
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.2s ease, transform 0.2s ease;
+      transition: transform 0.2s ease;
+      display: inline-block;
   }
   
-  .icon.fade-in {
-      opacity: 1;
-      transform: scale(1);
-  }
-  
-  .icon.fade-out {
-      opacity: 0;
-      transform: scale(0.8); /* Slight shrink for better effect */
+  /* Rotate icon when expanded */
+  .icon.rotated {
+      transform: rotate(180deg);
   }
 
   .hint-text {
@@ -161,7 +138,6 @@
       color: #666;
       font-weight: 500;
   }
-
 
   .dot {
       width: 6px;
@@ -171,9 +147,4 @@
       /* Make dot visible even when not hovered if we want, but user asked for clean interface. 
          Let's keep it inside content for now, or move it out if needed. */
   }
-  
-  /* If has content, show a subtle indicator even when collapsed and not hovered? 
-     The requirement was "悬浮后会有提示". Let's stick to hover reveal mostly.
-     But a small persistent dot might be useful. */
-  
 </style>
