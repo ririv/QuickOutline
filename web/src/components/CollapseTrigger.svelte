@@ -29,11 +29,21 @@
       <span class="dot"></span>
     {/if}
     <span class="icon-wrapper">
-        <span class="icon {expanded ? 'rotated' : ''}">
+        <!-- Default Icon (Top: Down, Bottom: Up) -->
+        <span class="icon default {expanded ? 'fade-out' : 'fade-in'}">
             {#if position === 'top'}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             {:else}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+            {/if}
+        </span>
+        
+        <!-- Expanded Icon (Top: Up, Bottom: Down) -->
+        <span class="icon expanded {expanded ? 'fade-in' : 'fade-out'}">
+            {#if position === 'top'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+            {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
             {/if}
         </span>
     </span>
@@ -119,24 +129,31 @@
       justify-content: center;
       width: 16px;
       height: 16px;
+      position: relative; /* Important for absolute positioning of children */
   }
 
   .icon {
       font-size: 10px;
       color: #666;
-      transition: transform 0.5s ease; /* Faster transition */
-      display: inline-block;
-      will-change: transform; /* Hint for browser optimization */
-      backface-visibility: hidden; /* Prevent flickering */
+      position: absolute; /* Stack icons */
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s ease, transform 0.2s ease;
   }
   
-  /* Rotate icon when expanded based on position */
-  .collapse-trigger.top .icon.rotated {
-      transform: rotateX(180deg);
+  .icon.fade-in {
+      opacity: 1;
+      transform: scale(1);
   }
   
-  .collapse-trigger.bottom .icon.rotated {
-      transform: rotateX(180deg);
+  .icon.fade-out {
+      opacity: 0;
+      transform: scale(0.8); /* Slight shrink for better effect */
   }
 
   .hint-text {
@@ -144,6 +161,7 @@
       color: #666;
       font-weight: 500;
   }
+
 
   .dot {
       width: 6px;
