@@ -14,13 +14,27 @@
     hasContent = false,
     ontoggle 
   }: Props = $props();
+
+  let isHovered = $state(false);
+
+  function handleMouseEnter(e: MouseEvent) {
+      // Ignore if mouse button is down (dragging)
+      if (e.buttons !== 0) return;
+      isHovered = true;
+  }
+
+  function handleMouseLeave() {
+      isHovered = false;
+  }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div 
-  class="collapse-trigger {position} {expanded ? 'expanded' : ''}" 
+  class="collapse-trigger {position} {expanded ? 'expanded' : ''} {isHovered ? 'hover' : ''}" 
   onclick={ontoggle}
+  onmouseenter={handleMouseEnter}
+  onmouseleave={handleMouseLeave}
   title={expanded ? `Hide ${label}` : `Show ${label}`}
 >
   <div class="indicator-line"></div>
@@ -75,8 +89,8 @@
       border-top-color: #eee;
   }
 
-  /* Hover State */
-  .collapse-trigger:hover {
+  /* Hover State (Managed by JS) */
+  .collapse-trigger.hover {
       height: 24px;
       background-color: #f0f0f0;
   }
@@ -97,7 +111,7 @@
       transition: background-color 0.2s;
   }
   
-  .collapse-trigger:hover .indicator-line {
+  .collapse-trigger.hover .indicator-line {
       background-color: #1677ff;
       opacity: 0.3;
   }
@@ -113,7 +127,7 @@
       transition: all 0.2s;
   }
 
-  .collapse-trigger:hover .content,
+  .collapse-trigger.hover .content,
   .collapse-trigger.expanded .content {
       opacity: 1;
       transform: scale(1);
@@ -173,7 +187,7 @@
   }
   
   /* Hide center dot on hover or expand */
-  .collapse-trigger:hover .center-dot,
+  .collapse-trigger.hover .center-dot,
   .collapse-trigger.expanded .center-dot {
       opacity: 0 !important;
   }
@@ -208,8 +222,14 @@
      "expanded state: hide the dot if it's there, as editor is visible" - user said previously.
   */
   
-  /* If expanded, hide the dot because the full editor is open */
-  .collapse-trigger.expanded .dot {
+  /* Hover state: make it visible and bright blue */
+  .collapse-trigger.hover .dot.has-content {
+      opacity: 1;
+      background-color: #1677ff;
+  }
+
+  /* Expanded state: hide the dot because the full editor is open */
+  .collapse-trigger.expanded .dot.has-content {
       opacity: 0;
   }
 </style>
