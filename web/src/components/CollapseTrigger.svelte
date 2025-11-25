@@ -25,9 +25,6 @@
 >
   <div class="indicator-line"></div>
   <div class="content">
-    {#if hasContent && !expanded}
-      <span class="dot"></span>
-    {/if}
     <span class="icon-wrapper">
         <span class="icon {expanded ? 'rotated' : ''}">
             {#if position === 'top'}
@@ -36,6 +33,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
             {/if}
         </span>
+        <span class="dot {hasContent && !expanded ? 'visible' : ''}"></span>
     </span>
     <span class="hint-text">{label}</span>
   </div>
@@ -119,6 +117,7 @@
       justify-content: center;
       width: 16px;
       height: 16px;
+      position: relative; /* For dot positioning */
   }
 
   .icon {
@@ -126,10 +125,16 @@
       color: #666;
       transition: transform 0.2s ease;
       display: inline-block;
+      will-change: transform; /* Hint for browser optimization */
+      backface-visibility: hidden; /* Prevent flickering */
   }
   
-  /* Rotate icon when expanded */
-  .icon.rotated {
+  /* Rotate icon when expanded based on position */
+  .collapse-trigger.top .icon.rotated {
+      transform: rotate(180deg);
+  }
+  
+  .collapse-trigger.bottom .icon.rotated {
       transform: rotate(180deg);
   }
 
@@ -140,11 +145,20 @@
   }
 
   .dot {
-      width: 6px;
-      height: 6px;
+      position: absolute;
+      top: 50%;
+      left: -8px; /* Adjust as needed for spacing */
+      transform: translateY(-50%);
+      width: 5px;
+      height: 5px;
       background-color: #1677ff;
       border-radius: 50%;
-      /* Make dot visible even when not hovered if we want, but user asked for clean interface. 
-         Let's keep it inside content for now, or move it out if needed. */
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+  }
+  
+  .dot.visible {
+      opacity: 1;
   }
 </style>
