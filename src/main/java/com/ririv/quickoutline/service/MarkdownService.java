@@ -47,6 +47,8 @@ public class MarkdownService {
                     fullHtml,
                     baseUri,
                     baos,
+                    mdEditorContentPayloads.header(),
+                    mdEditorContentPayloads.footer(),
                     event -> {
                         if (event == null) return;
                         switch (event.type()) {

@@ -3,9 +3,12 @@
   import MdEditor from '../../components/MdEditor.svelte';
   import Preview from '../../components/Preview.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
+  import SectionEditor from '../../components/SectionEditor.svelte';
+  import CollapseTrigger from '../../components/CollapseTrigger.svelte';
   import { initBridge } from '../../lib/bridge';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
+  import { slide } from 'svelte/transition';
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
@@ -15,7 +18,17 @@
   // style is not used in Markdown tab currently, but binding is required by StatusBar prop
   let style = 'None';
   
+  let headerConfig = { left: '', center: '', right: '', inner: '', outer: '' };
+  let footerConfig = { left: '', center: '{p}', right: '', inner: '', outer: '' };
+  
+  let showHeader = false;
+  let showFooter = false;
+  
   let debounceTimer: number; // For live preview debounce
+
+  function hasContent(config: typeof headerConfig) {
+      return Object.values(config).some(v => v && v.trim().length > 0 && v !== '{p}');
+  }
 
   onMount(() => {
     // Initialize Bridge to route Java calls to components
@@ -38,12 +51,20 @@
 
   async function triggerPreview() {
       if (!editorComponent) return;
-      const json = await editorComponent.getPayloads(); // {html, styles}
-      // Assuming Java bridge has updatePreview method that accepts {html, styles}
+      const payloadJson = await editorComponent.getPayloads();
+      const payload = JSON.parse(payloadJson);
+      
+      const request = {
+          ...payload,
+          header: headerConfig,
+          footer: footerConfig
+      };
+      
+      // Assuming Java bridge has updatePreview method that accepts json string
       if (window.javaBridge && window.javaBridge.updatePreview) {
-          window.javaBridge.updatePreview(json);
+          window.javaBridge.updatePreview(JSON.stringify(request));
       } else {
-          console.warn('Java Bridge updatePreview not available', json);
+          console.warn('Java Bridge updatePreview not available', request);
       }
   }
 
@@ -59,7 +80,9 @@
       const request = {
           ...payload, // html, styles
           insertPos,
-          style
+          style,
+          header: headerConfig,
+          footer: footerConfig
       };
       
       if (window.javaBridge && window.javaBridge.renderPdf) {
@@ -73,8 +96,46 @@
 <main>
   <div class="content-area">
       <SplitPane initialSplit={50}>
-        <div slot="left" class="h-full">
-          <MdEditor bind:this={editorComponent} />
+        <div slot="left" class="h-full flex-col">
+          <!-- Header Trigger & Editor -->
+          <CollapseTrigger 
+            position="top" 
+            label="Header" 
+            expanded={showHeader} 
+            hasContent={hasContent(headerConfig)}
+            ontoggle={() => showHeader = !showHeader} 
+          />
+          {#if showHeader}
+            <div transition:slide={{ duration: 200 }}>
+              <SectionEditor 
+                type="header"
+                bind:config={headerConfig} 
+                onchange={triggerPreview} 
+              />
+            </div>
+          {/if}
+
+          <div class="editor-wrapper">
+            <MdEditor bind:this={editorComponent} onchange={triggerPreview} />
+          </div>
+
+          <!-- Footer Trigger & Editor -->
+          {#if showFooter}
+            <div transition:slide={{ duration: 200 }}>
+              <SectionEditor 
+                type="footer"
+                bind:config={footerConfig} 
+                onchange={triggerPreview} 
+              />
+            </div>
+          {/if}
+          <CollapseTrigger 
+            position="bottom" 
+            label="Footer" 
+            expanded={showFooter} 
+            hasContent={hasContent(footerConfig)}
+            ontoggle={() => showFooter = !showFooter} 
+          />
         </div>
         <div slot="right" class="h-full">
           <Preview bind:this={previewComponent} mode="combined" onrefresh={triggerPreview} />
@@ -109,5 +170,16 @@
   
   .h-full {
       height: 100%;
+  }
+  
+  .flex-col {
+      display: flex;
+      flex-direction: column;
+  }
+  
+  .editor-wrapper {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
   }
 </style>

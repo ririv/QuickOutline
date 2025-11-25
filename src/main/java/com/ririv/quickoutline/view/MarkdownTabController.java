@@ -25,6 +25,7 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 import com.ririv.quickoutline.model.SvgPageMetadata;
 import com.google.gson.Gson;
+import com.ririv.quickoutline.model.SectionConfig; // Added import
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class MarkdownTabController {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MarkdownTabController.class);
 
     // DTO for renderPdf request
-    private record RenderPdfPayload(String html, String styles, int insertPos, String style) {}
+    private record RenderPdfPayload(String html, String styles, int insertPos, String style, SectionConfig header, SectionConfig footer) {}
 
     @FXML
     private WebView webView;
@@ -223,7 +224,12 @@ public class MarkdownTabController {
     }
 
     private void handleUpdatePreview(String json) {
-        // json contains {html, styles} (from MdEditor.getPayloads)
+        // json contains {html, styles, header, footer} (from MdEditor.getPayloads via App.svelte wrapper)
+        // We need to parse it to extract header/footer if we want to pass them, or just pass json if previewer expects json string
+        // The previewer expects a JSON string and uses PayloadsJsonParser.
+        // However, PayloadsJsonParser might not know about header/footer.
+        // Let's check PayloadsJsonParser.
+        // But wait, previewer lambda does: PayloadsJsonParser.parseJson(jsonString)
         previewer.trigger(json);
     }
 
@@ -267,7 +273,7 @@ public class MarkdownTabController {
 
                 // Adapt payload to MdEditorContentPayloads for service
                 PayloadsJsonParser.MdEditorContentPayloads contentPayloads = 
-                    new PayloadsJsonParser.MdEditorContentPayloads(payload.html(), payload.styles());
+                    new PayloadsJsonParser.MdEditorContentPayloads(payload.html(), payload.styles(), payload.header(), payload.footer());
 
                 markdownService.insertPageFromHtml(srcFile, destFile, contentPayloads, insertPos, baseUri, onMessage, onError);
 
@@ -290,7 +296,7 @@ public class MarkdownTabController {
             Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
             
             PayloadsJsonParser.MdEditorContentPayloads contentPayloads = 
-                    new PayloadsJsonParser.MdEditorContentPayloads(payload.html(), payload.styles());
+                    new PayloadsJsonParser.MdEditorContentPayloads(payload.html(), payload.styles(), payload.header(), payload.footer());
 
             FastByteArrayOutputStream pdfStream = markdownService.convertHtmlToPdfStream(contentPayloads, null, onMessage, onError);
 
