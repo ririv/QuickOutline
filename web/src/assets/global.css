@@ -9,7 +9,16 @@ body {
     height: 100vh;
     overflow: hidden; /* 禁用 Body 滚动，完全交给 Viewport */
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    
+    /* Global: Disable text selection for app-like feel */
+    user-select: none;
+    -webkit-user-select: none;
+}
 
+/* Allow text selection in editable fields */
+input, textarea, [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 
