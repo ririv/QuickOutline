@@ -24,6 +24,7 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 import com.ririv.quickoutline.model.SvgPageMetadata;
+import com.google.gson.Gson;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -41,14 +42,11 @@ public class MarkdownTabController {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MarkdownTabController.class);
 
-    @FXML
-    private WebView webView; // 统一的 WebView (包含编辑器和预览)
+    // DTO for renderPdf request
+    private record RenderPdfPayload(String html, String styles, int insertPos, String style) {}
 
     @FXML
-    private TextField insertPosTextField;
-
-    @FXML
-    private Button previewButton;
+    private WebView webView;
 
     private final CurrentFileState currentFileState;
     private final AppEventBus eventBus;
@@ -57,13 +55,12 @@ public class MarkdownTabController {
     private WebEngine webEngine;      // 统一引擎
 
     private String editorHtmlContent = ""; // 缓存前端内容，防止重复渲染
-    // 修改泛型：输入 String (HTML)，输出 FastByteArrayOutputStream (零拷贝流)
     private TrailingThrottlePreviewer<String, FastByteArrayOutputStream> previewer;
 
     private ScheduledExecutorService contentPoller;
 
     JsBridge bridge = new JsBridge();
-
+    private final Gson gson = new Gson();
 
     @Inject
     private PdfSvgService pdfSvgService; // 注入服务
@@ -82,37 +79,26 @@ public class MarkdownTabController {
     public void initialize() {
         log.debug("Controller initialize start");
 
-        // 1. 初始化 PDF 预览生成器 (Previewer)
-        // 负责调度：Markdown -> HTML -> PDF Stream -> Update UI
+        // 1. 初始化 PDF 预览生成器
         setupPreviewer();
 
-        // 2. 配置 WebView (编辑器 + 预览)
+        // 2. 配置 WebView
         setupWebViewConfig();
 
-        // 3. 配置输入框格式化
-        setupInputFields();
-
-        // 4. 【核心】启动本地服务器并加载页面
-        // Server 必须在加载任何页面之前启动，以确保资源路径可达
+        // 3. 启动本地服务器并加载页面
         loadEditor();
 
         log.debug("Controller initialize complete");
     }
 
-    /**
-     * 1. 初始化预览节流器 (TrailingThrottlePreviewer)
-     */
     private void setupPreviewer() {
-        final int PREVIEW_THROTTLE_MS = 500; // 建议设大一点 (500ms)，给 iText 缓冲时间
+        final int PREVIEW_THROTTLE_MS = 500; 
 
         Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
         Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
 
-        // 输入是 JSON 字符串，输出是 FastByteArrayOutputStream
         this.previewer = new TrailingThrottlePreviewer<>(PREVIEW_THROTTLE_MS,
-                jsonString -> { // 【注意】这里接收到的是 JSON 字符串
-
-                    // 1. 计算 Base URI (用于加载图片)
+                jsonString -> {
                     String baseUri = null;
                     try {
                         if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
@@ -122,62 +108,35 @@ public class MarkdownTabController {
                         log.warn("[Preview] failed to compute baseUri", ex);
                     }
 
-                    // 2. 【关键步骤】解析 JSON
                     PayloadsJsonParser.MdEditorContentPayloads payloads = PayloadsJsonParser.parseJson(jsonString);
-
-                    // 3. 生成 PDF (耗时操作)
                     return markdownService.convertHtmlToPdfStream(payloads, baseUri, onMessage, onError);
                 },
-                this::updatePreviewUISvg, // 成功回调：调用 SVG Diff 更新逻辑
+                this::updatePreviewUISvg,
                 e -> onError.accept("PDF preview failed: " + e.getMessage())
         );
     }
 
-    /**
-     * 2. 配置 WebView
-     */
     private void setupWebViewConfig() {
         webEngine = webView.getEngine();
         webEngine.setJavaScriptEnabled(true);
+        
+        // Register handlers
+        bridge.setRenderPdfHandler(this::handleRenderPdf);
 
-        // 监听加载状态，注入 Java 对象 (JSBridge)
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
                 log.info("WebView load succeeded");
                 JSObject window = (JSObject) webEngine.executeScript("window");
                 window.setMember("javaBridge", bridge);
-                window.setMember("debugBridge", new JsBridge.DebugBridge()); // 同时也注入 debugBridge
-
-                // 如果需要轮询兜底，可在此处启动
-//                 startContentPoller();
+                window.setMember("debugBridge", new JsBridge.DebugBridge()); 
             } else if (newState == Worker.State.FAILED) {
                 log.error("WebView load failed");
             }
         });
     }
 
-    /**
-     * 3. 配置输入框
-     */
-    private void setupInputFields() {
-        UnaryOperator<TextFormatter.Change> integerFilter = change -> {
-            String newText = change.getControlNewText();
-            if (newText.matches("[0-9]*")) {
-                return change;
-            }
-            return null;
-        };
-        insertPosTextField.setTextFormatter(new TextFormatter<>(integerFilter));
-        insertPosTextField.setText("1");
-    }
-
-    /**
-     * 4. 加载编辑器资源 (含 Server 启动)
-     */
     private void loadEditor() {
         String urlToLoad = null;
-
-        // --- 策略 1: 本地 HTTP 服务器 (推荐) ---
         try {
             LocalWebServer server = LocalWebServer.getInstance();
             server.start("/web");
@@ -187,17 +146,14 @@ public class MarkdownTabController {
             log.error("[Load Strategy 1] Failed to start LocalWebServer. Trying fallback...", e);
         }
 
-        // --- 策略 2: Classpath 直接加载 (IDE 兜底) ---
         if (urlToLoad == null) {
             URL resource = getClass().getResource("/web/markdown-tab.html");
             if (resource != null) {
                 urlToLoad = resource.toExternalForm();
-                log.warn("[Load Strategy 2] Falling back to direct Classpath loading. Note: Icons/MathJax might fail in jpackage environment. URL: {}", urlToLoad);
             }
         }
 
         if (urlToLoad != null) {
-            log.info("WebView loading: {}", urlToLoad);
             webEngine.load(urlToLoad);
         } else {
             String errorMsg = "FATAL: Could not find 'markdown-tab.html' in resources!";
@@ -209,22 +165,17 @@ public class MarkdownTabController {
     private void updatePreviewUISvg(FastByteArrayOutputStream pdfStream) {
         if (pdfStream == null || pdfStream.size() == 0) return;
 
-        // 后台计算 Diff
         new Thread(() -> {
             try {
-                // 1. 计算 Diff (使用 Fast Stream)
                 var updates = pdfSvgService.diffPdfToSvg(pdfStream);
+                if (updates.isEmpty()) return; 
 
-                if (updates.isEmpty()) return; // 无变化，不打扰 UI
-
-                // 2. 将 SVG 内容存入 Server，并准备元数据
                 LocalWebServer server = LocalWebServer.getInstance();
-                long version = System.currentTimeMillis(); // 简单版本号，强制刷新缓存
+                long version = System.currentTimeMillis();
 
                 var metadataList = new java.util.ArrayList<SvgPageMetadata>();
 
                 for (var update : updates) {
-                    // 存入 SVG 内容
                     server.putSvg(LocalWebServer.DEFAULT_DOC_ID, String.valueOf(update.pageIndex()), update.svgContent());
                     
                     metadataList.add(new SvgPageMetadata(
@@ -236,10 +187,8 @@ public class MarkdownTabController {
                     ));
                 }
 
-                // 3. 序列化元数据
-                String jsonString = new com.google.gson.Gson().toJson(metadataList);
+                String jsonString = gson.toJson(metadataList);
 
-                // 4. 推送前端
                 Platform.runLater(() -> {
                     if (webEngine == null) return;
                     try {
@@ -255,7 +204,6 @@ public class MarkdownTabController {
         }).start();
     }
 
-    
     public void dispose() {
         if (contentPoller != null && !contentPoller.isShutdown()) {
             contentPoller.shutdownNow();
@@ -265,8 +213,7 @@ public class MarkdownTabController {
         }
     }
 
-
-    // ================= Action Handlers =================
+    // ================= Handlers =================
 
     @FXML
     void insertImageIntoMarkdown() {
@@ -274,121 +221,101 @@ public class MarkdownTabController {
         new MarkdownImageHandler(currentFileState, eventBus).insertImage(owner, webEngine);
     }
 
-    @FXML
-    void manualPreviewAction(ActionEvent event) {
-        new Thread(() -> {
-            try {
-                String json = bridge.getContentSync(webEngine);
-                triggerPreviewIfChanged(json);
-            } catch (Exception e) {
-                log.error("Manual preview failed: " + e.getMessage());
-            }
-        }).start();
+    private void handleRenderPdf(String json) {
+        try {
+            RenderPdfPayload payload = gson.fromJson(json, RenderPdfPayload.class);
+            renderToPdfAction(payload);
+        } catch (Exception e) {
+            log.error("Error handling render PDF request", e);
+            eventBus.post(new ShowMessageEvent("Invalid data from editor", Message.MessageType.ERROR));
+        }
     }
 
-    @FXML
-    void renderToPdfAction() {
+    private void renderToPdfAction(RenderPdfPayload payload) {
         if (currentFileState.getSrcFile() == null) {
-            savePreviewAsNewPdf();
+            savePreviewAsNewPdf(payload);
             return;
         }
+        
         new Thread(() -> {
+            String currentHtml = payload.html();
+            if (currentHtml == null || currentHtml.isBlank()) {
+                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("No HTML content to render.", Message.MessageType.WARNING)));
+                return;
+            }
+
+            int insertPos = payload.insertPos() <= 0 ? 1 : payload.insertPos();
+
             try {
-                String json = bridge.getContentSync(webEngine);
-                PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(json);
-
-                String currentHtml = mdEditorContentPayloads.html();
-                if (currentHtml == null || currentHtml.isBlank()) {
-                    eventBus.post(new ShowMessageEvent("No HTML content to render.", Message.MessageType.WARNING));
-                    return;
+                String srcFile = currentFileState.getSrcFile().toString();
+                String destFile = currentFileState.getDestFile().toString();
+                String baseUri = null;
+                if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
+                    baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
                 }
+                Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+                Consumer<String> onError = msg -> Platform.runLater(() -> {
+                    log.error(msg);
+                    eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR));
+                });
 
-                int insertPos = 1;
-                try {
-                    insertPos = Integer.parseInt(insertPosTextField.getText());
-                    if (insertPos <= 0) insertPos = 1;
-                } catch (NumberFormatException e) { }
+                // Adapt payload to MdEditorContentPayloads for service
+                PayloadsJsonParser.MdEditorContentPayloads contentPayloads = 
+                    new PayloadsJsonParser.MdEditorContentPayloads(payload.html(), payload.styles());
 
-                try {
-                    String srcFile = currentFileState.getSrcFile().toString();
-                    String destFile = currentFileState.getDestFile().toString();
-                    String baseUri = null;
-                    if (currentFileState.getSrcFile() != null && currentFileState.getSrcFile().getParent() != null) {
-                        baseUri = currentFileState.getSrcFile().getParent().toUri().toString();
-                    }
-                    Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
-                    Consumer<String> onError = msg -> Platform.runLater(() -> {
-                        log.error(msg);
-                        eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR));
-                    });
+                markdownService.insertPageFromHtml(srcFile, destFile, contentPayloads, insertPos, baseUri, onMessage, onError);
 
-                    markdownService.insertPageFromHtml(srcFile, destFile, mdEditorContentPayloads, insertPos, baseUri, onMessage, onError);
-
-                    eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS));
-                } catch (IOException e) {
-                    eventBus.post(new ShowMessageEvent("Failed to render to PDF: " + e.getMessage(), Message.MessageType.ERROR));
-                    log.error("Render to PDF failed", e);
-                }
-            } catch (Exception e) {
-                log.error("Render action failed", e);
+                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Successfully rendered to " + destFile, Message.MessageType.SUCCESS)));
+            } catch (IOException e) {
+                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to render to PDF: " + e.getMessage(), Message.MessageType.ERROR)));
+                log.error("Render to PDF failed", e);
             }
         }, "pdf-render").start();
     }
 
-    // ================= Helpers =================
-
-    private void savePreviewAsNewPdf() {
+    private void savePreviewAsNewPdf(RenderPdfPayload payload) {
         new Thread(() -> {
-            try {
-                String json = bridge.getContentSync(webEngine);
-                PayloadsJsonParser.MdEditorContentPayloads mdEditorContentPayloads = PayloadsJsonParser.parseJson(json);
-                if (mdEditorContentPayloads.html() == null || mdEditorContentPayloads.html().isBlank()) {
-                    Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Markdown content is empty.", Message.MessageType.WARNING)));
-                    return;
-                }
-
-                Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
-                Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
-                
-                // 使用 FastStream 获取数据
-                FastByteArrayOutputStream pdfStream = markdownService.convertHtmlToPdfStream(mdEditorContentPayloads, null, onMessage, onError);
-
-                if (pdfStream == null || pdfStream.size() == 0) {
-                    Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to generate PDF from Markdown.", Message.MessageType.ERROR)));
-                    return;
-                }
-
-                Platform.runLater(() -> {
-                    javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
-                    fileChooser.setTitle("Save New PDF");
-                    fileChooser.getExtensionFilters().add(
-                            new javafx.stage.FileChooser.ExtensionFilter("PDF Files", "*.pdf")
-                    );
-                    fileChooser.setInitialFileName("Untitled.pdf");
-                    java.io.File file = fileChooser.showSaveDialog(webView.getScene().getWindow());
-
-                    if (file != null) {
-                        new Thread(() -> {
-                            try (FileOutputStream fos = new FileOutputStream(file)) {
-                                // 写入文件
-                                fos.write(pdfStream.getBuffer(), 0, pdfStream.size());
-                                Platform.runLater(() -> {
-                                    eventBus.post(new ShowMessageEvent("Successfully saved new PDF to " + file.getAbsolutePath(), Message.MessageType.SUCCESS));
-                                });
-                            } catch (IOException e) {
-                                log.error("Failed to save new PDF file", e);
-                                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to save file: " + e.getMessage(), Message.MessageType.ERROR)));
-                            }
-                        }, "save-new-pdf-io").start();
-                    }
-                });
-            } catch (Exception e) {
-                log.error("Failed to save preview as new PDF", e);
-                Platform.runLater(() -> {
-                    eventBus.post(new ShowMessageEvent("An error occurred: " + e.getMessage(), Message.MessageType.ERROR));
-                    e.printStackTrace();
-                });
+            if (payload.html() == null || payload.html().isBlank()) {
+                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Markdown content is empty.", Message.MessageType.WARNING)));
+                return;
             }
+
+            Consumer<String> onMessage = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.INFO)));
+            Consumer<String> onError = msg -> Platform.runLater(() -> eventBus.post(new ShowMessageEvent(msg, Message.MessageType.ERROR)));
+            
+            PayloadsJsonParser.MdEditorContentPayloads contentPayloads = 
+                    new PayloadsJsonParser.MdEditorContentPayloads(payload.html(), payload.styles());
+
+            FastByteArrayOutputStream pdfStream = markdownService.convertHtmlToPdfStream(contentPayloads, null, onMessage, onError);
+
+            if (pdfStream == null || pdfStream.size() == 0) {
+                Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to generate PDF from Markdown.", Message.MessageType.ERROR)));
+                return;
+            }
+
+            Platform.runLater(() -> {
+                javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+                fileChooser.setTitle("Save New PDF");
+                fileChooser.getExtensionFilters().add(
+                        new javafx.stage.FileChooser.ExtensionFilter("PDF Files", "*.pdf")
+                );
+                fileChooser.setInitialFileName("Untitled.pdf");
+                java.io.File file = fileChooser.showSaveDialog(webView.getScene().getWindow());
+
+                if (file != null) {
+                    new Thread(() -> {
+                        try (FileOutputStream fos = new FileOutputStream(file)) {
+                            fos.write(pdfStream.getBuffer(), 0, pdfStream.size());
+                            Platform.runLater(() -> {
+                                eventBus.post(new ShowMessageEvent("Successfully saved new PDF to " + file.getAbsolutePath(), Message.MessageType.SUCCESS));
+                            });
+                        } catch (IOException e) {
+                            log.error("Failed to save new PDF file", e);
+                            Platform.runLater(() -> eventBus.post(new ShowMessageEvent("Failed to save file: " + e.getMessage(), Message.MessageType.ERROR)));
+                        }
+                    }, "save-new-pdf-io").start();
+                }
+            });
         }, "save-new-pdf").start();
     }
 

@@ -18,22 +18,13 @@
         <WebView fx:id="webView"/>
         
         <!-- 手动刷新按钮保留在右下角，依然覆盖在 WebView 上 -->
-        <Button fx:id="previewButton" onAction="#manualPreviewAction" styleClass="graph-button, graph-button-basic" StackPane.alignment="BOTTOM_RIGHT">
-            <graphic>
-                <RefreshIcon prefWidth="15" prefHeight="15" />
-            </graphic>
-            <StackPane.margin>
-                <Insets right="10" bottom="10"/>
-            </StackPane.margin>
-        </Button>
+<!--        <Button fx:id="previewButton" onAction="#manualPreviewAction" styleClass="graph-button, graph-button-basic" StackPane.alignment="BOTTOM_RIGHT">-->
+<!--            <graphic>-->
+<!--                <RefreshIcon prefWidth="15" prefHeight="15" />-->
+<!--            </graphic>-->
+<!--            <StackPane.margin>-->
+<!--                <Insets right="10" bottom="10"/>-->
+<!--            </StackPane.margin>-->
+<!--        </Button>-->
     </StackPane>
-
-    <HBox alignment="CENTER" prefHeight="40.0" spacing="10">
-        <padding>
-            <Insets top="5" bottom="5" left="10" right="10"/>
-        </padding>
-        <TextField fx:id="insertPosTextField" styleClass="underlineTF" promptText="%insertPosTextField.prompt" prefWidth="100"/>
-        <Region HBox.hgrow="ALWAYS" />
-        <Button text="Render to PDF" onAction="#renderToPdfAction" styleClass="my-button,plain-button-primary"/>
-    </HBox>
 </VBox>

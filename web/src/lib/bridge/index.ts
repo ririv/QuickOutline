@@ -23,6 +23,8 @@ declare global {
       // Toc Tab specific
       previewToc: (json: string) => void;
       generateToc: (json: string) => void;
+      // Markdown Tab specific
+      renderPdf: (json: string) => void;
       // Clipboard
       copyText: (text: string) => void;
       getClipboardText: () => string;
