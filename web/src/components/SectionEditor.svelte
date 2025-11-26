@@ -276,6 +276,7 @@
       display: flex;
 
       align-items: center;
+      padding-left: 20px;
 
       /* margin-bottom removed, using gap in parent */
 
