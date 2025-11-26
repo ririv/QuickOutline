@@ -175,16 +175,21 @@
     resize: none;
     border: none;
     outline: none;
-    padding: 10px;
+    padding: 16px 24px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.5;
     background-color: transparent;
     color: #333;
     box-sizing: border-box;
+    transition: background-color 0.2s;
   }
   
   textarea:focus {
     background-color: transparent;
+  }
+  
+  textarea:hover {
+    background-color: rgba(0, 0, 0, 0.02);
   }
 </style>

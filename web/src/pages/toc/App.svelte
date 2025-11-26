@@ -193,7 +193,7 @@
   }
   .title-input {
     width: 100%;
-    padding: 8px;
+    padding: 16px 24px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 20px;
     font-weight: bold;
@@ -202,14 +202,20 @@
     box-sizing: border-box;
     text-align: center;
     color: #333;
+    transition: background-color 0.2s;
   }
   
   .title-input:focus {
     outline: none;
   }
 
+  .title-input:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
   .editor-wrapper {
     flex: 1;
     overflow: hidden;
+    padding: 10px;
   }
 </style>
