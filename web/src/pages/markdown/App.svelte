@@ -14,21 +14,27 @@
   let previewComponent: Preview;
 
   // State for StatusBar
-  let insertPos = 1;
+  let insertPos = $state(1);
   // style is not used in Markdown tab currently, but binding is required by StatusBar prop
-  let style = 'None';
+  let style = $state('None');
   
-  let headerConfig = { left: '', center: '', right: '', inner: '', outer: '' };
-  let footerConfig = { left: '', center: '{p}', right: '', inner: '', outer: '' };
+  let headerConfig = $state({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
+  let footerConfig = $state({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
   
-  let showHeader = false;
-  let showFooter = false;
+  let showHeader = $state(false);
+  let showFooter = $state(false);
   
   let debounceTimer: number; // For live preview debounce
 
   function hasContent(config: typeof headerConfig) {
-      return Object.values(config).some(v => v && v.trim().length > 0 && v !== '{p}');
+      const hasText = Object.entries(config).some(([k, v]) => {
+          if (k === 'drawLine') return false;
+          return typeof v === 'string' && v.trim().length > 0 && v !== '{p}';
+      });
+      return hasText || config.drawLine;
   }
+
+  // Use $effect to react to changes in headerConfig or footerConfig (deeply reactive $state)
 
   onMount(() => {
     // Initialize Bridge to route Java calls to components
@@ -110,7 +116,6 @@
               <SectionEditor 
                 type="header"
                 bind:config={headerConfig} 
-                onchange={triggerPreview} 
               />
             </div>
           {/if}
@@ -125,7 +130,6 @@
               <SectionEditor 
                 type="footer"
                 bind:config={footerConfig} 
-                onchange={triggerPreview} 
               />
             </div>
           {/if}

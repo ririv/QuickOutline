@@ -13,24 +13,50 @@
   let previewComponent: Preview;
   
   // State
-  let tocContent = '';
-  let title = 'Table of Contents';
-  let offset = 0;
-  let insertPos = 1;
-  let style = 'None';
+  let tocContent = $state('');
+  let title = $state('Table of Contents');
+  let offset = $state(0);
+  let insertPos = $state(1);
+  let style = $state('None');
   
-  let headerConfig = { left: '', center: '', right: '', inner: '', outer: '' };
-  let footerConfig = { left: '', center: '{p}', right: '', inner: '', outer: '' };
+  let headerConfig = $state({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
+  let footerConfig = $state({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
   
-  let showHeader = false;
-  let showFooter = false;
+  let showHeader = $state(false);
+  let showFooter = $state(false);
   
   let debounceTimer: number;
-
+  
   function hasContent(config: typeof headerConfig) {
-      return Object.values(config).some(v => v && v.trim().length > 0 && v !== '{p}');
+      const hasText = Object.entries(config).some(([k, v]) => {
+          if (k === 'drawLine') return false;
+          return typeof v === 'string' && v.trim().length > 0 && v !== '{p}';
+      });
+      return hasText || config.drawLine;
   }
+  
+  // Use $effect to react to changes in headerConfig or footerConfig (deeply reactive $state)
+  $effect(() => {
+    // Read headerConfig and footerConfig to trigger reactivity.
+    // Accessing headerConfig.left, footerConfig.center etc. ensures deep reactivity
+    // for string changes. For drawLine, config.drawLine is also watched.
+    // stringify the whole object to ensure deep watching for all properties.
+    const headerJson = JSON.stringify(headerConfig);
+    const footerJson = JSON.stringify(footerConfig);
 
+    // Call triggerPreview with debounce
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        // Only trigger preview if config has actually changed from default or previous state.
+        // This is a simple check, a more robust solution might track previous serialized state.
+        // For now, rely on Svelte's reactivity to only run $effect when dependencies change.
+        if (headerJson !== '{"left":"","center":"","right":"","inner":"","outer":"","drawLine":false}' ||
+            footerJson !== '{"left":"","center":"{p}","right":"","inner":"","outer":"","drawLine":false}') {
+            triggerPreview();
+        }
+    }, 500);
+  });
+  
   onMount(() => {
     initBridge({
       onUpdateSvg: (json) => previewComponent?.renderSvg(json),
@@ -90,7 +116,6 @@
               <SectionEditor 
                 type="header"
                 bind:config={headerConfig} 
-                onchange={triggerPreview} 
               />
             </div>
           {/if}
@@ -109,7 +134,6 @@
               <SectionEditor 
                 type="footer"
                 bind:config={footerConfig} 
-                onchange={triggerPreview} 
               />
             </div>
           {/if}

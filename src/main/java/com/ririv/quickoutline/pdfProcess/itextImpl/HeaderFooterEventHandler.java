@@ -12,6 +12,8 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.SectionConfig;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
+import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas; // Added import
 
 import java.util.function.BiConsumer;
 
@@ -36,6 +38,9 @@ public class HeaderFooterEventHandler extends AbstractPdfDocumentEventHandler {
     private static final float DEFAULT_FONT_SIZE = 10f;
     private static final float HEADER_Y_OFFSET = 36f; // From top edge
     private static final float FOOTER_Y_OFFSET = 36f; // From bottom edge
+    
+    private static final float LINE_WIDTH = 0.5f;
+    private static final float LINE_GAP = 5f; // Gap between text and line
 
     public HeaderFooterEventHandler(Document doc, PageLabelNumberingStyle style, PdfFont font, int startPageNum, int totalTocPages, SectionConfig header, SectionConfig footer) {
         this.doc = doc;
@@ -73,15 +78,42 @@ public class HeaderFooterEventHandler extends AbstractPdfDocumentEventHandler {
             // Draw Header
             if (headerConfig != null) {
                 drawSectionContent(canvas, page.getPageSize(), headerConfig, true, pageNum, currentRelativePageNum, formattedPageNumber);
+                if (headerConfig.drawLine()) {
+                    drawLine(page, page.getPageSize(), true);
+                }
             }
 
             // Draw Footer
             if (footerConfig != null) {
                 drawSectionContent(canvas, page.getPageSize(), footerConfig, false, pageNum, currentRelativePageNum, formattedPageNumber);
+                if (footerConfig.drawLine()) {
+                    drawLine(page, page.getPageSize(), false);
+                }
             }
             
             canvas.close();
         }
+    }
+
+    private void drawLine(PdfPage page, Rectangle pageSize, boolean isHeader) {
+        PdfCanvas pdfCanvas = new PdfCanvas(page);
+        float y;
+        if (isHeader) {
+            // Line below header text
+            y = pageSize.getTop() - HEADER_Y_OFFSET - LINE_GAP;
+        } else {
+            // Line above footer text
+            y = FOOTER_Y_OFFSET + 10f + LINE_GAP; 
+        }
+
+        float x1 = doc.getLeftMargin();
+        float x2 = pageSize.getWidth() - doc.getRightMargin();
+
+        pdfCanvas.setStrokeColor(ColorConstants.BLACK)
+              .setLineWidth(LINE_WIDTH)
+              .moveTo(x1, y)
+              .lineTo(x2, y)
+              .stroke();
     }
 
     private void drawSectionContent(Canvas canvas, Rectangle pageSize, SectionConfig config, boolean isHeader, 

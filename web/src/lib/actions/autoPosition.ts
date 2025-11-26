@@ -58,16 +58,22 @@ export function autoPosition(node: HTMLElement, { triggerEl }: { triggerEl: HTML
 
   const resizeObserver = new ResizeObserver(robustAdjust);
   resizeObserver.observe(node);
-  resizeObserver.observe(triggerEl);
+  if (triggerEl) {
+      resizeObserver.observe(triggerEl);
+  }
   window.addEventListener('resize', robustAdjust);
   window.addEventListener('scroll', robustAdjust, true); // Capture scroll for position updates
 
   return {
     update(newParams: { triggerEl: HTMLElement }) {
       if (newParams.triggerEl !== triggerEl) {
-        resizeObserver.unobserve(triggerEl);
+        if (triggerEl) {
+            resizeObserver.unobserve(triggerEl);
+        }
         triggerEl = newParams.triggerEl;
-        resizeObserver.observe(triggerEl);
+        if (triggerEl) {
+            resizeObserver.observe(triggerEl);
+        }
       }
       robustAdjust();
     },

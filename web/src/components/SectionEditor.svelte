@@ -8,18 +8,17 @@
     right: string;
     inner: string;
     outer: string;
+    drawLine: boolean;
   }
 
   interface Props {
     config?: SectionConfig;
     type?: 'header' | 'footer';
-    onchange?: () => void;
   }
 
   let { 
-    config = $bindable({ left: '', center: '', right: '', inner: '', outer: '' }), 
+    config = $bindable({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false }), 
     type = 'header',
-    onchange 
   }: Props = $props();
 
   let activePos: 'left' | 'center' | 'right' | 'inner' | 'outer' = $state('center');
@@ -29,7 +28,10 @@
   }
 
   function handleInput() {
-    onchange?.();
+  }
+  
+  function toggleDrawLine() {
+      config.drawLine = !config.drawLine;
   }
 
   // Helper to check if a position has content (for dot indicator)
@@ -60,7 +62,7 @@
       <div class="btn-wrapper">
         <button 
           bind:this={leftBtnEl}
-          class="pos-btn {activePos === 'left' ? 'active' : ''}" 
+          class="pos-btn" class:active={activePos === 'left'}
           onclick={() => setActive('left')} 
           title="Left Aligned"
         >
@@ -75,7 +77,7 @@
       <div class="btn-wrapper">
         <button 
           bind:this={centerBtnEl}
-          class="pos-btn {activePos === 'center' ? 'active' : ''}" 
+          class="pos-btn" class:active={activePos === 'center'}
           onclick={() => setActive('center')} 
           title="Center Aligned"
         >
@@ -90,7 +92,7 @@
       <div class="btn-wrapper">
         <button 
           bind:this={rightBtnEl}
-          class="pos-btn {activePos === 'right' ? 'active' : ''}" 
+          class="pos-btn" class:active={activePos === 'right'}
           onclick={() => setActive('right')} 
           title="Right Aligned"
         >
@@ -110,7 +112,7 @@
       <div class="btn-wrapper">
           <button 
             bind:this={innerBtnEl}
-            class="pos-btn {activePos === 'inner' ? 'active' : ''}" 
+            class="pos-btn" class:active={activePos === 'inner'}
             onclick={() => setActive('inner')} 
             title="Inner Side"
           >
@@ -125,7 +127,7 @@
       <div class="btn-wrapper">
           <button 
             bind:this={outerBtnEl}
-            class="pos-btn {activePos === 'outer' ? 'active' : ''}" 
+            class="pos-btn" class:active={activePos === 'outer'}
             onclick={() => setActive('outer')} 
             title="Outer Side"
           >
@@ -146,14 +148,34 @@
       oninput={handleInput}
       placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) (e.g. &lbrace;p&rbrace;)..." 
     />
-    {#if type === 'footer' && activePos !== 'left' && activePos !== 'inner'}
-      <div class="tooltip-container">
-          <span class="hint-icon">?</span>
-          <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
-      </div>
-    {/if}
+    
+    <div class="controls-right">
+      <!-- Divider Line Toggle -->
+      <button 
+        class="toggle-line-btn" class:active={config.drawLine}
+        onclick={toggleDrawLine} 
+        title="Show Divider Line"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          {#if type === 'header'}
+              <rect x="2" y="4" width="18" height="12" rx="2" stroke-opacity="0.3" stroke-dasharray="2 2" stroke={config.drawLine ? '#1677ff' : '#999'}></rect>
+              <line x1="2" y1="20" x2="20" y2="20" stroke={config.drawLine ? '#1677ff' : '#999'} stroke-dasharray={config.drawLine ? '0' : '2 2'}></line>
+          {:else}
+              <rect x="2" y="8" width="18" height="12" rx="2" stroke-opacity="0.3" stroke-dasharray="2 2" stroke={config.drawLine ? '#1677ff' : '#999'}></rect>
+              <line x1="2" y1="4" x2="20" y2="4" stroke={config.drawLine ? '#1677ff' : '#999'} stroke-dasharray={config.drawLine ? '0' : '2 2'}></line>
+          {/if}
+        </svg>
+      </button>
+
+      {#if type === 'footer' && activePos !== 'left' && activePos !== 'inner'}
+        <div class="tooltip-container">
+            <span class="hint-icon">?</span>
+            <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
+        </div>
+      {/if}
+    </div>
   </div>
-</div>
+</div> <!-- /section-editor -->
 
 <style>
   .section-editor {
@@ -255,17 +277,61 @@
   input {
     width: 100%;
     padding: 6px 8px;
-    padding-right: 24px; /* Space for hint icon */
+    padding-right: 80px; /* Increased space for controls */
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 13px;
     box-sizing: border-box;
     transition: border 0.2s;
+    user-select: text;
   }
 
   input:focus {
     outline: none;
     border-color: #1677ff;
+  }
+  
+  .controls-right {
+      position: absolute;
+      right: 0px; /* Align to right edge of input-wrapper */
+      top: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      padding-right: 6px; /* Inner padding */
+      gap: 6px;
+  }
+  
+  .toggle-line-btn {
+      background: transparent;
+      border: none;
+      padding: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      color: #999;
+      transition: all 0.2s;
+      width: 24px; /* Fixed width to make clickable area consistent */
+      height: 24px; /* Fixed height */
+  }
+  
+  .toggle-line-btn:hover {
+      background-color: #f0f0f0;
+      color: #666;
+  }
+  
+  .toggle-line-btn.active {
+      background-color: #e6f7ff;
+      color: #1677ff;
+  }
+
+  /* Specific styling for SVG inside toggle-line-btn */
+  .toggle-line-btn svg {
+      width: 100%;
+      height: 100%;
+      stroke: currentColor; /* Inherit color from parent button */
   }
 
   .hint-icon {
@@ -283,8 +349,7 @@
   }
   
   .tooltip-container {
-      position: absolute;
-      right: 6px;
+      position: relative; 
       display: flex;
       align-items: center;
   }
