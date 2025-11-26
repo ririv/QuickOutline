@@ -1,3 +1,30 @@
+:root {
+    --el-color-primary: #409eff;
+    --el-color-primary-pressed: rgb(51, 126, 204);
+    --el-color-plain-primary-bg: rgb(236, 245, 255);
+    --el-color-plain-primary-border: rgb(160, 207, 255);
+
+    --el-color-important: #f56c6c;
+    --el-color-important-pressed: rgb(196, 86, 86);
+    --el-color-plain-important-bg: rgb(254, 240, 240);
+    --el-color-plain-important-border: rgb(250, 182, 182);
+
+    --el-color-info: #909399;
+    --el-color-default-text: #606266;
+
+    --el-color-default-bg: white;
+    --el-color-default-active-bg: var(--el-color-plain-primary-bg);
+    --el-color-default-border: #dcdfe6;
+    --el-color-default-pressed-border: var(--el-color-plain-primary-border);
+    --el-color-default-active-text: var(--el-color-primary);
+    --el-color-primary-shadow: rgba(64, 158, 255, 0.2);
+
+    --el-color-textbtn-hover-bg: #f5f7fa;
+    --el-color-textbtn-active-bg: #f0f2f5;
+    
+    --my-color-divding-line: #dfdfdf;
+}
+
 body {
     /*background-color: #525659; !* PDF 阅读器经典深灰背景 *!*/
     background-color: #e3e4ea;
@@ -21,6 +48,145 @@ input, textarea, [contenteditable="true"] {
     -webkit-user-select: text;
 }
 
+/* --- Common Controls Styles (Ported from JavaFX) --- */
+
+/* Input/Select */
+.input {
+    background-color: white;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    color: #333333;
+    padding: 6px 11px; 
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input:hover {
+    border-color: var(--el-color-primary);
+}
+
+.input:focus {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 2px var(--el-color-primary-shadow);
+}
+
+/* Button Base */
+.my-button {
+    height: 32px; 
+    font-size: 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    transition: .1s;
+    border: 1px solid transparent;
+    padding: 0 15px;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+/* Primary Plain Button */
+.plain-button-primary {
+    background-color: var(--el-color-plain-primary-bg);
+    color: var(--el-color-primary);
+    border-color: var(--el-color-plain-primary-border);
+}
+
+.plain-button-primary:hover {
+    color: #fffafa; /* snow */
+    background-color: var(--el-color-primary);
+    border-color: var(--el-color-primary);
+}
+
+.plain-button-primary:active {
+    color: #fffafa;
+    background-color: var(--el-color-primary-pressed);
+    border-color: var(--el-color-primary-pressed);
+}
+
+/* Important Plain Button */
+.plain-button-important {
+    background-color: var(--el-color-plain-important-bg);
+    color: var(--el-color-important);
+    border-color: var(--el-color-plain-important-border);
+}
+
+.plain-button-important:hover {
+    background-color: var(--el-color-important);
+    color: #fffafa;
+    border-color: var(--el-color-important);
+}
+
+.plain-button-important:active {
+    color: #fffafa;
+    background-color: var(--el-color-important-pressed);
+    border-color: var(--el-color-important-pressed);
+}
+
+/* Graph/Icon Button */
+.graph-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.graph-button img, .graph-button svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    opacity: 0.8;
+}
+.graph-button:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+.graph-button:hover img {
+    opacity: 1;
+}
+.graph-button-important:hover {
+    background-color: var(--el-color-plain-important-bg);
+}
+
+/* Title */
+.title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #9198a1;
+    margin-bottom: 10px;
+    display: block;
+}
+
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    border: 2px solid transparent; 
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
 
 
 /* --- 4. 视口与内容 (虚拟渲染核心 CSS) --- */
@@ -118,5 +284,3 @@ body.is-resizing * {
     pointer-events: none !important;
     user-select: none !important;
 }
-
-

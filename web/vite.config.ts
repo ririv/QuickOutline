@@ -37,6 +37,16 @@ export default defineConfig({
            fs.rmSync(resolve(distDir, 'pages/toc'), { recursive: true, force: true });
            console.log('Moved toc/index.html to toc-tab.html');
         }
+
+        // 移动并重命名 pagelabel/index.html -> pagelabel-tab.html
+        const pageLabelHtmlSrc = resolve(distDir, 'pages/pagelabel/index.html');
+        const pageLabelHtmlDest = resolve(distDir, 'pagelabel-tab.html');
+        if (fs.existsSync(pageLabelHtmlSrc)) {
+           fs.renameSync(pageLabelHtmlSrc, pageLabelHtmlDest);
+           // 清理空目录
+           fs.rmSync(resolve(distDir, 'pages/pagelabel'), { recursive: true, force: true });
+           console.log('Moved pagelabel/index.html to pagelabel-tab.html');
+        }
         
         // 清理 pages 空目录 (如果存在)
         if (fs.existsSync(resolve(distDir, 'pages'))) {
@@ -70,6 +80,7 @@ export default defineConfig({
       input: {
         markdown: resolve(__dirname, 'src/pages/markdown/index.html'),
         toc: resolve(__dirname, 'src/pages/toc/index.html'),
+        pagelabel: resolve(__dirname, 'src/pages/pagelabel/index.html'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
