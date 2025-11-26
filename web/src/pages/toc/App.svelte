@@ -194,18 +194,18 @@
   .title-input {
     width: 100%;
     padding: 8px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+    background: transparent;
     box-sizing: border-box;
     text-align: center;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #333;
   }
   
   .title-input:focus {
-    border-color: #1677ff;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
   }
 
   .editor-wrapper {

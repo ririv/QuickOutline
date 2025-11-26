@@ -179,12 +179,12 @@
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.5;
-    background-color: #f8f9fa;
+    background-color: transparent;
     color: #333;
     box-sizing: border-box;
   }
   
   textarea:focus {
-    background-color: #fff;
+    background-color: transparent;
   }
 </style>
