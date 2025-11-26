@@ -2,11 +2,25 @@
     import TextSubView from '../../components/bookmark/TextSubView.svelte';
     import TreeSubView from '../../components/bookmark/TreeSubView.svelte';
     import BookmarkBottomPane from '../../components/bookmark/BookmarkBottomPane.svelte';
+    import MessageContainer from '../../components/common/MessageContainer.svelte';
+    import { messageStore } from '@/stores/messageStore';
     
     type View = 'text' | 'tree';
     let currentView = $state<View>('text');
 
+    function testMessages() {
+        messageStore.add('This is an info message.', 'INFO');
+        setTimeout(() => messageStore.add('This is a success message!', 'SUCCESS'), 300);
+        setTimeout(() => messageStore.add('This is a warning message, be careful, this is a long message to test wrapping.', 'WARNING'), 600);
+        setTimeout(() => messageStore.add('This is an error message.', 'ERROR'), 900);
+    }
+
 </script>
+
+<MessageContainer />
+
+<!-- Temporary test button -->
+<button onclick={testMessages} style="position:fixed; top: 10px; right: 10px; z-index: 9999;">Test Msgs</button>
 
 <div class="bookmark-tab-container">
     <main class="main-content">

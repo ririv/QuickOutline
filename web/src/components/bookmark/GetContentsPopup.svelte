@@ -4,29 +4,38 @@
     interface Props {
         triggerEl: HTMLElement;
         onSelect: (type: 'bookmark' | 'toc') => void;
+        selected: 'bookmark' | 'toc'; // Controlled prop
     }
-    let { triggerEl, onSelect }: Props = $props();
+    let { triggerEl, onSelect, selected }: Props = $props();
 
-    let selected = $state('bookmark');
+    let currentSelection = $state(selected); // Internal state, controlled by prop
 
-    function handleSelect(type: 'bookmark' | 'toc') {
-        selected = type;
-        onSelect(type);
-    }
+    // Update parent when internal selection changes
+    $effect(() => {
+        if (currentSelection !== selected) { // Only call onSelect if internal state truly changed
+             onSelect?.(currentSelection);
+        }
+    });
 
+    // Update internal state if parent's selected prop changes
+    $effect(() => {
+        if (selected !== currentSelection) {
+            currentSelection = selected;
+        }
+    });
 </script>
 
 <ArrowPopup placement="top" {triggerEl} padding="15px">
     <div class="popup-content">
         <span class="title">Get Contents From</span>
-        <div class="radio-group">
-            <label class:selected={selected === 'bookmark'}>
-                <input type="radio" name="get-contents" value="bookmark" bind:group={selected} onchange={() => handleSelect('bookmark')} />
-                From Bookmark
+        <div class="radio-button-group">
+            <label class="radio-button-label-wrapper">
+                <input type="radio" name="get-contents" value="bookmark" bind:group={currentSelection} />
+                <span class="radio-button-label {currentSelection === 'bookmark' ? 'active' : ''}">From Bookmark</span>
             </label>
-            <label class:selected={selected === 'toc'}>
-                <input type="radio" name="get-contents" value="toc" bind:group={selected} onchange={() => handleSelect('toc')} />
-                From ToC
+            <label class="radio-button-label-wrapper">
+                <input type="radio" name="get-contents" value="toc" bind:group={currentSelection} />
+                <span class="radio-button-label {currentSelection === 'toc' ? 'active' : ''}">From ToC</span>
             </label>
         </div>
     </div>
@@ -37,31 +46,48 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
+        align-items: center;
     }
-    .radio-group {
-        display: flex;
-        gap: 10px;
-        background-color: #f5f7fa;
+    .radio-button-group {
+        display: inline-flex;
+        border: 1px solid #d9d9d9;
         border-radius: 6px;
-        padding: 4px;
+        overflow: hidden;
     }
-    .radio-group label {
-        flex: 1;
-        padding: 4px 10px;
-        border-radius: 4px;
+    .radio-button-group label {
+        position: relative;
+        flex: 1 1 0%; /* Make buttons equal width, explicitly setting flex-basis to 0 */
+        display: flex; /* Make label a flex container */
+        justify-content: center; /* Center content within label */
+    }
+    .radio-button-group label:not(:last-child) .radio-button-label {
+        border-right: 1px solid #d9d9d9;
+    }
+    .radio-button-label {
+        display: block;
+        padding: 4px 15px;
         cursor: pointer;
-        text-align: center;
         font-size: 13px;
         transition: all 0.2s;
-        border: 1px solid transparent;
+        background-color: #fff;
+        color: #606266;
+        text-align: center; /* Center the text */
+        width: 100%; /* Force span to fill parent label's width */
     }
-    .radio-group label.selected {
-        background-color: white;
-        border-color: #dcdfe6;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        font-weight: 500;
+    .radio-button-label:hover {
+        color: var(--el-color-primary);
+    }
+    .radio-button-label.active {
+        background-color: var(--el-color-primary);
+        color: white;
     }
     input[type="radio"] {
-        display: none;
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .radio-button-label-wrapper {
+        width: 50%; /* Ensure equal width for each label wrapper */
     }
 </style>

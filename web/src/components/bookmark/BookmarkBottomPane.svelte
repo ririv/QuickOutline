@@ -7,16 +7,18 @@
     import GetContentsPopup from './GetContentsPopup.svelte';
     import SetContentsPopup from './SetContentsPopup.svelte';
     import type { ViewScaleType } from './SetContentsPopup.svelte';
+    import GraphButton from '../controls/GraphButton.svelte';
 
     interface Props {
         view: 'text' | 'tree';
     }
     let { view = $bindable() }: Props = $props();
 
-    let activePopup = $state<'get' | 'set' | null>(null);
-    let getContentsBtnEl: HTMLElement;
-    let setContentsBtnEl: HTMLElement;
+    let activePopup = $state<'get' | 'set' | null>('get'); // Revert to normal state
+    let getContentsBtnEl = $state<HTMLElement>();
+    let setContentsBtnEl = $state<HTMLElement>();
     let hideTimer: number | null = null;
+    let getContentsPopupSelected = $state<'bookmark' | 'toc'>('bookmark'); // State for GetContentsPopup selection
 
     function toggleView() {
         view = view === 'text' ? 'tree' : 'text';
@@ -34,8 +36,9 @@
     }
 
     function handleGetContentsSelect(type: 'bookmark' | 'toc') {
-        console.log('Get contents from:', type);
-        activePopup = null;
+        getContentsPopupSelected = type; // Update the state in parent
+        console.log('Get contents from:', getContentsPopupSelected);
+        // activePopup = null; // DO NOT close popup on select, hover logic will handle it.
         // TODO: post event
     }
 
@@ -47,20 +50,24 @@
 </script>
 
 <div class="bottom-pane">
-    <button class="graph-button graph-button-important" title="Delete">
+    <GraphButton className="graph-button-important" title="Delete">
         <img src={trashIcon} alt="Delete" />
-    </button>
+    </GraphButton>
     
-    <div class="popup-wrapper" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
+    <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
         <button class="my-button plain-button-primary" bind:this={getContentsBtnEl}>
             Get Contents
         </button>
         {#if activePopup === 'get' && getContentsBtnEl}
-            <GetContentsPopup triggerEl={getContentsBtnEl} onSelect={handleGetContentsSelect} />
+            <GetContentsPopup 
+                triggerEl={getContentsBtnEl} 
+                onSelect={handleGetContentsSelect} 
+                selected={getContentsPopupSelected}
+            />
         {/if}
     </div>
 
-    <div class="popup-wrapper" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
+    <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
         <button class="my-button plain-button-important" bind:this={setContentsBtnEl}>
             Set Contents
         </button>
@@ -73,14 +80,14 @@
 
     <div class="spacer"></div>
 
-    <button class="graph-button" title="Switch View" onclick={toggleView}>
+    <GraphButton title="Switch View" onclick={toggleView}>
         {#if view === 'text'}
             <img src={treeDiagramIcon} alt="Tree View" />
         {:else}
             <img src={textEditIcon} alt="Text View" />
         {/if}
         <img src={switchIcon} alt="Switch" style="margin-left: 5px;" />
-    </button>
+    </GraphButton>
 </div>
 
 <style>

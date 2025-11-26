@@ -3,6 +3,7 @@
     import fitToHeightIcon from '@/assets/icons/fit-to-height.svg';
     import fitToWidthIcon from '@/assets/icons/fit-to-width.svg';
     import actualSizeIcon from '@/assets/icons/actual-size.svg';
+    import GraphButton from '../controls/GraphButton.svelte';
 
     export type ViewScaleType = 'NONE' | 'FIT_TO_HEIGHT' | 'FIT_TO_WIDTH' | 'ACTUAL_SIZE';
 
@@ -35,15 +36,15 @@
     <div class="popup-content">
         <span class="title">Set Page View Mode</span>
         <div class="icon-toggle-group">
-            <button class="graph-button {selected === 'FIT_TO_HEIGHT' ? 'active' : ''}" onclick={() => handleSelect('FIT_TO_HEIGHT')}>
+            <GraphButton className={selected === 'FIT_TO_HEIGHT' ? 'active' : ''} onclick={() => handleSelect('FIT_TO_HEIGHT')}>
                 <img src={fitToHeightIcon} alt="Fit to Height"/>
-            </button>
-            <button class="graph-button {selected === 'FIT_TO_WIDTH' ? 'active' : ''}" onclick={() => handleSelect('FIT_TO_WIDTH')}>
+            </GraphButton>
+            <GraphButton className={selected === 'FIT_TO_WIDTH' ? 'active' : ''} onclick={() => handleSelect('FIT_TO_WIDTH')}>
                 <img src={fitToWidthIcon} alt="Fit to Width"/>
-            </button>
-            <button class="graph-button {selected === 'ACTUAL_SIZE' ? 'active' : ''}" onclick={() => handleSelect('ACTUAL_SIZE')}>
+            </GraphButton>
+            <GraphButton className={selected === 'ACTUAL_SIZE' ? 'active' : ''} onclick={() => handleSelect('ACTUAL_SIZE')}>
                 <img src={actualSizeIcon} alt="Actual Size"/>
-            </button>
+            </GraphButton>
         </div>
         <div class="label-display">{label}</div>
     </div>
@@ -60,16 +61,7 @@
         display: flex;
         gap: 8px;
     }
-    .icon-toggle-group .graph-button {
-        padding: 8px;
-        border-radius: 6px;
-    }
-    .icon-toggle-group .graph-button.active {
-        background-color: var(--el-color-plain-primary-bg);
-    }
-    .icon-toggle-group .graph-button.active img {
-        opacity: 1;
-    }
+    /* Removed redundant styles, as GraphButton handles them */
     .label-display {
         font-size: 12px;
         color: #606266;
