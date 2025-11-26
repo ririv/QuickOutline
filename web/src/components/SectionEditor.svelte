@@ -55,7 +55,7 @@
 
 </script>
 
-<div class="section-editor {type}">
+<div class="section-editor {type}" class:show-line={config.drawLine}>
   <div class="toolbar">
     <!-- Absolute Positions -->
     <div class="pos-group">
@@ -180,117 +180,286 @@
 <style>
   .section-editor {
     background: #fff;
-    border-bottom: 1px solid #eee;
     padding: 8px 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-  }
-
-  .section-editor.footer {
-    border-bottom: none;
-    border-top: 1px solid #eee;
-    flex-direction: column-reverse;
-  }
-  
-  .toolbar {
-    display: flex;
-    align-items: center;
-    /* margin-bottom removed, using gap in parent */
-  }
-
-  .pos-group {
-    display: flex;
-    background: #e1e4e8;
-    border-radius: 4px;
-    padding: 2px;
-  }
-
-  .divider {
-    width: 1px;
-    height: 20px;
-    background-color: #d0d4d9;
-    margin: 0 10px;
-  }
-
-  .pos-btn {
-    background: transparent;
-    border: none;
-    padding: 4px 8px;
-    cursor: pointer;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #666;
     position: relative;
-    transition: all 0.2s;
   }
 
-  .pos-btn:hover {
-    background: rgba(255,255,255,0.5);
-    color: #333;
-  }
+    /* Bottom line for Header */
 
-  .pos-btn.active {
-    background: #fff;
-    color: #1677ff;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  }
+    .section-editor::after {
 
-  .dot {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 4px;
-    height: 4px;
-    background-color: #ff4d4f;
-    border-radius: 50%;
-  }
+      content: '';
+
+      position: absolute;
+
+      bottom: 0;
+
+      left: 32px;
+
+      width: calc(100% - 64px);
+
+      height: 1px;
+
+      background: #eee;
+
+      transition: background-color 0.2s;
+
+    }
+
   
-  .relative-group {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
+
+    .section-editor.footer {
+
+      flex-direction: column-reverse;
+
+    }
+
+    
+
+    /* Hide bottom line for Footer */
+
+    .section-editor.footer::after {
+
+      display: none;
+
+    }
+
   
-  .btn-wrapper {
+
+    /* Top line for Footer */
+
+    .section-editor.footer::before {
+
+      content: '';
+
+      position: absolute;
+
+      top: 0;
+
+      left: 32px;
+
+      width: calc(100% - 64px);
+
+      height: 1px;
+
+      background: #eee;
+
+      transition: background-color 0.2s;
+
+    }
+
+  
+
+    .section-editor.show-line::after {
+
+      background: #333;
+
+    }
+
+  
+
+    .section-editor.footer.show-line::before {
+
+      background: #333;
+
+    }
+
+    
+
+    .toolbar {
+
+      display: flex;
+
+      align-items: center;
+
+      /* margin-bottom removed, using gap in parent */
+
+    }
+
+  
+
+    .pos-group {
+
+      display: flex;
+
+      background: #e1e4e8;
+
+      border-radius: 4px;
+
+      padding: 2px;
+
+    }
+
+  
+
+    .divider {
+
+      width: 1px;
+
+      height: 20px;
+
+      background-color: #d0d4d9;
+
+      margin: 0 10px;
+
+    }
+
+  
+
+    .pos-btn {
+
+      background: transparent;
+
+      border: none;
+
+      padding: 4px 8px;
+
+      cursor: pointer;
+
+      border-radius: 3px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      color: #666;
+
       position: relative;
-  }
 
-  /* Hide popup by default */
-  .btn-wrapper :global(.hover-popup) {
-      visibility: hidden;
-      opacity: 0;
       transition: all 0.2s;
-      pointer-events: none;
-  }
 
-  /* Show popup on hover */
-  .btn-wrapper:hover :global(.hover-popup) {
-      visibility: visible;
-      opacity: 1;
-  }
+    }
 
-  .input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
+  
 
-  input {
-    width: 100%;
-    padding: 10px 12px;
-    padding-right: 40px; /* Space for toggle-line-btn */
-    border: none;
-    background: transparent;
-    border-radius: 4px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 13px;
-    box-sizing: border-box;
-    transition: background-color 0.2s;
-    user-select: text;
-  }
+    .pos-btn:hover {
+
+      background: rgba(255,255,255,0.5);
+
+      color: #333;
+
+    }
+
+  
+
+    .pos-btn.active {
+
+      background: #fff;
+
+      color: #1677ff;
+
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+
+    }
+
+  
+
+    .dot {
+
+      position: absolute;
+
+      top: 2px;
+
+      right: 2px;
+
+      width: 4px;
+
+      height: 4px;
+
+      background-color: #ff4d4f;
+
+      border-radius: 50%;
+
+    }
+
+    
+
+    .relative-group {
+
+      position: relative;
+
+      display: flex;
+
+      align-items: center;
+
+    }
+
+    
+
+    .btn-wrapper {
+
+        position: relative;
+
+    }
+
+  
+
+    /* Hide popup by default */
+
+    .btn-wrapper :global(.hover-popup) {
+
+        visibility: hidden;
+
+        opacity: 0;
+
+        transition: all 0.2s;
+
+        pointer-events: none;
+
+    }
+
+  
+
+    /* Show popup on hover */
+
+    .btn-wrapper:hover :global(.hover-popup) {
+
+        visibility: visible;
+
+        opacity: 1;
+
+    }
+
+  
+
+    .input-wrapper {
+
+      position: relative;
+
+      display: flex;
+
+      align-items: center;
+
+    }
+
+    input {
+
+      width: 100%;
+
+      padding: 10px 40px 10px 22px;
+
+      border: none;
+
+      background: transparent;
+
+      border-radius: 4px;
+
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+
+      font-size: 13px;
+
+      box-sizing: border-box;
+
+      transition: background-color 0.2s;
+
+      user-select: text;
+
+    }
 
   input:focus {
     outline: none;

@@ -189,11 +189,22 @@
 
   .header {
     padding: 10px;
-    border-bottom: 1px solid #eee;
+    position: relative;
   }
+  
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 32px;
+    width: calc(100% - 64px);
+    height: 1px;
+    background: #eee;
+  }
+/* ... middle content ... */
   .title-input {
     width: 100%;
-    padding: 16px 24px;
+    padding: 16px 22px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 20px;
     font-weight: bold;

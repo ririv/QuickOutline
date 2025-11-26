@@ -175,7 +175,7 @@
     resize: none;
     border: none;
     outline: none;
-    padding: 16px 24px;
+    padding: 16px 22px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.5;
