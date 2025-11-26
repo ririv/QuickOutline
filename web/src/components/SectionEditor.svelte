@@ -179,20 +179,24 @@
 
 <style>
   .section-editor {
-    background: #f8f9fa;
-    border-bottom: 1px solid #e1e4e8;
+    background: #fff;
+    border-bottom: 1px solid #eee;
     padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .section-editor.footer {
     border-bottom: none;
-    border-top: 1px solid #e1e4e8;
+    border-top: 1px solid #eee;
+    flex-direction: column-reverse;
   }
   
   .toolbar {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    /* margin-bottom removed, using gap in parent */
   }
 
   .pos-group {
@@ -276,19 +280,25 @@
 
   input {
     width: 100%;
-    padding: 6px 8px;
-    padding-right: 80px; /* Increased space for controls */
-    border: 1px solid #ddd;
+    padding: 10px 12px;
+    padding-right: 40px; /* Space for toggle-line-btn */
+    border: none;
+    background: transparent;
     border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 13px;
     box-sizing: border-box;
-    transition: border 0.2s;
+    transition: background-color 0.2s;
     user-select: text;
   }
 
   input:focus {
     outline: none;
-    border-color: #1677ff;
+    background-color: transparent;
+  }
+  
+  input:hover {
+    background-color: rgba(0, 0, 0, 0.02);
   }
   
   .controls-right {
@@ -298,7 +308,7 @@
       bottom: 0;
       display: flex;
       align-items: center;
-      padding-right: 6px; /* Inner padding */
+      padding-right: 0px; /* Inner padding adjusted for alignment */
       gap: 6px;
   }
   
@@ -353,6 +363,7 @@
       display: flex;
       align-items: center;
       margin-left: auto;
+      margin-right: 3px;
   }
 
   .tooltip {
