@@ -56,6 +56,18 @@
 </script>
 
 <div class="section-editor {type}" class:show-line={config.drawLine}>
+  {#if type === 'footer'}
+    <!-- Footer Top Line Trigger -->
+    <div 
+      class="divider-line-trigger footer-line" 
+      onclick={toggleDrawLine} 
+      role="button" 
+      tabindex="0"
+      onkeydown={(e) => e.key === 'Enter' && toggleDrawLine()}
+      title={config.drawLine ? "点击移除分割线" : "点击添加分割线"}
+    ></div>
+  {/if}
+
   <div class="toolbar">
     <!-- Absolute Positions -->
     <div class="pos-group">
@@ -140,26 +152,13 @@
       </div>
     </div>
 
-    {#if type === 'footer'}
-      <div class="tooltip-container">
-          <span class="hint-icon">?</span>
-          <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
-      </div>
-    {/if}
-  </div>
-    
-  <div class="input-wrapper">
-    <input 
-      type="text" 
-      bind:value={config[activePos]} 
-      oninput={handleInput}
-      style:text-align={activePos === 'right' ? 'right' : activePos === 'center' ? 'center' : 'left'}
-      style:padding-left={activePos === 'center' ? '40px' : '22px'}
-      placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) (e.g. &lbrace;p&rbrace;)..." 
-    />
-    
-    <div class="controls-right">
-      <!-- Divider Line Toggle -->
+    <div class="right-tools">
+            {#if type === 'footer'}
+        <div class="tooltip-container">
+            <span class="hint-icon">?</span>
+            <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
+        </div>
+      {/if}
       <button 
         class="toggle-line-btn" class:active={config.drawLine}
         onclick={toggleDrawLine} 
@@ -175,111 +174,117 @@
           {/if}
         </svg>
       </button>
+
+
     </div>
   </div>
+    
+  <div class="input-wrapper">
+    <input 
+      type="text" 
+      bind:value={config[activePos]} 
+      oninput={handleInput}
+      style:text-align={activePos === 'right' ? 'right' : activePos === 'center' ? 'center' : 'left'}
+      style:padding-left={activePos === 'center' ? '40px' : '22px'}
+      placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) (e.g. &lbrace;p&rbrace;)..." 
+    />
+  </div>
+
+  {#if type === 'header'}
+    <!-- Header Bottom Line Trigger -->
+    <div 
+      class="divider-line-trigger header-line" 
+      onclick={toggleDrawLine} 
+      role="button" 
+      tabindex="0"
+      onkeydown={(e) => e.key === 'Enter' && toggleDrawLine()}
+      title={config.drawLine ? "点击移除分割线" : "点击添加分割线"}
+    ></div>
+  {/if}
 </div> <!-- /section-editor -->
 
 <style>
-  .section-editor {
-    background: #fff;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
+    .section-editor {
+      background: #fff;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+  
+    /* Trigger area for line clicking */
+    .divider-line-trigger {
+      position: absolute;
+      left: 32px;
+      width: calc(100% - 64px);
+      height: 9px; /* Larger hit area */
+      cursor: pointer;
+      z-index: 1;
+    }
+    
+      /* Visual Line inside trigger */
+      .divider-line-trigger::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 1px;
+                background: #eee;
+                transition: background-color 0.2s;
+              }
+              
+              .section-editor.footer::before:hover { /* Hover for non-active state */
+                background: #ccc;
+              }          
+          .section-editor::after:hover { /* Hover for non-active state */
+            background: #ccc;
+          }    
+      /* Hover State */
+      .divider-line-trigger:hover::before {
+        background: #bbb;
+      }    
+    /* Header line at bottom */
+    .header-line {
+      bottom: 0;
+    }
+    .header-line::before {
+      bottom: 0;
+    }
+  
+    /* Footer line at top */
+    .footer-line {
+      top: 0;
+    }
+    .footer-line::before {
+      top: 0;
+    }
+  
+    .section-editor.footer {
+      flex-direction: column-reverse;
+    }
+  
+      /* Active State */
+      .section-editor.show-line .divider-line-trigger::before {
+        background: #333;
+      }
+      
+  .section-editor.footer.show-line::before {
+    background: #333;
   }
 
-    /* Bottom line for Header */
-
-    .section-editor::after {
-
-      content: '';
-
-      position: absolute;
-
-      bottom: 0;
-
-      left: 32px;
-
-      width: calc(100% - 64px);
-
-      height: 1px;
-
-      background: #eee;
-
-      transition: background-color 0.2s;
-
-    }
-
-  
-
-    .section-editor.footer {
-
-      flex-direction: column-reverse;
-
-    }
-
-    
-
-    /* Hide bottom line for Footer */
-
-    .section-editor.footer::after {
-
-      display: none;
-
-    }
-
-  
-
-    /* Top line for Footer */
-
-    .section-editor.footer::before {
-
-      content: '';
-
-      position: absolute;
-
-      top: 0;
-
-      left: 32px;
-
-      width: calc(100% - 64px);
-
-      height: 1px;
-
-      background: #eee;
-
-      transition: background-color 0.2s;
-
-    }
-
-  
-
-    .section-editor.show-line::after {
-
-      background: #333;
-
-    }
-
-  
-
-    .section-editor.footer.show-line::before {
-
-      background: #333;
-
-    }
-
+  /* Hover for active state */
+  .section-editor.show-line::after:hover,
+  .section-editor.footer.show-line::before:hover {
+    background: #ccc;
+  }
     
 
     .toolbar {
-
       display: flex;
-
       align-items: center;
       padding-left: 20px;
-
-      /* margin-bottom removed, using gap in parent */
-
+      padding-right: 20px;
     }
 
   
@@ -441,27 +446,16 @@
     }
 
     input {
-
       width: 100%;
-
-      padding: 10px 40px 10px 22px;
-
+      padding: 10px 22px 10px 22px;
       border: none;
-
       background: transparent;
-
       border-radius: 4px;
-
       font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-
       font-size: 13px;
-
       box-sizing: border-box;
-
       transition: background-color 0.2s;
-
       user-select: text;
-
     }
 
   input:focus {
@@ -471,17 +465,6 @@
   
   input:hover {
     background-color: rgba(0, 0, 0, 0.02);
-  }
-  
-  .controls-right {
-      position: absolute;
-      right: 0px; /* Align to right edge of input-wrapper */
-      top: 0;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      padding-right: 0px; /* Inner padding adjusted for alignment */
-      gap: 6px;
   }
   
   .toggle-line-btn {
@@ -516,6 +499,13 @@
       stroke: currentColor; /* Inherit color from parent button */
   }
 
+  .right-tools {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .hint-icon {
     font-size: 12px;
     color: #999;
@@ -534,8 +524,6 @@
       position: relative; 
       display: flex;
       align-items: center;
-      margin-left: auto;
-      margin-right: 3px;
   }
 
   .tooltip {
