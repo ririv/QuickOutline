@@ -113,8 +113,8 @@
   }
   
   .collapse-trigger.hover .indicator-line {
-      background-color: #1677ff;
-      opacity: 0.3;
+      background-color: rgba(22, 119, 255, 0.3);
+      /* opacity removed to prevent flash */
   }
   .collapse-trigger.top .indicator-line { bottom: 0; }
   .collapse-trigger.bottom .indicator-line { top: 0; }
