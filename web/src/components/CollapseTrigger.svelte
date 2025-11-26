@@ -31,13 +31,14 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div 
-  class="collapse-trigger {position} {expanded ? 'expanded' : ''} {isHovered ? 'hover' : ''}" 
+  class="collapse-trigger {position} {expanded ? 'expanded' : ''} {isHovered ? 'hover' : ''} {hasContent ? 'has-content-line' : ''}" 
   onclick={ontoggle}
   onmouseenter={handleMouseEnter}
   onmouseleave={handleMouseLeave}
   title={expanded ? `Hide ${label}` : `Show ${label}`}
 >
   <div class="indicator-line"></div>
+  <div class="static-divider"></div>
   
   <!-- Persistent hint dot (centered) when collapsed and not hovered -->
   <div class="center-dot" class:visible={hasContent && !expanded}></div>
@@ -81,12 +82,12 @@
 
   /* Top Trigger Styles */
   .collapse-trigger.top {
-      border-bottom-color: #eee;
+      /* Border removed */
   }
   
   /* Bottom Trigger Styles */
   .collapse-trigger.bottom {
-      border-top-color: #eee;
+      /* Border removed */
   }
 
   /* Hover State (Managed by JS) */
@@ -117,6 +118,29 @@
   }
   .collapse-trigger.top .indicator-line { bottom: 0; }
   .collapse-trigger.bottom .indicator-line { top: 0; }
+
+  /* Static Divider (Short, aligned line) */
+  .static-divider {
+      position: absolute;
+      left: 32px;
+      width: calc(100% - 64px);
+      height: 1px;
+      background-color: #eee;
+      transition: opacity 0.2s;
+      pointer-events: none;
+  }
+  .collapse-trigger.top .static-divider { bottom: 0; }
+  .collapse-trigger.bottom .static-divider { top: 0; }
+
+  .collapse-trigger.has-content-line .static-divider {
+      background-color: #333;
+  }
+
+  /* Hide static divider on interaction to show indicator line */
+  .collapse-trigger.hover .static-divider,
+  .collapse-trigger.expanded .static-divider {
+      opacity: 0;
+  }
 
   .content {
       display: flex;
