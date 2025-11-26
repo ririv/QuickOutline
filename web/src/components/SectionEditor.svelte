@@ -128,7 +128,15 @@
             onclick={() => setActive('inner')} 
             title="Inner Side"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="3" x2="12" y2="21" stroke-opacity="0.6"></line>
+              <line x1="5" y1="7" x2="10" y2="7"></line>
+              <line x1="7" y1="12" x2="10" y2="12"></line>
+              <line x1="5" y1="17" x2="10" y2="17"></line>
+              <line x1="14" y1="7" x2="19" y2="7"></line>
+              <line x1="14" y1="12" x2="17" y2="12"></line>
+              <line x1="14" y1="17" x2="19" y2="17"></line>
+            </svg>
             {#if hasContent('inner')}<span class="dot"></span>{/if}
           </button>
           <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup" triggerEl={innerBtnEl}>
@@ -143,7 +151,15 @@
             onclick={() => setActive('outer')} 
             title="Outer Side"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="3" x2="12" y2="21" stroke-opacity="0.6"></line>
+              <line x1="2" y1="7" x2="7" y2="7"></line>
+              <line x1="2" y1="12" x2="5" y2="12"></line>
+              <line x1="2" y1="17" x2="7" y2="17"></line>
+              <line x1="17" y1="7" x2="22" y2="7"></line>
+              <line x1="19" y1="12" x2="22" y2="12"></line>
+              <line x1="17" y1="17" x2="22" y2="17"></line>
+            </svg>
             {#if hasContent('outer')}<span class="dot"></span>{/if}
           </button>
           <ArrowPopup placement={type === 'header' ? 'bottom' : 'top'} className="hover-popup" triggerEl={outerBtnEl}>
