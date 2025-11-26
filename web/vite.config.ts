@@ -48,6 +48,16 @@ export default defineConfig({
            console.log('Moved pagelabel/index.html to pagelabel-tab.html');
         }
         
+        // 移动并重命名 bookmark/index.html -> bookmark-tab.html
+        const bookmarkHtmlSrc = resolve(distDir, 'pages/bookmark/index.html');
+        const bookmarkHtmlDest = resolve(distDir, 'bookmark-tab.html');
+        if (fs.existsSync(bookmarkHtmlSrc)) {
+            fs.renameSync(bookmarkHtmlSrc, bookmarkHtmlDest);
+            // 清理空目录
+            fs.rmSync(resolve(distDir, 'pages/bookmark'), { recursive: true, force: true });
+            console.log('Moved bookmark/index.html to bookmark-tab.html');
+        }
+
         // 清理 pages 空目录 (如果存在)
         if (fs.existsSync(resolve(distDir, 'pages'))) {
             fs.rmSync(resolve(distDir, 'pages'), { recursive: true, force: true });
@@ -81,6 +91,7 @@ export default defineConfig({
         markdown: resolve(__dirname, 'src/pages/markdown/index.html'),
         toc: resolve(__dirname, 'src/pages/toc/index.html'),
         pagelabel: resolve(__dirname, 'src/pages/pagelabel/index.html'),
+        bookmark: resolve(__dirname, 'src/pages/bookmark/index.html'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
