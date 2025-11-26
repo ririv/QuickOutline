@@ -153,6 +153,8 @@
       type="text" 
       bind:value={config[activePos]} 
       oninput={handleInput}
+      style:text-align={activePos === 'right' ? 'right' : activePos === 'center' ? 'center' : 'left'}
+      style:padding-left={activePos === 'center' ? '40px' : '22px'}
       placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) (e.g. &lbrace;p&rbrace;)..." 
     />
     
