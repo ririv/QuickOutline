@@ -6,7 +6,8 @@
 
   let { selected = 'None', onselect }: Props = $props();
 
-  const styles = ['None', 'Decimal', 'Roman Lower', 'Roman Upper', 'Alpha Lower', 'Alpha Upper'];
+  const styles = ['None', '1, 2, 3, ...', 'i, ii, iii, ...', 'I, II, III, ...', 'a, b, c, ...', 'A, B, C, ...'];
+  
 </script>
 
 <div class="style-list">

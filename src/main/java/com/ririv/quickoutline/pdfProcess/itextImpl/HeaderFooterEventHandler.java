@@ -14,6 +14,7 @@ import com.ririv.quickoutline.model.SectionConfig;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas; // Added import
+import com.ririv.quickoutline.pdfProcess.numbering.Numbering;
 
 import java.util.function.BiConsumer;
 
@@ -21,6 +22,7 @@ import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlph
 import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlphabetNumberUpperCase;
 import static com.itextpdf.kernel.numbering.RomanNumbering.toRomanLowerCase;
 import static com.itextpdf.kernel.numbering.RomanNumbering.toRomanUpperCase;
+import static com.ririv.quickoutline.pdfProcess.numbering.Numbering.formatPageNumber;
 
 /**
  * Shared EventHandler for drawing headers and footers in iText PDFs.
@@ -69,7 +71,7 @@ public class HeaderFooterEventHandler extends AbstractPdfDocumentEventHandler {
         if (pageNum >= startPageNum && pageNum < startPageNum + totalTocPages) {
             // Current page number relative to start (for placeholders like {p})
             int currentRelativePageNum = pageNum - startPageNum + 1;
-            String formattedPageNumber = formatPageNumber(currentRelativePageNum);
+            String formattedPageNumber = formatPageNumber(style, currentRelativePageNum, "");
             
             Canvas canvas = new Canvas(docEvent.getPage(), page.getPageSize());
             canvas.setFont(font)
@@ -167,16 +169,5 @@ public class HeaderFooterEventHandler extends AbstractPdfDocumentEventHandler {
             drawText.accept(config.outer(), TextAlignment.LEFT); // Outer is Left
         }
     }
-    
-    private String formatPageNumber(int number) {
-        if (style == null) return String.valueOf(number);
-        return switch (style) {
-            case DECIMAL_ARABIC_NUMERALS -> String.valueOf(number);
-            case UPPERCASE_ROMAN_NUMERALS -> toRomanUpperCase(number);
-            case LOWERCASE_ROMAN_NUMERALS -> toRomanLowerCase(number);
-            case UPPERCASE_LETTERS -> toLatinAlphabetNumberUpperCase(number);
-            case LOWERCASE_LETTERS -> toLatinAlphabetNumberLowerCase(number);
-            default -> String.valueOf(number);
-        };
-    }
+
 }

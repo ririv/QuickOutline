@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.pdfProcess;
+package com.ririv.quickoutline.pdfProcess.numbering;
 
 public class NumberingImpl implements Numbering {
 

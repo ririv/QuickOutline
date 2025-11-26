@@ -1,10 +1,8 @@
 package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.exception.InvalidPageLabelRuleException;
-import com.ririv.quickoutline.pdfProcess.Numbering;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.pdfProcess.PageLabelProcessor;
-import com.ririv.quickoutline.pdfProcess.itextImpl.ItextNumbering;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextPageLabelProcessor;
 
 import java.io.IOException;
@@ -12,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.ririv.quickoutline.pdfProcess.numbering.Numbering.formatPageNumber;
 
 
 public class PdfPageLabelService {
@@ -51,7 +51,7 @@ public class PdfPageLabelService {
             String label;
             if (currentRule != null) {
                 int pageOffset = i - currentRule.pageNum();
-                label = generateLabel(currentRule.numberingStyle(), currentRule.firstPage() + pageOffset, currentRule.labelPrefix());
+                label = formatPageNumber(currentRule.numberingStyle(), currentRule.firstPage() + pageOffset, currentRule.labelPrefix());
             } else {
                 // If no rule has been set yet (e.g., for pages before the first rule),
                 // use the default decimal numbering.
@@ -60,24 +60,6 @@ public class PdfPageLabelService {
             simulatedLabels.add(label);
         }
         return simulatedLabels;
-    }
-
-    private String generateLabel(PageLabel.PageLabelNumberingStyle style, int number, String prefix) {
-        if (style == null) { // Fallback for undefined or null styles
-            return (prefix != null ? prefix : "") + number;
-        }
-        String label;
-        Numbering numbering = new ItextNumbering();
-        switch (style) {
-            case DECIMAL_ARABIC_NUMERALS -> label = String.valueOf(number);
-            case UPPERCASE_ROMAN_NUMERALS -> label = numbering.toRomanUpperCase(number);
-            case LOWERCASE_ROMAN_NUMERALS -> label = numbering.toRomanLowerCase(number);
-            case UPPERCASE_LETTERS -> label = numbering.toLatinAlphabetNumberUpperCase(number);
-            case LOWERCASE_LETTERS -> label = numbering.toLatinAlphabetNumberLowerCase(number);
-            case NONE -> label = ""; // For NONE style, display nothing.
-            default -> label = String.valueOf(number);
-        }
-        return prefix != null ? prefix + label : label;
     }
 
 
