@@ -139,6 +139,13 @@
           </ArrowPopup>
       </div>
     </div>
+
+    {#if type === 'footer'}
+      <div class="tooltip-container">
+          <span class="hint-icon">?</span>
+          <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
+      </div>
+    {/if}
   </div>
     
   <div class="input-wrapper">
@@ -166,13 +173,6 @@
           {/if}
         </svg>
       </button>
-
-      {#if type === 'footer' && activePos !== 'left' && activePos !== 'inner'}
-        <div class="tooltip-container">
-            <span class="hint-icon">?</span>
-            <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
-        </div>
-      {/if}
     </div>
   </div>
 </div> <!-- /section-editor -->
@@ -335,12 +335,12 @@
   }
 
   .hint-icon {
-    font-size: 11px;
+    font-size: 12px;
     color: #999;
     border: 1px solid #ccc;
     border-radius: 50%;
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -352,6 +352,7 @@
       position: relative; 
       display: flex;
       align-items: center;
+      margin-left: auto;
   }
 
   .tooltip {
