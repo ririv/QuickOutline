@@ -305,17 +305,19 @@
 
   
 
-    .pos-group {
+      .pos-group {
 
-      display: flex;
+  
 
-      background: #e1e4e8;
+        display: flex;
 
-      border-radius: 4px;
+  
 
-      padding: 2px;
+        border-radius: 4px;
 
-    }
+  
+
+      }
 
   
 
@@ -361,25 +363,25 @@
 
   
 
-    .pos-btn:hover {
+      .pos-btn:hover {
 
-      background: rgba(255,255,255,0.5);
+        background: #f0f0f0;
 
-      color: #333;
+        color: #333;
 
-    }
+      }
 
   
 
-    .pos-btn.active {
+      .pos-btn.active {
 
-      background: #fff;
+        background: #e6f7ff;
 
-      color: #1677ff;
+        color: #1677ff;
 
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        box-shadow: none; /* Remove shadow as it might look weird without container bg */
 
-    }
+      }
 
   
 
