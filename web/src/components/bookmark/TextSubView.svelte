@@ -1,4 +1,5 @@
 <script lang="ts">
+    import StyledButton from '../controls/StyledButton.svelte';
     // Placeholder for TextSubView
 </script>
 
@@ -7,8 +8,8 @@
         <textarea placeholder="Enter bookmarks here..."></textarea>
     </div>
     <div class="sidebar">
-        <button class="my-button plain-button-primary">VSCode</button>
-        <button class="my-button plain-button-primary">Auto-Format</button>
+        <StyledButton type="primary">VSCode</StyledButton>
+        <StyledButton type="primary">Auto-Format</StyledButton>
 
         <div class="method-group">
             <label class="radio-button">

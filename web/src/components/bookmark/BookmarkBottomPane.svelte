@@ -8,6 +8,7 @@
     import SetContentsPopup from './SetContentsPopup.svelte';
     import type { ViewScaleType } from './SetContentsPopup.svelte';
     import GraphButton from '../controls/GraphButton.svelte';
+    import StyledButton from '../controls/StyledButton.svelte';
 
     interface Props {
         view: 'text' | 'tree';
@@ -55,9 +56,9 @@
     </GraphButton>
     
     <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
-        <button class="my-button plain-button-primary" bind:this={getContentsBtnEl}>
+        <StyledButton type="primary" bind:this={getContentsBtnEl}>
             Get Contents
-        </button>
+        </StyledButton>
         {#if activePopup === 'get' && getContentsBtnEl}
             <GetContentsPopup 
                 triggerEl={getContentsBtnEl} 
@@ -68,9 +69,9 @@
     </div>
 
     <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
-        <button class="my-button plain-button-important" bind:this={setContentsBtnEl}>
+        <StyledButton type="important" bind:this={setContentsBtnEl}>
             Set Contents
-        </button>
+        </StyledButton>
         {#if activePopup === 'set' && setContentsBtnEl}
             <SetContentsPopup triggerEl={setContentsBtnEl} onSelect={handleSetContentsSelect} />
         {/if}

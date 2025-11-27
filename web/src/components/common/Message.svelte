@@ -41,6 +41,7 @@
 </script>
 
 <div 
+    role="status"
     class="message {type.toLowerCase()}" 
     transition:slide|local={{duration: 300}}
     onmouseenter={pauseTimer}

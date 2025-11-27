@@ -5,6 +5,7 @@
     import { onMount } from 'svelte';
     import deleteIcon from '../../assets/icons/delete-item.svg';
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
+    import StyledButton from '../../components/controls/StyledButton.svelte';
 
     // Models
     interface PageLabelRule {
@@ -112,7 +113,7 @@
                 </div>
 
                 <div class="actions">
-                    <button class="my-button plain-button-primary" onclick={addRule}>Add Rule</button>
+                    <StyledButton type="primary" on:click={addRule}>Add Rule</StyledButton>
                 </div>
             </div>
 
@@ -135,7 +136,7 @@
             </div>
 
             <div class="bottom-actions">
-                 <button class="my-button plain-button-important" onclick={apply}>Set Page Label</button>
+                 <StyledButton type="important" on:click={apply}>Set Page Label</StyledButton>
             </div>
         </div>
         {/snippet}
