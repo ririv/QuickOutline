@@ -22,6 +22,7 @@
     }: Props = $props();
 
     let activePos: 'left' | 'center' | 'right' | 'inner' | 'outer' = $state('center');
+    let isButtonHovered = $state(false); // State for linked hover effect
 
     function setActive(pos: 'left' | 'center' | 'right' | 'inner' | 'outer') {
         activePos = pos;
@@ -60,6 +61,7 @@
     <!-- Footer Top Line Trigger -->
     <div
         class="divider-line-trigger footer-line"
+        class:force-hover={isButtonHovered}
         onclick={toggleDrawLine}
         role="button"
         tabindex="0"
@@ -203,6 +205,8 @@
       <button
           class="toggle-line-btn" class:active={config.drawLine}
           onclick={toggleDrawLine}
+          onmouseenter={() => isButtonHovered = true}
+          onmouseleave={() => isButtonHovered = false}
           title="Show Divider Line"
       >
         <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -240,6 +244,7 @@
     <!-- Header Bottom Line Trigger -->
     <div
         class="divider-line-trigger header-line"
+        class:force-hover={isButtonHovered}
         onclick={toggleDrawLine}
         role="button"
         tabindex="0"
@@ -289,7 +294,8 @@
     }
 
     /* Hover State */
-    .divider-line-trigger:hover::before {
+    .divider-line-trigger:hover::before,
+    .divider-line-trigger.force-hover::before {
         background: #bbb;
     }
 
@@ -326,7 +332,8 @@
 
     /* Hover for active state */
     .section-editor.show-line::after:hover,
-    .section-editor.footer.show-line::before:hover {
+    .section-editor.footer.show-line::before:hover,
+    .section-editor.show-line .divider-line-trigger.force-hover::before {
         background: #ccc;
     }
 
