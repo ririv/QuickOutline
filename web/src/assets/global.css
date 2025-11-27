@@ -44,6 +44,11 @@ body {
     user-select: none;
 }
 
+#app {
+    width: 100%;
+    height: 100%;
+}
+
 /* Allow text selection in editable fields */
 input, textarea, [contenteditable="true"] {
     -webkit-user-select: text;
