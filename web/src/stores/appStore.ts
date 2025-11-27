@@ -5,7 +5,8 @@ export enum FnTab {
     tocGenerator = 'tocGenerator',
     label = 'label',
     preview = 'preview',
-    markdown = 'markdown'
+    markdown = 'markdown',
+    settings = 'settings'
 }
 
 function createAppStore() {
