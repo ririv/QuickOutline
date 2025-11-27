@@ -9,16 +9,31 @@
     rippleColor?: RippleColor;
     class?: string;
     children?: Snippet;
+    element?: HTMLButtonElement; // Define 'element' as a bindable prop
     [key:string]: any;
   }
 
   let {
     type,
-    rippleColor = 'light', // Default to dark ripple for light buttons
+    rippleColor = 'light', // Default to light ripple for these button types
     class: className,
     children,
+    element = $bindable(), // Use $bindable() to make the 'element' prop two-way bindable
     ...rest
   }: Props = $props();
+
+  // --- Tailwind CSS class definitions ---
+  
+  // Base styles that correspond to the old .my-button class
+  const baseClasses = 'h-8 px-[15px] text-xs font-medium rounded inline-flex justify-center items-center whitespace-nowrap border select-none relative overflow-hidden transition-colors duration-200';
+
+  // Type-specific styles
+  const typeClasses = {
+    primary: 'bg-el-plain-primary-bg text-el-primary border-el-plain-primary-border hover:bg-el-plain-primary-bg-hover',
+    important: 'bg-el-plain-important-bg text-el-important border-el-plain-important-border hover:bg-el-plain-important-bg-hover'
+  };
+  
+  // --- Ripple Effect Logic (unchanged) ---
 
   function rippleEffect(event: MouseEvent) {
     const btn = event.currentTarget as HTMLElement;
@@ -30,10 +45,8 @@
     circle.style.left = `${event.clientX - btn.getBoundingClientRect().left - radius}px`;
     circle.style.top = `${event.clientY - btn.getBoundingClientRect().top - radius}px`;
     
-    // Add classes for styling
     circle.classList.add('ripple', rippleColor);
     
-    // Remove any existing ripple to ensure only one is active
     const oldRipple = btn.querySelector('.ripple');
     if (oldRipple) {
       oldRipple.remove();
@@ -41,7 +54,6 @@
     
     btn.appendChild(circle);
 
-    // Clean up ripple after animation
     setTimeout(() => {
         if(circle.parentElement) {
             circle.parentElement.removeChild(circle);
@@ -52,7 +64,8 @@
 </script>
 
 <button
-  class="my-button plain-button-{type} {className || ''}"
+  bind:this={element}
+  class={`${baseClasses} ${typeClasses[type]} ${className || ''}`}
   onmousedown={rippleEffect}
   {...rest}
 >
@@ -60,5 +73,29 @@
 </button>
 
 <style>
-  /* Component is clean, all styling is in global.css */
+  /* 
+    Ripple effect styles are moved here from global.css.
+    They are marked as :global() because the <span> is dynamically created in JavaScript.
+  */
+  :global(.ripple) {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple-animation 600ms linear;
+  }
+
+  :global(.ripple.dark) {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.ripple.light) {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
+
+  @keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+  }
 </style>

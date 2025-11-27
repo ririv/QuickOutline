@@ -15,7 +15,7 @@
     }
     let { view = $bindable() }: Props = $props();
 
-    let activePopup = $state<'get' | 'set' | null>('get'); // Revert to normal state
+    let activePopup = $state<'get' | 'set' | null>(null);
     let getContentsBtnEl = $state<HTMLElement>();
     let setContentsBtnEl = $state<HTMLElement>();
     let hideTimer: number | null = null;
@@ -56,7 +56,7 @@
     </GraphButton>
     
     <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
-        <StyledButton type="primary" hoverEffect="darken" bind:this={getContentsBtnEl}>
+        <StyledButton type="primary" hoverEffect="darken" bind:element={getContentsBtnEl}>
             Get Contents
         </StyledButton>
         {#if activePopup === 'get' && getContentsBtnEl}
@@ -69,7 +69,7 @@
     </div>
 
     <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
-        <StyledButton type="important" hoverEffect="elevation" bind:this={setContentsBtnEl}>
+        <StyledButton type="important" hoverEffect="elevation" bind:element={setContentsBtnEl}>
             Set Contents
         </StyledButton>
         {#if activePopup === 'set' && setContentsBtnEl}
@@ -101,7 +101,7 @@
     }
     .popup-wrapper {
         position: relative;
-        display: inline-block; /* Or just display: contents; */
+        display: inline-flex;
     }
     .spacer {
         flex: 1;

@@ -1,32 +1,30 @@
 @import "tailwindcss";
 
-:root {
-    --el-color-primary: #409eff;
-    --el-color-primary-pressed: rgb(51, 126, 204);
-    --el-color-plain-primary-bg: rgb(236, 245, 255);
-    --el-color-plain-primary-bg-hover: rgb(221, 238, 255);
-    --el-color-plain-primary-border: rgb(160, 207, 255);
+@theme {
+    --animation-popupFade: popupFade 0.15s ease-out;
+    --color-el-primary: #409eff;
+    --color-el-primary-pressed: rgb(51, 126, 204);
+    --color-el-plain-primary-bg: rgb(236, 245, 255);
+    --color-el-plain-primary-bg-hover: rgb(221, 238, 255);
+    --color-el-plain-primary-border: rgb(160, 207, 255);
+    --color-el-important: #f56c6c;
+    --color-el-important-pressed: rgb(196, 86, 86);
+    --color-el-plain-important-bg: rgb(254, 240, 240);
+    --color-el-plain-important-bg-hover: rgb(253, 230, 230);
+    --color-el-plain-important-border: rgb(250, 182, 182);
+    --color-el-info: #909399;
+    --color-el-default-text: #606266;
+    --color-el-default-bg: white;
+    --color-el-default-border: #dcdfe6;
+    --color-el-primary-shadow: rgba(64, 158, 255, 0.2);
+    --color-el-textbtn-hover-bg: #f5f7fa;
+    --color-el-textbtn-active-bg: #f0f2f5;
+    --color-my-color-divding-line: #dfdfdf;
+}
 
-    --el-color-important: #f56c6c;
-    --el-color-important-pressed: rgb(196, 86, 86);
-    --el-color-plain-important-bg: rgb(254, 240, 240);
-    --el-color-plain-important-bg-hover: rgb(253, 230, 230);
-    --el-color-plain-important-border: rgb(250, 182, 182);
-
-    --el-color-info: #909399;
-    --el-color-default-text: #606266;
-
-    --el-color-default-bg: white;
-    --el-color-default-active-bg: var(--el-color-plain-primary-bg);
-    --el-color-default-border: #dcdfe6;
-    --el-color-default-pressed-border: var(--el-color-plain-primary-border);
-    --el-color-default-active-text: var(--el-color-primary);
-    --el-color-primary-shadow: rgba(64, 158, 255, 0.2);
-
-    --el-color-textbtn-hover-bg: #f5f7fa;
-    --el-color-textbtn-active-bg: #f0f2f5;
-    
-    --my-color-divding-line: #dfdfdf;
+@keyframes popupFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 body {
@@ -55,130 +53,16 @@ input, textarea, [contenteditable="true"] {
 /* --- Common Controls Styles (Ported from JavaFX) --- */
 
 /* Input/Select */
-.input {
-    background-color: white;
-    border: 1px solid #d9d9d9;
-    border-radius: 4px;
-    color: #333333;
-    padding: 6px 11px; 
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
-    width: 100%;
-    box-sizing: border-box;
+@layer components {
+  .input {
+    @apply bg-white border border-el-default-border rounded text-el-default-text py-[6px] px-[11px] text-sm outline-none transition-colors duration-200 w-full box-border
+           hover:border-el-primary
+           focus:border-el-primary focus:ring-2 focus:ring-el-primary/20;
+  }
 }
-
-.input:hover {
-    border-color: var(--el-color-primary);
-}
-
-.input:focus {
-    border-color: var(--el-color-primary);
-    box-shadow: 0 0 0 2px var(--el-color-primary-shadow);
-}
-
-/* Button Base */
-.my-button {
-    height: 32px; 
-    font-size: 12px;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    white-space: nowrap;
-    border: 1px solid transparent;
-    padding: 0 15px;
-    box-sizing: border-box;
-    user-select: none;
-    
-    /* For Ripple Effect */
-    position: relative;
-    overflow: hidden;
-    
-    /* Transitions for hover effects */
-    transition: background-color 0.2s, border-color 0.2s;
-}
-
-/* Ripple Effect Base & Animation */
-.ripple {
-    position: absolute;
-    border-radius: 50%;
-    transform: scale(0);
-    animation: ripple-animation 600ms linear;
-}
-
-.ripple.dark {
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-.ripple.light {
-    background-color: rgba(255, 255, 255, 0.4);
-}
-
-@keyframes ripple-animation {
-    to {
-        transform: scale(4);
-        opacity: 0;
-    }
-}
-
-/* Primary Plain Button */
-.plain-button-primary {
-    background-color: var(--el-color-plain-primary-bg);
-    color: var(--el-color-primary);
-    border-color: var(--el-color-plain-primary-border);
-}
-
-.plain-button-primary:hover {
-    background-color: var(--el-color-plain-primary-bg-hover);
-}
-
-/* Important Plain Button */
-.plain-button-important {
-    background-color: var(--el-color-plain-important-bg);
-    color: var(--el-color-important);
-    border-color: var(--el-color-plain-important-border);
-}
-
-.plain-button-important:hover {
-    background-color: var(--el-color-plain-important-bg-hover);
-}
-
-
-/* Graph/Icon Button */
-.graph-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-}
-.graph-button img, .graph-button svg {
-    width: 16px;
-    height: 16px;
-    display: block;
-    opacity: 0.8;
-}
-.graph-button:hover {
-    background-color: rgba(0,0,0,0.05);
-}
-.graph-button:hover img {
-    opacity: 1;
-}
-.graph-button-important:hover {
-    background-color: var(--el-color-plain-important-bg);
-}
-
 /* Title */
 .title {
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 12px;    font-weight: bold;
     color: #9198a1;
     margin-bottom: 10px;
     display: block;

@@ -7,7 +7,14 @@ export function autoPosition(node: HTMLElement, { triggerEl }: { triggerEl: HTML
   
   function robustAdjust() {
       // Check if elements still exist
-      if (!triggerEl || !node) return;
+      if (!triggerEl || !(triggerEl instanceof Element)) { // <-- 增加这个检查
+          console.error(
+              `[autoPosition] 'triggerEl' must be a DOM Element. ` +
+              `Received:`, triggerEl,
+              `\nHint: If you are using bind:this on a Svelte component, wrap it in a <div> and bind to the div instead.`
+          );
+          return;
+      }
 
       const offsetParent = node.offsetParent as HTMLElement;
       if (!offsetParent) {
