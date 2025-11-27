@@ -2,9 +2,11 @@
   import type { Snippet } from 'svelte';
 
   type ButtonType = 'primary' | 'important';
+  type HoverEffect = 'elevation' | 'darken';
 
   interface Props {
     type: ButtonType;
+    hoverEffect?: HoverEffect;
     class?: string;
     children?: Snippet;
     [key:string]: any;
@@ -12,6 +14,7 @@
 
   let {
     type,
+    hoverEffect = 'elevation', // Default to elevation effect
     class: className,
     children,
     ...rest
@@ -45,10 +48,13 @@
         }
     }, 600);
   }
+
+  const hoverClass = `hover-effect-${hoverEffect}`;
+
 </script>
 
 <button
-  class="my-button plain-button-{type} {className || ''}"
+  class="my-button plain-button-{type} {hoverClass} {className || ''}"
   onmousedown={rippleEffect}
   {...rest}
 >
@@ -56,6 +62,5 @@
 </button>
 
 <style>
-  /* The ripple class and animation are now global, defined in global.css */
-  /* This keeps the component cleaner and consolidates button styling. */
+  /* Component is clean, all styling is in global.css */
 </style>

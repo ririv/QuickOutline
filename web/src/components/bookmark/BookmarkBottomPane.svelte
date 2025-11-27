@@ -56,7 +56,7 @@
     </GraphButton>
     
     <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
-        <StyledButton type="primary" bind:this={getContentsBtnEl}>
+        <StyledButton type="primary" hoverEffect="darken" bind:this={getContentsBtnEl}>
             Get Contents
         </StyledButton>
         {#if activePopup === 'get' && getContentsBtnEl}
@@ -69,7 +69,7 @@
     </div>
 
     <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
-        <StyledButton type="important" bind:this={setContentsBtnEl}>
+        <StyledButton type="important" hoverEffect="elevation" bind:this={setContentsBtnEl}>
             Set Contents
         </StyledButton>
         {#if activePopup === 'set' && setContentsBtnEl}
