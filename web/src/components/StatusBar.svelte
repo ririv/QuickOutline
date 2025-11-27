@@ -7,6 +7,7 @@
     insertPos?: number;
     style?: string;
     showOffset?: boolean;
+    showStyle?: boolean;
     onGenerate?: () => void;
     onParamChange?: () => void;
   }
@@ -25,9 +26,9 @@
   let barElement: HTMLElement;
   
   // Trigger elements for popups
-  let offsetBtnEl: HTMLElement = $state();
-  let posBtnEl: HTMLElement = $state();
-  let styleBtnEl: HTMLElement = $state();
+  let offsetBtnEl = $state<HTMLElement | undefined>();
+  let posBtnEl = $state<HTMLElement | undefined>();
+  let styleBtnEl = $state<HTMLElement | undefined>();
 
   function togglePopup(type: 'offset' | 'pos' | 'style') {
       if (activePopup === type) {
