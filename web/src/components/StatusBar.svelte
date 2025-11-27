@@ -68,7 +68,9 @@
             title="Set Page Offset"
           >
               <span class="icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor">
+                  <path d="M356.992 203.9552a51.2 51.2 0 0 0-99.584-23.8976l-153.6 640a51.2 51.2 0 0 0 99.584 23.8976l153.6-640zM358.4 486.4a38.4 38.4 0 1 0 0 76.8h180.3776l-31.168 31.168a38.4 38.4 0 1 0 54.2976 54.2976l126.72-126.7072-126.72-126.72a38.4 38.4 0 1 0-54.2976 54.3104L544.4608 486.4H358.4z m523.9424-344.1792a51.2 51.2 0 0 1 37.8368 61.7344l-19.2 80a51.2 51.2 0 0 1-99.5712-23.8976l19.2-80a51.2 51.2 0 0 1 61.7344-37.8368z m-57.6 240a51.2 51.2 0 0 1 37.8368 61.7344l-38.4 160a51.2 51.2 0 0 1-99.5712-23.8976l38.4-160a51.2 51.2 0 0 1 61.7344-37.8368z m-76.8 320a51.2 51.2 0 0 1 37.8368 61.7344l-19.2 80a51.2 51.2 0 0 1-99.5712-23.8976l19.2-80a51.2 51.2 0 0 1 61.7344-37.8368z"
+                  ></path></svg>
               </span> Offset: {offset}
           </div>
           {#if activePopup === 'offset'}
@@ -179,7 +181,7 @@
   .icon-btn {
       background: transparent;
       border: none;
-      color: #666;
+      /*color: #666;*/
       cursor: pointer;
       padding: 0;
       height: 22px;
