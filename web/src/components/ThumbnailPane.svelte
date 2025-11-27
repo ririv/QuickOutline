@@ -66,8 +66,9 @@
         justify-content: center;
     }
     .thumbnail-wrapper {
-        width: calc(100px * var(--zoom, 1)); 
-        flex: 0 0 auto;
+        /*不要使用width，而是使用flex，前者会有刚性宽度导致压缩其他元素（比如leftPane）*/
+        /*width: calc(100px * var(--zoom, 1));*/
+        flex: 0 1 calc(100px * var(--zoom, 1)); /* Use flex-basis for size, allow shrinking */
         min-width: 0;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);

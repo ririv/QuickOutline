@@ -123,6 +123,7 @@
     .nav-btn {
         width: 40px;
         height: 40px;
+        flex-shrink: 0; /* Prevent shrinking */
         display: flex;
         align-items: center;
         justify-content: center;
