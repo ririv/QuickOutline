@@ -16,8 +16,8 @@
     let { view = $bindable() }: Props = $props();
 
     let activePopup = $state<'get' | 'set' | null>(null);
-    let getContentsBtnEl = $state<HTMLElement>();
-    let setContentsBtnEl = $state<HTMLElement>();
+    let getContentsBtnEl = $state<HTMLButtonElement | undefined>();
+    let setContentsBtnEl = $state<HTMLButtonElement | undefined>();
     let hideTimer: number | null = null;
     let getContentsPopupSelected = $state<'bookmark' | 'toc'>('bookmark'); // State for GetContentsPopup selection
 
@@ -51,7 +51,7 @@
 </script>
 
 <div class="bottom-pane">
-    <GraphButton className="graph-button-important" title="Delete">
+    <GraphButton class="graph-button-important" title="Delete">
         <img src={trashIcon} alt="Delete" />
     </GraphButton>
     

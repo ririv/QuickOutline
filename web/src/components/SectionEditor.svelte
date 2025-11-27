@@ -48,12 +48,11 @@
     }
 
     // Trigger element references for autoPosition action
-    let leftBtnEl: HTMLElement = $state();
-    let centerBtnEl: HTMLElement = $state();
-    let rightBtnEl: HTMLElement = $state();
-    let innerBtnEl: HTMLElement = $state();
-    let outerBtnEl: HTMLElement = $state();
-
+    let leftBtnEl = $state<HTMLElement | undefined>();
+    let centerBtnEl = $state<HTMLElement | undefined>();
+    let rightBtnEl = $state<HTMLElement | undefined>();
+    let innerBtnEl = $state<HTMLElement | undefined>();
+    let outerBtnEl = $state<HTMLElement | undefined>();
 </script>
 
 <div class="section-editor {type}" class:show-line={config.drawLine}>

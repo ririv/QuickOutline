@@ -36,13 +36,13 @@
     <div class="popup-content">
         <span class="title">Set Page View Mode</span>
         <div class="icon-toggle-group">
-            <GraphButton className={selected === 'FIT_TO_HEIGHT' ? 'active' : ''} onclick={() => handleSelect('FIT_TO_HEIGHT')}>
+            <GraphButton class={selected === 'FIT_TO_HEIGHT' ? 'active' : ''} onclick={() => handleSelect('FIT_TO_HEIGHT')}>
                 <img src={fitToHeightIcon} alt="Fit to Height"/>
             </GraphButton>
-            <GraphButton className={selected === 'FIT_TO_WIDTH' ? 'active' : ''} onclick={() => handleSelect('FIT_TO_WIDTH')}>
+            <GraphButton class={selected === 'FIT_TO_WIDTH' ? 'active' : ''} onclick={() => handleSelect('FIT_TO_WIDTH')}>
                 <img src={fitToWidthIcon} alt="Fit to Width"/>
             </GraphButton>
-            <GraphButton className={selected === 'ACTUAL_SIZE' ? 'active' : ''} onclick={() => handleSelect('ACTUAL_SIZE')}>
+            <GraphButton class={selected === 'ACTUAL_SIZE' ? 'active' : ''} onclick={() => handleSelect('ACTUAL_SIZE')}>
                 <img src={actualSizeIcon} alt="Actual Size"/>
             </GraphButton>
         </div>

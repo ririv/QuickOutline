@@ -4,9 +4,10 @@
         class?: string; // Correctly define the prop as 'class'
         onclick?: (e: MouseEvent) => void;
         children?: import('svelte').Snippet;
+        element?: HTMLButtonElement; // Define 'element' as a bindable prop
     }
     // Correctly destructure 'class' and rename it to 'className'
-    let { title = '', class: className = '', onclick, children }: Props = $props();
+    let { title = '', class: className = '', onclick, children, element = $bindable() }: Props = $props();
 
     // Base Tailwind classes corresponding to the original .graph-button
     const baseClasses = "inline-flex items-center justify-center bg-transparent border-none cursor-pointer p-[6px] rounded transition-colors duration-200";
@@ -21,6 +22,7 @@
 </script>
 
 <button
+    bind:this={element}
     class={finalClasses}
     {title}
     onclick={onclick}
