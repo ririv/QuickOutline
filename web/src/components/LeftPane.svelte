@@ -63,7 +63,11 @@
             onclick={() => switchTab(FnTab.markdown)}
             title="Markdown"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M7 16V8l3 4 3-4v8"/><line x1="17" x2="17" y1="8" y2="16"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-markdown-v6">
+                <path d="M3 17V7l4.5 5 4.5-5v10"/> <!-- Balanced M shape (x=3 to 12) -->
+                <line x1="18" x2="18" y1="7" y2="17"/> <!-- Arrow shaft -->
+                <polyline points="15 14 18 17 21 14"/> <!-- Arrow head -->
+            </svg>
         </button>
 
         <button 
