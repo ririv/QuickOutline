@@ -2,11 +2,11 @@
   import type { Snippet } from 'svelte';
 
   type ButtonType = 'primary' | 'important';
-  type HoverEffect = 'elevation' | 'darken';
+  type RippleColor = 'dark' | 'light';
 
   interface Props {
     type: ButtonType;
-    hoverEffect?: HoverEffect;
+    rippleColor?: RippleColor;
     class?: string;
     children?: Snippet;
     [key:string]: any;
@@ -14,7 +14,7 @@
 
   let {
     type,
-    hoverEffect = 'elevation', // Default to elevation effect
+    rippleColor = 'light', // Default to dark ripple for light buttons
     class: className,
     children,
     ...rest
@@ -22,8 +22,6 @@
 
   function rippleEffect(event: MouseEvent) {
     const btn = event.currentTarget as HTMLElement;
-
-    // Create ripple element
     const circle = document.createElement('span');
     const diameter = Math.max(btn.clientWidth, btn.clientHeight);
     const radius = diameter / 2;
@@ -31,9 +29,11 @@
     circle.style.width = circle.style.height = `${diameter}px`;
     circle.style.left = `${event.clientX - btn.getBoundingClientRect().left - radius}px`;
     circle.style.top = `${event.clientY - btn.getBoundingClientRect().top - radius}px`;
-    circle.classList.add('ripple');
     
-    // Ensure only one ripple is active
+    // Add classes for styling
+    circle.classList.add('ripple', rippleColor);
+    
+    // Remove any existing ripple to ensure only one is active
     const oldRipple = btn.querySelector('.ripple');
     if (oldRipple) {
       oldRipple.remove();
@@ -49,12 +49,10 @@
     }, 600);
   }
 
-  const hoverClass = `hover-effect-${hoverEffect}`;
-
 </script>
 
 <button
-  class="my-button plain-button-{type} {hoverClass} {className || ''}"
+  class="my-button plain-button-{type} {className || ''}"
   onmousedown={rippleEffect}
   {...rest}
 >
