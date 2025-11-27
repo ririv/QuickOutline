@@ -23,6 +23,7 @@
 
     let activePos: 'left' | 'center' | 'right' | 'inner' | 'outer' = $state('center');
     let isButtonHovered = $state(false); // State for linked hover effect
+    let justToggled = $state(false); // State to suppress hover effect immediately after click
 
     function setActive(pos: 'left' | 'center' | 'right' | 'inner' | 'outer') {
         activePos = pos;
@@ -33,6 +34,7 @@
 
     function toggleDrawLine() {
         config.drawLine = !config.drawLine;
+        justToggled = true; // Set to true after any toggle
     }
 
     // Helper to check if a position has content (for dot indicator)
@@ -62,7 +64,9 @@
     <div
         class="divider-line-trigger footer-line"
         class:force-hover={isButtonHovered}
+        class:just-toggled={justToggled}
         onclick={toggleDrawLine}
+        onmouseleave={() => justToggled = false}
         role="button"
         tabindex="0"
         onkeydown={(e) => e.key === 'Enter' && toggleDrawLine()}
@@ -206,7 +210,7 @@
           class="toggle-line-btn" class:active={config.drawLine}
           onclick={toggleDrawLine}
           onmouseenter={() => isButtonHovered = true}
-          onmouseleave={() => isButtonHovered = false}
+          onmouseleave={() => { isButtonHovered = false; justToggled = false; }}
           title="Show Divider Line"
       >
         <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -245,7 +249,9 @@
     <div
         class="divider-line-trigger header-line"
         class:force-hover={isButtonHovered}
+        class:just-toggled={justToggled}
         onclick={toggleDrawLine}
+        onmouseleave={() => justToggled = false}
         role="button"
         tabindex="0"
         onkeydown={(e) => e.key === 'Enter' && toggleDrawLine()}
@@ -315,6 +321,24 @@
 
     /* Active State */
     .section-editor.show-line .divider-line-trigger::before {
+        background: #333;
+    }
+
+    /* Hover for active state (Cancel Hint) */
+    .section-editor.show-line .divider-line-trigger:hover::before,
+    .section-editor.show-line .divider-line-trigger.force-hover::before {
+        background: #bbb;
+    }
+
+    /* Just Deactivated (Default just-toggled state): Keep White */
+    .divider-line-trigger.just-toggled:hover::before,
+    .divider-line-trigger.just-toggled.force-hover::before {
+        background: #eee;
+    }
+
+    /* Just Activated (Specific override for show-line): Keep Black */
+    .section-editor.show-line .divider-line-trigger.just-toggled:hover::before,
+    .section-editor.show-line .divider-line-trigger.just-toggled.force-hover::before {
         background: #333;
     }
 
