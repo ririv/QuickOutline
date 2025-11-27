@@ -3,10 +3,12 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { resolve } from 'path';
 import fs from 'fs';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [
     svelte(),
+    tailwindcss(),
     // 自定义插件：构建完成后将 index.html 移动到对应的资源目录，并重命名以匹配 Java 侧的加载逻辑
     {
       name: 'move-html-plugin',

@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
     --el-color-primary: #409eff;
     --el-color-primary-pressed: rgb(51, 126, 204);
