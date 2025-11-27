@@ -2,11 +2,13 @@
     --el-color-primary: #409eff;
     --el-color-primary-pressed: rgb(51, 126, 204);
     --el-color-plain-primary-bg: rgb(236, 245, 255);
+    --el-color-plain-primary-bg-hover: rgb(221, 238, 255);
     --el-color-plain-primary-border: rgb(160, 207, 255);
 
     --el-color-important: #f56c6c;
     --el-color-important-pressed: rgb(196, 86, 86);
     --el-color-plain-important-bg: rgb(254, 240, 240);
+    --el-color-plain-important-bg-hover: rgb(253, 230, 230);
     --el-color-plain-important-border: rgb(250, 182, 182);
 
     --el-color-info: #909399;
@@ -84,11 +86,33 @@ input, textarea, [contenteditable="true"] {
     justify-content: center;
     align-items: center;
     white-space: nowrap;
-    transition: .1s;
     border: 1px solid transparent;
     padding: 0 15px;
     box-sizing: border-box;
     user-select: none;
+    
+    /* For Ripple Effect */
+    position: relative;
+    overflow: hidden;
+    
+    /* Transitions for background and border for hover/focus */
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+/* Ripple Effect Animation */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple-animation 600ms linear;
+    background-color: rgba(0, 0, 0, 0.1); /* Dark ripple for light backgrounds */
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
 }
 
 /* Primary Plain Button */
@@ -99,15 +123,7 @@ input, textarea, [contenteditable="true"] {
 }
 
 .plain-button-primary:hover {
-    color: #fffafa; /* snow */
-    background-color: var(--el-color-primary);
-    border-color: var(--el-color-primary);
-}
-
-.plain-button-primary:active {
-    color: #fffafa;
-    background-color: var(--el-color-primary-pressed);
-    border-color: var(--el-color-primary-pressed);
+    background-color: var(--el-color-plain-primary-bg-hover);
 }
 
 /* Important Plain Button */
@@ -118,15 +134,7 @@ input, textarea, [contenteditable="true"] {
 }
 
 .plain-button-important:hover {
-    background-color: var(--el-color-important);
-    color: #fffafa;
-    border-color: var(--el-color-important);
-}
-
-.plain-button-important:active {
-    color: #fffafa;
-    background-color: var(--el-color-important-pressed);
-    border-color: var(--el-color-important-pressed);
+    background-color: var(--el-color-plain-important-bg-hover);
 }
 
 /* Graph/Icon Button */
