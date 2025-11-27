@@ -320,7 +320,7 @@
 
     /* Hover for active state */
     .section-editor.show-line .divider-line-trigger.force-hover::before {
-        background: #ccc;
+        background: #bbb;
     }
 
 
