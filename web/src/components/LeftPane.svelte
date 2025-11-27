@@ -1,7 +1,9 @@
 <script lang="ts">
     import { appStore, FnTab } from '../stores/appStore';
+    import HelpWindow from './HelpWindow.svelte';
     
     let activeTab = $state(FnTab.bookmark);
+    let showHelpModal = $state(false);
 
     // Subscribe to the store to update local state
     appStore.subscribe(state => {
@@ -13,8 +15,7 @@
     }
 
     function showHelp() {
-        // Placeholder for help action
-        alert("Help window would open here.");
+        showHelpModal = true;
     }
 </script>
 
@@ -39,7 +40,6 @@
                 <path d="M4 20V4a2 2 0 0 1 2-2h8.5L20 7.5"/> <!-- Left, Top, and Diagonal Corner Fold -->
                 <path d="M20 20V7.5"/> <!-- Right side -->
                 <polyline points="14 2 14 8 20 8"/> <!-- Fold line restored -->
-                
                 <!-- Hash symbol shifted further down (center y=18) -->
                 <line x1="9" x2="15" y1="16" y2="16"/>
                 <line x1="9" x2="15" y1="20" y2="20"/>
@@ -99,6 +99,8 @@
         </button>
     </div>
 </div>
+
+<HelpWindow bind:showHelpModal={showHelpModal} />
 
 <style>
     .left-pane {
