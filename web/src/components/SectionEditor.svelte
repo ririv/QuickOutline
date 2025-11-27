@@ -285,14 +285,6 @@
         transition: background-color 0.2s;
     }
 
-    .section-editor.footer::before:hover { /* Hover for non-active state */
-        background: #ccc;
-    }
-
-    .section-editor::after:hover { /* Hover for non-active state */
-        background: #ccc;
-    }
-
     /* Hover State */
     .divider-line-trigger:hover::before,
     .divider-line-trigger.force-hover::before {
@@ -326,13 +318,7 @@
         background: #333;
     }
 
-    .section-editor.footer.show-line::before {
-        background: #333;
-    }
-
     /* Hover for active state */
-    .section-editor.show-line::after:hover,
-    .section-editor.footer.show-line::before:hover,
     .section-editor.show-line .divider-line-trigger.force-hover::before {
         background: #ccc;
     }
