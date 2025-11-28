@@ -1,6 +1,6 @@
 <script lang="ts">
   import { type Snippet } from 'svelte';
-  import { autoPosition } from '../../lib/actions/autoPosition';
+  import { autoPosition } from '@/lib/actions/autoPosition';
 
   interface Props {
     placement?: 'top' | 'bottom'; // top: popup is above trigger (arrow points down); bottom: popup is below trigger (arrow points up)

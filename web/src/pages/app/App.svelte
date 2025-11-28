@@ -1,6 +1,6 @@
 <script lang="ts">
     import LeftPane from '../../components/LeftPane.svelte';
-    import { appStore, FnTab } from '../../stores/appStore';
+    import { appStore, FnTab } from '@/stores/appStore';
     import BookmarkTab from '../bookmark/App.svelte';
     import PageLabelTab from '../pagelabel/App.svelte';
     import TocGeneratorTab from '../toc/App.svelte';

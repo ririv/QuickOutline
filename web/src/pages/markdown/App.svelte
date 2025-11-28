@@ -5,7 +5,7 @@
   import StatusBar from '../../components/StatusBar.svelte';
   import SectionEditor from '../../components/SectionEditor.svelte';
   import CollapseTrigger from '../../components/CollapseTrigger.svelte';
-  import { initBridge } from '../../lib/bridge';
+  import { initBridge } from '@/lib/bridge';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';

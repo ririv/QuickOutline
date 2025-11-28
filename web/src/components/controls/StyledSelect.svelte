@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { clickOutside } from '../../lib/actions/clickOutside';
+  import { clickOutside } from '@/lib/actions/clickOutside';
 
   interface Props {
     options: string[];
