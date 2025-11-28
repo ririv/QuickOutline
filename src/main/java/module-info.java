@@ -51,6 +51,8 @@ module quickoutline {
 
     requires org.jfree.svg;
 
+    requires io.vertx.core;
+
     opens com.ririv.quickoutline.view to javafx.fxml,javafx.graphics, com.google.guice ;
     opens com.ririv.quickoutline.service to com.google.guice;
     opens com.ririv.quickoutline.view.state to com.google.guice;

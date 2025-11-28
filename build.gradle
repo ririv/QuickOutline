@@ -11,6 +11,9 @@ plugins {
 
     id 'com.github.node-gradle.node' version '7.0.2'
 
+    // Shadow 插件: 用于将所有依赖打包进同一个 JAR 文件中
+    id 'com.gradleup.shadow' version '9.2.2'
+
     id 'idea'
     id 'java'
 }
@@ -91,6 +94,14 @@ dependencies {
 
     implementation 'org.jfree:org.jfree.svg:5.0.7'
 
+
+    implementation 'io.vertx:vertx-core:5.0.5'
+    // [macOS] 消除 Netty DNS Resolver 警告 (可选)
+    // 这是一个 macOS 特有的优化库。如果你的开发环境是 macOS，添加此依赖可消除警告。
+    // classifiers: osx-aarch_64 (Apple Silicon M1/M2...), osx-x86_64 (Intel Mac)
+    // 注意：版本号建议检查 Vert.x 5.0.0 依赖树中的 netty-common 版本，这里暂用较新版本
+    runtimeOnly 'io.netty:netty-resolver-dns-native-macos:4.2.7.Final:osx-aarch_64'
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:6.0.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:6.0.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:6.0.1'
@@ -122,7 +133,7 @@ def args = [
     // 注意：类名必须完全匹配报错信息中的类名
     '-Dorg.slf4j.simpleLogger.log.com.itextpdf.styledxmlparser.css.parse.syntax.CssParserStateController=OFF',
     // https://github.com/openjdk/jfx/blob/jfx25/doc-files/release-notes-24.md#javafx-applications-must-use---enable-native-access
-    '--enable-native-access=javafx.graphics,javafx.web,javafx.media',
+    '--enable-native-access=javafx.graphics,javafx.web,javafx.media,ALL-UNNAMED',
     '-Djavafx.enablePreview=true',
 //    '-Dprism.order=es2,d3d',
 //    '-Dprism.verbose=true', // 开发时开启，发布时关掉
