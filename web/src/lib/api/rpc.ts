@@ -1,3 +1,4 @@
+
 /**
  * RPC 请求结构
  */
@@ -53,7 +54,7 @@ export interface PageLabelRule {
 }
 
 /**
- * 定义 Java 端 QuickOutlineApiService 对应的方法
+ * 定义 Java 端 ApiService 对应的方法
  */
 export interface QuickOutlineApi {
     openFile(filePath: string): Promise<string>;
@@ -62,13 +63,13 @@ export interface QuickOutlineApi {
     // Outline
     getOutline(offset: number): Promise<string>;
     getOutlineAsBookmark(offset: number): Promise<any>;
-    // bookmarkRoot 是 JSON 对象, destFilePath 可选
-    saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number): Promise<string>;
+    saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number): Promise<string>; // Corrected signature
+    saveOutlineFromText(text: string, destFilePath: string | null, offset: number): Promise<string>; // New method
     autoFormat(text: string): Promise<string>;
 
     // TOC
     generateTocPage(config: TocConfig, destFilePath: string | null): Promise<string>;
-    generateTocPreview(config: TocConfig): Promise<string>; // Returns Base64 string
+    generateTocPreview(config: TocConfig): Promise<string>; // Returns JSON of ImagePageUpdate[]
 
     // Page Labels
     getPageLabels(srcFilePath: string | null): Promise<string[]>;
@@ -76,10 +77,11 @@ export interface QuickOutlineApi {
     simulatePageLabels(rules: PageLabelRule[]): Promise<string[]>;
 }
 
+
 class RpcClient implements QuickOutlineApi {
     private ws: WebSocket | null = null;
     private pendingRequests = new Map<string, { resolve: Function, reject: Function }>();
-    private port: number = 0;
+    public port: number = 0; // Make port public
     private isAndroid: boolean = false;
 
     constructor() {
@@ -100,7 +102,7 @@ class RpcClient implements QuickOutlineApi {
         if (!port) {
             throw new Error("Port required for Tauri mode");
         }
-        this.port = port;
+        this.port = port; // Store the port
 
         return new Promise((resolve, reject) => {
             this.ws = new WebSocket(`ws://127.0.0.1:${port}/ws/tauri`);
@@ -117,15 +119,19 @@ class RpcClient implements QuickOutlineApi {
 
             this.ws.onmessage = (event) => {
                 try {
+                    console.log("RPC: Received message", event.data);
                     const response: RpcResponse = JSON.parse(event.data);
                     const handler = this.pendingRequests.get(response.id);
                     if (handler) {
                         if (response.error) {
+                            console.error("RPC: Response error", response.error);
                             handler.reject(new Error(response.error));
                         } else {
                             handler.resolve(response.result);
                         }
                         this.pendingRequests.delete(response.id);
+                    } else {
+                        console.warn("RPC: No handler found for ID", response.id);
                     }
                 } catch (e) {
                     console.error("RPC: Failed to parse response", e);
@@ -142,12 +148,12 @@ class RpcClient implements QuickOutlineApi {
         const id = crypto.randomUUID();
         const request: RpcRequest = { id, method, params };
         const json = JSON.stringify(request);
+        console.log(`RPC: Sending [${method}]`, json);
 
         if (this.isAndroid) {
             return new Promise((resolve, reject) => {
                 try {
                     // @ts-ignore
-                    // 假设 Android 端注入的对象名为 AndroidRpc，方法名为 handle
                     const responseStr = window.AndroidRpc.handle(json);
                     const response: RpcResponse = JSON.parse(responseStr);
                     
@@ -192,6 +198,10 @@ class RpcClient implements QuickOutlineApi {
 
     public saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number): Promise<string> {
         return this.send("saveOutline", [bookmarkRoot, destFilePath, offset]);
+    }
+
+    public saveOutlineFromText(text: string, destFilePath: string | null, offset: number): Promise<string> {
+        return this.send("saveOutlineFromText", [text, destFilePath, offset]);
     }
 
     public autoFormat(text: string): Promise<string> {

@@ -3,8 +3,11 @@ package com.ririv.quickoutline.api;
 import com.ririv.quickoutline.api.service.RpcProcessor;
 import io.vertx.core.Handler;
 import io.vertx.core.http.ServerWebSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WebSocketRpcHandler implements Handler<ServerWebSocket> {
+    private static final Logger log = LoggerFactory.getLogger(WebSocketRpcHandler.class);
     private final RpcProcessor processor;
 
     public WebSocketRpcHandler(RpcProcessor processor) {
@@ -13,18 +16,19 @@ public class WebSocketRpcHandler implements Handler<ServerWebSocket> {
 
     @Override
     public void handle(ServerWebSocket ws) {
-        // Accept /ws/tauri or just / if flexible, but user wants specific sets.
-        // Let's check path in the handler or assume the caller filters.
-        // Checking path here is safer.
         if (!ws.path().equals("/ws/tauri")) {
-             // If this handler is used exclusively for this path, reject others?
-             // Or maybe we chain them. For now, simple check.
              return; 
         }
-        System.out.println("Tauri connected");
+        log.info("Tauri connected via WebSocket");
+        
         ws.textMessageHandler(text -> {
+            log.info("Received WebSocket message: {}", text);
             String response = processor.process(text);
+            log.info("Sending WebSocket response: {}", response);
             ws.writeFinalTextFrame(response);
         });
+        
+        ws.closeHandler(v -> log.info("Tauri WebSocket disconnected"));
+        ws.exceptionHandler(e -> log.error("WebSocket error", e));
     }
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { handleSvgUpdate, onSvgViewChange, setDoubleBuffering } from '../lib/preview-engine/svg-engine';
-  import { handleImageUpdate } from '../lib/preview-engine/image-engine';
+  import { handleSvgUpdate, onSvgViewChange, setDoubleBuffering } from '@/lib/preview-engine/svg-engine';
+  import { handleImageUpdate } from '@/lib/preview-engine/image-engine';
   import PagedRenderer from './renderers/PagedRenderer.svelte';
 
   export let mode: 'svg' | 'image' | 'paged' = 'paged'; // Default to paged

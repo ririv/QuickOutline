@@ -1,3 +1,5 @@
+import { rpc } from '@/lib/api/rpc';
+
 // --- 类型定义 ---
 interface ImagePageUpdateData {
     pageIndex: number;
@@ -11,6 +13,7 @@ interface ImagePageUpdateData {
  * 核心：处理 Java 传来的图片 JSON 数据
  */
 export function handleImageUpdate(jsonString: string, container: HTMLElement) {
+    if (!container) return;
     // 确保容器拥有 .double-buffer 类以激活 CSS 双缓冲样式
     if (!container.classList.contains('double-buffer')) {
         container.classList.add('double-buffer');
@@ -27,6 +30,7 @@ export function handleImageUpdate(jsonString: string, container: HTMLElement) {
     if (!updates || updates.length === 0) return;
 
     const totalPages = updates[0].totalPages;
+    const baseUrl = `http://127.0.0.1:${rpc.port}`; // Get base URL from rpc client
 
     // 1. 同步容器结构
     syncContainerForImage(container, totalPages);
@@ -40,15 +44,15 @@ export function handleImageUpdate(jsonString: string, container: HTMLElement) {
         pageDiv.style.width = u.widthPt + 'pt';
         pageDiv.style.height = u.heightPt + 'pt';
 
-        // 标记为已加载，防止 SVG 逻辑误判（虽然现在逻辑分离了，但保持一致性是好的）
+        // 标记为已加载
         pageDiv.dataset.loaded = "true";
 
-        const newUrl = `/page_images/${u.pageIndex}.png?v=${u.version}`;
+        const newUrl = `${baseUrl}/page_images/${u.pageIndex}.png?v=${u.version}`;
         const currentImg = pageDiv.querySelector('img.current') as HTMLImageElement;
 
         // 缓存命中检查
         // @ts-ignore
-        if (currentImg && currentImg.src.includes(`v=${u.version}`)) {
+        if (currentImg && currentImg.src === newUrl) {
             return;
         }
 
@@ -66,7 +70,7 @@ export function handleImageUpdate(jsonString: string, container: HTMLElement) {
         };
 
         newImg.onerror = () => {
-            console.error(`Failed to load image for page ${u.pageIndex}`);
+            console.error(`Failed to load image for page ${u.pageIndex} from ${newUrl}`);
         };
 
         pageDiv.appendChild(newImg);

@@ -9,6 +9,11 @@
     import type { ViewScaleType } from './SetContentsPopup.svelte';
     import GraphButton from '../controls/GraphButton.svelte';
     import StyledButton from '../controls/StyledButton.svelte';
+    
+    import { rpc } from '@/lib/api/rpc';
+    import { bookmarkStore } from '@/stores/bookmarkStore';
+    import { messageStore } from '@/stores/messageStore';
+    import { get } from 'svelte/store';
 
     interface Props {
         view: 'text' | 'tree';
@@ -19,7 +24,9 @@
     let getContentsBtnEl = $state<HTMLButtonElement | undefined>();
     let setContentsBtnEl = $state<HTMLButtonElement | undefined>();
     let hideTimer: number | null = null;
-    let getContentsPopupSelected = $state<'bookmark' | 'toc'>('bookmark'); // State for GetContentsPopup selection
+    let getContentsPopupSelected = $state<'bookmark' | 'toc'>('bookmark'); 
+    
+    let offsetValue = $state('0');
 
     function toggleView() {
         view = view === 'text' ? 'tree' : 'text';
@@ -36,22 +43,63 @@
         }, 200);
     }
 
-    function handleGetContentsSelect(type: 'bookmark' | 'toc') {
-        getContentsPopupSelected = type; // Update the state in parent
+    async function handleGetContentsSelect(type: 'bookmark' | 'toc') {
+        getContentsPopupSelected = type;
         console.log('Get contents from:', getContentsPopupSelected);
-        // activePopup = null; // DO NOT close popup on select, hover logic will handle it.
-        // TODO: post event
+        
+        try {
+            const offset = parseInt(offsetValue, 10) || 0;
+            // TODO: If type === 'toc', maybe use a different API? 
+            // For now, we assume standard getOutline.
+            const text = await rpc.getOutline(offset);
+            
+            if (text) {
+                bookmarkStore.setText(text);
+                bookmarkStore.setOffset(offset);
+                messageStore.add('Outline loaded successfully', 'SUCCESS');
+            } else {
+                messageStore.add('No outline found in PDF', 'INFO');
+            }
+        } catch (e: any) {
+            messageStore.add('Failed to load outline: ' + (e.message || String(e)), 'ERROR');
+        }
     }
 
-    function handleSetContentsSelect(type: ViewScaleType) {
+    async function handleSetContentsSelect(type: ViewScaleType) {
         console.log('Set contents with view scale:', type);
-        // Don't close popup immediately to show selection
+        try {
+            const state = get(bookmarkStore);
+            if (!state.text || !state.text.trim()) {
+                messageStore.add('No outline text to save. Please enter some text first.', 'WARNING');
+                return;
+            }
+            
+            const offset = parseInt(offsetValue, 10) || 0;
+            
+            // Note: ViewScaleType from frontend is not passed to saveOutlineFromText yet 
+            // because the backend API `saveOutlineFromText` I added sets ViewScaleType.NONE hardcoded.
+            // If scale support is needed, update API. For now, following basic functionality.
+            await rpc.saveOutlineFromText(state.text, null, offset);
+            
+            messageStore.add('Outline saved successfully!', 'SUCCESS');
+        } catch (e: any) {
+            messageStore.add('Failed to save outline: ' + (e.message || String(e)), 'ERROR');
+        }
+    }
+
+    function handleDelete() {
+        // Implement delete outline functionality if API supports it, 
+        // or just clear the store.
+        // rpc.deleteOutline? (Not in API yet)
+        // For now just clear editor
+        bookmarkStore.setText('');
+        messageStore.add('Editor cleared', 'INFO');
     }
 
 </script>
 
 <div class="bottom-pane">
-    <GraphButton class="graph-button-important" title="Delete">
+    <GraphButton class="graph-button-important" title="Clear Editor" onclick={handleDelete}>
         <img src={trashIcon} alt="Delete" />
     </GraphButton>
     
@@ -77,7 +125,13 @@
         {/if}
     </div>
 
-    <input type="text" class="input" placeholder="Offset" style="width: 120px;" />
+    <input 
+        type="text" 
+        class="input" 
+        placeholder="Offset" 
+        style="width: 120px;" 
+        bind:value={offsetValue}
+    />
 
     <div class="spacer"></div>
 
@@ -105,5 +159,15 @@
     }
     .spacer {
         flex: 1;
+    }
+    .input {
+        padding: 6px 10px;
+        border: 1px solid #dfdfdf;
+        border-radius: 4px;
+        font-size: 14px;
+        outline: none;
+    }
+    .input:focus {
+        border-color: #007bff;
     }
 </style>

@@ -14,6 +14,7 @@ public interface ApiService {
     String getOutline(int offset);
     Bookmark getOutlineAsBookmark(int offset);
     void saveOutline(Bookmark rootBookmark, String destFilePath, int offset);
+    void saveOutlineFromText(String text, String destFilePath, int offset); // New method
     String autoFormat(String text);
 
     // TOC

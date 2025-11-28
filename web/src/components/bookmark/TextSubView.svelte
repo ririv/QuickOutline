@@ -1,21 +1,57 @@
 <script lang="ts">
     import StyledButton from '../controls/StyledButton.svelte';
     import StyledRadioGroup from '../controls/StyledRadioGroup.svelte';
+    import { bookmarkStore } from '@/stores/bookmarkStore';
+    import { rpc } from '@/lib/api/rpc';
+    import { messageStore } from '@/stores/messageStore';
 
     let method = $state('sequential');
     const methodOptions = [
         { value: 'sequential', label: 'Sequential' },
         { value: 'indent', label: 'Indent' }
     ];
+
+    let textValue = $state('');
+
+    // Subscribe to store changes
+    bookmarkStore.subscribe(state => {
+        // Avoid cursor jumping loop if needed, but for now simple sync
+        if (state.text !== textValue) {
+            textValue = state.text;
+        }
+    });
+
+    // Update store when text changes
+    function handleInput(e: Event) {
+        const target = e.target as HTMLTextAreaElement;
+        textValue = target.value;
+        bookmarkStore.setText(textValue);
+    }
+
+    async function handleAutoFormat() {
+        if (!textValue) return;
+        try {
+            const formatted = await rpc.autoFormat(textValue);
+            textValue = formatted;
+            bookmarkStore.setText(formatted);
+            messageStore.add('Auto-format successful', 'SUCCESS');
+        } catch (e: any) {
+            messageStore.add('Auto-format failed: ' + e.message, 'ERROR');
+        }
+    }
 </script>
 
 <div class="text-subview-container">
     <div class="editor-area">
-        <textarea placeholder="Enter bookmarks here..."></textarea>
+        <textarea 
+            placeholder="Enter bookmarks here..." 
+            value={textValue} 
+            oninput={handleInput}
+        ></textarea>
     </div>
     <div class="sidebar">
         <StyledButton type="primary">VSCode</StyledButton>
-        <StyledButton type="primary">Auto-Format</StyledButton>
+        <StyledButton type="primary" onclick={handleAutoFormat}>Auto-Format</StyledButton>
 
         <StyledRadioGroup 
             name="method"

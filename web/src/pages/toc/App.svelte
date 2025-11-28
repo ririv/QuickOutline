@@ -5,10 +5,12 @@
   import StatusBar from '../../components/StatusBar.svelte';
   import SectionEditor from '../../components/SectionEditor.svelte';
   import CollapseTrigger from '../../components/CollapseTrigger.svelte';
-  import { initBridge } from '@/lib/bridge';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
+  
+  import { rpc, PageLabelNumberingStyle } from '@/lib/api/rpc';
+  import { messageStore } from '@/stores/messageStore';
 
   let previewComponent: Preview;
   
@@ -35,21 +37,13 @@
       return hasText || config.drawLine;
   }
   
-  // Use $effect to react to changes in headerConfig or footerConfig (deeply reactive $state)
+  // Use $effect to react to changes in headerConfig or footerConfig
   $effect(() => {
-    // Read headerConfig and footerConfig to trigger reactivity.
-    // Accessing headerConfig.left, footerConfig.center etc. ensures deep reactivity
-    // for string changes. For drawLine, config.drawLine is also watched.
-    // stringify the whole object to ensure deep watching for all properties.
     const headerJson = JSON.stringify(headerConfig);
     const footerJson = JSON.stringify(footerConfig);
 
-    // Call triggerPreview with debounce
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-        // Only trigger preview if config has actually changed from default or previous state.
-        // This is a simple check, a more robust solution might track previous serialized state.
-        // For now, rely on Svelte's reactivity to only run $effect when dependencies change.
         if (headerJson !== '{"left":"","center":"","right":"","inner":"","outer":"","drawLine":false}' ||
             footerJson !== '{"left":"","center":"{p}","right":"","inner":"","outer":"","drawLine":false}') {
             triggerPreview();
@@ -57,43 +51,64 @@
     }, 500);
   });
   
+  // onMount not strictly needed for bridge anymore, RPC is initialized by RpcProvider
+  // but we can trigger an initial preview if there's content
   onMount(() => {
-    initBridge({
-      onUpdateSvg: (json) => previewComponent?.renderSvg(json),
-      onUpdateImage: (json) => previewComponent?.renderImage(json),
-      onSetSvgDoubleBuffering: (enable) => previewComponent?.setDoubleBuffer(enable),
-    });
+      if (tocContent) {
+          triggerPreview();
+      }
   });
 
-  function triggerPreview() {
+  async function triggerPreview() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      const payload = JSON.stringify({
+    debounceTimer = setTimeout(async () => {
+      if (!tocContent) {
+          return; // Or clear preview?
+      }
+      
+      const config = {
         tocContent,
         title,
         offset,
-        style,
+        insertPos, // insertPos is part of config, even if unused for preview
+        style: style as PageLabelNumberingStyle,
         header: headerConfig,
         footer: footerConfig
-      });
-      if (window.javaBridge && window.javaBridge.previewToc) {
-        window.javaBridge.previewToc(payload);
+      };
+
+      try {
+        // rpc.generateTocPreview returns JSON string of ImagePageUpdate[]
+        const resultJson = await rpc.generateTocPreview(config);
+        previewComponent?.renderImage(resultJson);
+      } catch (e: any) {
+        console.error("Preview failed", e);
+        // messageStore.add("Preview failed: " + e.message, "ERROR"); // Maybe too noisy for debounce
       }
     }, 500);
   }
 
-  function handleGenerate() {
-      const payload = JSON.stringify({
+  async function handleGenerate() {
+      if (!tocContent) {
+          messageStore.add("Please enter TOC content first.", "WARNING");
+          return;
+      }
+
+      const config = {
         tocContent,
         title,
         offset,
         insertPos,
-        style,
+        style: style as PageLabelNumberingStyle,
         header: headerConfig,
         footer: footerConfig
-      });
-      if (window.javaBridge && window.javaBridge.generateToc) {
-        window.javaBridge.generateToc(payload);
+      };
+      
+      try {
+          await rpc.generateTocPage(config, null); // destFilePath null means overwrite/auto
+          messageStore.add("Table of Contents generated successfully!", "SUCCESS");
+      } catch (e: any) {
+          console.error("Generate failed", e);
+          messageStore.add("Failed to generate TOC: " + e.message, "ERROR");
       }
   }
 
@@ -147,7 +162,8 @@
         </div>
         
         <div slot="right" class="h-full">
-          <Preview bind:this={previewComponent} mode="preview-only" onrefresh={triggerPreview} />
+          <!-- mode="image" uses the JSON image updates -->
+          <Preview bind:this={previewComponent} mode="image" onrefresh={triggerPreview} />
         </div>
       </SplitPane>
   </div>

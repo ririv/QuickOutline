@@ -8,11 +8,14 @@ import com.ririv.quickoutline.api.model.RpcResponse;
 import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PageLabelRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.List;
 
 public class RpcProcessor {
+    private static final Logger log = LoggerFactory.getLogger(RpcProcessor.class);
     private final ApiService apiService;
     private final Gson gson = new Gson();
 
@@ -23,9 +26,11 @@ public class RpcProcessor {
     public String process(String jsonRequest) {
         RpcRequest request = null;
         try {
+            log.debug("Processing RPC request: {}", jsonRequest);
             request = gson.fromJson(jsonRequest, RpcRequest.class);
             if (request == null) throw new IllegalArgumentException("Empty request");
             
+            log.info("Executing method: {}", request.method);
             Object result = null;
 
             switch (request.method) {
@@ -48,8 +53,19 @@ public class RpcProcessor {
                     apiService.saveOutline(root, dest, offset);
                     result = "OK";
                     break;
+                case "saveOutlineFromText":
+                    // params: [text, destPath, offset]
+                    String text = (String) request.params.get(0);
+                    String txtDest = request.params.size() > 1 ? (String) request.params.get(1) : null;
+                    int txtOffset = request.params.size() > 2 ? getInt(request.params.get(2)) : 0;
+                    apiService.saveOutlineFromText(text, txtDest, txtOffset);
+                    result = "OK";
+                    break;
                 case "autoFormat":
                     result = apiService.autoFormat((String) request.params.get(0));
+                    break;
+                case "getCurrentFilePath":
+                    result = apiService.getCurrentFilePath();
                     break;
                 
                 // --- TOC ---
@@ -92,7 +108,7 @@ public class RpcProcessor {
             }
             return gson.toJson(RpcResponse.success(request.id, result));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("RPC Error processing request: {}", jsonRequest, e);
             String id = (request != null) ? request.id : null;
             return gson.toJson(RpcResponse.error(id, e.getMessage()));
         }
