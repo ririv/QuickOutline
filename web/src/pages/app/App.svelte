@@ -5,6 +5,7 @@
     import PageLabelTab from '../pagelabel/App.svelte';
     import TocGeneratorTab from '../toc/App.svelte';
     import MarkdownTab from '../markdown/App.svelte';
+    import RpcProvider from '../../components/RpcProvider.svelte';
 
     let activeTab = $state(FnTab.bookmark);
     appStore.subscribe(state => {
@@ -15,30 +16,32 @@
 <main class="app-layout">
     <LeftPane />
     <div class="content-area">
-        {#if activeTab === FnTab.bookmark}
-            <BookmarkTab />
-        {:else if activeTab === FnTab.label}
-            <PageLabelTab />
-        {:else if activeTab === FnTab.tocGenerator}
-            <TocGeneratorTab />
-        {:else if activeTab === FnTab.markdown}
-            <MarkdownTab />
-        {:else if activeTab === FnTab.preview}
-            <div class="placeholder">
-                <h1>Preview Content</h1>
-                <p>This is the content for the Preview tab.</p>
-            </div>
-        {:else if activeTab === FnTab.settings}
-            <div class="placeholder">
-                <h1>Settings Content</h1>
-                <p>This is the content for the Settings tab.</p>
-            </div>
-        {:else}
-            <div class="placeholder">
-                <h1>Welcome</h1>
-                <p>Select a tab from the left.</p>
-            </div>
-        {/if}
+        <RpcProvider>
+            {#if activeTab === FnTab.bookmark}
+                <BookmarkTab />
+            {:else if activeTab === FnTab.label}
+                <PageLabelTab />
+            {:else if activeTab === FnTab.tocGenerator}
+                <TocGeneratorTab />
+            {:else if activeTab === FnTab.markdown}
+                <MarkdownTab />
+            {:else if activeTab === FnTab.preview}
+                <div class="placeholder">
+                    <h1>Preview Content</h1>
+                    <p>This is the content for the Preview tab.</p>
+                </div>
+            {:else if activeTab === FnTab.settings}
+                <div class="placeholder">
+                    <h1>Settings Content</h1>
+                    <p>This is the content for the Settings tab.</p>
+                </div>
+            {:else}
+                <div class="placeholder">
+                    <h1>Welcome</h1>
+                    <p>Select a tab from the left.</p>
+                </div>
+            {/if}
+        </RpcProvider>
     </div>
 </main>
 
