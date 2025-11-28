@@ -105,7 +105,7 @@
 <style>
     .left-pane {
         width: 50px;
-        background-color: #fff;
+        background-color: rgba(247, 248, 250);
         border-right: 1px solid var(--color-el-default-border);
         display: flex;
         flex-direction: column;

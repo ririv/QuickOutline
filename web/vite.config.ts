@@ -105,6 +105,8 @@ export default defineConfig({
         pagelabel: resolve(__dirname, 'src/pages/pagelabel/index.html'),
         bookmark: resolve(__dirname, 'src/pages/bookmark/index.html'),
         app: resolve(__dirname, 'src/pages/app/index.html'),
+        test: resolve(__dirname, 'src/test/index.html'),
+        main: resolve(__dirname, 'src/index.html'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
@@ -114,7 +116,8 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173
+    port: 5173,
+    hmr: true, // 启用热更新
   },
   resolve: {
     alias: {
