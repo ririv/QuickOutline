@@ -9,6 +9,7 @@
     "allowJs": true,
     "checkJs": true,
     "isolatedModules": true,
+    "allowArbitraryExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

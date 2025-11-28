@@ -1,6 +1,6 @@
 <script lang="ts">
   import StyleList from './StyleList.svelte';
-  import ArrowPopup from './ArrowPopup.svelte';
+  import ArrowPopup from './controls/ArrowPopup.svelte';
 
   interface Props {
     type: 'offset' | 'pos' | 'style';
@@ -8,7 +8,7 @@
     insertPos?: number;
     style?: string;
     onchange?: () => void;
-    triggerEl?: HTMLElement; // Prop for positioning
+    triggerEl: HTMLElement; // Prop for positioning
   }
 
   let { 

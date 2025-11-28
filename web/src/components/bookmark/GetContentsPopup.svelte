@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ArrowPopup from "../ArrowPopup.svelte";
+    import ArrowPopup from "../controls/ArrowPopup.svelte";
     import StyledRadioButtonGroup from '../controls/StyledRadioButtonGroup.svelte';
 
     type SelectionType = 'bookmark' | 'toc';
