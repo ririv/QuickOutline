@@ -34,7 +34,6 @@
     }
     .editor-area {
         flex: 1;
-        padding: 10px;
     }
     textarea {
         width: 100%;
@@ -45,7 +44,7 @@
         font-family: monospace;
         font-size: 14px;
         background-color: white; /* Match JavaFX */
-        padding: 5px;
+        padding: 10px;
         box-sizing: border-box;
     }
     .sidebar {
