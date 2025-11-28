@@ -5,6 +5,8 @@
   import StatusBar from '../../components/StatusBar.svelte';
   import SectionEditor from '../../components/SectionEditor.svelte';
   import CollapseTrigger from '../../components/CollapseTrigger.svelte';
+  import ConfirmDialog from '../../components/ConfirmDialog.svelte'; // Import ConfirmDialog
+  import { confirm } from '@/stores/confirm.svelte'; // Import confirm helper
   import { initBridge } from '@/lib/bridge';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
@@ -114,6 +116,10 @@
   }
 
   async function handleGenerate() {
+     // Example usage of the new Confirm Dialog
+     const ok = await confirm('Are you sure you want to print this document?', 'Print Confirmation', { type: 'info' });
+     if (!ok) return;
+
      // Trigger browser print via Java Bridge
      // JavaFX will handle this via WebEngine.print()
      if (window.javaBridge && window.javaBridge.print) {
@@ -123,6 +129,9 @@
      }
   }
 </script>
+
+<!-- Mount the Global Confirm Dialog -->
+<ConfirmDialog />
 
 <main>
   <div class="content-area">
