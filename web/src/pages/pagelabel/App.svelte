@@ -113,7 +113,7 @@
                 </div>
 
                 <div class="actions">
-                    <StyledButton type="primary" on:click={addRule}>Add Rule</StyledButton>
+                    <StyledButton type="primary" onclick={addRule}>Add Rule</StyledButton>
                 </div>
             </div>
 
@@ -136,7 +136,7 @@
             </div>
 
             <div class="bottom-actions">
-                 <StyledButton type="important" on:click={apply}>Set Page Label</StyledButton>
+                 <StyledButton type="important" onclick={apply}>Set Page Label</StyledButton>
             </div>
         </div>
         {/snippet}

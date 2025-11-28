@@ -23,6 +23,8 @@
     });
 </script>
 
+
+<!-- on:click|self 是 Svelte 4 的语法，使用 |self 必须加: , self 在 Svelte 5 已不使用-->
 {#if show}
 <div class="modal-overlay" on:click|self={close} role="presentation" tabindex="-1">
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
