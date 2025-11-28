@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "node download-pdfjs.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
