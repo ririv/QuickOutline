@@ -48,6 +48,9 @@
                     }
                 }
             });
+
+            // 重要！！！必须有这条语句进行等待，否则获得的是未渲染完成的内容（公式）
+            await new Promise(resolve => setTimeout(resolve, 0));
             
             // Fix MathJax SVG sizes if necessary (omitted complex logic for brevity, assuming standard output is ok or handled by CSS)
             // If previous logic had manual SVG resizing, it should be moved to a util function.
