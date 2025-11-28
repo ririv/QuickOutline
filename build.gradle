@@ -161,6 +161,9 @@ def os = org.gradle.internal.os.OperatingSystem.current()
 // https://badass-jlink-plugin.beryx.org/releases/latest/
 // 仅对build中任务有效，对application中的run任务无效，
 jlink {
+    // 注意参数是jar名的前缀（String... jarPrefixes）
+    addExtraDependencies("jackson-core")
+
     launcher {
         name = 'QuickOutline'
         jvmArgs = args
@@ -241,6 +244,41 @@ test {
     enabled = false // 禁用测试任务
 }
 
+shadowJar {
+    // 设置最终 Fat JAR 的文件名
+    archiveClassifier.set('all') // 生成如 'your-app-version-all.jar'
 
+    // 排除签名文件和不必要的元数据，减小体积并避免冲突
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/LICENSE*'
+    exclude 'META-INF/NOTICE*'
+    exclude 'META-INF/README*'
+    exclude '**/module-info.class' // 如果项目是非模块化或自动模块，排除模块描述符，避免潜在的冲突
 
+    // 处理 SPI (Service Provider Interface) 配置文件冲突，例如 Vert.x, SLF4J
+    // 当多个 JAR 包含 META-INF/services/ 下的同名文件时，需要合并内容
+    mergeServiceFiles()
 
+    // 解决其他常见的文件冲突，例如属性文件或原生库
+    // 通常 Vert.x/Netty 会导致一些 META-INF/io.netty 路径下的重复，或者 Log4j
+    // append 'META-INF/io.netty.versions.properties' // 示例：如果出现此文件冲突
+    // append 'META-INF/native-image/io.netty/common/reflect-config.json' // 示例
+
+    // 确保主类被正确写入 JAR 的 Manifest 文件
+    manifest {
+        attributes 'Main-Class': application.mainClass.get() // 从 application 插件获取主类
+    }
+
+    // 暂时不开启 minimize()，因为 Vert.x/Jackson 等库大量使用反射，
+    // minimize() 容易误删运行时需要的类，导致 NoClassDefFoundError。
+    // 如果需要进一步裁剪，可以在功能验证稳定后，谨慎尝试并手动维护保留规则。
+    // minimize() {
+    //     // 例如：保留所有 Vert.x 相关的类
+    //     keep 'io.vertx.**'
+    //     // 排除测试相关的依赖
+    //     exclude(dependency('org.junit.*'))
+    // }
+}
