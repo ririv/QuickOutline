@@ -2,9 +2,13 @@
   import { onMount } from 'svelte';
   import { handleSvgUpdate, onSvgViewChange, setDoubleBuffering } from '../lib/preview-engine/svg-engine';
   import { handleImageUpdate } from '../lib/preview-engine/image-engine';
+  import PagedRenderer from './renderers/PagedRenderer.svelte';
 
-  export let mode: 'combined' | 'preview-only' = 'preview-only';
+  export let mode: 'svg' | 'image' | 'paged' = 'paged'; // Default to paged
   export let onrefresh: (() => void | Promise<void>) | undefined = undefined; // onrefresh might be async
+
+  // Payload for PagedRenderer
+  export let pagedPayload: { html: string, styles: string, header: any, footer: any } | null = null;
 
   let container: HTMLDivElement;
   let viewport: HTMLDivElement;
@@ -15,13 +19,13 @@
   let sliderPercent = '20%';
   let isRefreshing = false; // Refresh state for animation
 
-  // Expose methods for parent to call
+  // Expose methods for parent to call (SVG/Image Engine)
   export const renderSvg = (json: string) => {
-    if (container && viewport) handleSvgUpdate(json, container, viewport);
+    if (mode === 'svg' && container && viewport) handleSvgUpdate(json, container, viewport);
   };
   
   export const renderImage = (json: string) => {
-    if (container) handleImageUpdate(json, container);
+    if (mode === 'image' && container) handleImageUpdate(json, container);
   };
 
   export const setDoubleBuffer = (enable: boolean) => {
@@ -40,9 +44,12 @@
       currentScale = scale;
       
       if (container) {
-          (container.style as any).zoom = currentScale;
-          // Notify engine
-          onSvgViewChange(container, viewport);
+          // Apply zoom to container
+          container.style.transform = `scale(${currentScale})`;
+          // Ensure origin is top-left for consistent scaling
+          container.style.transformOrigin = 'top left';
+          // Notify svg-engine if mode is svg
+          if (mode === 'svg') onSvgViewChange(container, viewport);
       }
       updateSliderBackground(currentScale);
   }
@@ -61,7 +68,8 @@
   }
 
   function handleScroll() {
-      if (!isScrolling) {
+      // Only SVG mode needs scroll notification to manage virtual rendering
+      if (mode === 'svg' && !isScrolling) {
           window.requestAnimationFrame(() => {
               onSvgViewChange(container, viewport);
               isScrolling = false;
@@ -92,6 +100,8 @@
   onMount(() => {
       updateSliderBackground(currentScale);
       setDoubleBuffer(true);
+      // Apply initial zoom
+      setZoom(currentScale);
   });
 
 </script>
@@ -99,7 +109,13 @@
 <div class="preview-root" data-mode={mode}>
     <div id="viewport" bind:this={viewport} onwheel={handleWheel} onscroll={handleScroll}>
         <div id="pages-container" bind:this={container}>
-            <!-- Pages will be injected here by engine -->
+            {#if mode === 'paged'}
+                {#if pagedPayload}
+                    <PagedRenderer payload={pagedPayload} onRenderComplete={() => { /* Optional: Restore scroll etc */ }} />
+                {/if}
+            {:else if mode === 'svg' || mode === 'image'}
+                <!-- SVG/Image engines render directly into container -->
+            {/if}
         </div>
     </div>
 
@@ -128,98 +144,104 @@
 </div>
 
 <style>
-    /* ... existing styles ... */
-    
-    .refresh-fab {
-        position: absolute;
-        bottom: 15px; /* Adjusted position */
-        right: 15px;  /* Adjusted position */
-        width: 28px;  /* Button size */
-        height: 28px;
-        border-radius: 50%;
-        background: transparent;
-        box-shadow: none;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 900;
-        color: #666; /* Default icon color */
-        transition: all 0.2s;
-        padding: 0;
-    }
-    .refresh-fab svg {
-        width: 20px; /* Icon size */
-        height: 20px;
-        transition: transform 0.3s ease-out; /* Smooth transform for rotation */
-    }
-    .refresh-fab:hover {
-        background: rgba(0,0,0,0.1);
-        color: #1677ff;
-        box-shadow: none;
-    }
-    
-    .refresh-fab.spinning svg { /* Use class to trigger animation */
-        animation: spin 0.3s ease-out forwards; /* Spin once, then hold last frame */
-    }
-    
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+    /* Unified Paper Styles for All Engines */
+    /* .page-sheet: General class for future use */
+    /* .pagedjs_page: Paged.js generated pages */
+    /* .page-wrapper: SVG/Image engine pages */
+    :global(.page-sheet), :global(.pagedjs_page), :global(.page-wrapper) {
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4); /* Elevation shadow */
+        margin-bottom: 20px; /* Spacing between pages */
+        flex: none; /* Prevent shrinking */
+        display: flex; /* Removes bottom gap for images */
+        
+        /* Performance & Layout */
+        contain: content;
+        transform: translate3d(0, 0, 0);
+        will-change: transform;
+        position: relative;
+        overflow: hidden;
     }
 
-    /* --- 双缓冲通用类 (仅在启用时生效) --- */
-    /* 使用 :global() 包裹，因为 .double-buffer 类和内部的 svg/img 是动态生成的 */
-    :global(.double-buffer .page-wrapper svg),
-    :global(.double-buffer .page-wrapper img) {
+    /* Paged.js specific sizing (A4 default) */
+    :global(.pagedjs_page) {
+        width: 595pt; 
+        min-height: 842pt; 
+    }
+    
+    /* SVG/Image Engine Specific Styles - Restored */
+    :global(.page-wrapper svg) {
+        display: block;
+        width: 100%;
+        height: 100%;
+        pointer-events: auto;
+        shape-rendering: auto;
+        text-rendering: geometricPrecision;
+        mix-blend-mode: normal;
+    }
+
+    :global(.page-wrapper img) {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
         position: absolute;
         top: 0;
         left: 0;
-        opacity: 0;
-        transition: opacity 0.2s ease-in;
+        image-rendering: auto;
     }
 
-    :global(.double-buffer .page-wrapper .current) {
-        opacity: 1;
-        z-index: 1;
-    }
-
-    :global(.double-buffer .page-wrapper .preload) {
-        z-index: 2;
-    }
-
-    /* 允许用户选中页面内容 */
-    :global(#pages-container) {
-        user-select: text;
-    }
-
+    /* Container Styles */
     .preview-root {
         position: relative;
         width: 100%;
         height: 100%;
         overflow: hidden;
         background-color: #e3e4ea;
+        display: flex;
+        flex-direction: column;
     }
 
-    /* --- 悬浮工具栏 (胶囊样式 + 毛玻璃) --- */
+    #viewport {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        /* Left align pages */
+        justify-content: flex-start; 
+        padding: 40px;
+        /* Force left alignment to override any global center styles */
+        text-align: left !important; 
+    }
+
+    #pages-container {
+        /* Zoom from top-left to keep content aligned left */
+        transform-origin: top left; 
+        transition: transform 0.1s ease-out;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        /* Ensure container width wraps content */
+        width: auto !important; 
+    }
+
+    /* Toolbar Styles */
     #toolbar-container {
-        position: absolute; /* Changed from fixed to absolute */
-        bottom: 30px; /* 悬浮在底部，不遮挡顶部内容 */
+        position: absolute;
+        bottom: 30px;
         left: 0;
         right: 0;
         display: flex;
         justify-content: center;
         z-index: 1000;
-        pointer-events: none; /* 让容器本身不挡鼠标 */
+        pointer-events: none;
     }
 
     #toolbar {
-        pointer-events: auto; /* 让工具栏内部可点击 */
-        background-color: rgba(0, 0, 0, 0.75); /* 半透明黑 */
-        backdrop-filter: blur(10px); /* 毛玻璃效果 */
+        pointer-events: auto;
+        background-color: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(10px);
         padding: 8px 20px;
-        border-radius: 50px; /* 胶囊圆角 */
+        border-radius: 50px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
@@ -228,7 +250,6 @@
         transition: opacity 0.3s;
     }
 
-    /* 圆形图标按钮 */
     .icon-btn {
         background: transparent;
         border: 1px solid transparent;
@@ -246,25 +267,17 @@
         line-height: 1;
         padding: 0;
     }
-    .icon-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-    }
-    .icon-btn:active {
-        background: rgba(255, 255, 255, 0.2);
-        transform: scale(0.95);
-    }
+    .icon-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+    .icon-btn:active { background: rgba(255, 255, 255, 0.2); transform: scale(0.95); }
 
-    /* 缩放数值标签 */
     #zoom-label {
         font-size: 14px;
-        font-variant-numeric: tabular-nums; /* 数字等宽，防止跳动 */
+        font-variant-numeric: tabular-nums;
         min-width: 45px;
         text-align: center;
         color: #fff;
     }
 
-    /* 文字按钮 (Reset) */
     .text-btn {
         background: #1677ff;
         border: none;
@@ -279,45 +292,81 @@
     .text-btn:hover { background: #4096ff; }
     .text-btn:active { background: #0958d9; }
 
-    /* --- Ant Design 风格滑动条 (CSS Magic) --- */
     input[type=range] {
-        appearance: none; /* 清除默认样式 */
+        appearance: none;
         width: 120px;
-        height: 4px; /* 轨道高度 */
+        height: 4px;
         background: transparent;
         cursor: pointer;
         outline: none;
         margin: 0;
     }
-
-    /* 轨道 (Track) - 动态背景色由 JS 变量 --percent 控制 */
     input[type=range]::-webkit-slider-runnable-track {
         width: 100%;
         height: 4px;
         border-radius: 2px;
         background: linear-gradient(to right, #1677ff 0%, #1677ff var(--percent), #5e5e5e var(--percent), #5e5e5e 100%);
     }
-
-    /* 滑块 (Thumb) */
     input[type=range]::-webkit-slider-thumb {
         -webkit-appearance: none;
         height: 14px;
         width: 14px;
         border-radius: 50%;
         background: #ffffff;
-        border: 2px solid #1677ff; /* 蓝色边框 */
-        margin-top: -5px; /* 垂直居中修正: (轨道4 - 滑块14) / 2 */
+        border: 2px solid #1677ff;
+        margin-top: -5px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         transition: transform 0.1s;
     }
-
-    /* 滑块交互效果 */
-    input[type=range]:hover::-webkit-slider-thumb {
-        transform: scale(1.2);
-        box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.2); /* 蓝色光晕 */
+    input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
+    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.3); }
+    
+    .refresh-fab {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: transparent;
+        box-shadow: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 900;
+        color: #666;
+        transition: all 0.2s;
+        padding: 0;
     }
-    input[type=range]:active::-webkit-slider-thumb {
-        transform: scale(1.2);
-        box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.3);
+    .refresh-fab:hover { background: rgba(0,0,0,0.1); color: #1677ff; }
+    .refresh-fab.spinning svg { animation: spin 0.3s ease-out forwards; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* --- PRINT STYLES for all modes --- */
+    /* Hides UI elements. Specific page layout is handled by PagedRenderer or Engine */
+    @media print {
+        :global(body > *:not(.preview-root)), 
+        #toolbar-container,
+        .refresh-fab {
+            display: none !important;
+        }
+
+        :global(body), :global(html), .preview-root, #viewport, #pages-container {
+            width: 100%;
+            height: auto !important;
+            margin: 0;
+            padding: 0;
+            background: white;
+            overflow: visible !important;
+            display: block !important;
+        }
+
+        #viewport, #pages-container {
+            padding: 0 !important;
+            text-align: left !important;
+            transform: none !important; /* Disable zoom on print */
+        }
     }
 </style>

@@ -25,7 +25,7 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 import com.ririv.quickoutline.model.SvgPageMetadata;
 import com.google.gson.Gson;
-import com.ririv.quickoutline.model.SectionConfig; // Added import
+import com.ririv.quickoutline.model.SectionConfig; 
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -80,7 +80,7 @@ public class MarkdownTabController {
     public void initialize() {
         log.debug("Controller initialize start");
 
-        // 1. 初始化 PDF 预览生成器
+        // 1. 初始化 PDF 预览生成器 (保留原有逻辑)
         setupPreviewer();
 
         // 2. 配置 WebView
@@ -124,6 +124,8 @@ public class MarkdownTabController {
         // Register handlers
         bridge.setRenderPdfHandler(this::handleRenderPdf);
         bridge.setUpdatePreviewHandler(this::handleUpdatePreview);
+        // 新增：注册打印处理器
+        bridge.setPrintHandler(this::handlePrint);
 
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
@@ -234,6 +236,7 @@ public class MarkdownTabController {
     }
 
     private void handleRenderPdf(String json) {
+        // 保留原有逻辑：如果前端显式调用 renderPdf，则走旧流程
         try {
             RenderPdfPayload payload = gson.fromJson(json, RenderPdfPayload.class);
             renderToPdfAction(payload);
@@ -241,6 +244,22 @@ public class MarkdownTabController {
             log.error("Error handling render PDF request", e);
             eventBus.post(new ShowMessageEvent("Invalid data from editor", Message.MessageType.ERROR));
         }
+    }
+    
+    // 新增：打印处理逻辑
+    private void handlePrint(Void ignored) {
+        Platform.runLater(() -> {
+            javafx.print.PrinterJob job = javafx.print.PrinterJob.createPrinterJob();
+            if (job != null) {
+                // 使用 WebEngine 的打印功能
+                webEngine.print(job);
+                job.endJob();
+                log.info("Print job initiated via JavaFX PrinterJob");
+            } else {
+                log.error("Could not create printer job");
+                eventBus.post(new ShowMessageEvent("Could not create printer job. Please check your printer settings.", Message.MessageType.ERROR));
+            }
+        });
     }
 
     private void renderToPdfAction(RenderPdfPayload payload) {

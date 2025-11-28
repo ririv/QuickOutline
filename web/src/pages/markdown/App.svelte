@@ -12,6 +12,9 @@
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
+  
+  // Payload state for Preview component
+  let currentPagedPayload: any = $state(null);
 
   // State for StatusBar
   let insertPos = $state(1);
@@ -34,15 +37,13 @@
       return hasText || config.drawLine;
   }
 
-  // Use $effect to react to changes in headerConfig or footerConfig (deeply reactive $state)
-
   onMount(() => {
     // Initialize Bridge to route Java calls to components
     initBridge({
-      // Preview actions
-      onUpdateSvg: (json) => previewComponent?.renderSvg(json),
-      onUpdateImage: (json) => previewComponent?.renderImage(json),
-      onSetSvgDoubleBuffering: (enable) => previewComponent?.setDoubleBuffer(enable),
+      // Preview actions - Kept for compatibility but routed to safe checks
+      onUpdateSvg: (json) => (previewComponent as any)?.renderSvg && (previewComponent as any).renderSvg(json),
+      onUpdateImage: (json) => (previewComponent as any)?.renderImage && (previewComponent as any).renderImage(json),
+      onSetSvgDoubleBuffering: (enable) => (previewComponent as any)?.setDoubleBuffer && (previewComponent as any).setDoubleBuffer(enable),
 
       // Editor actions
       onInitVditor: (md) => editorComponent?.init(md),
@@ -55,47 +56,71 @@
     });
   });
 
+
+  async function triggerPreview2() {
+    if (!editorComponent) return;
+    const payloadJson = await editorComponent.getPayloads();
+    const payload = JSON.parse(payloadJson);
+
+    const request = {
+      ...payload,
+      header: headerConfig,
+      footer: footerConfig
+    };
+
+    // Assuming Java bridge has updatePreview method that accepts json string
+    if (window.javaBridge && window.javaBridge.updatePreview) {
+      window.javaBridge.updatePreview(JSON.stringify(request));
+    } else {
+      console.warn('Java Bridge updatePreview not available', request);
+    }
+  }
+
+  async function handleGenerate2() {
+    if (!editorComponent) return;
+
+    // Get editor content
+    const payloadJson = await editorComponent.getPayloads();
+    const payload = JSON.parse(payloadJson);
+
+    // Merge with status bar params
+    // Note: style is not used in Markdown PDF generation currently, but we pass it anyway
+    const request = {
+      ...payload, // html, styles
+      insertPos,
+      style,
+      header: headerConfig,
+      footer: footerConfig
+    };
+
+    if (window.javaBridge && window.javaBridge.renderPdf) {
+      window.javaBridge.renderPdf(JSON.stringify(request));
+    } else {
+      console.warn('Java Bridge renderPdf not available', request);
+    }
+  }
+
   async function triggerPreview() {
       if (!editorComponent) return;
       const payloadJson = await editorComponent.getPayloads();
       const payload = JSON.parse(payloadJson);
       
-      const request = {
+      // Update the reactive state, which will trigger Preview -> PagedRenderer
+      currentPagedPayload = {
           ...payload,
           header: headerConfig,
           footer: footerConfig
       };
-      
-      // Assuming Java bridge has updatePreview method that accepts json string
-      if (window.javaBridge && window.javaBridge.updatePreview) {
-          window.javaBridge.updatePreview(JSON.stringify(request));
-      } else {
-          console.warn('Java Bridge updatePreview not available', request);
-      }
   }
 
   async function handleGenerate() {
-      if (!editorComponent) return;
-      
-      // Get editor content
-      const payloadJson = await editorComponent.getPayloads();
-      const payload = JSON.parse(payloadJson);
-      
-      // Merge with status bar params
-      // Note: style is not used in Markdown PDF generation currently, but we pass it anyway
-      const request = {
-          ...payload, // html, styles
-          insertPos,
-          style,
-          header: headerConfig,
-          footer: footerConfig
-      };
-      
-      if (window.javaBridge && window.javaBridge.renderPdf) {
-          window.javaBridge.renderPdf(JSON.stringify(request));
-      } else {
-          console.warn('Java Bridge renderPdf not available', request);
-      }
+     // Trigger browser print via Java Bridge
+     // JavaFX will handle this via WebEngine.print()
+     if (window.javaBridge && window.javaBridge.print) {
+        window.javaBridge.print();
+     } else {
+        window.print(); // Fallback
+     }
   }
 </script>
 
@@ -142,7 +167,13 @@
           />
         </div>
         <div slot="right" class="h-full">
-          <Preview bind:this={previewComponent} mode="combined" onrefresh={triggerPreview} />
+          <!-- Pass payload via prop -->
+          <Preview 
+            bind:this={previewComponent} 
+            mode="paged" 
+            pagedPayload={currentPagedPayload}
+            onrefresh={triggerPreview} 
+          />
         </div>
       </SplitPane>
   </div>
@@ -185,5 +216,26 @@
       flex: 1;
       overflow: hidden;
       position: relative;
+  }
+
+  @media print {
+    main, .content-area, .h-full {
+        height: auto !important;
+        width: auto !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+    
+    /* Hide the editor pane explicitly if global CSS doesn't catch it */
+    .editor-wrapper, 
+    :global([slot="left"]),
+    :global(.status-bar) {
+        display: none !important;
+    }
+    
+    :global([slot="right"]) {
+        height: auto !important;
+        overflow: visible !important;
+    }
   }
 </style>
