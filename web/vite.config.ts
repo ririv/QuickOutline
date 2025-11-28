@@ -5,6 +5,7 @@ import fs from 'fs';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import tailwindcss from '@tailwindcss/vite';
 
+const host = process.env.TAURI_DEV_HOST;
 export default defineConfig({
   plugins: [
     svelte(),
@@ -115,9 +116,26 @@ export default defineConfig({
       }
     }
   },
+  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
+  //
+  // 1. prevent Vite from obscuring rust errors
+  clearScreen: false,
+  // 2. tauri expects a fixed port, fail if that port is not available
   server: {
-    port: 5173,
-    hmr: true, // 启用热更新
+    port: 1420,
+    strictPort: true,
+    host: host || false,
+    hmr: host
+        ? {
+          protocol: "ws",
+          host,
+          port: 1421,
+        }
+        : undefined,
+    watch: {
+      // 3. tell Vite to ignore watching `src-tauri`
+      ignored: ["**/src-tauri/**"],
+    },
   },
   resolve: {
     alias: {
