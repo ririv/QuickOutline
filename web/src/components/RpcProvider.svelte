@@ -47,14 +47,25 @@
             }
         }, 300);
 
-        try {
-            // @ts-ignore
-            if (window.__TAURI_INTERNALS__ || window.__TAURI__) {
+        // === 环境检测与连接 ===
+        // @ts-ignore
+        const isTauri = !!(window.__TAURI_INTERNALS__ || window.__TAURI__);
+
+        if (isTauri) {
+            try {
                 await setupTauriConnection();
+            } catch (e) {
+                console.warn("Tauri setup failed:", e);
+                handleError(String(e));
             }
-        } catch (e) {
-            console.warn("Tauri setup failed:", e);
-            handleError(e);
+        } else {
+            // 【关键修复】: 浏览器环境 (Vite Dev)
+            // 如果不是 Tauri 环境，说明无法自动获取端口，直接显示手动连接界面
+            console.warn("RpcProvider: Browser environment detected (No Tauri).");
+
+            // 为了体验平滑，稍微延迟一点点再显示错误，或者直接显示
+            // 这里选择直接显示，方便开发调试
+            handleError("Browser Environment Detected.\n\nTauri APIs are unavailable in the browser.\nPlease enter the Java Sidecar port manually.");
         }
     });
 
@@ -135,13 +146,9 @@
     }
 </script>
 
-<!-- 渲染逻辑： -->
 {#if status === 'connected'}
-    <!-- 1. 连接成功：直接显示内容 -->
     {@render children()}
-
 {:else if status === 'connecting'}
-    <!-- 2. 连接中：只有当超过宽限期(showLoadingUI为true)时，才显示转圈圈 -->
     {#if showLoadingUI}
         <div class="loading-screen fade-in">
             <div class="spinner"></div>
@@ -154,8 +161,7 @@
     {/if}
 
 {:else if status === 'error'}
-    <!-- 3. 出错：始终显示错误界面 -->
-    <div class="error-screen">
+    <div class="error-screen fade-in">
         <h2>Service Unavailable</h2>
         <pre class="error-msg">{errorMessage}</pre>
 
@@ -190,7 +196,6 @@
         to { opacity: 1; }
     }
 
-    /* 以下样式保持不变 */
     .loading-screen, .error-screen {
         height: 100%;
         display: flex;

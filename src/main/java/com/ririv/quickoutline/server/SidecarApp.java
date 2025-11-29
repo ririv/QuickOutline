@@ -65,8 +65,10 @@ public class SidecarApp {
 
                     if (imageData != null) {
                         req.response()
+                           // 【关键修正】添加CORS头，允许来自任何源（包括tauri://localhost）的请求
+                           .putHeader("Access-Control-Allow-Origin", "*")
                            .putHeader("Content-Type", "image/png")
-                           .putHeader("Cache-Control", "public, max-age=31536000") // 强缓存
+                           .putHeader("Cache-Control", "public, max-age=31536000")
                            .end(io.vertx.core.buffer.Buffer.buffer(imageData));
                     } else {
                         req.response().setStatusCode(404).end("Image not found");
