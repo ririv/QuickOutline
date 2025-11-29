@@ -8,12 +8,14 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "update:sidecar": "rm -rf src-tauri/resources/java-runtime && cd ../ && ./gradlew clean jlink && cp -r build/image web/src-tauri/resources/java-runtime && echo '✅ Sidecar updated!'"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-shell": "^2.3.3",
     "pagedjs": "^0.4.3",
     "tailwindcss": "^4.1.17",
     "vditor": "^3.11.2"
