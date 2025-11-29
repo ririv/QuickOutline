@@ -281,9 +281,8 @@
 
     #toolbar {
         pointer-events: auto;
-        /* Idle State: Subtle */
-
-        background-color: rgba(0, 0, 0, 0.15);
+        /* Idle State: Even more subtle */
+        background-color: rgba(0, 0, 0, 0.3); /* Changed from 0.5 to 0.3 */
         backdrop-filter: blur(4px);
         padding: 8px 20px;
         border-radius: 50px;
@@ -291,14 +290,12 @@
         display: flex;
         align-items: center;
         gap: 15px;
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.8); /* Slightly brighter text */
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
     #toolbar:hover {
-        /* Changed from .preview-root:hover #toolbar */
-
         /* Active State: High contrast */
-
         background-color: rgba(0, 0, 0, 0.85);
         backdrop-filter: blur(10px);
         color: #fff;
@@ -310,7 +307,6 @@
         background: transparent;
         border: 1px solid transparent;
         color: inherit; /* Inherit from parent for transition */
-
         width: 28px;
         height: 28px;
         border-radius: 50%;
@@ -344,7 +340,7 @@
     }
 
     .text-btn {
-        background: #1677ff;
+        background: rgba(255, 255, 255, 0.2); /* Neutral default */
         border: none;
         color: white;
         border-radius: 4px;
@@ -353,19 +349,21 @@
         cursor: pointer;
         margin-left: 5px;
         font-family: inherit;
-        opacity: 0.8; /* Slightly dimmed normally */
+        opacity: 0.9;
+        transition: background-color 0.3s;
     }
-
-    .preview-root:hover .text-btn {
-        opacity: 1;
+    
+    #toolbar:hover .text-btn {
+        background: #1677ff; /* Blue when toolbar active */
     }
 
     .text-btn:hover {
-        background: #4096ff;
+        background: #4096ff !important; /* Brighter on direct hover */
+        opacity: 1;
     }
 
     .text-btn:active {
-        background: #0958d9;
+        background: #0958d9 !important;
     }
 
     input[type="range"] {
@@ -376,11 +374,11 @@
         cursor: pointer;
         outline: none;
         margin: 0;
-        opacity: 0.6;
+        opacity: 0.8;
         transition: opacity 0.3s;
     }
 
-    .preview-root:hover input[type="range"] {
+    #toolbar:hover input[type="range"] {
         opacity: 1;
     }
 
@@ -388,6 +386,19 @@
         width: 100%;
         height: 4px;
         border-radius: 2px;
+        /* Default: Neutral/Grayish track */
+        background: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.6) 0%,
+            rgba(255, 255, 255, 0.6) var(--percent),
+            rgba(255, 255, 255, 0.2) var(--percent),
+            rgba(255, 255, 255, 0.2) 100%
+        );
+        transition: background 0.3s;
+    }
+    
+    #toolbar:hover input[type="range"]::-webkit-slider-runnable-track {
+        /* Hover: Blue track */
         background: linear-gradient(
             to right,
             #1677ff 0%,
@@ -403,10 +414,14 @@
         width: 14px;
         border-radius: 50%;
         background: #ffffff;
-        border: 2px solid #1677ff;
+        border: 2px solid rgba(255, 255, 255, 0.6); /* Neutral border */
         margin-top: -5px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: transform 0.1s;
+        transition: transform 0.1s, border-color 0.3s;
+    }
+    
+    #toolbar:hover input[type="range"]::-webkit-slider-thumb {
+        border-color: #1677ff; /* Blue border on hover */
     }
 
     input[type="range"]:hover::-webkit-slider-thumb {
@@ -416,6 +431,7 @@
     input[type="range"]:active::-webkit-slider-thumb {
         transform: scale(1.2);
         box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.3);
+        border-color: #1677ff;
     }
 
     .refresh-fab {
@@ -433,7 +449,7 @@
         align-items: center;
         justify-content: center;
         z-index: 900;
-        color: #666;
+        color: rgba(0, 0, 0, 0.3);
         transition: all 0.2s;
         padding: 0;
     }
