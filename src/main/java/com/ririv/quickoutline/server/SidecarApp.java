@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.server.websocket;
+package com.ririv.quickoutline.server;
 
 import com.ririv.quickoutline.api.service.RpcProcessor;
 import com.ririv.quickoutline.api.service.impl.ApiServiceImpl;

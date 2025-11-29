@@ -35,7 +35,7 @@ javafx {
 
 application{
     mainModule.set("quickoutline")
-    mainClass.set("com.ririv.quickoutline.view.App")
+    mainClass.set("com.ririv.quickoutline.server.SidecarApp")
 }
 
 
@@ -140,7 +140,12 @@ def args = [
 //    '-Dprism.lcdtext=false' // 视效果而定
     '-Djavafx.animation.fullspeed=true',
     '-Djavafx.pulseLogger=false',
-    '-Dprism.lcdtext=false'
+    '-Dprism.lcdtext=false',
+
+//    AWT 触发：你的某个功能（可能是生成 PDF、处理图片、或者仅仅是计算字体宽度）在底层调用了 java.awt 包相关的类（比如 java.awt.Font, java.awt.Color, javax.imageio.ImageIO 等）。
+//    默认行为：在 macOS/Windows 上，一旦 Java 程序加载了 AWT 图形库（即使你不显示任何窗口），操作系统就会默认把它当做一个“图形界面应用程序”，因此会在 Dock 栏显示一个 Java 图标（通常是那个咖啡杯）。
+    // 【新增修复】开启 Headless 模式，禁止显示 Dock 图标
+    '-Djava.awt.headless=true'
 ]
 
 tasks.withType(JavaCompile).configureEach {
@@ -281,4 +286,40 @@ shadowJar {
     //     // 排除测试相关的依赖
     //     exclude(dependency('org.junit.*'))
     // }
+}
+
+
+
+// ============================================================
+//  macOS 自动签名任务 (使用 type: Exec)
+// ============================================================
+
+// 定义一个标准的 Exec 任务
+tasks.register('signMacBinaries', Exec) {
+    // 只有在 macOS 下才执行
+    onlyIf { org.gradle.internal.os.OperatingSystem.current().isMacOsX() }
+
+    // 必须等待 jlink 任务生成完文件
+    dependsOn 'jlink'
+
+    // 定义要签名的文件路径
+    def imageDir = layout.buildDirectory.dir("image").get().asFile
+    def javaBin = new File(imageDir, "bin/java").absolutePath
+    def libJvm = new File(imageDir, "lib/server/libjvm.dylib").absolutePath
+
+    // 设置工作目录 (可选)
+    workingDir imageDir
+
+    // 使用 sh -c 来一次性执行多条签名命令
+    commandLine 'sh', '-c', """
+        echo "正在执行 macOS Ad-hoc 签名..."
+        codesign --force --sign - "${javaBin}"
+        codesign --force --sign - "${libJvm}"
+        echo "签名修复完成"
+    """
+}
+
+// 配置钩子：当 jlink 执行完毕后，自动执行签名任务
+tasks.named('jlink') {
+    finalizedBy 'signMacBinaries'
 }

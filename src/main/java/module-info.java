@@ -105,4 +105,5 @@ module quickoutline {
     opens com.ririv.quickoutline.service.pdfpreview.strategy to com.google.guice;
     exports com.ririv.quickoutline.pdfProcess.numbering;
     opens com.ririv.quickoutline.pdfProcess.numbering to com.google.guice;
+    opens com.ririv.quickoutline.api.model to com.google.gson;
 }
