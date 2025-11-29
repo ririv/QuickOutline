@@ -16,9 +16,6 @@
 
 </script>
 
-<!-- Temporary test button -->
-<button onclick={testMessages} style="position:fixed; top: 10px; right: 10px; z-index: 9999;">Test Msgs</button>
-
 <div class="bookmark-tab-container">
     <main class="main-content">
         {#if currentView === 'text'}

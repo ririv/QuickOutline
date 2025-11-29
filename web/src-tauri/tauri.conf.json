@@ -16,7 +16,8 @@
         "title": "quickoutline",
         "width": 1024,
         "height": 768,
-        "decorations": true
+        "decorations": true,
+        "dragDropEnabled": false
       }
     ],
     "security": {

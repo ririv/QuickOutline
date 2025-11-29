@@ -1,8 +1,8 @@
+use serde_json::Value;
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_shell::process::CommandEvent;
-use serde_json::Value;
 
 // 1. 定义全局状态结构体
 pub struct JavaState {
@@ -52,7 +52,12 @@ pub fn start(app: &AppHandle) {
                                 }
 
                                 // 发送事件 (Push)
-                                let _ = app_handle.emit("java-ready", SidecarMessage { message: line.clone() });
+                                let _ = app_handle.emit(
+                                    "java-ready",
+                                    SidecarMessage {
+                                        message: line.clone(),
+                                    },
+                                );
                             }
                         }
                     }
