@@ -1,16 +1,42 @@
 <script lang="ts">
     import type { Bookmark } from "./types";
     import BookmarkNode from "./BookmarkNode.svelte";
+    import { onMount, onDestroy } from 'svelte';
+    import { bookmarkStore } from '@/stores/bookmarkStore';
+    import { rpc } from '@/lib/api/rpc';
+    import { get } from 'svelte/store';
 
-    let bookmarks = $state<Bookmark[]>([
-        { 
-            id: '1', title: 'Chapter 1: Introduction', page: 1, level: 1, children: [
-                { id: '1.1', title: '1.1 Overview', page: 2, level: 2, children: [] },
-                { id: '1.2', title: '1.2 History', page: 5, level: 2, children: [] }
-            ] 
-        },
-        { id: '2', title: 'Chapter 2: Advanced Topics', page: 10, level: 1, children: [] },
-    ]);
+    let bookmarks = $state<Bookmark[]>([]);
+    let rootBookmark: any = null; // Keep the root structure for serialization
+
+    onMount(async () => {
+        const text = get(bookmarkStore).text;
+        if (text) {
+            try {
+                const root = await rpc.parseTextToTree(text);
+                if (root) {
+                    rootBookmark = root;
+                    bookmarks = root.children || [];
+                }
+            } catch (e) {
+                console.error("Failed to parse bookmarks", e);
+            }
+        }
+    });
+
+    onDestroy(async () => {
+        // Sync back to text store when switching views
+        if (rootBookmark) {
+            // Update children in root object
+            rootBookmark.children = $state.snapshot(bookmarks); 
+            try {
+                const text = await rpc.serializeTreeToText(rootBookmark);
+                bookmarkStore.setText(text);
+            } catch (e) {
+                console.error("Failed to serialize bookmarks", e);
+            }
+        }
+    });
 
 </script>
 

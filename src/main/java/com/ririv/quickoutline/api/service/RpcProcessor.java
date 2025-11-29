@@ -3,6 +3,7 @@ package com.ririv.quickoutline.api.service;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
+import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.api.model.RpcRequest;
 import com.ririv.quickoutline.api.model.RpcResponse;
 import com.ririv.quickoutline.api.model.TocConfig;
@@ -101,6 +102,19 @@ public class RpcProcessor {
                     Type simRuleListType = new TypeToken<List<PageLabelRule>>(){}.getType();
                     List<PageLabelRule> simRules = gson.fromJson(gson.toJsonTree(request.params.get(0)), simRuleListType);
                     result = apiService.simulatePageLabels(simRules);
+                    break;
+
+                // --- Sync Utils ---
+                case "parseTextToTree":
+                    // params: [text]
+                    result = apiService.parseTextToTree((String) request.params.get(0));
+                    break;
+                case "serializeTreeToText":
+                    // params: [rootBookmarkDto]
+                    JsonElement dtoElement = gson.toJsonTree(request.params.get(0));
+                    BookmarkDto dto = gson.fromJson(dtoElement, BookmarkDto.class);
+                    Bookmark domainRoot = dto != null ? dto.toDomain() : null;
+                    result = apiService.serializeTreeToText(domainRoot);
                     break;
 
                 default:

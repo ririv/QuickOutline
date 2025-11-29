@@ -59,7 +59,7 @@ pub fn start(app: &AppHandle) {
                 }
                 CommandEvent::Stderr(data) => {
                     let line = String::from_utf8_lossy(&data).into_owned();
-                    println!("[Java Log]: {}", line);
+                    print!("[Java Log]: {}", line);
                 }
                 _ => {}
             }

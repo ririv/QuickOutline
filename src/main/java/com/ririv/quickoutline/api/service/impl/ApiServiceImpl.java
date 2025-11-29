@@ -2,6 +2,7 @@ package com.ririv.quickoutline.api.service.impl;
 
 import com.google.gson.Gson;
 import com.ririv.quickoutline.api.model.TocConfig;
+import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.api.service.ApiService;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
@@ -221,5 +222,17 @@ public class ApiServiceImpl implements ApiService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public BookmarkDto parseTextToTree(String text) {
+        Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
+        return BookmarkDto.fromDomain(root);
+    }
+
+    @Override
+    public String serializeTreeToText(Bookmark root) {
+        if (root == null) return "";
+        return root.toOutlineString();
     }
 }

@@ -1,6 +1,7 @@
 package com.ririv.quickoutline.api.service;
 
 import com.ririv.quickoutline.api.model.TocConfig;
+import com.ririv.quickoutline.api.model.BookmarkDto; // Import added
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PageLabelRule;
 
@@ -25,4 +26,8 @@ public interface ApiService {
     String[] getPageLabels(String srcFilePath);
     void setPageLabels(List<PageLabelRule> rules, String destFilePath);
     List<String> simulatePageLabels(List<PageLabelRule> rules);
+
+    // Sync Utils
+    BookmarkDto parseTextToTree(String text); // Return type changed
+    String serializeTreeToText(Bookmark root);
 }
