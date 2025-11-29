@@ -9,6 +9,8 @@
     import MessageContainer from '../../components/common/MessageContainer.svelte';
     import FileHeader from '../../components/FileHeader.svelte';
     import { rpc } from '@/lib/api/rpc';
+    import { listen } from '@tauri-apps/api/event';
+    import { onMount, onDestroy } from 'svelte';
 
     let activeTab = $state(FnTab.bookmark);
     appStore.subscribe(state => {
@@ -16,52 +18,88 @@
     });
 
     let isDragging = $state(false);
+    let unlistenFns: (() => void)[] = [];
+    let isTauri = false;
 
-    function handleDragEnter(e: DragEvent) {
+    onMount(async () => {
+        // @ts-ignore
+        isTauri = !!(window.__TAURI_INTERNALS__ || window.__TAURI__);
+
+        if (isTauri) {
+            // Tauri Strategy
+            try {
+                unlistenFns.push(await listen('tauri://drag-enter', () => {
+                    isDragging = true;
+                }));
+
+                unlistenFns.push(await listen('tauri://drag-leave', () => {
+                    isDragging = false;
+                }));
+
+                unlistenFns.push(await listen<{ paths: string[] }>('tauri://drag-drop', (event) => {
+                    isDragging = false;
+                    const paths = event.payload.paths;
+                    if (paths && paths.length > 0) {
+                        const pdfPath = paths.find(p => p.toLowerCase().endsWith('.pdf'));
+                        if (pdfPath) {
+                            appStore.openFile(pdfPath);
+                        }
+                    }
+                }));
+            } catch (e) {
+                console.warn("Failed to setup Tauri drag events", e);
+            }
+        }
+    });
+
+    onDestroy(() => {
+        unlistenFns.forEach(fn => fn());
+    });
+
+    // HTML5 Fallback Handlers
+    function handleHtmlDragEnter(e: DragEvent) {
         e.preventDefault();
-        if (e.dataTransfer?.types.includes('Files')) {
+        if (!isTauri && e.dataTransfer?.types.includes('Files')) {
             isDragging = true;
         }
     }
 
-    function handleDragOver(e: DragEvent) {
+    function handleHtmlDragOver(e: DragEvent) {
         e.preventDefault();
     }
 
-    function handleDragLeave(e: DragEvent) {
+    function handleHtmlDragLeave(e: DragEvent) {
         e.preventDefault();
-        isDragging = false;
+        if (!isTauri) {
+            isDragging = false;
+        }
     }
 
-    async function handleDrop(e: DragEvent) {
+    function handleHtmlDrop(e: DragEvent) {
         e.preventDefault();
-        isDragging = false;
-        
-        if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-            const file = e.dataTransfer.files[0];
-            if (file.name.toLowerCase().endsWith('.pdf')) {
-                // @ts-ignore
-                const path = file.path; // Tauri specific
-                if (path) {
-                    await rpc.openFile(path);
-                } else {
-                    console.warn("No file path available (Browser mode?)");
-                    const manualPath = prompt("Browser mode detected: Please enter PDF file path manually:");
-                    if (manualPath) {
-                        await rpc.openFile(manualPath);
-                    }
-                }
+        if (!isTauri) {
+            isDragging = false;
+            const manualPath = prompt(
+                "Browser Restriction: Cannot access file path from drag-and-drop.\n\n" +
+                "If the Java backend is running locally, please enter the absolute file path manually:"
+            );
+            if (manualPath) {
+                appStore.openFile(manualPath);
             }
         }
     }
 </script>
 
-<main class="app-container" ondragenter={handleDragEnter} ondragover={handleDragOver} role="application">
+<main class="app-container" 
+      ondragenter={handleHtmlDragEnter} 
+      ondragover={handleHtmlDragOver} 
+      role="application">
     {#if isDragging}
+        <!-- Overlay handles events to prevent flickering in HTML5 mode -->
         <div class="drag-overlay" 
-             ondragleave={handleDragLeave} 
-             ondrop={handleDrop}
-             ondragover={handleDragOver} 
+             ondragleave={handleHtmlDragLeave} 
+             ondrop={handleHtmlDrop}
+             ondragover={handleHtmlDragOver}
              role="presentation">
             <div class="drag-message">Drop PDF File Here</div>
         </div>
@@ -160,6 +198,6 @@
         font-size: 24px;
         color: #1677ff;
         font-weight: 600;
-        pointer-events: none;
+        pointer-events: none; /* Critical for preventing flickering */
     }
 </style>

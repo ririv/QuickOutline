@@ -2,9 +2,15 @@
     import { rpc } from '@/lib/api/rpc';
     import { onMount } from 'svelte';
     import { open } from '@tauri-apps/plugin-dialog';
+    import { appStore } from '@/stores/appStore';
 
     let currentFilePath = $state<string | null>(null);
     let fileName = $derived(currentFilePath ? getFileName(currentFilePath) : 'Click to Open or Drop PDF');
+
+    // Sync with global store
+    appStore.subscribe(state => {
+        currentFilePath = state.currentFilePath;
+    });
 
     function getFileName(path: string) {
         // Handle both Windows and Unix paths
@@ -21,16 +27,14 @@
             if (selected) {
                 // selected is string | null (since multiple: false)
                 const path = selected as string; 
-                await rpc.openFile(path);
-                currentFilePath = path;
+                await appStore.openFile(path);
             }
         } catch (e) {
             console.error("File open error:", e);
             // Fallback for browser/dev environment
             const path = prompt("Unable to open system dialog. Please enter PDF file path manually:");
             if (path) {
-                await rpc.openFile(path);
-                currentFilePath = path;
+                await appStore.openFile(path);
             }
         }
     }
@@ -39,7 +43,7 @@
     onMount(async () => {
         try {
             const path = await rpc.getCurrentFilePath();
-            if (path) currentFilePath = path;
+            if (path) appStore.setCurrentFile(path);
         } catch (e) {
             console.warn("Failed to get current file path", e);
         }

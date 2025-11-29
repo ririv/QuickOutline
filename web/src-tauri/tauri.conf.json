@@ -17,7 +17,7 @@
         "width": 1024,
         "height": 768,
         "decorations": true,
-        "dragDropEnabled": false
+        "dragDropEnabled": true
       }
     ],
     "security": {
