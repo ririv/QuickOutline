@@ -144,6 +144,10 @@
             alert("Please enter a valid port number (1-65535)");
         }
     }
+
+    function handleSkipConnection() {
+        status = 'connected';
+    }
 </script>
 
 {#if status === 'connected'}
@@ -162,19 +166,22 @@
 
 {:else if status === 'error'}
     <div class="error-screen fade-in">
-        <h2>Service Unavailable</h2>
-        <pre class="error-msg">{errorMessage}</pre>
+        <div class="card">
+            <h2>Service Unavailable</h2>
+            <pre class="error-msg">{errorMessage}</pre>
 
-        <div class="manual-connect">
-            <p class="hint">Enter Java Sidecar port manually:</p>
-            <div class="input-group">
-                <input
-                        type="number"
-                        bind:value={manualPort}
-                        placeholder="e.g. 12345"
-                        onkeydown={(e) => e.key === 'Enter' && handleManualSubmit()}
-                />
-                <button onclick={handleManualSubmit}>Connect</button>
+            <div class="manual-connect">
+                <p class="hint">Enter Java Sidecar port manually:</p>
+                <div class="input-group">
+                    <input
+                            type="number"
+                            bind:value={manualPort}
+                            placeholder="e.g. 12345"
+                            onkeydown={(e) => e.key === 'Enter' && handleManualSubmit()}
+                    />
+                    <button onclick={handleManualSubmit}>Connect</button>
+                </div>
+                <button onclick={handleSkipConnection} class="skip-button">Don't Connect</button>
             </div>
         </div>
 
@@ -205,15 +212,44 @@
         padding: 20px;
         text-align: center;
         color: #333;
+        background-color: #f8f9fa; /* Light gray background for the whole screen */
+    }
+
+    .card {
+        background: #fff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        width: 100%;
+        max-width: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .error-screen h2 {
+        color: #d32f2f; /* Error red color */
+        margin-bottom: 20px;
+        font-size: 1.8em;
+        font-weight: 800; /* Make the title bolder */
+        margin-top: 0;
     }
 
     .error-msg {
-        color: #d32f2f;
-        font-weight: bold;
-        margin: 10px 0;
+        color: #721c24;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: left;
+        font-family: monospace;
+        margin: 0 0 25px 0; /* Space below error message */
         white-space: pre-wrap;
-        max-width: 80%;
+        width: 100%;
         overflow-wrap: break-word;
+        font-weight: normal;
+        font-size: 0.9em;
+        box-sizing: border-box;
     }
 
     .spinner {
@@ -231,43 +267,68 @@
     }
 
     .manual-connect {
-        margin-top: 20px;
-        background: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #eee;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        /* Removed independent card styles */
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
-    .hint { margin: 0 0 10px 0; color: #555; }
+    .hint { margin: 0 0 10px 0; color: #555; font-weight: 500; }
 
     .input-group {
         display: flex;
         gap: 8px;
         justify-content: center;
+        margin-bottom: 10px;
+        width: 100%;
     }
 
     input {
-        padding: 8px 12px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        padding: 10px 14px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
         font-size: 16px;
-        width: 120px;
+        width: 140px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    input:focus {
+        border-color: #007bff;
     }
 
     button {
-        padding: 8px 16px;
+        padding: 10px 20px;
         background-color: #007bff;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
         font-size: 16px;
-        transition: background-color 0.2s;
+        font-weight: 500;
+        transition: all 0.2s;
     }
 
     button:hover {
         background-color: #0056b3;
+        transform: translateY(-1px);
+    }
+
+    .manual-connect .skip-button {
+        background-color: transparent;
+        color: #6c757d;
+        margin-top: 8px;
+        font-size: 0.9em;
+        padding: 8px 16px;
+        font-weight: normal;
+    }
+
+    .manual-connect .skip-button:hover {
+        background-color: #f1f3f5;
+        color: #343a40;
+        text-decoration: none;
+        transform: none;
     }
 
     .hint-small {
