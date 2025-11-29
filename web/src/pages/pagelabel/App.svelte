@@ -6,6 +6,7 @@
     import deleteIcon from '../../assets/icons/delete-item.svg';
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
     import StyledButton from '../../components/controls/StyledButton.svelte';
+    import { messageStore } from '@/stores/messageStore';
 
     // Models
     interface PageLabelRule {
@@ -45,7 +46,7 @@
     function addRule() {
         if (!startPage) {
              // Simple validation
-             alert("Please enter Start Page");
+             messageStore.add("Please enter Start Page", "WARNING");
              return;
         }
 

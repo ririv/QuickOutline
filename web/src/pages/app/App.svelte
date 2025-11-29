@@ -6,6 +6,7 @@
     import TocGeneratorTab from '../toc/App.svelte';
     import MarkdownTab from '../markdown/App.svelte';
     import RpcProvider from '../../components/RpcProvider.svelte';
+    import MessageContainer from '../../components/common/MessageContainer.svelte';
 
     let activeTab = $state(FnTab.bookmark);
     appStore.subscribe(state => {
@@ -14,6 +15,7 @@
 </script>
 
 <main class="app-layout">
+    <MessageContainer />
     <LeftPane />
     <div class="content-area">
         <RpcProvider>

@@ -2,7 +2,6 @@
     import TextSubView from '../../components/bookmark/TextSubView.svelte';
     import TreeSubView from '../../components/bookmark/TreeSubView.svelte';
     import BookmarkBottomPane from '../../components/bookmark/BookmarkBottomPane.svelte';
-    import MessageContainer from '../../components/common/MessageContainer.svelte';
     import { messageStore } from '@/stores/messageStore';
     
     type View = 'text' | 'tree';
@@ -16,8 +15,6 @@
     }
 
 </script>
-
-<MessageContainer />
 
 <!-- Temporary test button -->
 <button onclick={testMessages} style="position:fixed; top: 10px; right: 10px; z-index: 9999;">Test Msgs</button>
