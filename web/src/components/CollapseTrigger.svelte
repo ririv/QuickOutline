@@ -70,7 +70,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all 0.2s ease;
+    transition: height 0.2s ease;
+    will-change: height;  /* Hint for browser optimization */
     position: relative;
     background-color: #fdfdfd; /* Very subtle background */
     border-bottom: 1px solid transparent;
