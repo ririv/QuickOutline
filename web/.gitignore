@@ -4,5 +4,6 @@
 .idea/web.iml
 
 target/
-/.idea/copilot.data.migration.agent.xml
 build/
+
+/.idea/copilot.data.migration.*.xml
