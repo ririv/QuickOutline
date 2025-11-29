@@ -16,8 +16,7 @@
         "title": "quickoutline",
         "width": 1024,
         "height": 768,
-        "decorations": true,
-        "titleBarStyle": "Transparent"
+        "decorations": true
       }
     ],
     "security": {
