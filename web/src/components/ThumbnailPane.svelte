@@ -17,13 +17,13 @@
             <StyledSlider 
                 min={0.5} 
                 max={3.0} 
-                step={0.1} 
+                step={0.01} 
                 bind:value={zoom} 
             />
             <img src={landscapeIcon} class="icon landscape-large" alt="Zoom In" />
         </div>
         <div class="scroll-area">
-            <div class="grid">
+            <div class="grid" style="--zoom: {zoom}">
                 
                 {#each thumbnails as src, i}
                     <div class="thumbnail-wrapper" >
