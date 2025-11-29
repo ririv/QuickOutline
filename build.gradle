@@ -287,39 +287,3 @@ shadowJar {
     //     exclude(dependency('org.junit.*'))
     // }
 }
-
-
-
-// ============================================================
-//  macOS 自动签名任务 (使用 type: Exec)
-// ============================================================
-
-// 定义一个标准的 Exec 任务
-tasks.register('signMacBinaries', Exec) {
-    // 只有在 macOS 下才执行
-    onlyIf { org.gradle.internal.os.OperatingSystem.current().isMacOsX() }
-
-    // 必须等待 jlink 任务生成完文件
-    dependsOn 'jlink'
-
-    // 定义要签名的文件路径
-    def imageDir = layout.buildDirectory.dir("image").get().asFile
-    def javaBin = new File(imageDir, "bin/java").absolutePath
-    def libJvm = new File(imageDir, "lib/server/libjvm.dylib").absolutePath
-
-    // 设置工作目录 (可选)
-    workingDir imageDir
-
-    // 使用 sh -c 来一次性执行多条签名命令
-    commandLine 'sh', '-c', """
-        echo "正在执行 macOS Ad-hoc 签名..."
-        codesign --force --sign - "${javaBin}"
-        codesign --force --sign - "${libJvm}"
-        echo "签名修复完成"
-    """
-}
-
-// 配置钩子：当 jlink 执行完毕后，自动执行签名任务
-tasks.named('jlink') {
-    finalizedBy 'signMacBinaries'
-}

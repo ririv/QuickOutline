@@ -9,7 +9,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "tauri": "tauri",
-    "update:sidecar": "rm -rf src-tauri/resources/java-runtime && cd ../ && ./gradlew clean jlink && cp -r build/image web/src-tauri/resources/java-runtime && echo '✅ Sidecar updated!'"
+    "update:sidecar": "node update-sidecar.cjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
