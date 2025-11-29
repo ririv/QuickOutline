@@ -10,11 +10,14 @@
     "frontendDist": "../build"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "quickoutline",
-        "width": 800,
-        "height": 600
+        "width": 1024,
+        "height": 768,
+        "decorations": true,
+        "titleBarStyle": "Transparent"
       }
     ],
     "security": {
