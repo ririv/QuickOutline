@@ -276,12 +276,7 @@
         justify-content: center;
         z-index: 1000;
         pointer-events: none;
-        transition: opacity 0.3s;
-        opacity: 0; /* Completely hidden by default */
-    }
-
-    .preview-root:hover #toolbar-container {
-        opacity: 1; /* Show on hover */
+        transition: opacity 0.3s; /* Reverted to original transition */
     }
 
     #toolbar {
@@ -457,11 +452,6 @@
         color: rgba(0, 0, 0, 0.3);
         transition: all 0.2s;
         padding: 0;
-        opacity: 0; /* Hidden by default */
-    }
-
-    .preview-root:hover .refresh-fab {
-        opacity: 1; /* Show on hover */
     }
 
     .refresh-fab:hover {
