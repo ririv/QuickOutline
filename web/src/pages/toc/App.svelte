@@ -19,7 +19,7 @@
   let title = $state('Table of Contents');
   let offset = $state(0);
   let insertPos = $state(1);
-  let style = $state('None');
+  let style = $state(PageLabelNumberingStyle.NONE); // 【关键修正】现在直接绑定枚举名
   
   let headerConfig = $state({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
   let footerConfig = $state({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
@@ -71,7 +71,7 @@
         title,
         offset,
         insertPos, // insertPos is part of config, even if unused for preview
-        style: style as PageLabelNumberingStyle,
+        style: style, // 直接使用绑定的枚举名
         header: headerConfig,
         footer: footerConfig
       };
@@ -98,7 +98,7 @@
         title,
         offset,
         insertPos,
-        style: style as PageLabelNumberingStyle,
+        style: style, // 直接使用绑定的枚举名
         header: headerConfig,
         footer: footerConfig
       };

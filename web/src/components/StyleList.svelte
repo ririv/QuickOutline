@@ -1,22 +1,25 @@
 <script lang="ts">
+  import type { PageLabelNumberingStyle } from '@/lib/api/rpc';
+  import { pageLabelStyleMap } from '@/lib/styleMaps';
+
   interface Props {
-    selected?: string;
-    onselect?: (s: string) => void;
+    selected?: PageLabelNumberingStyle;
+    onselect?: (s: PageLabelNumberingStyle) => void;
   }
 
-  let { selected = 'None', onselect }: Props = $props();
-
-  const styles = ['None', '1, 2, 3, ...', 'i, ii, iii, ...', 'I, II, III, ...', 'a, b, c, ...', 'A, B, C, ...'];
+  let { selected = PageLabelNumberingStyle.NONE, onselect }: Props = $props();
   
+  const styles = pageLabelStyleMap.getAllStyles(); // 获取 [{ displayText, enumName }, ...]
+
 </script>
 
 <div class="style-list">
   {#each styles as s}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="style-option {selected === s ? 'selected' : ''}" onclick={() => onselect?.(s)}>
-          {s}
-          {#if selected === s}<span>✓</span>{/if}
+      <div class="style-option {selected === s.enumName ? 'selected' : ''}" onclick={() => onselect?.(s.enumName)}>
+          {s.displayText}
+          {#if selected === s.enumName}<span>✓</span>{/if}
       </div>
   {/each}
 </div>

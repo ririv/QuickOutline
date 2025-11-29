@@ -1,12 +1,13 @@
 <script lang="ts">
   import StyleList from './StyleList.svelte';
   import ArrowPopup from './controls/ArrowPopup.svelte';
+  import { PageLabelNumberingStyle } from '@/lib/api/rpc';
 
   interface Props {
     type: 'offset' | 'pos' | 'style';
     offset?: number;
     insertPos?: number;
-    style?: string;
+    style?: PageLabelNumberingStyle; // 改为枚举名
     onchange?: () => void;
     triggerEl: HTMLElement; // Prop for positioning
   }
@@ -15,12 +16,12 @@
     type, 
     offset = $bindable(0),
     insertPos = $bindable(1),
-    style = $bindable('None'),
+    style = $bindable(PageLabelNumberingStyle.NONE),
     onchange,
     triggerEl
   }: Props = $props();
 
-  function handleStyleSelect(s: string) {
+  function handleStyleSelect(s: PageLabelNumberingStyle) {
       style = s;
       onchange?.();
   }

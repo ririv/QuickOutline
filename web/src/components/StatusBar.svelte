@@ -1,11 +1,13 @@
 <script lang="ts">
   import SettingsPopup from './SettingsPopup.svelte';
   import { onMount } from 'svelte';
+  import { PageLabelNumberingStyle } from '@/lib/api/rpc';
+  import {pageLabelStyleMap} from "@/lib/styleMaps";
 
   interface Props {
     offset?: number;
     insertPos?: number;
-    style?: string;
+    style?: PageLabelNumberingStyle; // 改为枚举名
     showOffset?: boolean;
     showStyle?: boolean;
     onGenerate?: () => void;
@@ -15,7 +17,7 @@
   let { 
     offset = $bindable(0),
     insertPos = $bindable(1),
-    style = $bindable('None'),
+    style = $bindable(PageLabelNumberingStyle.NONE),
     showOffset = true,
     showStyle = true,
     onGenerate,
@@ -31,17 +33,12 @@
   let styleBtnEl = $state<HTMLElement | undefined>();
 
   function togglePopup(type: 'offset' | 'pos' | 'style') {
-      if (activePopup === type) {
-          activePopup = null;
-      } else {
-          activePopup = type;
-      }
+      if (activePopup === type) activePopup = null;
+      else activePopup = type;
   }
 
   function onPopupChange() {
-      if (activePopup === 'style') {
-          activePopup = null;
-      }
+      if (activePopup === 'style') activePopup = null;
       onParamChange?.();
   }
 
@@ -83,7 +80,7 @@
   <div class="status-item-wrapper">
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div 
+      <div
         bind:this={posBtnEl}
         class="status-item {activePopup === 'pos' ? 'active' : ''}" 
         onclick={() => togglePopup('pos')} 
@@ -94,7 +91,7 @@
           </span> Pos: {insertPos}
       </div>
       {#if activePopup === 'pos'}
-          <SettingsPopup type="pos" bind:offset bind:insertPos bind:style triggerEl={posBtnEl} />
+          <SettingsPopup type="pos" bind:offset bind:insertPos bind:style onchange={onParamChange} triggerEl={posBtnEl} />
       {/if}
   </div>
 
@@ -110,7 +107,7 @@
       >
           <span class="icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
-          </span> Page Num: {style}
+          </span> Page Num: {pageLabelStyleMap.getDisplayText(style)}
       </div>
       {#if activePopup === 'style'}
           <SettingsPopup type="style" bind:offset bind:insertPos bind:style onchange={onPopupChange} triggerEl={styleBtnEl} />
