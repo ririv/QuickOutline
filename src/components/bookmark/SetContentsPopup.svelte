@@ -3,17 +3,16 @@
     import fitToHeightIcon from '@/assets/icons/fit-to-height.svg';
     import fitToWidthIcon from '@/assets/icons/fit-to-width.svg';
     import actualSizeIcon from '@/assets/icons/actual-size.svg';
-    import GraphButton from '../controls/GraphButton.svelte';
 
     export type ViewScaleType = 'NONE' | 'FIT_TO_HEIGHT' | 'FIT_TO_WIDTH' | 'ACTUAL_SIZE';
 
     interface Props {
         triggerEl: HTMLElement;
+        selected: ViewScaleType;
         onSelect: (type: ViewScaleType) => void;
     }
-    let { triggerEl, onSelect }: Props = $props();
+    let { triggerEl, selected, onSelect }: Props = $props();
 
-    let selected = $state<ViewScaleType>('NONE');
     let label = $derived(getLabel(selected));
 
     function getLabel(type: ViewScaleType) {
@@ -26,44 +25,48 @@
     }
 
     function handleSelect(type: ViewScaleType) {
-        selected = selected === type ? 'NONE' : type; // Allow toggle off
-        onSelect(selected);
+        // Toggle behavior: if clicking already selected, revert to NONE
+        const newType = selected === type ? 'NONE' : type;
+        onSelect(newType);
     }
-
 </script>
+<ArrowPopup placement="top" {triggerEl} padding="12px">
+    <div class="flex flex-col items-center gap-2.5">
+        <span class="text-xs font-semibold text-el-default-text">Set Page View Mode</span>
 
-<ArrowPopup placement="top" {triggerEl} padding="15px">
-    <div class="popup-content">
-        <span class="title">Set Page View Mode</span>
-        <div class="icon-toggle-group">
-            <GraphButton class={selected === 'FIT_TO_HEIGHT' ? 'active' : ''} onclick={() => handleSelect('FIT_TO_HEIGHT')}>
-                <img src={fitToHeightIcon} alt="Fit to Height"/>
-            </GraphButton>
-            <GraphButton class={selected === 'FIT_TO_WIDTH' ? 'active' : ''} onclick={() => handleSelect('FIT_TO_WIDTH')}>
-                <img src={fitToWidthIcon} alt="Fit to Width"/>
-            </GraphButton>
-            <GraphButton class={selected === 'ACTUAL_SIZE' ? 'active' : ''} onclick={() => handleSelect('ACTUAL_SIZE')}>
-                <img src={actualSizeIcon} alt="Actual Size"/>
-            </GraphButton>
+        <!-- Button Group: Tightly packed, no outer border, rounded corners for the group -->
+        <div class="flex rounded-md overflow-hidden">
+            <button
+                    class="p-2 transition-colors focus:outline-none
+                       hover:bg-gray-200
+                       {selected === 'FIT_TO_HEIGHT' ? 'bg-blue-200 text-blue-800' : 'bg-transparent text-gray-600'}"
+                    onclick={() => handleSelect('FIT_TO_HEIGHT')}
+                    title="Fit to Height"
+            >
+                <img src={fitToHeightIcon} alt="Fit to Height" class="w-4 h-4" />
+            </button>
+
+            <button
+                    class="p-2 transition-colors focus:outline-none
+                       hover:bg-gray-200
+                       {selected === 'FIT_TO_WIDTH' ? 'bg-blue-200 text-blue-800' : 'bg-transparent text-gray-600'}"
+                    onclick={() => handleSelect('FIT_TO_WIDTH')}
+                    title="Fit to Width"
+            >
+                <img src={fitToWidthIcon} alt="Fit to Width" class="w-4 h-4" />
+            </button>
+
+            <button
+                    class="p-2 transition-colors focus:outline-none
+                       hover:bg-gray-200
+                       {selected === 'ACTUAL_SIZE' ? 'bg-blue-200 text-blue-800' : 'bg-transparent text-gray-600'}"
+                    onclick={() => handleSelect('ACTUAL_SIZE')}
+                    title="Actual Size"
+            >
+                <img src={actualSizeIcon} alt="Actual Size" class="w-4 h-4" />
+            </button>
         </div>
-        <div class="label-display">{label}</div>
+
+        <div class="text-xs text-gray-500 h-4">{label}</div>
     </div>
 </ArrowPopup>
-
-<style>
-    .popup-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-    }
-    .icon-toggle-group {
-        display: flex;
-        gap: 8px;
-    }
-    /* Removed redundant styles, as GraphButton handles them */
-    .label-display {
-        font-size: 12px;
-        color: #606266;
-    }
-</style>

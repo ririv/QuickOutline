@@ -29,6 +29,7 @@
     
     let offsetValue = $state('');
     let debounceTimer: number | undefined;
+    let viewMode = $state<ViewScaleType>('NONE'); // State for SetContentsPopup
 
     // Simple debounce function
     function debounce(func: Function, delay: number) {
@@ -104,8 +105,14 @@
         }
     }
 
-    async function handleSetContentsSelect(type: ViewScaleType) {
-        console.log('Set contents with view scale:', type);
+    // Just updates the view mode state
+    function handleViewModeChange(type: ViewScaleType) {
+        viewMode = type;
+    }
+
+    // Triggered when clicking "Set Contents" button directly
+    async function handleSetContentsClick() {
+        console.log('Set contents click with view scale:', viewMode);
         try {
             const state = get(bookmarkStore);
             if (!state.text || !state.text.trim()) {
@@ -119,7 +126,7 @@
             await rpc.updateOffset(offset);
 
             // 2. Use saveOutlineFromText which updates backend state AND saves in one go.
-            // This is safer than saveOutline(null) which requires pre-existing state.
+            // TODO: Pass viewMode to backend if API supports it in the future
             await rpc.saveOutlineFromText(state.text, null, offset);
             
             messageStore.add('Outline saved successfully!', 'SUCCESS');
@@ -158,11 +165,15 @@
     </div>
 
     <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
-        <StyledButton type="important" hoverEffect="elevation" bind:element={setContentsBtnEl}>
+        <StyledButton type="important" hoverEffect="elevation" bind:element={setContentsBtnEl} onclick={handleSetContentsClick}>
             Set Contents
         </StyledButton>
         {#if activePopup === 'set' && setContentsBtnEl}
-            <SetContentsPopup triggerEl={setContentsBtnEl} onSelect={handleSetContentsSelect} />
+            <SetContentsPopup 
+                triggerEl={setContentsBtnEl} 
+                selected={viewMode}
+                onSelect={handleViewModeChange} 
+            />
         {/if}
     </div>
 
