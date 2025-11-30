@@ -18,10 +18,9 @@
 
 </script>
 
-<div class="inline-flex overflow-hidden rounded-md border border-el-default-border">
+<div class="grid grid-flow-col auto-cols-fr overflow-hidden rounded-md border border-el-default-border">
   {#each options as option, i (option.value)}
-<!--    使用 flex-1 min-w-0 或者 w-1/2，否则按钮宽度会不等分-->
-    <label class="relative flex-1 min-w-0">
+    <label class="relative">
       <input 
         type="radio"
         {name}
@@ -30,7 +29,7 @@
         class="sr-only"
       />
       <span
-        class="block w-full cursor-pointer px-4 py-1 text-center text-sm text-el-default-text transition-colors duration-200"
+        class="flex items-center justify-center w-full h-full cursor-pointer px-2 py-1 text-sm text-el-default-text transition-colors duration-200 whitespace-nowrap"
         class:bg-el-primary={value === option.value}
         class:text-white={value === option.value}
         class:hover:text-el-primary={value !== option.value}

@@ -31,12 +31,12 @@
     });
 
     const options = [
-        { value: 'bookmark', label: 'From Bookmark' },
-        { value: 'toc', label: 'From ToC' }
+        { value: 'bookmark', label: 'Bookmark' },
+        { value: 'toc', label: 'ToC' }
     ];
 </script>
 
-<ArrowPopup placement="top" {triggerEl} padding="15px">
+<ArrowPopup placement="top" {triggerEl} padding="15px" minWidth="200px">
     <div class="flex flex-col items-center gap-2.5">
         <span class="title">Get Contents From</span>
         <StyledRadioButtonGroup {options} bind:value name="get-contents" />
