@@ -9,6 +9,7 @@
     value?: string;
     name: string;
     class?: string;
+    layout?: 'vertical' | 'horizontal';
   }
 
   let {
@@ -16,11 +17,12 @@
     value = $bindable(),
     name,
     class: className,
+    layout = 'vertical'
   }: Props = $props();
 
 </script>
 
-<div class="{className}">
+<div class="{className} flex {layout === 'vertical' ? 'flex-col gap-2' : 'flex-row gap-4'}">
   {#each options as option (option.value)}
     <label class="group flex cursor-pointer items-center select-none">
       <input 
@@ -40,7 +42,7 @@
       </div>
 
       <!-- The label text -->
-      <span class="ml-[5px] text-el-default-text transition-colors duration-200 ease-in-out group-hover:text-el-primary">
+      <span class="ml-[5px] text-sm text-el-default-text transition-colors duration-200 ease-in-out group-hover:text-el-primary">
         {option.label}
       </span>
     </label>

@@ -7,6 +7,7 @@
     import { rpc } from '@/lib/api/rpc';
     import { messageStore } from '@/stores/messageStore';
     import type { Bookmark } from './types';
+    import formatIcon from '@/assets/icons/text-edit.svg'; // Using text-edit for format
 
     let method = $state('sequential');
     const methodOptions = [
@@ -87,56 +88,53 @@
     }
 </script>
 
-<div class="text-subview-container">
-    <div class="editor-area">
+<div class="flex flex-col h-full w-full bg-gray-50">
+    <!-- Top Toolbar -->
+    <div class="flex items-center justify-between shrink-0 px-3 py-1 border-b border-gray-200 bg-white">
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Mode:</span>
+            <StyledRadioGroup 
+                bind:value={method} 
+                options={methodOptions}
+                name="method" 
+                layout="horizontal"
+            />
+        </div>
+        
+        <div class="flex items-center gap-1">
+            <button 
+                class="p-1.5 rounded hover:bg-gray-200 transition-colors"
+                onclick={handleAutoFormat} 
+                title="Auto Format Indentation"
+            >
+                <img src={formatIcon} alt="Auto Format" class="w-4 h-4" />
+            </button>
+            <button
+                class="p-1.5 rounded hover:bg-gray-200 transition-colors"
+                title="Open in VS Code"
+            >
+                <!-- Placeholder for VS Code icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Editor Area -->
+    <div class="flex-1 min-h-0 relative group
+                border border-gray-200 rounded-lg m-2 
+                focus-within:border-el-primary focus-within:ring-2 focus-within:ring-el-primary/20
+                transition-all duration-200 overflow-hidden">
         <textarea 
+            class="w-full h-full resize-none outline-none border-none rounded-none shadow-none
+                   font-mono text-sm leading-relaxed
+                   bg-white text-gray-800 p-4"
             placeholder="Enter bookmarks here..." 
             value={textValue} 
             oninput={handleInput}
+            spellcheck="false"
         ></textarea>
     </div>
-    <div class="sidebar">
-        <StyledButton type="primary">VSCode</StyledButton>
-        <StyledButton type="primary" onclick={handleAutoFormat}>Auto-Format</StyledButton>
-
-        <StyledRadioGroup 
-            name="method"
-            bind:value={method}
-            options={methodOptions}
-            class="mt-auto flex flex-col gap-2.5 text-sm"
-        />
-    </div>
 </div>
-
 <style>
-    .text-subview-container {
-        display: flex;
-        height: 100%;
-        width: 100%;
-    }
-    .editor-area {
-        flex: 1;
-    }
-    textarea {
-        width: 100%;
-        height: 100%;
-        border: none;
-        resize: none;
-        outline: none;
-        font-family: monospace;
-        font-size: 14px;
-        background-color: white; /* Match JavaFX */
-        padding: 10px;
-        box-sizing: border-box;
-    }
-    .sidebar {
-        width: 150px;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-        border-left: 1px solid #dfdfdf;
-        background-color: white; /* Match JavaFX */
-    }
+    /* No extra styles needed, Tailwind covers it */
 </style>
