@@ -9,24 +9,32 @@
     }
 
     let { pageCount = 0, zoom = $bindable(1.0) }: Props = $props();
-    
-    // Track which indices are visible to trigger load
-    let visibleIndices = $state(new Set<number>());
-    
+
+    // 性能优化方案：使用布尔数组代替 Set
+    // 初始化为空，依靠下方的 $effect 根据 pageCount 填充
+    let loadedState = $state<boolean[]>([]);
+
+    // 监听 pageCount 变化，如果页数变了（例如文档加载完成），重置加载状态数组
+    $effect(() => {
+        if (loadedState.length !== pageCount) {
+            // 创建指定长度的数组，全部填充为 false
+            loadedState = new Array(pageCount).fill(false);
+        }
+    });
+
     // Action for lazy loading
     function lazyLoad(node: HTMLElement, index: number) {
         const observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting) {
-                visibleIndices.add(index);
-                // Svelte 5 Set reactivity might require re-assignment or specific methods? 
-                // In Svelte 5 $state(Set), methods like add() are reactive.
-                // But to be safe/sure, we can do:
-                // visibleIndices = new Set(visibleIndices);
-                // Or relying on fine-grained reactivity if it works.
-                // Let's assume it works or force update if needed.
+                // 【核心修改】
+                // Svelte 5 代理数组：直接修改索引是响应式的，且只会触发当前图片的更新
+                loadedState[index] = true;
+
                 observer.disconnect();
             }
-        }, { rootMargin: "200px" });
+        }, {
+            rootMargin: "200px" // 提前 200px 加载，体验更好
+        });
 
         observer.observe(node);
 
@@ -38,7 +46,7 @@
     }
 
     function getThumbnailUrl(index: number) {
-        if ($appStore.serverPort > 0) {
+        if ($appStore.serverPort && $appStore.serverPort > 0) {
             return `http://127.0.0.1:${$appStore.serverPort}/page_images/${index}.png`;
         }
         return '';
@@ -47,29 +55,28 @@
 
 <div class="thumbnail-pane">
     <div class="controls">
-            <!-- Debug: {zoom} -->
-            <img src={landscapeIcon} class="icon landscape-small" alt="Zoom Out" />
-            <StyledSlider 
-                min={0.5} 
-                max={3.0} 
-                step={0.01} 
-                bind:value={zoom} 
-            />
-            <img src={landscapeIcon} class="icon landscape-large" alt="Zoom In" />
-        </div>
-        <div class="scroll-area">
-            <div class="grid" style="--zoom: {zoom}">
-                
-                {#each Array(pageCount) as _, i}
-                    <div class="thumbnail-wrapper" use:lazyLoad={i}>
-                        {#if visibleIndices.has(i)}
-                            <div class="image-container" style="background-image: url('{getThumbnailUrl(i)}')"></div>
-                        {:else}
-                            <div class="image-container placeholder"></div>
-                        {/if}
-                        <div class="page-number">{i + 1}</div>
-                    </div>
-                {:else}
+        <img src={landscapeIcon} class="icon landscape-small" alt="Zoom Out" />
+        <StyledSlider
+            min={0.5}
+            max={3.0}
+            step={0.01}
+            bind:value={zoom}
+        />
+        <img src={landscapeIcon} class="icon landscape-large" alt="Zoom In" />
+    </div>
+    <div class="scroll-area">
+        <div class="grid" style="--zoom: {zoom}">
+
+            {#each Array(pageCount) as _, i}
+                <div class="thumbnail-wrapper" use:lazyLoad={i}>
+                    {#if loadedState[i]}
+                        <div class="image-container" style="background-image: url('{getThumbnailUrl(i)}')"></div>
+                    {:else}
+                        <div class="image-container placeholder"></div>
+                    {/if}
+                    <div class="page-number">{i + 1}</div>
+                </div>
+            {:else}
                 <div class="empty-state">No thumbnails available</div>
             {/each}
         </div>
@@ -92,7 +99,7 @@
         border-bottom: 1px solid #eee;
         background: #fff;
     }
-    
+
     .scroll-area {
         flex: 1;
         overflow-y: auto;
@@ -105,9 +112,7 @@
         justify-content: center;
     }
     .thumbnail-wrapper {
-        /*不要使用width，而是使用flex，前者会有刚性宽度导致压缩其他元素（比如leftPane）*/
-        /*width: calc(100px * var(--zoom, 1));*/
-        flex: 0 1 calc(100px * var(--zoom, 1)); /* Use flex-basis for size, allow shrinking */
+        flex: 0 1 calc(100px * var(--zoom, 1));
         min-width: 0;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -115,11 +120,11 @@
         padding: 5px;
         box-sizing: border-box;
         text-align: center;
-        transition: flex-basis 0.05s ease-out; /* Changed from 0.1s to 0.05s */
+        transition: flex-basis 0.05s ease-out;
     }
     .image-container {
         width: 100%;
-        padding-top: 133.33%; /* Aspect ratio */
+        padding-top: 133.33%;
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
@@ -142,12 +147,12 @@
         display: block;
         opacity: 0.6;
     }
-    .landscape-small { 
-        width: 12px; 
-        height: 12px; 
+    .landscape-small {
+        width: 12px;
+        height: 12px;
     }
-    .landscape-large { 
-        width: 20px; 
-        height: 20px; 
+    .landscape-large {
+        width: 20px;
+        height: 20px;
     }
 </style>
