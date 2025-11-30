@@ -104,6 +104,20 @@ public class RpcProcessor {
                     result = apiService.simulatePageLabels(simRules);
                     break;
 
+                // --- Thumbnails ---
+                case "getPageCount":
+                    result = apiService.getPageCount();
+                    break;
+                case "getThumbnail":
+                    result = apiService.getThumbnail(getInt(request.params.get(0)));
+                    break;
+                case "getThumbnails":
+                    // params: [List<Integer> pageIndices]
+                    Type listType = new TypeToken<List<Integer>>(){}.getType();
+                    List<Integer> indices = gson.fromJson(gson.toJsonTree(request.params.get(0)), listType);
+                    result = apiService.getThumbnails(indices);
+                    break;
+
                 // --- Sync Utils ---
                 case "parseTextToTree":
                     // params: [text]

@@ -183,7 +183,7 @@ public class TocGeneratorTabController {
                 LocalWebServer server = LocalWebServer.getInstance();
                 for (var update : updates) {
                     String imageKey = update.pageIndex() + ".png";
-                    byte[] imgData = pdfImageService.getImageData(update.pageIndex());
+                    byte[] imgData = pdfImageService.getImageData(update.pageIndex()).join();
                     if (imgData != null) {
                         server.putImage(LocalWebServer.DEFAULT_DOC_ID, imageKey, imgData);
                     }

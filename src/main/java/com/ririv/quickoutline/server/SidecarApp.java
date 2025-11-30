@@ -61,18 +61,22 @@ public class SidecarApp {
                     String pageNumStr = parts[parts.length - 1].split("\\.")[0];
                     int pageIndex = Integer.parseInt(pageNumStr);
 
-                    byte[] imageData = apiService.getPreviewImageData(pageIndex);
-
-                    if (imageData != null) {
-                        req.response()
-                           // 【关键修正】添加CORS头，允许来自任何源（包括tauri://localhost）的请求
-                           .putHeader("Access-Control-Allow-Origin", "*")
-                           .putHeader("Content-Type", "image/png")
-                           .putHeader("Cache-Control", "public, max-age=31536000")
-                           .end(io.vertx.core.buffer.Buffer.buffer(imageData));
-                    } else {
-                        req.response().setStatusCode(404).end("Image not found");
-                    }
+                    apiService.getPreviewImageDataAsync(pageIndex)
+                        .thenAccept(imageData -> {
+                            if (imageData != null) {
+                                req.response()
+                                   .putHeader("Access-Control-Allow-Origin", "*")
+                                   .putHeader("Content-Type", "image/png")
+                                   .putHeader("Cache-Control", "public, max-age=31536000")
+                                   .end(io.vertx.core.buffer.Buffer.buffer(imageData));
+                            } else {
+                                req.response().setStatusCode(404).end("Image not found");
+                            }
+                        })
+                        .exceptionally(e -> {
+                            req.response().setStatusCode(500).end("Error serving image: " + e.getMessage());
+                            return null;
+                        });
                 } catch (Exception e) {
                     req.response().setStatusCode(500).end("Error serving image: " + e.getMessage());
                 }

@@ -3,6 +3,7 @@
     import { rpc } from '@/lib/api/rpc';
     import { listen } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/core';
+    import { appStore } from '@/stores/appStore';
 
     let { children } = $props();
 
@@ -118,6 +119,8 @@
         try {
             await rpc.connect(port);
             console.info(`%c[RpcProvider] 🚀 Connected via [${source}] on port ${port}`, 'color: #4caf50; font-weight: bold;');
+            
+            appStore.setServerPort(port);
 
             // 连接成功，立即清除 Loading 计时器
             clearTimeout(loadingTimer);

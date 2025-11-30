@@ -2,6 +2,7 @@ package com.ririv.quickoutline.api;
 
 import com.ririv.quickoutline.api.service.RpcProcessor;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.ServerWebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +24,24 @@ public class WebSocketRpcHandler implements Handler<ServerWebSocket> {
         
         ws.textMessageHandler(text -> {
             log.info("Received WebSocket message: {}", text);
-            String response = processor.process(text);
-            log.info("Sending WebSocket response: {}", response);
-            ws.writeFinalTextFrame(response);
+            
+            // Offload to worker thread to avoid blocking Event Loop
+            Vertx.currentContext().owner().executeBlocking(() -> {
+                try {
+                    return processor.process(text);
+                } catch (Exception e) {
+                    log.error("RPC Processing Error", e);
+                    throw new RuntimeException(e);
+                }
+            }).onComplete(res -> {
+                if (res.succeeded()) {
+                    String response = (String) res.result();
+                    log.info("Sending WebSocket response: {}", response);
+                    ws.writeFinalTextFrame(response);
+                } else {
+                    log.error("RPC Execution Failed", res.cause());
+                }
+            });
         });
         
         ws.closeHandler(v -> log.info("Tauri WebSocket disconnected"));

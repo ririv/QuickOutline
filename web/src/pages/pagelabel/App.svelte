@@ -7,6 +7,7 @@
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
     import StyledButton from '../../components/controls/StyledButton.svelte';
     import { messageStore } from '@/stores/messageStore';
+    import { appStore } from '@/stores/appStore';
 
     // Models
     interface PageLabelRule {
@@ -25,10 +26,6 @@
     let startNumber = $state("");
     let startPage = $state("");
     
-    // Mock Thumbnails (Data URI SVG to avoid network issues)
-    const placeholderSvg = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='200' viewBox='0 0 150 200'%3E%3Crect width='150' height='200' fill='%23f0f0f0' stroke='%23ddd' stroke-width='2'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='16' text-anchor='middle' dy='.3em' fill='%23999'%3EPreview%3C/text%3E%3C/svg%3E";
-    let thumbnails = Array(10).fill(placeholderSvg); 
-
     const styles = [
         "1, 2, 3, ...", 
         "I, II, III, ...", 
@@ -144,7 +141,7 @@
 
         {#snippet right()}
         <div class="preview-pane">
-            <ThumbnailPane {thumbnails} />
+            <ThumbnailPane pageCount={$appStore.pageCount} />
         </div>
         {/snippet}
     </SplitPane>

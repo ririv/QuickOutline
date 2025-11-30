@@ -11,6 +11,7 @@
   
   import { rpc, PageLabelNumberingStyle } from '@/lib/api/rpc';
   import { messageStore } from '@/stores/messageStore';
+  import { appStore } from '@/stores/appStore';
 
   let previewComponent: Preview;
   
@@ -28,6 +29,30 @@
   let showFooter = $state(false);
   
   let debounceTimer: number;
+
+  // Auto-load TOC when file changes
+  $effect(() => {
+      const path = $appStore.currentFilePath;
+      if (path) {
+          loadOutline();
+      } else {
+          tocContent = '';
+      }
+  });
+
+  async function loadOutline() {
+      try {
+          // Default offset 0. Ideally offset should be managed per file.
+          const outline = await rpc.getOutline(0);
+          if (outline) {
+              tocContent = outline;
+              // Trigger initial preview
+              triggerPreview();
+          }
+      } catch (e) {
+          console.error("Failed to load outline", e);
+      }
+  }
   
   function hasContent(config: typeof headerConfig) {
       const hasText = Object.entries(config).some(([k, v]) => {

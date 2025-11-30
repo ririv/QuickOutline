@@ -26,6 +26,14 @@ public interface ApiService {
     String[] getPageLabels(String srcFilePath);
     void setPageLabels(List<PageLabelRule> rules, String destFilePath);
     List<String> simulatePageLabels(List<PageLabelRule> rules);
+    
+    // Thumbnails / Metadata
+    int getPageCount();
+    String getThumbnail(int pageIndex);
+    java.util.Map<Integer, String> getThumbnails(List<Integer> pageIndices); // Batch fetch
+    
+    // Internal / Async
+    java.util.concurrent.CompletableFuture<byte[]> getPreviewImageDataAsync(int pageIndex);
 
     // Sync Utils
     BookmarkDto parseTextToTree(String text); // Return type changed

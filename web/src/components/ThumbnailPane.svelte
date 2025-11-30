@@ -1,13 +1,48 @@
 <script lang="ts">
     import landscapeIcon from '../assets/icons/landscape.svg';
     import StyledSlider from './controls/StyledSlider.svelte';
+    import { appStore } from '@/stores/appStore';
 
     interface Props {
-        thumbnails?: string[];
+        pageCount?: number;
         zoom?: number;
     }
 
-    let { thumbnails = [], zoom = $bindable(1.0) }: Props = $props();
+    let { pageCount = 0, zoom = $bindable(1.0) }: Props = $props();
+    
+    // Track which indices are visible to trigger load
+    let visibleIndices = $state(new Set<number>());
+    
+    // Action for lazy loading
+    function lazyLoad(node: HTMLElement, index: number) {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                visibleIndices.add(index);
+                // Svelte 5 Set reactivity might require re-assignment or specific methods? 
+                // In Svelte 5 $state(Set), methods like add() are reactive.
+                // But to be safe/sure, we can do:
+                // visibleIndices = new Set(visibleIndices);
+                // Or relying on fine-grained reactivity if it works.
+                // Let's assume it works or force update if needed.
+                observer.disconnect();
+            }
+        }, { rootMargin: "200px" });
+
+        observer.observe(node);
+
+        return {
+            destroy() {
+                observer.disconnect();
+            }
+        };
+    }
+
+    function getThumbnailUrl(index: number) {
+        if ($appStore.serverPort > 0) {
+            return `http://127.0.0.1:${$appStore.serverPort}/page_images/${index}.png`;
+        }
+        return '';
+    }
 </script>
 
 <div class="thumbnail-pane">
@@ -25,9 +60,13 @@
         <div class="scroll-area">
             <div class="grid" style="--zoom: {zoom}">
                 
-                {#each thumbnails as src, i}
-                    <div class="thumbnail-wrapper" >
-                        <div class="image-container" style="background-image: url('{src}')"></div>
+                {#each Array(pageCount) as _, i}
+                    <div class="thumbnail-wrapper" use:lazyLoad={i}>
+                        {#if visibleIndices.has(i)}
+                            <div class="image-container" style="background-image: url('{getThumbnailUrl(i)}')"></div>
+                        {:else}
+                            <div class="image-container placeholder"></div>
+                        {/if}
                         <div class="page-number">{i + 1}</div>
                     </div>
                 {:else}
@@ -76,13 +115,17 @@
         padding: 5px;
         box-sizing: border-box;
         text-align: center;
+        transition: flex-basis 0.05s ease-out; /* Changed from 0.1s to 0.05s */
     }
     .image-container {
         width: 100%;
-        padding-top: 133.33%;
+        padding-top: 133.33%; /* Aspect ratio */
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
+    }
+    .image-container.placeholder {
+        background-color: #eee;
     }
     .page-number {
         font-size: 12px;

@@ -17,9 +17,13 @@ import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class ApiServiceImpl implements ApiService {
     private static final Logger log = LoggerFactory.getLogger(ApiServiceImpl.class);
@@ -27,14 +31,14 @@ public class ApiServiceImpl implements ApiService {
     private final PdfOutlineService pdfOutlineService;
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
     private final PdfPageLabelService pdfPageLabelService;
-    private final PdfImageService pdfImageService; // Re-introduced for diffing logic
+    private final PdfImageService pdfImageService;
     
     private String currentFilePath;
 
     public ApiServiceImpl(PdfOutlineService pdfOutlineService,
                           PdfTocPageGeneratorService pdfTocPageGeneratorService,
                           PdfPageLabelService pdfPageLabelService,
-                          PdfImageService pdfImageService) { // Added PdfImageService
+                          PdfImageService pdfImageService) {
         this.pdfOutlineService = pdfOutlineService;
         this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
         this.pdfPageLabelService = pdfPageLabelService;
@@ -45,14 +49,12 @@ public class ApiServiceImpl implements ApiService {
         if (currentFilePath == null) throw new IllegalStateException("No file open");
     }
 
-    // ... (openFile, getCurrentFilePath, outline methods are unchanged) ...
-
     @Override
     public void openFile(String filePath) {
         try {
             pdfOutlineService.checkOpenFile(filePath);
             this.currentFilePath = filePath;
-            this.pdfImageService.clearCache(); // Clear cache on new file
+            this.pdfImageService.openSession(new File(filePath));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -106,10 +108,8 @@ public class ApiServiceImpl implements ApiService {
         return pdfOutlineService.autoFormat(text);
     }
 
-
     @Override
     public void generateTocPage(TocConfig config, String destFilePath) {
-        // ... (this method remains the same) ...
         checkFileOpen();
         String actualDest = destFilePath != null ? destFilePath : currentFilePath;
         Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(config.tocContent(), Method.INDENT);
@@ -157,7 +157,6 @@ public class ApiServiceImpl implements ApiService {
             
             byte[] pdfBytes = baos.getBuffer();
             int size = baos.size();
-            // Create a new stream with the exact size, because diffPdfToImages expects it
             FastByteArrayOutputStream finalStream = new FastByteArrayOutputStream();
             finalStream.write(pdfBytes, 0, size);
 
@@ -168,7 +167,6 @@ public class ApiServiceImpl implements ApiService {
                 return new Gson().toJson(Collections.emptyList());
             }
 
-            // Restore old logic: use PdfImageService to get diff updates
             List<PdfImageService.ImagePageUpdate> updates = pdfImageService.diffPdfToImages(finalStream);
             log.info("Found {} updated image(s) for preview.", updates.size());
             
@@ -180,13 +178,32 @@ public class ApiServiceImpl implements ApiService {
         }
     }
 
-    // --- New method for the web server to get image data ---
-    public byte[] getPreviewImageData(int pageIndex) {
+    @Override
+    public CompletableFuture<byte[]> getPreviewImageDataAsync(int pageIndex) {
         return pdfImageService.getImageData(pageIndex);
     }
 
+    @Override
+    public String getThumbnail(int pageIndex) {
+        checkFileOpen();
+        byte[] data = pdfImageService.getImageData(pageIndex).join();
+        if (data == null || data.length == 0) return null;
+        return java.util.Base64.getEncoder().encodeToString(data);
+    }
 
-    // ... (Page Labels implementation remains the same) ...
+    @Override
+    public Map<Integer, String> getThumbnails(List<Integer> pageIndices) {
+        checkFileOpen();
+        Map<Integer, String> result = new HashMap<>();
+        for (Integer index : pageIndices) {
+            String base64 = getThumbnail(index);
+            if (base64 != null) {
+                result.put(index, base64);
+            }
+        }
+        return result;
+    }
+
     @Override
     public String[] getPageLabels(String srcFilePath) {
         String path = srcFilePath != null ? srcFilePath : currentFilePath;
@@ -219,6 +236,17 @@ public class ApiServiceImpl implements ApiService {
             if (totalPages == 0) return Collections.emptyList();
             
             return pdfPageLabelService.simulatePageLabels(rules, totalPages);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public int getPageCount() {
+        checkFileOpen();
+        try {
+            String[] labels = pdfPageLabelService.getPageLabels(currentFilePath);
+            return labels != null ? labels.length : 0;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

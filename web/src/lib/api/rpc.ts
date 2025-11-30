@@ -76,8 +76,12 @@ export interface QuickOutlineApi {
     setPageLabels(rules: PageLabelRule[], destFilePath: string | null): Promise<string>;
     simulatePageLabels(rules: PageLabelRule[]): Promise<string[]>;
 
+    getPageCount(): Promise<number>;
+    getThumbnail(pageIndex: number): Promise<string>;
+    getThumbnails(pageIndices: number[]): Promise<Record<number, string>>;
+
+    // Sync Utils
     parseTextToTree(text: string): Promise<any>;
-    serializeTreeToText(rootBookmark: any): Promise<string>;
 }
 
 
@@ -229,6 +233,18 @@ class RpcClient implements QuickOutlineApi {
 
     public simulatePageLabels(rules: PageLabelRule[]): Promise<string[]> {
         return this.send("simulatePageLabels", [rules]);
+    }
+
+    public getPageCount(): Promise<number> {
+        return this.send("getPageCount", []);
+    }
+
+    public getThumbnail(pageIndex: number): Promise<string> {
+        return this.send("getThumbnail", [pageIndex]);
+    }
+
+    public getThumbnails(pageIndices: number[]): Promise<Record<number, string>> {
+        return this.send("getThumbnails", [pageIndices]);
     }
 
     public parseTextToTree(text: string): Promise<any> {
