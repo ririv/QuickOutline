@@ -143,12 +143,13 @@
     }
 
     function handleDelete() {
-        // Implement delete outline functionality if API supports it, 
-        // or just clear the store.
-        // rpc.deleteOutline? (Not in API yet)
-        // For now just clear editor
-        bookmarkStore.setText('');
-        messageStore.add('Editor cleared', 'INFO');
+        bookmarkStore.reset(); // Clear frontend store (text, tree, offset)
+        // Sync empty state with backend
+        rpc.syncFromText('').then(() => {
+            messageStore.add('Editor cleared and backend state reset.', 'INFO');
+        }).catch(e => {
+            messageStore.add('Failed to clear editor and reset backend state: ' + (e.message || String(e)), 'ERROR');
+        });
     }
 
 </script>

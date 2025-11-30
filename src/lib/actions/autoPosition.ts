@@ -1,5 +1,5 @@
 // web/src/lib/actions/autoPosition.ts
-export function autoPosition(node: HTMLElement, { triggerEl }: { triggerEl: HTMLElement }) {
+export function autoPosition(node: HTMLElement, { triggerEl }: { triggerEl: HTMLElement | undefined }) {
   
   // Calculate where the parent is.
   // The popup is inside `div.arrow-popup` which usually has a parent like `.btn-wrapper`.

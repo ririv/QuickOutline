@@ -18,6 +18,7 @@
     let textValue = $state('');
     let unsubscribeStore: () => void;
     let debounceTimer: number | undefined;
+    let highlightedMode = $state<string | null>(null); // State for highlight value
 
     // Simple debounce function
     function debounce<T extends any[]>(func: (...args: T) => void, delay: number) {
@@ -81,40 +82,49 @@
             bookmarkStore.setText(formatted);
             bookmarkStore.setTree(bookmarkDto.children || []);
             
-            messageStore.add('Auto-format successful', 'SUCCESS');
+            // Update Method and show highlight
+            method = 'indent';
+            highlightedMode = 'indent';
+            setTimeout(() => {
+                highlightedMode = null;
+            }, 1500); // Highlight for 1.5 seconds
+
         } catch (e: any) {
             messageStore.add('Auto-format failed: ' + e.message, 'ERROR');
         }
     }
 </script>
 
-<div class="flex flex-col h-full w-full bg-gray-50">
+<div class="flex flex-col h-full w-full bg-white">
     <!-- Top Toolbar -->
-    <div class="flex items-center justify-between shrink-0 px-3 py-1 border-b border-gray-200 bg-white">
-        <div class="flex items-center gap-3">
+    <div class="flex items-center justify-between shrink-0 py-1 bg-white">
+        <div class="flex items-center ml-2 pl-2">
             <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Mode:</span>
             <StyledRadioGroup 
                 bind:value={method} 
                 options={methodOptions}
                 name="method" 
                 layout="horizontal"
+                highlightValue={highlightedMode}
             />
         </div>
         
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 mr-2">
             <button 
-                class="p-1.5 rounded hover:bg-gray-200 transition-colors"
+                class="flex items-center gap-1.5 p-1.5 rounded hover:bg-gray-200 transition-colors text-xs text-gray-600 font-medium"
                 onclick={handleAutoFormat} 
                 title="Auto Format Indentation"
             >
                 <img src={formatIcon} alt="Auto Format" class="w-4 h-4" />
+                <span>Auto-Format</span>
             </button>
             <button
-                class="p-1.5 rounded hover:bg-gray-200 transition-colors"
+                class="flex items-center gap-1.5 p-1.5 rounded hover:bg-gray-200 transition-colors text-xs text-gray-600 font-medium"
                 title="Open in VS Code"
             >
                 <!-- Placeholder for VS Code icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                <span>VS Code</span>
             </button>
         </div>
     </div>

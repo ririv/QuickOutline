@@ -10,6 +10,7 @@
     name: string;
     class?: string;
     layout?: 'vertical' | 'horizontal';
+    highlightValue?: string; // Changed from boolean to specific value
   }
 
   let {
@@ -17,14 +18,19 @@
     value = $bindable(),
     name,
     class: className,
-    layout = 'vertical'
+    layout = 'vertical',
+    highlightValue // Changed from highlight
   }: Props = $props();
 
 </script>
 
-<div class="{className} flex {layout === 'vertical' ? 'flex-col gap-2' : 'flex-row gap-4'}">
+<div class="{className} flex {layout === 'vertical' ? 'flex-col gap-2' : 'flex-row'}
+            relative">
   {#each options as option (option.value)}
-    <label class="group flex cursor-pointer items-center select-none">
+    <label class="group flex cursor-pointer items-center select-none rounded-md relative px-2 py-1">
+      {#if highlightValue === option.value && value === option.value}
+        <div class="absolute inset-0 bg-red-500/30 rounded-md pointer-events-none animate-flash-red"></div>
+      {/if}
       <input 
         type="radio"
         {name}
@@ -58,5 +64,14 @@
     */
     .peer:checked ~ .radio-circle > .radio-dot {
         background-color: var(--color-el-primary);
+    }
+
+    .animate-flash-red {
+        animation: flashRed 1.5s ease-out forwards;
+    }
+
+    @keyframes flashRed {
+        0% { opacity: 1; }
+        100% { opacity: 0; }
     }
 </style>
