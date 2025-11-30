@@ -133,8 +133,8 @@
             const offset = parseInt(offsetValue, 10) || 0;
             await rpc.updateOffset(offset);
 
-            // TODO: Pass viewMode to backend
-            await rpc.saveOutlineFromText(state.text, null, offset);
+            // 2. Use saveOutlineFromText which updates backend state AND saves in one go.
+            await rpc.saveOutlineFromText(state.text, null, offset, viewMode);
             
             messageStore.add('Outline saved successfully!', 'SUCCESS');
         } catch (e: any) {

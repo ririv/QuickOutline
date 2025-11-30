@@ -53,7 +53,7 @@
             bind:value={groupValue} 
             allowDeselect={true}
             onchange={(val) => onSelect((val || 'NONE') as ViewScaleType)}
-            hasBorder={false} // Explicitly set to false to keep borderless style
+            hasBorder={false}
         />
 
         <div class="text-xs text-gray-500 h-4">{label}</div>

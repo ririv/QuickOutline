@@ -63,8 +63,8 @@ export interface QuickOutlineApi {
     // Outline
     getOutline(offset: number): Promise<string>;
     getOutlineAsBookmark(offset: number): Promise<any>;
-    saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number): Promise<string>; // Corrected signature
-    saveOutlineFromText(text: string, destFilePath: string | null, offset: number): Promise<string>; // New method
+    saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // Corrected signature
+    saveOutlineFromText(text: string, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // New method
     autoFormat(text: string): Promise<string>;
 
     // TOC
@@ -206,12 +206,12 @@ class RpcClient implements QuickOutlineApi {
         return this.send("getOutlineAsBookmark", [offset]);
     }
 
-    public saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number): Promise<string> {
-        return this.send("saveOutline", [bookmarkRoot, destFilePath, offset]);
+    public saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode: string = 'NONE'): Promise<string> {
+        return this.send("saveOutline", [bookmarkRoot, destFilePath, offset, viewMode]);
     }
 
-    public saveOutlineFromText(text: string, destFilePath: string | null, offset: number): Promise<string> {
-        return this.send("saveOutlineFromText", [text, destFilePath, offset]);
+    public saveOutlineFromText(text: string, destFilePath: string | null, offset: number, viewMode: string = 'NONE'): Promise<string> {
+        return this.send("saveOutlineFromText", [text, destFilePath, offset, viewMode]);
     }
 
     public autoFormat(text: string): Promise<string> {

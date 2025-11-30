@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
+    import { get } from 'svelte/store'; // Import get
     import StyledButton from '../controls/StyledButton.svelte';
     import StyledRadioGroup from '../controls/StyledRadioGroup.svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore';
@@ -39,7 +40,7 @@
 
     onMount(() => {
         // Initialize textValue from store
-        textValue = bookmarkStore.text;
+        textValue = get(bookmarkStore).text;
 
         // Subscribe to store changes from other sources (e.g., TreeSubView, Get Contents)
         unsubscribeStore = bookmarkStore.subscribe(state => {

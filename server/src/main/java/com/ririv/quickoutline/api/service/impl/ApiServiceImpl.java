@@ -34,7 +34,7 @@ public class ApiServiceImpl implements ApiService {
     private final PdfPageLabelService pdfPageLabelService;
     private final PdfImageService pdfImageService;
     private final ApiBookmarkState apiBookmarkState;
-    
+
     private String currentFilePath;
 
     public ApiServiceImpl(PdfOutlineService pdfOutlineService,
@@ -64,7 +64,7 @@ public class ApiServiceImpl implements ApiService {
             throw new RuntimeException(e);
         }
     }
-    
+
     @Override
     public String getCurrentFilePath() {
         return currentFilePath;
@@ -75,12 +75,12 @@ public class ApiServiceImpl implements ApiService {
         checkFileOpen();
         try {
             String content = pdfOutlineService.getContents(currentFilePath, offset);
-            
+
             // Sync State: Parse back to object to hold in memory
             Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(content, Method.INDENT);
             apiBookmarkState.setRootBookmark(root);
             apiBookmarkState.setOffset(offset);
-            
+
             return content;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -92,11 +92,11 @@ public class ApiServiceImpl implements ApiService {
         checkFileOpen();
         try {
             Bookmark root = pdfOutlineService.getOutlineAsBookmark(currentFilePath, offset);
-            
+
             // Sync State
             apiBookmarkState.setRootBookmark(root);
             apiBookmarkState.setOffset(offset);
-            
+
             return BookmarkDto.fromDomain(root);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -108,10 +108,10 @@ public class ApiServiceImpl implements ApiService {
         checkFileOpen();
         // Parse Text -> Domain
         Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
-        
+
         // Update State
         apiBookmarkState.setRootBookmark(root);
-        
+
         // Return DTO for Frontend Tree
         return BookmarkDto.fromDomain(root);
     }
@@ -121,10 +121,10 @@ public class ApiServiceImpl implements ApiService {
         checkFileOpen();
         // DTO -> Domain
         Bookmark root = dto.toDomain();
-        
+
         // Update State
         apiBookmarkState.setRootBookmark(root);
-        
+
         // Return Text for Frontend Editor
         return root.toOutlineString();
     }
@@ -145,15 +145,15 @@ public class ApiServiceImpl implements ApiService {
         File srcFile = new File(srcPath);
         String fileName = srcFile.getName();
         String parent = srcFile.getParent();
-        
+
         int dotIndex = fileName.lastIndexOf('.');
         String name = (dotIndex == -1) ? fileName : fileName.substring(0, dotIndex);
         String ext = (dotIndex == -1) ? "" : fileName.substring(dotIndex);
-        
+
         // 1. Try base suffix _new
         String candidateName = name + "_new" + ext;
         File candidateFile = new File(parent, candidateName);
-        
+
         if (!candidateFile.exists()) {
             return candidateFile.getAbsolutePath();
         }
@@ -165,19 +165,19 @@ public class ApiServiceImpl implements ApiService {
             candidateFile = new File(parent, candidateName);
             counter++;
         }
-        
+
         return candidateFile.getAbsolutePath();
     }
 
     @Override
-    public void saveOutline(Bookmark rootBookmark, String destFilePath, int offset) {
+    public void saveOutline(Bookmark rootBookmark, String destFilePath, int offset, ViewScaleType viewMode) {
         checkFileOpen();
         String actualDest = resolveDestFilePath(destFilePath);
-        
-        // Strategy: Use provided params if present (stateless call), 
+
+        // Strategy: Use provided params if present (stateless call),
         // otherwise fallback to state (stateful call).
         // For standard flow, we prefer the state if it exists and matches context.
-        
+
         Bookmark targetRoot = rootBookmark;
         int targetOffset = offset;
 
@@ -191,24 +191,27 @@ public class ApiServiceImpl implements ApiService {
             throw new IllegalArgumentException("No bookmark data provided and no server state available.");
         }
 
+        // Use the provided viewMode directly, defaulting to NONE if null (though RpcProcessor handles default)
+        ViewScaleType scaleType = (viewMode != null) ? viewMode : ViewScaleType.NONE;
+
         try {
-            pdfOutlineService.setOutline(targetRoot, currentFilePath, actualDest, targetOffset, ViewScaleType.NONE); 
+            pdfOutlineService.setOutline(targetRoot, currentFilePath, actualDest, targetOffset, scaleType);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void saveOutlineFromText(String text, String destFilePath, int offset) {
+    public void saveOutlineFromText(String text, String destFilePath, int offset, ViewScaleType viewMode) {
         checkFileOpen();
-        
+
         // Update state first
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
         apiBookmarkState.setRootBookmark(rootBookmark);
         apiBookmarkState.setOffset(offset);
-        
+
         // Then save
-        saveOutline(rootBookmark, destFilePath, offset);
+        saveOutline(rootBookmark, destFilePath, offset, viewMode);
     }
 
     @Override
@@ -221,7 +224,7 @@ public class ApiServiceImpl implements ApiService {
         checkFileOpen();
         String actualDest = resolveDestFilePath(destFilePath);
         Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(config.tocContent(), Method.INDENT);
-        
+
         try {
             pdfTocPageGeneratorService.createTocPage(
                     currentFilePath,
@@ -232,8 +235,10 @@ public class ApiServiceImpl implements ApiService {
                     root,
                     config.header(),
                     config.footer(),
-                    msg -> log.info("TOC Gen msg: {}", msg), 
-                    err -> { throw new RuntimeException(err); }
+                    msg -> log.info("TOC Gen msg: {}", msg),
+                    err -> {
+                        throw new RuntimeException(err);
+                    }
             );
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -244,7 +249,7 @@ public class ApiServiceImpl implements ApiService {
     public String generateTocPreview(TocConfig config) {
         log.info("Generating TOC preview for title: {}", config.title());
         Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(config.tocContent(), Method.INDENT);
-        
+
         if (root == null || root.getChildren().isEmpty()) {
             log.warn("TOC preview generation skipped: content is empty after parsing.");
             return new Gson().toJson(Collections.emptyList());
@@ -260,16 +265,18 @@ public class ApiServiceImpl implements ApiService {
                     config.header(),
                     config.footer(),
                     msg -> log.info("TOC Preview msg: {}", msg),
-                    err -> { throw new RuntimeException(err); }
+                    err -> {
+                        throw new RuntimeException(err);
+                    }
             );
-            
+
             byte[] pdfBytes = baos.getBuffer();
             int size = baos.size();
             FastByteArrayOutputStream finalStream = new FastByteArrayOutputStream();
             finalStream.write(pdfBytes, 0, size);
 
             log.debug("Preview PDF generated, size: {} bytes. Diffing images...", size);
-            
+
             if (size == 0) {
                 log.warn("Preview PDF is empty, cannot render images.");
                 return new Gson().toJson(Collections.emptyList());
@@ -277,9 +284,9 @@ public class ApiServiceImpl implements ApiService {
 
             List<PdfImageService.ImagePageUpdate> updates = pdfImageService.diffPdfToImages(finalStream);
             log.info("Found {} updated image(s) for preview.", updates.size());
-            
+
             return new Gson().toJson(updates);
-            
+
         } catch (Exception e) {
             log.error("Failed to generate TOC preview.", e);
             throw new RuntimeException(e);
@@ -342,7 +349,7 @@ public class ApiServiceImpl implements ApiService {
             String[] existingLabels = pdfPageLabelService.getPageLabels(currentFilePath);
             int totalPages = existingLabels == null ? 0 : existingLabels.length;
             if (totalPages == 0) return Collections.emptyList();
-            
+
             return pdfPageLabelService.simulatePageLabels(rules, totalPages);
         } catch (IOException e) {
             throw new RuntimeException(e);

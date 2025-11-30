@@ -10,6 +10,7 @@ import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PageLabelRule;
 import com.ririv.quickoutline.utils.RpcUtils;
+import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,17 @@ public class RpcProcessor {
 
     public RpcProcessor(ApiService apiService) {
         this.apiService = apiService;
+    }
+
+    private ViewScaleType parseViewMode(Object obj) {
+        if (obj instanceof String) {
+            try {
+                return ViewScaleType.valueOf((String) obj);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid ViewScaleType: {}", obj);
+            }
+        }
+        return ViewScaleType.NONE;
     }
 
     public String process(String jsonRequest) {
@@ -47,7 +59,7 @@ public class RpcProcessor {
                     result = apiService.getOutlineAsBookmark(RpcUtils.getInt(request.params.get(0)));
                     break;
                 case "saveOutline":
-                    // params: [bookmarkDto (nullable), destPath, offset]
+                    // params: [bookmarkDto (nullable), destPath, offset, viewMode]
                     Bookmark root = null;
                     if (request.params.get(0) != null) {
                         JsonElement bookmarkJson = gson.toJsonTree(request.params.get(0));
@@ -58,15 +70,17 @@ public class RpcProcessor {
                     }
                     String dest = request.params.size() > 1 ? (String) request.params.get(1) : null;
                     int offset = request.params.size() > 2 ? RpcUtils.getInt(request.params.get(2)) : 0;
-                    apiService.saveOutline(root, dest, offset);
+                    ViewScaleType viewMode = request.params.size() > 3 ? parseViewMode(request.params.get(3)) : ViewScaleType.NONE;
+                    apiService.saveOutline(root, dest, offset, viewMode);
                     result = "OK";
                     break;
                 case "saveOutlineFromText":
-                    // params: [text, destPath, offset]
+                    // params: [text, destPath, offset, viewMode]
                     String text = (String) request.params.get(0);
                     String txtDest = request.params.size() > 1 ? (String) request.params.get(1) : null;
                     int txtOffset = request.params.size() > 2 ? RpcUtils.getInt(request.params.get(2)) : 0;
-                    apiService.saveOutlineFromText(text, txtDest, txtOffset);
+                    ViewScaleType txtViewMode = request.params.size() > 3 ? parseViewMode(request.params.get(3)) : ViewScaleType.NONE;
+                    apiService.saveOutlineFromText(text, txtDest, txtOffset, txtViewMode);
                     result = "OK";
                     break;
                 case "autoFormat":

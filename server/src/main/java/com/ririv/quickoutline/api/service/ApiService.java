@@ -4,6 +4,7 @@ import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PageLabelRule;
+import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -12,16 +13,15 @@ public interface ApiService {
     void openFile(String filePath);
     String getCurrentFilePath();
     
-    // --- Outline (Stateful Operations) ---
-    
+    // Outline
     String getOutline(int offset);
     
     // CHANGED: Returns DTO to prevent circular reference during JSON serialization
     BookmarkDto getOutlineAsBookmark(int offset); 
     
-    void saveOutline(Bookmark rootBookmark, String destFilePath, int offset);
+    void saveOutline(Bookmark rootBookmark, String destFilePath, int offset, ViewScaleType viewMode);
     
-    void saveOutlineFromText(String text, String destFilePath, int offset);
+    void saveOutlineFromText(String text, String destFilePath, int offset, ViewScaleType viewMode);
     
     String autoFormat(String text);
 
