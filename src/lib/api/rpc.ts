@@ -81,6 +81,10 @@ export interface QuickOutlineApi {
 
     // Sync Utils
     parseTextToTree(text: string): Promise<any>;
+    syncFromText(text: string): Promise<any>; // Returns BookmarkDto
+    syncFromTree(dto: any): Promise<string>;  // Returns Text
+    updateOffset(offset: number): Promise<void>;
+    serializeTreeToText(rootBookmark: any): Promise<string>;
 }
 
 
@@ -240,6 +244,18 @@ class RpcClient implements QuickOutlineApi {
 
     public parseTextToTree(text: string): Promise<any> {
         return this.send("parseTextToTree", [text]);
+    }
+
+    public syncFromText(text: string): Promise<any> {
+        return this.send("syncFromText", [text]);
+    }
+
+    public syncFromTree(dto: any): Promise<string> {
+        return this.send("syncFromTree", [dto]);
+    }
+
+    public updateOffset(offset: number): Promise<void> {
+        return this.send("updateOffset", [offset]);
     }
 
     public serializeTreeToText(rootBookmark: any): Promise<string> {

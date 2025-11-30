@@ -9,6 +9,7 @@ import com.ririv.quickoutline.api.model.RpcResponse;
 import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PageLabelRule;
+import com.ririv.quickoutline.utils.RpcUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,17 +41,23 @@ public class RpcProcessor {
                     result = "OK";
                     break;
                 case "getOutline":
-                    result = apiService.getOutline(getInt(request.params.get(0)));
+                    result = apiService.getOutline(RpcUtils.getInt(request.params.get(0)));
                     break;
                 case "getOutlineAsBookmark":
-                    result = apiService.getOutlineAsBookmark(getInt(request.params.get(0)));
+                    result = apiService.getOutlineAsBookmark(RpcUtils.getInt(request.params.get(0)));
                     break;
                 case "saveOutline":
-                    // params: [bookmarkObj, destPath, offset]
-                    JsonElement bookmarkJson = gson.toJsonTree(request.params.get(0));
-                    Bookmark root = gson.fromJson(bookmarkJson, Bookmark.class);
+                    // params: [bookmarkDto (nullable), destPath, offset]
+                    Bookmark root = null;
+                    if (request.params.get(0) != null) {
+                        JsonElement bookmarkJson = gson.toJsonTree(request.params.get(0));
+                        BookmarkDto dto = gson.fromJson(bookmarkJson, BookmarkDto.class);
+                        if (dto != null) {
+                            root = dto.toDomain();
+                        }
+                    }
                     String dest = request.params.size() > 1 ? (String) request.params.get(1) : null;
-                    int offset = request.params.size() > 2 ? getInt(request.params.get(2)) : 0;
+                    int offset = request.params.size() > 2 ? RpcUtils.getInt(request.params.get(2)) : 0;
                     apiService.saveOutline(root, dest, offset);
                     result = "OK";
                     break;
@@ -58,7 +65,7 @@ public class RpcProcessor {
                     // params: [text, destPath, offset]
                     String text = (String) request.params.get(0);
                     String txtDest = request.params.size() > 1 ? (String) request.params.get(1) : null;
-                    int txtOffset = request.params.size() > 2 ? getInt(request.params.get(2)) : 0;
+                    int txtOffset = request.params.size() > 2 ? RpcUtils.getInt(request.params.get(2)) : 0;
                     apiService.saveOutlineFromText(text, txtDest, txtOffset);
                     result = "OK";
                     break;
@@ -113,6 +120,21 @@ public class RpcProcessor {
                     // params: [text]
                     result = apiService.parseTextToTree((String) request.params.get(0));
                     break;
+                case "syncFromText":
+                    // params: [text]
+                    result = apiService.syncFromText((String) request.params.get(0));
+                    break;
+                case "syncFromTree":
+                    // params: [BookmarkDto]
+                    JsonElement treeDtoJson = gson.toJsonTree(request.params.get(0));
+                    BookmarkDto treeDto = gson.fromJson(treeDtoJson, BookmarkDto.class);
+                    result = apiService.syncFromTree(treeDto);
+                    break;
+                case "updateOffset":
+                    // params: [offset]
+                    apiService.updateOffset(RpcUtils.getInt(request.params.get(0)));
+                    result = "OK";
+                    break;
                 case "serializeTreeToText":
                     // params: [rootBookmarkDto]
                     JsonElement dtoElement = gson.toJsonTree(request.params.get(0));
@@ -130,12 +152,5 @@ public class RpcProcessor {
             String id = (request != null) ? request.id : null;
             return gson.toJson(RpcResponse.error(id, e.getMessage()));
         }
-    }
-
-    private int getInt(Object num) {
-        if (num instanceof Number) {
-            return ((Number) num).intValue();
-        }
-        return 0;
     }
 }

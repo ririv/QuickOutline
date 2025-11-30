@@ -1,6 +1,7 @@
 package com.ririv.quickoutline.api.service.impl;
 
 import com.google.gson.Gson;
+import com.ririv.quickoutline.api.state.ApiBookmarkState;
 import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.api.service.ApiService;
@@ -32,17 +33,20 @@ public class ApiServiceImpl implements ApiService {
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
     private final PdfPageLabelService pdfPageLabelService;
     private final PdfImageService pdfImageService;
+    private final ApiBookmarkState apiBookmarkState;
     
     private String currentFilePath;
 
     public ApiServiceImpl(PdfOutlineService pdfOutlineService,
                           PdfTocPageGeneratorService pdfTocPageGeneratorService,
                           PdfPageLabelService pdfPageLabelService,
-                          PdfImageService pdfImageService) {
+                          PdfImageService pdfImageService,
+                          ApiBookmarkState apiBookmarkState) {
         this.pdfOutlineService = pdfOutlineService;
         this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
         this.pdfPageLabelService = pdfPageLabelService;
         this.pdfImageService = pdfImageService;
+        this.apiBookmarkState = apiBookmarkState;
     }
 
     private void checkFileOpen() {
@@ -55,6 +59,7 @@ public class ApiServiceImpl implements ApiService {
             pdfOutlineService.checkOpenFile(filePath);
             this.currentFilePath = filePath;
             this.pdfImageService.openSession(new File(filePath));
+            this.apiBookmarkState.clear(); // Clear state on new file
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -69,28 +74,125 @@ public class ApiServiceImpl implements ApiService {
     public String getOutline(int offset) {
         checkFileOpen();
         try {
-            return pdfOutlineService.getContents(currentFilePath, offset);
+            String content = pdfOutlineService.getContents(currentFilePath, offset);
+            
+            // Sync State: Parse back to object to hold in memory
+            Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(content, Method.INDENT);
+            apiBookmarkState.setRootBookmark(root);
+            apiBookmarkState.setOffset(offset);
+            
+            return content;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Bookmark getOutlineAsBookmark(int offset) {
+    public BookmarkDto getOutlineAsBookmark(int offset) {
         checkFileOpen();
         try {
-            return pdfOutlineService.getOutlineAsBookmark(currentFilePath, offset);
+            Bookmark root = pdfOutlineService.getOutlineAsBookmark(currentFilePath, offset);
+            
+            // Sync State
+            apiBookmarkState.setRootBookmark(root);
+            apiBookmarkState.setOffset(offset);
+            
+            return BookmarkDto.fromDomain(root);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public BookmarkDto syncFromText(String text) {
+        checkFileOpen();
+        // Parse Text -> Domain
+        Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
+        
+        // Update State
+        apiBookmarkState.setRootBookmark(root);
+        
+        // Return DTO for Frontend Tree
+        return BookmarkDto.fromDomain(root);
+    }
+
+    @Override
+    public String syncFromTree(BookmarkDto dto) {
+        checkFileOpen();
+        // DTO -> Domain
+        Bookmark root = dto.toDomain();
+        
+        // Update State
+        apiBookmarkState.setRootBookmark(root);
+        
+        // Return Text for Frontend Editor
+        return root.toOutlineString();
+    }
+
+    @Override
+    public void updateOffset(int offset) {
+        apiBookmarkState.setOffset(offset);
+    }
+
+    private String resolveDestFilePath(String destFilePath) {
+        if (destFilePath != null && !destFilePath.trim().isEmpty()) {
+            return destFilePath;
+        }
+        return calculateAutoDestPath(currentFilePath);
+    }
+
+    private String calculateAutoDestPath(String srcPath) {
+        File srcFile = new File(srcPath);
+        String fileName = srcFile.getName();
+        String parent = srcFile.getParent();
+        
+        int dotIndex = fileName.lastIndexOf('.');
+        String name = (dotIndex == -1) ? fileName : fileName.substring(0, dotIndex);
+        String ext = (dotIndex == -1) ? "" : fileName.substring(dotIndex);
+        
+        // 1. Try base suffix _new
+        String candidateName = name + "_new" + ext;
+        File candidateFile = new File(parent, candidateName);
+        
+        if (!candidateFile.exists()) {
+            return candidateFile.getAbsolutePath();
+        }
+
+        // 2. Collision detected, increment: _new_1, _new_2...
+        int counter = 1;
+        while (candidateFile.exists()) {
+            candidateName = name + "_new_" + counter + ext;
+            candidateFile = new File(parent, candidateName);
+            counter++;
+        }
+        
+        return candidateFile.getAbsolutePath();
     }
 
     @Override
     public void saveOutline(Bookmark rootBookmark, String destFilePath, int offset) {
         checkFileOpen();
-        String actualDest = destFilePath != null ? destFilePath : currentFilePath;
+        String actualDest = resolveDestFilePath(destFilePath);
+        
+        // Strategy: Use provided params if present (stateless call), 
+        // otherwise fallback to state (stateful call).
+        // For standard flow, we prefer the state if it exists and matches context.
+        
+        Bookmark targetRoot = rootBookmark;
+        int targetOffset = offset;
+
+        if (targetRoot == null && apiBookmarkState.hasRootBookmark()) {
+            targetRoot = apiBookmarkState.getRootBookmark();
+            targetOffset = apiBookmarkState.getOffset();
+            log.info("Saving outline using Server State (offset={})", targetOffset);
+        }
+
+        if (targetRoot == null) {
+            throw new IllegalArgumentException("No bookmark data provided and no server state available.");
+        }
+
         try {
-            pdfOutlineService.setOutline(rootBookmark, currentFilePath, actualDest, offset, ViewScaleType.NONE); 
+            pdfOutlineService.setOutline(targetRoot, currentFilePath, actualDest, targetOffset, ViewScaleType.NONE); 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -99,7 +201,13 @@ public class ApiServiceImpl implements ApiService {
     @Override
     public void saveOutlineFromText(String text, String destFilePath, int offset) {
         checkFileOpen();
+        
+        // Update state first
         Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
+        apiBookmarkState.setRootBookmark(rootBookmark);
+        apiBookmarkState.setOffset(offset);
+        
+        // Then save
         saveOutline(rootBookmark, destFilePath, offset);
     }
 
@@ -111,7 +219,7 @@ public class ApiServiceImpl implements ApiService {
     @Override
     public void generateTocPage(TocConfig config, String destFilePath) {
         checkFileOpen();
-        String actualDest = destFilePath != null ? destFilePath : currentFilePath;
+        String actualDest = resolveDestFilePath(destFilePath);
         Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(config.tocContent(), Method.INDENT);
         
         try {
@@ -218,7 +326,7 @@ public class ApiServiceImpl implements ApiService {
     @Override
     public void setPageLabels(List<PageLabelRule> rules, String destFilePath) {
         checkFileOpen();
-        String actualDest = destFilePath != null ? destFilePath : currentFilePath;
+        String actualDest = resolveDestFilePath(destFilePath);
         List<PageLabel> finalLabels = pdfPageLabelService.convertRulesToPageLabels(rules);
         try {
             pdfPageLabelService.setPageLabels(currentFilePath, actualDest, finalLabels);

@@ -14,6 +14,7 @@
     import { bookmarkStore } from '@/stores/bookmarkStore';
     import { messageStore } from '@/stores/messageStore';
     import { get } from 'svelte/store';
+    import type { Bookmark } from '@/components/bookmark/types';
 
     interface Props {
         view: 'text' | 'tree';
@@ -26,7 +27,41 @@
     let hideTimer: number | null = null;
     let getContentsPopupSelected = $state<'bookmark' | 'toc'>('bookmark'); 
     
-    let offsetValue = $state('0');
+    let offsetValue = $state('');
+    let debounceTimer: number | undefined;
+
+    // Simple debounce function
+    function debounce(func: Function, delay: number) {
+        return function(...args: any[]) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => func(...args), delay);
+        };
+    }
+
+    const debouncedUpdateOffset = debounce(async (val: string) => {
+        const offset = parseInt(val, 10) || 0;
+        try {
+            await rpc.updateOffset(offset);
+        } catch (e) {
+            console.error("Failed to sync offset", e);
+        }
+    }, 500);
+
+    // Sync offsetValue with bookmarkStore
+    bookmarkStore.subscribe(state => {
+        const currentOffset = state.offset === 0 ? '' : String(state.offset);
+        if (offsetValue !== currentOffset) {
+            offsetValue = currentOffset;
+        }
+    });
+
+    function handleOffsetInput(e: Event) {
+        const target = e.target as HTMLInputElement;
+        offsetValue = target.value;
+        const offset = parseInt(offsetValue, 10) || 0;
+        bookmarkStore.setOffset(offset);
+        debouncedUpdateOffset(offsetValue);
+    }
 
     function toggleView() {
         view = view === 'text' ? 'tree' : 'text';
@@ -49,17 +84,21 @@
         
         try {
             const offset = parseInt(offsetValue, 10) || 0;
-            // TODO: If type === 'toc', maybe use a different API? 
-            // For now, we assume standard getOutline.
-            const text = await rpc.getOutline(offset);
+            // 1. Update backend offset state
+            await rpc.updateOffset(offset);
             
-            if (text) {
-                bookmarkStore.setText(text);
-                bookmarkStore.setOffset(offset);
-                messageStore.add('Outline loaded successfully', 'SUCCESS');
-            } else {
-                messageStore.add('No outline found in PDF', 'INFO');
-            }
+            // 2. Get Bookmark DTO from backend (updates backend's internal state)
+            const bookmarkDto: Bookmark = await rpc.getOutlineAsBookmark(offset);
+            
+            // 3. Get corresponding text from backend (updates backend's internal text representation if needed)
+            const text = await rpc.syncFromTree(bookmarkDto); // Pass DTO to get current text representation
+
+            // 4. Update frontend store
+            bookmarkStore.setText(text);
+            bookmarkStore.setTree(bookmarkDto.children || []);
+            bookmarkStore.setOffset(offset);
+            
+            messageStore.add('Outline loaded successfully', 'SUCCESS');
         } catch (e: any) {
             messageStore.add('Failed to load outline: ' + (e.message || String(e)), 'ERROR');
         }
@@ -76,9 +115,11 @@
             
             const offset = parseInt(offsetValue, 10) || 0;
             
-            // Note: ViewScaleType from frontend is not passed to saveOutlineFromText yet 
-            // because the backend API `saveOutlineFromText` I added sets ViewScaleType.NONE hardcoded.
-            // If scale support is needed, update API. For now, following basic functionality.
+            // 1. Update backend offset state
+            await rpc.updateOffset(offset);
+
+            // 2. Use saveOutlineFromText which updates backend state AND saves in one go.
+            // This is safer than saveOutline(null) which requires pre-existing state.
             await rpc.saveOutlineFromText(state.text, null, offset);
             
             messageStore.add('Outline saved successfully!', 'SUCCESS');
@@ -131,6 +172,7 @@
         placeholder="Offset" 
         style="width: 120px;" 
         bind:value={offsetValue}
+        oninput={handleOffsetInput}
     />
 
     <div class="spacer"></div>

@@ -10,6 +10,7 @@ import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
+import com.ririv.quickoutline.api.state.ApiBookmarkState;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 
@@ -25,15 +26,19 @@ public class SidecarApp {
         PdfTocPageGeneratorService pdfTocPageGeneratorService = new PdfTocPageGeneratorService(tocPageGenerator);
         PdfPageLabelService pdfPageLabelService = new PdfPageLabelService();
 
-        // 2. 初始化 API 实现
+        // 2. Initialize State
+        ApiBookmarkState apiBookmarkState = new ApiBookmarkState();
+
+        // 3. 初始化 API 实现
         ApiServiceImpl apiService = new ApiServiceImpl(
                 pdfOutlineService,
                 pdfTocPageGeneratorService,
                 pdfPageLabelService,
-                pdfImageService // 注入共享的实例
+                pdfImageService, // 注入共享的实例
+                apiBookmarkState
         );
 
-        // 3. 初始化 RPC 处理器
+        // 4. 初始化 RPC 处理器
         RpcProcessor rpcProcessor = new RpcProcessor(apiService);
         
         // 4. 初始化 WebSocket 处理器
