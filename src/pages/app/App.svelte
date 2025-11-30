@@ -8,6 +8,7 @@
     import RpcProvider from '../../components/RpcProvider.svelte';
     import MessageContainer from '../../components/common/MessageContainer.svelte';
     import FileHeader from '../../components/FileHeader.svelte';
+    import Settings from '../../components/Settings.svelte';
     import { rpc } from '@/lib/api/rpc';
     import { listen } from '@tauri-apps/api/event';
     import { onMount, onDestroy } from 'svelte';
@@ -125,10 +126,7 @@
                         <p>This is the content for the Preview tab.</p>
                     </div>
                 {:else if activeTab === FnTab.settings}
-                    <div class="placeholder">
-                        <h1>Settings Content</h1>
-                        <p>This is the content for the Settings tab.</p>
-                    </div>
+                    <Settings />
                 {:else}
                     <div class="placeholder">
                         <h1>Welcome</h1>
