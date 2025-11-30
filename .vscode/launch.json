@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "调试前端 (Svelte in Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      // 注意：Tauri 默认端口通常是 1420，如果你的 vite.config.ts 改了端口，这里也要改
+      "url": "http://localhost:1420",
+      "webRoot": "${workspaceFolder}/src",
+      "sourceMaps": true,
+      "userDataDir": true, // 👈 避免与你日常浏览器冲突
+      // 这一步是为了确保在调试前，开发服务器已经启动了
+      // 如果你已经手动运行了 npm run tauri dev，可以把下面这行删掉
+      // "preLaunchTask": "tauri-dev" 
+    },
+    {
+      "name": "调试后端 (Rust Core)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/src-tauri/target/debug/${workspaceFolderBasename}",
+      "args": [],
+      "cwd": "${workspaceFolder}/src-tauri",
+      "preLaunchTask": "tauri-dev",
+      "env": {
+        "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": "--remote-debugging-port=9222"
+      }
+    }
+  ]
+}

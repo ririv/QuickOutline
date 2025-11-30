@@ -1,9 +1,0 @@
-.idea/workspace.xml
-.idea/vcs.xml
-.idea/modules.xml
-.idea/web.iml
-
-target/
-build/
-
-/.idea/copilot.data.migration.*.xml

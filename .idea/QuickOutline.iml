@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="AdditionalModuleElements">
+    <content url="file://$MODULE_DIR$" dumb="true">
+      <excludeFolder url="file://$MODULE_DIR$/.github/java-upgrade/20250925034654" />
+      <excludeFolder url="file://$MODULE_DIR$/assets/pdfjs/build" />
+      <excludeFolder url="file://$MODULE_DIR$/assets_2/pdfjs/build" />
+      <excludeFolder url="file://$MODULE_DIR$/server/src/main/resources/web" />
+      <excludeFolder url="file://$MODULE_DIR$/server/src/main/resources/web/vditor/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/binaries" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/gen/android/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/gen/android/app/build" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/gen/android/app/src/main/java/com/ririv/quickoutline/generated" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/gen/android/build" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/gen/android/buildSrc/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/gen/android/buildSrc/build" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/gen/schemas" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/resources/java-runtime" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+  </component>
+</module>

@@ -1,0 +1,119 @@
+<script lang="ts">
+  import { type Snippet } from 'svelte';
+  import { autoPosition } from '@/lib/actions/autoPosition';
+
+  interface Props {
+    placement?: 'top' | 'bottom'; // top: popup is above trigger (arrow points down); bottom: popup is below trigger (arrow points up)
+    minWidth?: string;
+    padding?: string;
+    className?: string;
+    children?: Snippet;
+    triggerEl?: HTMLElement; // The element that triggers the popup, for positioning
+  }
+
+  let { 
+    placement = 'top', 
+    minWidth = '140px',
+    padding = '8px',
+    className = '',
+    children,
+    triggerEl // Destructure the new prop
+  }: Props = $props();
+</script>
+
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div 
+  class="arrow-popup {placement} {className}" 
+  style:--min-width={minWidth}
+  style:--padding={padding}
+  onclick={(e) => e.stopPropagation()}
+  use:autoPosition={{ triggerEl }}
+>
+  {@render children?.()}
+</div>
+
+<style>
+  .arrow-popup {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #e1e4e8;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    border-radius: 6px;
+    z-index: 100;
+    min-width: var(--min-width);
+    padding: var(--padding);
+    
+    /* Initial state: managed by autoPosition */
+    left: 0; 
+    /* No default transform/centering */
+    
+    /* Animation only for opacity/vertical slide, NOT horizontal */
+    animation: popupFade 0.15s ease-out;
+  }
+
+  @keyframes popupFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 
+     Placement: TOP
+     Arrow points DOWN at bottom.
+  */
+  .arrow-popup.top {
+    bottom: 100%;
+    margin-bottom: 10px; 
+  }
+  .arrow-popup.top::after {
+    content: "";
+    position: absolute;
+    top: 100%; 
+    /* Dynamic Arrow Position */
+    left: var(--arrow-x, 50%);
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+  }
+  .arrow-popup.top::before {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: var(--arrow-x, 50%);
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #e1e4e8 transparent transparent transparent;
+  }
+
+  /* 
+     Placement: BOTTOM
+     Arrow points UP at top.
+  */
+  .arrow-popup.bottom {
+    top: 100%;
+    margin-top: 10px;
+  }
+  .arrow-popup.bottom::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    /* Dynamic Arrow Position */
+    left: var(--arrow-x, 50%);
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #fff transparent;
+  }
+  .arrow-popup.bottom::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: var(--arrow-x, 50%);
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent #e1e4e8 transparent;
+  }
+</style>

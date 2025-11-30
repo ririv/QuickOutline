@@ -1,25 +1,25 @@
-/build/
-/.gradle/
-/bin/
-/target
-
 # IntelliJ IDEA
-.idea/workspace.xml
 .idea/tasks.xml
 .idea/shelf/
-.idea/vcs.xml
 .idea/misc.xml
+.idea/workspace.xml
+.idea/vcs.xml
+.idea/modules.xml
+.idea/web.iml
+/.idea/copilot.data.migration.*.xml
+/.idea/jsLibraryMappings.xml
 
+/.settings/org.eclipse.buildship.core.prefs
+
+target/
+build/
 
 
 /.env
 
 /tmp
 /1234/
-/.vscode/
 .qoder/rules/
-/fx/
-/.idea/copilot.data.migration.*.xml
 
 # Node 依赖
 node_modules/
@@ -32,12 +32,10 @@ nodejs/
 pdfjs/
 *.log
 
-#自动生成
-/src/main/resources/web/
 
 
-/.idea/jsLibraryMappings.xml
-/.settings/org.eclipse.buildship.core.prefs
+
+
 
 dist/
 
