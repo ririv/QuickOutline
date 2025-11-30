@@ -6,13 +6,12 @@ const path = require('path');
 
 // === 配置路径 ===
 // 项目根目录
-const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 // Java Server 源码目录
-// const SERVER_ROOT = path.join(PROJECT_ROOT, 'server');
-const SERVER_ROOT = PROJECT_ROOT
+const SERVER_ROOT =  path.join(PROJECT_ROOT, 'server');
 // Tauri 资源目录 (Java Runtime 存放位置)
-const TAURI_ROOT = path.join(PROJECT_ROOT, 'web');
+const TAURI_ROOT = PROJECT_ROOT
 const TAURI_RESOURCES_DIR = path.join(TAURI_ROOT, 'src-tauri', 'resources', 'java-runtime');
 
 console.log(`\x1b[34m[Project]\x1b[0m ${PROJECT_ROOT}`);
