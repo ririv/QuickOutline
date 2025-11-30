@@ -10,9 +10,11 @@ import org.slf4j.LoggerFactory;
 public class WebSocketRpcHandler implements Handler<ServerWebSocket> {
     private static final Logger log = LoggerFactory.getLogger(WebSocketRpcHandler.class);
     private final RpcProcessor processor;
+    private final WebSocketSessionManager sessionManager;
 
-    public WebSocketRpcHandler(RpcProcessor processor) {
+    public WebSocketRpcHandler(RpcProcessor processor, WebSocketSessionManager sessionManager) {
         this.processor = processor;
+        this.sessionManager = sessionManager;
     }
 
     @Override
@@ -21,6 +23,7 @@ public class WebSocketRpcHandler implements Handler<ServerWebSocket> {
              return; 
         }
         log.info("Tauri connected via WebSocket");
+        sessionManager.setSession(ws);
         
         ws.textMessageHandler(text -> {
             log.info("Received WebSocket message: {}", text);
@@ -44,7 +47,10 @@ public class WebSocketRpcHandler implements Handler<ServerWebSocket> {
             });
         });
         
-        ws.closeHandler(v -> log.info("Tauri WebSocket disconnected"));
+        ws.closeHandler(v -> {
+            log.info("Tauri WebSocket disconnected");
+            sessionManager.clearSession();
+        });
         ws.exceptionHandler(e -> log.error("WebSocket error", e));
     }
 }

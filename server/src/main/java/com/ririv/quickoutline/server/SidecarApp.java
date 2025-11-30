@@ -1,8 +1,10 @@
 package com.ririv.quickoutline.server;
 
+import com.ririv.quickoutline.api.WebSocketSessionManager;
 import com.ririv.quickoutline.api.service.RpcProcessor;
 import com.ririv.quickoutline.api.service.impl.ApiServiceImpl;
 import com.ririv.quickoutline.api.WebSocketRpcHandler;
+import com.ririv.quickoutline.api.state.ApiBookmarkState;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
 import com.ririv.quickoutline.service.FontManager;
@@ -10,12 +12,14 @@ import com.ririv.quickoutline.service.PdfOutlineService;
 import com.ririv.quickoutline.service.PdfPageLabelService;
 import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
 import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
-import com.ririv.quickoutline.api.state.ApiBookmarkState;
+import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 
+import java.io.IOException;
+
 public class SidecarApp {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Vertx vertx = Vertx.vertx();
 
         // 1. 初始化服务，共享 PdfImageService
@@ -25,9 +29,11 @@ public class SidecarApp {
         TocPageGenerator tocPageGenerator = new iTextTocPageGenerator(fontManager);
         PdfTocPageGeneratorService pdfTocPageGeneratorService = new PdfTocPageGeneratorService(tocPageGenerator);
         PdfPageLabelService pdfPageLabelService = new PdfPageLabelService();
+        SyncWithExternalEditorService syncWithExternalEditorService = new SyncWithExternalEditorService();
 
-        // 2. Initialize State
+        // 2. Initialize State and Managers
         ApiBookmarkState apiBookmarkState = new ApiBookmarkState();
+        WebSocketSessionManager sessionManager = new WebSocketSessionManager();
 
         // 3. 初始化 API 实现
         ApiServiceImpl apiService = new ApiServiceImpl(
@@ -35,16 +41,18 @@ public class SidecarApp {
                 pdfTocPageGeneratorService,
                 pdfPageLabelService,
                 pdfImageService, // 注入共享的实例
-                apiBookmarkState
+                apiBookmarkState,
+                syncWithExternalEditorService,
+                sessionManager
         );
 
         // 4. 初始化 RPC 处理器
         RpcProcessor rpcProcessor = new RpcProcessor(apiService);
         
-        // 4. 初始化 WebSocket 处理器
-        WebSocketRpcHandler tauriHandler = new WebSocketRpcHandler(rpcProcessor);
+        // 5. 初始化 WebSocket 处理器
+        WebSocketRpcHandler tauriHandler = new WebSocketRpcHandler(rpcProcessor, sessionManager);
 
-        // 5. 创建 HTTP 服务器
+        // 6. 创建 HTTP 服务器
         HttpServer server = vertx.createHttpServer();
 
         // 6. 配置 WebSocket 处理器

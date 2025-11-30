@@ -91,12 +91,47 @@ export interface QuickOutlineApi {
 class RpcClient implements QuickOutlineApi {
     private ws: WebSocket | null = null;
     private pendingRequests = new Map<string, { resolve: Function, reject: Function }>();
+    private eventListeners = new Map<string, Function[]>(); // For unsolicited messages
     public port: number = 0; // Make port public
     private isAndroid: boolean = false;
 
     constructor() {
         // @ts-ignore
         this.isAndroid = typeof window['AndroidRpc'] !== 'undefined';
+    }
+
+    /**
+     * Registers an event handler for unsolicited messages from the backend.
+     * @param eventType The type of the event (e.g., "external-editor-update")
+     * @param handler The callback function
+     */
+    public on(eventType: string, handler: Function) {
+        if (!this.eventListeners.has(eventType)) {
+            this.eventListeners.set(eventType, []);
+        }
+        this.eventListeners.get(eventType)?.push(handler);
+    }
+
+    /**
+     * Removes an event handler.
+     * @param eventType The type of the event
+     * @param handler The callback function to remove
+     */
+    public off(eventType: string, handler: Function) {
+        const handlers = this.eventListeners.get(eventType);
+        if (handlers) {
+            this.eventListeners.set(eventType, handlers.filter(h => h !== handler));
+        }
+    }
+
+    private emit(eventType: string, payload: any) {
+        this.eventListeners.get(eventType)?.forEach(handler => {
+            try {
+                handler(payload);
+            } catch (e) {
+                console.error(`RPC: Error in event handler for ${eventType}:`, e);
+            }
+        });
     }
 
     /**
@@ -129,27 +164,32 @@ class RpcClient implements QuickOutlineApi {
 
             this.ws.onmessage = (event) => {
                 try {
-                    console.log("RPC: Received message", event.data);
-                    const response: RpcResponse = JSON.parse(event.data);
-                    const handler = this.pendingRequests.get(response.id);
+                    const message = JSON.parse(event.data);
+                    
+                    // Check if it's an RPC response
+                    const handler = this.pendingRequests.get(message.id);
                     if (handler) {
-                        if (response.error) {
-                            console.error("RPC: Response error", response.error);
-                            handler.reject(new Error(response.error));
+                        if (message.error) {
+                            console.error("RPC: Response error", message.error);
+                            handler.reject(new Error(message.error));
                         } else {
-                            handler.resolve(response.result);
+                            handler.resolve(message.result);
                         }
-                        this.pendingRequests.delete(response.id);
+                        this.pendingRequests.delete(message.id);
+                    } else if (message.type) { // It's an unsolicited event from backend
+                        console.log(`RPC: Received event [${message.type}]`, message.payload);
+                        this.emit(message.type, message.payload);
                     } else {
-                        console.warn("RPC: No handler found for ID", response.id);
+                        console.warn("RPC: Unknown message format or no handler found", message);
                     }
                 } catch (e) {
-                    console.error("RPC: Failed to parse response", e);
+                    console.error("RPC: Failed to parse message or handle", e);
                 }
             };
             
             this.ws.onclose = () => {
                  console.log("RPC: WebSocket closed");
+                 // Emit a disconnection event if needed
             };
         });
     }
@@ -260,6 +300,10 @@ class RpcClient implements QuickOutlineApi {
 
     public serializeTreeToText(rootBookmark: any): Promise<string> {
         return this.send("serializeTreeToText", [rootBookmark]);
+    }
+
+    public openExternalEditor(textContent: string): Promise<void> {
+        return this.send("openExternalEditor", [textContent]);
     }
 }
 

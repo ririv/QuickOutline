@@ -62,4 +62,10 @@ public interface ApiService {
     // --- Utils ---
     BookmarkDto parseTextToTree(String text);
     String serializeTreeToText(Bookmark root); // Keep accepting Domain object for internal utility
+
+    /**
+     * Opens the given text content in an external editor (e.g., VS Code).
+     * @param textContent The content to be written to a temporary file and opened.
+     */
+    void openExternalEditor(String textContent);
 }
