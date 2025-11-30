@@ -1,6 +1,6 @@
 {
-  "name": "web-editor",
-  "version": "1.0.0",
+  "name": "quickoutline",
+  "version": "3.0.0-pre",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
