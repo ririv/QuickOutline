@@ -25,11 +25,13 @@
     let getContentsBtnEl = $state<HTMLButtonElement | undefined>();
     let setContentsBtnEl = $state<HTMLButtonElement | undefined>();
     let hideTimer: number | null = null;
-    let getContentsPopupSelected = $state<'bookmark' | 'toc'>('bookmark'); 
+    
+    // State for Popups
+    let getContentsMode = $state<'bookmark' | 'toc'>('bookmark'); 
+    let viewMode = $state<ViewScaleType>('NONE'); 
     
     let offsetValue = $state('');
     let debounceTimer: number | undefined;
-    let viewMode = $state<ViewScaleType>('NONE'); // State for SetContentsPopup
 
     // Simple debounce function
     function debounce(func: Function, delay: number) {
@@ -79,20 +81,28 @@
         }, 200);
     }
 
-    async function handleGetContentsSelect(type: 'bookmark' | 'toc') {
-        getContentsPopupSelected = type;
-        console.log('Get contents from:', getContentsPopupSelected);
+    // --- Get Contents Logic ---
+
+    function handleGetContentsModeChange(type: 'bookmark' | 'toc') {
+        getContentsMode = type;
+    }
+
+    async function handleGetContentsClick() {
+        console.log('Get contents from:', getContentsMode);
         
         try {
             const offset = parseInt(offsetValue, 10) || 0;
             // 1. Update backend offset state
             await rpc.updateOffset(offset);
             
-            // 2. Get Bookmark DTO from backend (updates backend's internal state)
+            // TODO: Handle 'toc' mode if backend supports it distinctively
+            // For now, we use standard getOutlineAsBookmark for 'bookmark' mode
+            
+            // 2. Get Bookmark DTO from backend
             const bookmarkDto: Bookmark = await rpc.getOutlineAsBookmark(offset);
             
-            // 3. Get corresponding text from backend (updates backend's internal text representation if needed)
-            const text = await rpc.syncFromTree(bookmarkDto); // Pass DTO to get current text representation
+            // 3. Sync text
+            const text = await rpc.syncFromTree(bookmarkDto); 
 
             // 4. Update frontend store
             bookmarkStore.setText(text);
@@ -105,12 +115,12 @@
         }
     }
 
-    // Just updates the view mode state
+    // --- Set Contents Logic ---
+
     function handleViewModeChange(type: ViewScaleType) {
         viewMode = type;
     }
 
-    // Triggered when clicking "Set Contents" button directly
     async function handleSetContentsClick() {
         console.log('Set contents click with view scale:', viewMode);
         try {
@@ -121,12 +131,9 @@
             }
             
             const offset = parseInt(offsetValue, 10) || 0;
-            
-            // 1. Update backend offset state
             await rpc.updateOffset(offset);
 
-            // 2. Use saveOutlineFromText which updates backend state AND saves in one go.
-            // TODO: Pass viewMode to backend if API supports it in the future
+            // TODO: Pass viewMode to backend
             await rpc.saveOutlineFromText(state.text, null, offset);
             
             messageStore.add('Outline saved successfully!', 'SUCCESS');
@@ -152,14 +159,14 @@
     </GraphButton>
     
     <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
-        <StyledButton type="primary" hoverEffect="darken" bind:element={getContentsBtnEl}>
+        <StyledButton type="primary" hoverEffect="darken" bind:element={getContentsBtnEl} onclick={handleGetContentsClick}>
             Get Contents
         </StyledButton>
         {#if activePopup === 'get' && getContentsBtnEl}
             <GetContentsPopup 
                 triggerEl={getContentsBtnEl} 
-                onSelect={handleGetContentsSelect} 
-                selected={getContentsPopupSelected}
+                onSelect={handleGetContentsModeChange} 
+                selected={getContentsMode}
             />
         {/if}
     </div>
