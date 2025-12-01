@@ -4,12 +4,13 @@
     import treeDiagramIcon from '@/assets/icons/tree-diagram.svg';
     import doubleColumnIcon from '@/assets/icons/double-column.svg';
     import offsetIcon from '@/assets/icons/offset.svg';
+    import downloadIcon from '@/assets/icons/download.svg';
+    import uploadIcon from '@/assets/icons/upload.svg';
 
     import GetContentsPopup from './GetContentsPopup.svelte';
     import SetContentsPopup from './SetContentsPopup.svelte';
     import type { ViewScaleType } from './SetContentsPopup.svelte';
     import GraphButton from '../controls/GraphButton.svelte';
-    import StyledButton from '../controls/StyledButton.svelte';
     import IconInput from '../controls/IconInput.svelte';
     
     import { rpc } from '@/lib/api/rpc';
@@ -163,7 +164,7 @@
 
 </script>
 
-<div class="flex items-center gap-[15px] p-[10px] bg-white border-none">
+<div class="flex items-center gap-2 p-[10px] bg-white border-none">
     <GraphButton class="graph-button-important group" title="Clear Editor" onclick={handleDelete}>
         <img 
             src={trashIcon} 
@@ -171,11 +172,28 @@
             class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
         />
     </GraphButton>
+
+    <!-- Vertical Divider -->
+    <div class="w-px h-5 bg-gray-300 mx-1"></div>
     
+    <!-- Offset Input Group -->
+    <IconInput 
+        icon={offsetIcon}
+        placeholder="Offset"
+        bind:value={offsetValue}
+        oninput={handleOffsetInput}
+        width="60px"
+    />
+
     <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
-        <StyledButton type="primary" hoverEffect="darken" bind:element={getContentsBtnEl} onclick={handleGetContentsClick}>
-            Get Contents
-        </StyledButton>
+        <button 
+            bind:this={getContentsBtnEl} 
+            onclick={handleGetContentsClick}
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
+        >
+            <img src={downloadIcon} alt="Load" class="w-4 h-4 text-gray-500" />
+            Load
+        </button>
         {#if activePopup === 'get' && getContentsBtnEl}
             <GetContentsPopup 
                 triggerEl={getContentsBtnEl} 
@@ -186,9 +204,14 @@
     </div>
 
     <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
-        <StyledButton type="important" hoverEffect="elevation" bind:element={setContentsBtnEl} onclick={handleSetContentsClick}>
-            Set Contents
-        </StyledButton>
+        <button 
+            bind:this={setContentsBtnEl} 
+            onclick={handleSetContentsClick}
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
+        >
+            <img src={uploadIcon} alt="Apply" class="w-4 h-4 text-gray-500" />
+            Apply
+        </button>
         {#if activePopup === 'set' && setContentsBtnEl}
             <SetContentsPopup 
                 triggerEl={setContentsBtnEl} 
@@ -197,15 +220,6 @@
             />
         {/if}
     </div>
-
-    <!-- Offset Input Group -->
-    <IconInput 
-        icon={offsetIcon}
-        placeholder="Offset"
-        bind:value={offsetValue}
-        oninput={handleOffsetInput}
-        width="60px"
-    />
 
     <div class="flex-1"></div>
 
