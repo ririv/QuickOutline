@@ -8,7 +8,7 @@
     import formatIcon from '@/assets/icons/format.svg'; // Using text-edit for format
     import sequentialIcon from '@/assets/icons/mode-sequential.svg';
     import indentIcon from '@/assets/icons/mode-indent.svg';
-    import SegmentedControl from '../controls/SegmentedControl.svelte';
+    import IconSwitch from '../controls/IconSwitch.svelte';
 
     let method = $state('sequential');
     const modeOptions = [
@@ -155,11 +155,10 @@
 <div class="flex flex-col h-full w-full bg-white">
     <!-- Top Toolbar -->
     <div class="flex items-center justify-between shrink-0 py-2 px-2 bg-white border-b border-gray-100">
-        <!-- Mode Selector (Segmented Control) -->
-        <SegmentedControl 
+        <!-- Mode Selector (IconSwitch) -->
+        <IconSwitch 
             bind:value={method} 
             options={modeOptions} 
-            itemClass="w-[100px]" 
         />
         
         <div class="flex items-center gap-2">
@@ -186,7 +185,8 @@
 
     <!-- Editor Area -->
     <div class="flex-1 min-h-0 relative group
-                bg-white
+                border border-gray-200 rounded-lg mx-2
+                focus-within:border-el-primary focus-within:ring-2 focus-within:ring-el-primary/20
                 transition-all duration-200 overflow-hidden">
         
         {#if isExternalEditing}
