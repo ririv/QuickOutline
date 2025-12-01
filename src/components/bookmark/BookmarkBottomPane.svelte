@@ -164,61 +164,69 @@
 
 </script>
 
-<div class="flex items-center gap-2 p-[10px] bg-white border-none">
-    <GraphButton class="graph-button-important group" title="Clear Editor" onclick={handleDelete}>
-        <img 
-            src={trashIcon} 
-            alt="Delete" 
-            class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
-        />
-    </GraphButton>
-
-    <!-- Vertical Divider -->
-    <div class="w-px h-5 bg-gray-300 mx-1"></div>
-    
-    <!-- Offset Input Group -->
-    <IconInput 
-        icon={offsetIcon}
-        placeholder="Offset"
-        bind:value={offsetValue}
-        oninput={handleOffsetInput}
-        width="60px"
-    />
-
-    <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
-        <button 
-            bind:this={getContentsBtnEl} 
-            onclick={handleGetContentsClick}
-            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
-        >
-            <img src={downloadIcon} alt="Load" class="w-4 h-4 text-gray-500" />
-            Load
-        </button>
-        {#if activePopup === 'get' && getContentsBtnEl}
-            <GetContentsPopup 
-                triggerEl={getContentsBtnEl} 
-                onSelect={handleGetContentsModeChange} 
-                selected={getContentsMode}
+<div class="flex items-center gap-[15px] py-[10px] pl-[15px] pr-[10px] bg-white border-none">
+    <!-- Left Group: Delete and Load -->
+    <div class="flex items-center gap-2">
+        <GraphButton class="graph-button-important group" title="Clear Editor" onclick={handleDelete}>
+            <img 
+                src={trashIcon} 
+                alt="Delete" 
+                class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
             />
-        {/if}
+        </GraphButton>
+
+        <!-- Vertical Divider -->
+        <div class="w-px h-5 bg-gray-300 mx-1"></div>
+
+        <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
+            <button 
+                bind:this={getContentsBtnEl} 
+                onclick={handleGetContentsClick}
+                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors w-[100px]"
+            >
+                <img src={downloadIcon} alt="Load" class="w-4 h-4 text-gray-500" />
+                Load
+            </button>
+            {#if activePopup === 'get' && getContentsBtnEl}
+                <GetContentsPopup 
+                    triggerEl={getContentsBtnEl} 
+                    onSelect={handleGetContentsModeChange} 
+                    selected={getContentsMode}
+                />
+            {/if}
+        </div>
     </div>
 
-    <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
-        <button 
-            bind:this={setContentsBtnEl} 
-            onclick={handleSetContentsClick}
-            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
-        >
-            <img src={uploadIcon} alt="Apply" class="w-4 h-4 text-gray-500" />
-            Apply
-        </button>
-        {#if activePopup === 'set' && setContentsBtnEl}
-            <SetContentsPopup 
-                triggerEl={setContentsBtnEl} 
-                selected={viewMode}
-                onSelect={handleViewModeChange} 
-            />
-        {/if}
+    <div class="flex-1"></div>
+    
+    <!-- Center Group: Apply and Offset -->
+    <div class="flex items-center gap-2">
+        <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
+            <button 
+                bind:this={setContentsBtnEl} 
+                onclick={handleSetContentsClick}
+                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors w-[100px]"
+            >
+                <img src={uploadIcon} alt="Apply" class="w-4 h-4 text-gray-500" />
+                Apply
+            </button>
+            {#if activePopup === 'set' && setContentsBtnEl}
+                <SetContentsPopup 
+                    triggerEl={setContentsBtnEl} 
+                    selected={viewMode}
+                    onSelect={handleViewModeChange} 
+                />
+            {/if}
+        </div>
+
+        <!-- Offset Input Group -->
+        <IconInput 
+            icon={offsetIcon}
+            placeholder="Offset"
+            bind:value={offsetValue}
+            oninput={handleOffsetInput}
+            width="100px"
+        />
     </div>
 
     <div class="flex-1"></div>
