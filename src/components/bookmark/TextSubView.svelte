@@ -1,13 +1,12 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store'; // Import get
-    import StyledButton from '../controls/StyledButton.svelte';
     import StyledRadioGroup from '../controls/StyledRadioGroup.svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore';
     import { rpc } from '@/lib/api/rpc';
     import { messageStore } from '@/stores/messageStore';
     import type { Bookmark } from './types';
-    import formatIcon from '@/assets/icons/text-edit.svg'; // Using text-edit for format
+    import formatIcon from '@/assets/icons/format.svg'; // Using text-edit for format
 
     let method = $state('sequential');
     const methodOptions = [
