@@ -17,85 +17,87 @@
     function showHelp() {
         showHelpModal = true;
     }
+
+    function getNavBtnClass(isActive: boolean) {
+        const base = "w-10 h-10 shrink-0 flex items-center justify-center border-none cursor-pointer rounded-md transition-all duration-200";
+        
+        let stateClasses = "";
+        let hoverClasses = "";
+
+        if (isActive) {
+            // Active state: Gray background, default gray text (user's '对调' for active)
+            stateClasses = "bg-gray-200 text-[#606266]";
+            // Active hover: Slightly darker gray background, text color becomes blue
+            hoverClasses = "hover:bg-gray-300 hover:text-[#409eff]";
+        } else {
+            // Inactive state: Transparent background, default gray text
+            stateClasses = "text-[#606266]";
+            // Inactive hover: Light gray background, blue text (user's '对调' for hover)
+            hoverClasses = "hover:bg-[#f5f7fa] hover:text-[#409eff]";
+        }
+
+        return `${base} ${stateClasses} ${hoverClasses}`;
+    }
 </script>
 
-<div class="left-pane">
-    <div class="top-section">
+<div class="w-[50px] bg-white border-r border-[#dcdfe6] flex flex-col justify-between py-[10px] h-full box-border">
+    <div class="flex flex-col items-center gap-2">
         <button 
-            class="nav-btn" 
-            class:active={activeTab === FnTab.bookmark} 
+            class={getNavBtnClass(activeTab === FnTab.bookmark)} 
             onclick={() => switchTab(FnTab.bookmark)}
             title="Bookmark"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+            <div class="icon icon-bookmark"></div>
         </button>
         
         <button 
-            class="nav-btn" 
-            class:active={activeTab === FnTab.label} 
+            class={getNavBtnClass(activeTab === FnTab.label)} 
             onclick={() => switchTab(FnTab.label)}
             title="Page Label"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-hash-open-v6">
-                <path d="M4 20V4a2 2 0 0 1 2-2h8.5L20 7.5"/> <!-- Left, Top, and Diagonal Corner Fold -->
-                <path d="M20 20V7.5"/> <!-- Right side -->
-                <polyline points="14 2 14 8 20 8"/> <!-- Fold line restored -->
-                <!-- Hash symbol shifted further down (center y=18) -->
-                <line x1="9" x2="15" y1="16" y2="16"/>
-                <line x1="9" x2="15" y1="20" y2="20"/>
-                <line x1="10.5" x2="10.5" y1="14" y2="22"/>
-                <line x1="13.5" x2="13.5" y1="14" y2="22"/>
-            </svg>
+            <div class="icon icon-label"></div>
         </button>
 
         <button 
-            class="nav-btn" 
-            class:active={activeTab === FnTab.tocGenerator} 
+            class={getNavBtnClass(activeTab === FnTab.tocGenerator)} 
             onclick={() => switchTab(FnTab.tocGenerator)}
             title="TOC Generator"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-table-of-contents"><path d="M16 12H3"/><path d="M16 18H3"/><path d="M16 6H3"/><path d="M21 12h.01"/><path d="M21 18h.01"/><path d="M21 6h.01"/></svg>
+            <div class="icon icon-toc"></div>
         </button>
 
         <button 
-            class="nav-btn" 
-            class:active={activeTab === FnTab.markdown} 
+            class={getNavBtnClass(activeTab === FnTab.markdown)} 
             onclick={() => switchTab(FnTab.markdown)}
             title="Markdown"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-markdown-v6">
-                <path d="M3 17V7l4.5 5 4.5-5v10"/> <!-- Balanced M shape (x=3 to 12) -->
-                <line x1="18" x2="18" y1="7" y2="17"/> <!-- Arrow shaft -->
-                <polyline points="15 14 18 17 21 14"/> <!-- Arrow head -->
-            </svg>
+            <div class="icon icon-markdown"></div>
         </button>
 
         <button 
-            class="nav-btn" 
-            class:active={activeTab === FnTab.preview} 
+            class={getNavBtnClass(activeTab === FnTab.preview)} 
             onclick={() => switchTab(FnTab.preview)}
             title="Preview"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <div class="icon icon-preview"></div>
         </button>
     </div>
 
-    <div class="bottom-section">
+    <div class="flex flex-col items-center gap-2">
         <button
-            class="nav-btn"
-            class:active={activeTab === FnTab.settings}
+            class={getNavBtnClass(activeTab === FnTab.settings)}
             onclick={() => switchTab(FnTab.settings)}
             title="Settings"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <div class="icon icon-settings"></div>
         </button>
 
         <button
-            class="nav-btn"
+            class={getNavBtnClass(false)}
             onclick={showHelp}
             title="Help"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+            <div class="icon icon-help"></div>
         </button>
     </div>
 </div>
@@ -103,53 +105,23 @@
 <HelpWindow bind:showHelpModal={showHelpModal} />
 
 <style>
-    .left-pane {
-        width: 50px;
-        background-color: #fff;
-        /*background-color: rgba(247, 248, 250);*/
-        border-right: 1px solid var(--color-el-default-border);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 10px 0;
-        height: 100%;
-        box-sizing: border-box;
-    }
-
-    .top-section, .bottom-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .nav-btn {
-        width: 40px;
-        height: 40px;
-        flex-shrink: 0; /* Prevent shrinking */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        border-radius: 6px;
-        color: #606266;
-        transition: all 0.2s;
-    }
-
-    .nav-btn:hover {
-        background-color: #f5f7fa;
-        color: #333;
-    }
-
-    .nav-btn.active {
-        background-color: #ecf5ff;
-        color: #409eff;
-    }
-
-    .nav-btn svg {
+    .icon {
         width: 20px;
         height: 20px;
+        background-color: currentColor;
+        mask-size: contain;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        -webkit-mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-position: center;
     }
+
+    .icon-bookmark { mask-image: url('../assets/icons/bookmark.svg'); -webkit-mask-image: url('../assets/icons/bookmark.svg'); }
+    .icon-label { mask-image: url('../assets/icons/page-label.svg'); -webkit-mask-image: url('../assets/icons/page-label.svg'); }
+    .icon-toc { mask-image: url('../assets/icons/toc.svg'); -webkit-mask-image: url('../assets/icons/toc.svg'); }
+    .icon-markdown { mask-image: url('../assets/icons/markdown.svg'); -webkit-mask-image: url('../assets/icons/markdown.svg'); }
+    .icon-preview { mask-image: url('../assets/icons/preview.svg'); -webkit-mask-image: url('../assets/icons/preview.svg'); }
+    .icon-settings { mask-image: url('../assets/icons/settings.svg'); -webkit-mask-image: url('../assets/icons/settings.svg'); }
+    .icon-help { mask-image: url('../assets/icons/help.svg'); -webkit-mask-image: url('../assets/icons/help.svg'); }
 </style>
