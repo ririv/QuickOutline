@@ -1,6 +1,8 @@
 <script lang="ts">
     import ArrowPopup from "../controls/ArrowPopup.svelte";
-    import StyledRadioButtonGroup from '../controls/StyledRadioButtonGroup.svelte';
+    import SegmentedControl from '../controls/SegmentedControl.svelte';
+    import bookmarkIcon from '@/assets/icons/bookmark.svg';
+    import tocIcon from '@/assets/icons/toc.svg';
 
     type SelectionType = 'bookmark' | 'toc';
 
@@ -12,8 +14,8 @@
     let { triggerEl, onSelect, selected }: Props = $props();
 
     const options = [
-        { value: 'bookmark', label: 'Bookmark' },
-        { value: 'toc', label: 'ToC' }
+        { value: 'bookmark', label: 'Bookmark', icon: bookmarkIcon },
+        { value: 'toc', label: 'ToC', icon: tocIcon }
     ];
 
     // Proxy state to handle binding with type casting
@@ -31,13 +33,11 @@
 <ArrowPopup placement="top" {triggerEl} padding="15px" minWidth="200px">
     <div class="flex flex-col items-center gap-2.5">
         <span class="title">Get Contents From</span>
-        <StyledRadioButtonGroup 
-            {options} 
+        <SegmentedControl 
+            options={options} 
             bind:value={groupValue} 
-            name="get-contents" 
-            allowDeselect={false}
-            hasBorder={true}
-            onchange={(val) => { if (val) onSelect(val as SelectionType); }}
+            itemClass="w-[80px]" 
+            onchange={(val) => onSelect(val as SelectionType)}
         />
     </div>
 </ArrowPopup>

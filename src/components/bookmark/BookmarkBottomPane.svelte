@@ -200,7 +200,7 @@
     <div class="flex-1"></div>
     
     <!-- Center Group: Apply and Offset -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-5">
         <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
             <button 
                 bind:this={setContentsBtnEl} 

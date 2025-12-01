@@ -1,17 +1,19 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store'; // Import get
-    import StyledRadioGroup from '../controls/StyledRadioGroup.svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore';
     import { rpc } from '@/lib/api/rpc';
     import { messageStore } from '@/stores/messageStore';
     import type { Bookmark } from './types';
     import formatIcon from '@/assets/icons/format.svg'; // Using text-edit for format
+    import sequentialIcon from '@/assets/icons/mode-sequential.svg';
+    import indentIcon from '@/assets/icons/mode-indent.svg';
+    import SegmentedControl from '../controls/SegmentedControl.svelte';
 
     let method = $state('sequential');
-    const methodOptions = [
-        { value: 'sequential', label: 'Sequential' },
-        { value: 'indent', label: 'Indent' }
+    const modeOptions = [
+        { value: 'sequential', label: 'Sequential', icon: sequentialIcon, title: 'Parse by Sequential Numbers (e.g., 1, 1.1, 2)' },
+        { value: 'indent', label: 'Indent', icon: indentIcon, title: 'Parse by Indentation Levels' }
     ];
 
     let textValue = $state('');
@@ -152,36 +154,31 @@
 
 <div class="flex flex-col h-full w-full bg-white">
     <!-- Top Toolbar -->
-    <div class="flex items-center justify-between shrink-0 py-1 bg-white">
-        <div class="flex items-center ml-2 pl-2">
-            <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Mode:</span>
-            <StyledRadioGroup 
-                bind:value={method} 
-                options={methodOptions}
-                name="method" 
-                layout="horizontal"
-                highlightValue={highlightedMode}
-            />
-        </div>
+    <div class="flex items-center justify-between shrink-0 py-2 px-2 bg-white border-b border-gray-100">
+        <!-- Mode Selector (Segmented Control) -->
+        <SegmentedControl 
+            bind:value={method} 
+            options={modeOptions} 
+            itemClass="w-[100px]" 
+        />
         
-        <div class="flex items-center gap-1 mr-2">
+        <div class="flex items-center gap-2">
             <button 
-                class="flex items-center gap-1.5 p-1.5 rounded hover:bg-gray-200 transition-colors text-xs text-gray-600 font-medium"
+                class="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-xs text-gray-600 font-medium transition-colors border border-transparent hover:border-gray-200"
                 onclick={handleAutoFormat} 
                 title="Auto Format Indentation"
                 disabled={isExternalEditing}
             >
-                <img src={formatIcon} alt="Auto Format" class="w-4 h-4" />
+                <img src={formatIcon} alt="Auto Format" class="w-4 h-4 opacity-70" />
                 <span>Auto-Format</span>
             </button>
             <button
-                class="flex items-center gap-1.5 p-1.5 rounded hover:bg-gray-200 transition-colors text-xs text-gray-600 font-medium"
+                class="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-xs text-gray-600 font-medium transition-colors border border-transparent hover:border-gray-200"
                 onclick={handleOpenInVSCode}
                 title="Open in VS Code"
                 disabled={isExternalEditing}
             >
-                <!-- Placeholder for VS Code icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code opacity-70"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
                 <span>{isExternalEditing ? 'Connected' : 'VS Code'}</span>
             </button>
         </div>
@@ -189,8 +186,7 @@
 
     <!-- Editor Area -->
     <div class="flex-1 min-h-0 relative group
-                border border-gray-200 rounded-lg mx-2
-                focus-within:border-el-primary focus-within:ring-2 focus-within:ring-el-primary/20
+                bg-white
                 transition-all duration-200 overflow-hidden">
         
         {#if isExternalEditing}
