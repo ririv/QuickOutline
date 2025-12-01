@@ -2,7 +2,7 @@
     import trashIcon from '@/assets/icons/trash.svg';
     import textEditIcon from '@/assets/icons/text-edit.svg';
     import treeDiagramIcon from '@/assets/icons/tree-diagram.svg';
-    import switchIcon from '@/assets/icons/switch.svg';
+    import doubleColumnIcon from '@/assets/icons/double-column.svg';
 
     import GetContentsPopup from './GetContentsPopup.svelte';
     import SetContentsPopup from './SetContentsPopup.svelte';
@@ -17,7 +17,7 @@
     import type { Bookmark } from '@/components/bookmark/types';
 
     interface Props {
-        view: 'text' | 'tree';
+        view: 'text' | 'tree' | 'double';
     }
     let { view = $bindable() }: Props = $props();
 
@@ -66,8 +66,8 @@
         debouncedUpdateOffset(offsetValue);
     }
 
-    function toggleView() {
-        view = view === 'text' ? 'tree' : 'text';
+    function setView(newView: 'text' | 'tree' | 'double') {
+        view = newView;
     }
 
     function showPopup(popup: 'get' | 'set') {
@@ -152,14 +152,21 @@
         });
     }
 
+    function getButtonClass(isActive: boolean) {
+        const base = "flex items-center justify-center w-8 h-7 rounded-md transition-all duration-200";
+        const active = "bg-gray-200 text-gray-900 opacity-100 scale-100";
+        const inactive = "text-gray-500 hover:text-gray-700 hover:bg-gray-100 opacity-60 hover:opacity-100";
+        return `${base} ${isActive ? active : inactive}`;
+    }
+
 </script>
 
-<div class="bottom-pane">
+<div class="flex items-center gap-[15px] p-[10px] bg-white border-none">
     <GraphButton class="graph-button-important" title="Clear Editor" onclick={handleDelete}>
         <img src={trashIcon} alt="Delete" />
     </GraphButton>
     
-    <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
+    <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
         <StyledButton type="primary" hoverEffect="darken" bind:element={getContentsBtnEl} onclick={handleGetContentsClick}>
             Get Contents
         </StyledButton>
@@ -172,7 +179,7 @@
         {/if}
     </div>
 
-    <div class="popup-wrapper" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
+    <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
         <StyledButton type="important" hoverEffect="elevation" bind:element={setContentsBtnEl} onclick={handleSetContentsClick}>
             Set Contents
         </StyledButton>
@@ -187,48 +194,36 @@
 
     <input 
         type="text" 
-        class="input" 
+        class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 w-[100px] transition-all" 
         placeholder="Offset" 
-        style="width: 120px;" 
         bind:value={offsetValue}
         oninput={handleOffsetInput}
     />
 
-    <div class="spacer"></div>
+    <div class="flex-1"></div>
 
-    <GraphButton title="Switch View" onclick={toggleView}>
-        {#if view === 'text'}
-            <img src={treeDiagramIcon} alt="Tree View" />
-        {:else}
-            <img src={textEditIcon} alt="Text View" />
-        {/if}
-        <img src={switchIcon} alt="Switch" style="margin-left: 5px;" />
-    </GraphButton>
+    <!-- Modern Segmented Control Group -->
+    <div class="flex p-1 rounded-lg gap-1 select-none">
+        <button 
+            class={getButtonClass(view === 'text')}
+            onclick={() => setView('text')} 
+            title="文本视图"
+        >
+            <img src={textEditIcon} alt="Text View" class="w-4 h-4" />
+        </button>
+        <button 
+            class={getButtonClass(view === 'tree')}
+            onclick={() => setView('tree')} 
+            title="树视图"
+        >
+            <img src={treeDiagramIcon} alt="Tree View" class="w-4 h-4" />
+        </button>
+        <button 
+            class={getButtonClass(view === 'double')}
+            onclick={() => setView('double')} 
+            title="双栏视图"
+        >
+            <img src={doubleColumnIcon} alt="Double Column View" class="w-4 h-4" />
+        </button>
+    </div>
 </div>
-
-<style>
-    .bottom-pane {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 10px;
-        background-color: #f7f8fa;
-    }
-    .popup-wrapper {
-        position: relative;
-        display: inline-flex;
-    }
-    .spacer {
-        flex: 1;
-    }
-    .input {
-        padding: 6px 10px;
-        border: 1px solid #dfdfdf;
-        border-radius: 4px;
-        font-size: 14px;
-        outline: none;
-    }
-    .input:focus {
-        border-color: #007bff;
-    }
-</style>

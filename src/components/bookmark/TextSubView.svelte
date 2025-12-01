@@ -190,7 +190,7 @@
 
     <!-- Editor Area -->
     <div class="flex-1 min-h-0 relative group
-                border border-gray-200 rounded-lg m-2 
+                border border-gray-200 rounded-lg mx-2
                 focus-within:border-el-primary focus-within:ring-2 focus-within:ring-el-primary/20
                 transition-all duration-200 overflow-hidden">
         
