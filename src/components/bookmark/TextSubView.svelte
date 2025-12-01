@@ -126,12 +126,15 @@
             bookmarkStore.setText(formatted);
             bookmarkStore.setTree(bookmarkDto.children || []);
             
-            // Update Method and show highlight
-            method = 'indent';
-            highlightedMode = 'indent';
-            setTimeout(() => {
-                highlightedMode = null;
-            }, 1500); // Highlight for 1.5 seconds
+            // Update Method
+            if (method !== 'indent') {
+                method = 'indent';
+                // Only highlight if method actually changed
+                highlightedMode = 'indent';
+                setTimeout(() => {
+                    highlightedMode = null;
+                }, 1500); // Highlight for 1.5 seconds
+            }
 
         } catch (e: any) {
             messageStore.add('Auto-format failed: ' + e.message, 'ERROR');
@@ -159,6 +162,7 @@
         <IconSwitch 
             bind:value={method} 
             options={modeOptions} 
+            highlightValue={highlightedMode}
         />
         
         <div class="flex items-center gap-2">

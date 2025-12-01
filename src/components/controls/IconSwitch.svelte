@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { fade } from 'svelte/transition';
+
     interface Option {
         value: string;
         icon: string;
@@ -10,9 +12,10 @@
         value: string;
         options: Option[];
         class?: string;
+        highlightValue?: string | null;
     }
 
-    let { value = $bindable(), options, class: className = '' }: Props = $props();
+    let { value = $bindable(), options, class: className = '', highlightValue = null }: Props = $props();
 
     let selectedOption = $derived(options.find(o => o.value === value) || options[0]);
     let selectedIndex = $derived(options.findIndex(o => o.value === value));
@@ -41,6 +44,14 @@
                     alt="" 
                     class="w-3.5 h-3.5 transition-all duration-200 {value === option.value ? 'opacity-100 scale-110' : 'opacity-50 grayscale hover:opacity-75'}" 
                 />
+                
+                <!-- Highlight Mask -->
+                {#if highlightValue === option.value}
+                    <div 
+                        transition:fade={{ duration: 300 }}
+                        class="absolute inset-0 bg-red-500/40 rounded-full pointer-events-none z-20"
+                    ></div>
+                {/if}
             </button>
         {/each}
     </div>
