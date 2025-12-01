@@ -3,12 +3,14 @@
     import textEditIcon from '@/assets/icons/text-edit.svg';
     import treeDiagramIcon from '@/assets/icons/tree-diagram.svg';
     import doubleColumnIcon from '@/assets/icons/double-column.svg';
+    import offsetIcon from '@/assets/icons/offset.svg';
 
     import GetContentsPopup from './GetContentsPopup.svelte';
     import SetContentsPopup from './SetContentsPopup.svelte';
     import type { ViewScaleType } from './SetContentsPopup.svelte';
     import GraphButton from '../controls/GraphButton.svelte';
     import StyledButton from '../controls/StyledButton.svelte';
+    import IconInput from '../controls/IconInput.svelte';
     
     import { rpc } from '@/lib/api/rpc';
     import { bookmarkStore } from '@/stores/bookmarkStore';
@@ -154,7 +156,7 @@
 
     function getButtonClass(isActive: boolean) {
         const base = "flex items-center justify-center w-8 h-7 rounded-md transition-all duration-200";
-        const active = "bg-gray-200 text-gray-900 opacity-100 scale-100";
+        const active = "bg-white shadow-sm text-gray-900 opacity-100 scale-100";
         const inactive = "text-gray-500 hover:text-gray-700 hover:bg-gray-100 opacity-60 hover:opacity-100";
         return `${base} ${isActive ? active : inactive}`;
     }
@@ -162,8 +164,12 @@
 </script>
 
 <div class="flex items-center gap-[15px] p-[10px] bg-white border-none">
-    <GraphButton class="graph-button-important" title="Clear Editor" onclick={handleDelete}>
-        <img src={trashIcon} alt="Delete" />
+    <GraphButton class="graph-button-important group" title="Clear Editor" onclick={handleDelete}>
+        <img 
+            src={trashIcon} 
+            alt="Delete" 
+            class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
+        />
     </GraphButton>
     
     <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('get')} onmouseleave={hidePopup}>
@@ -192,18 +198,19 @@
         {/if}
     </div>
 
-    <input 
-        type="text" 
-        class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 w-[100px] transition-all" 
-        placeholder="Offset" 
+    <!-- Offset Input Group -->
+    <IconInput 
+        icon={offsetIcon}
+        placeholder="Offset"
         bind:value={offsetValue}
         oninput={handleOffsetInput}
+        width="60px"
     />
 
     <div class="flex-1"></div>
 
     <!-- Modern Segmented Control Group -->
-    <div class="flex p-1 rounded-lg gap-1 select-none">
+    <div class="flex p-1 bg-gray-50 rounded-lg gap-1 select-none">
         <button 
             class={getButtonClass(view === 'text')}
             onclick={() => setView('text')} 
@@ -227,3 +234,5 @@
         </button>
     </div>
 </div>
+
+
