@@ -2,9 +2,10 @@
     import TextSubView from '../../components/bookmark/TextSubView.svelte';
     import TreeSubView from '../../components/bookmark/TreeSubView.svelte';
     import BookmarkBottomPane from '../../components/bookmark/BookmarkBottomPane.svelte';
+    import SplitPane from '../../components/SplitPane.svelte';
     import { messageStore } from '@/stores/messageStore';
     
-    type View = 'text' | 'tree';
+    type View = 'text' | 'tree' | 'double';
     let currentView = $state<View>('text');
 
     function testMessages() {
@@ -20,11 +21,19 @@
     <main class="main-content">
         {#if currentView === 'text'}
             <TextSubView />
-        {:else}
+        {:else if currentView === 'tree'}
             <TreeSubView />
+        {:else}
+            <SplitPane initialSplit={50}>
+                <div slot="left" style="height: 100%; width: 100%;">
+                    <TextSubView />
+                </div>
+                <div slot="right" style="height: 100%; width: 100%;">
+                    <TreeSubView />
+                </div>
+            </SplitPane>
         {/if}
     </main>
-    <div class="divider"></div>
     <BookmarkBottomPane bind:view={currentView} />
 </div>
 
