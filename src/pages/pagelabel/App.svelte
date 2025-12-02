@@ -4,8 +4,10 @@
     import ThumbnailPane from '../../components/ThumbnailPane.svelte';
     import { onMount } from 'svelte';
     import deleteIcon from '../../assets/icons/delete-item.svg';
+    import plusIcon from '@/assets/icons/plus.svg';
+    import uploadIcon from '@/assets/icons/upload.svg';
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
-    import StyledButton from '../../components/controls/StyledButton.svelte';
+    import { ripple } from '@/lib/actions/ripple';
     import { messageStore } from '@/stores/messageStore';
     import { appStore } from '@/stores/appStore';
 
@@ -111,7 +113,14 @@
                 </div>
 
                 <div class="actions">
-                    <StyledButton type="primary" onclick={addRule}>Add Rule</StyledButton>
+                    <button 
+                        class="inline-flex items-center justify-center w-[110px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100"
+                        use:ripple
+                        onclick={addRule}
+                    >
+                        <img src={plusIcon} alt="" class="w-4 h-4 opacity-70" />
+                        Add Rule
+                    </button>
                 </div>
             </div>
 
@@ -134,7 +143,14 @@
             </div>
 
             <div class="bottom-actions">
-                 <StyledButton type="important" onclick={apply}>Set Page Label</StyledButton>
+                 <button 
+                    class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#2D8CF0] hover:bg-[#1E74D4]"
+                    use:ripple={{ color: 'rgba(255, 255, 255, 0.3)' }}
+                    onclick={apply}
+                >
+                    <img src={uploadIcon} alt="" class="w-4 h-4 invert" />
+                    Set Page Label
+                </button>
             </div>
         </div>
         {/snippet}
