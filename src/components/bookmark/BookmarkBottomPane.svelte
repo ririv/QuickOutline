@@ -182,9 +182,9 @@
             <button 
                 bind:this={getContentsBtnEl} 
                 onclick={handleGetContentsClick}
-                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors w-[100px]"
+                class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100 active:bg-gray-200"
             >
-                <img src={downloadIcon} alt="Load" class="w-4 h-4 text-gray-500" />
+                <img src={downloadIcon} alt="Load" class="w-4 h-4 opacity-70 group-hover:opacity-100" />
                 Load
             </button>
             {#if activePopup === 'get' && getContentsBtnEl}
@@ -200,14 +200,14 @@
     <div class="flex-1"></div>
     
     <!-- Center Group: Apply and Offset -->
-    <div class="flex items-center gap-5">
+    <div class="flex items-center gap-2">
         <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
             <button 
                 bind:this={setContentsBtnEl} 
                 onclick={handleSetContentsClick}
-                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors w-[100px]"
+                class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#2D8CF0] hover:bg-[#1E74D4] active:bg-[#155AA8]"
             >
-                <img src={uploadIcon} alt="Apply" class="w-4 h-4 text-gray-500" />
+                <img src={uploadIcon} alt="Apply" class="w-4 h-4 invert" />
                 Apply
             </button>
             {#if activePopup === 'set' && setContentsBtnEl}
