@@ -52,6 +52,11 @@ public class PdfImageService {
         lastTotalPages = 0;
     }
 
+
+    public int getLastTotalPages() {
+        return lastTotalPages;
+    }
+
     public List<ImagePageUpdate> diffPdfToImages(FastByteArrayOutputStream pdfStream) {
         List<ImagePageUpdate> updates = new ArrayList<>();
         if (pdfStream == null || pdfStream.size() == 0) return updates;

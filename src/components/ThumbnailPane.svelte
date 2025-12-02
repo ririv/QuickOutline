@@ -2,6 +2,7 @@
     import landscapeIcon from '../assets/icons/landscape.svg';
     import StyledSlider from './controls/StyledSlider.svelte';
     import { appStore } from '@/stores/appStore';
+    import PreviewTooltip from './PreviewTooltip.svelte';
 
     interface Props {
         pageCount?: number;
@@ -13,6 +14,7 @@
     // 性能优化方案：使用布尔数组代替 Set
     // 初始化为空，依靠下方的 $effect 根据 pageCount 填充
     let loadedState = $state<boolean[]>([]);
+    let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
 
     // 监听 pageCount 变化，如果页数变了（例如文档加载完成），重置加载状态数组
     $effect(() => {
@@ -51,6 +53,20 @@
         }
         return '';
     }
+
+    function handleMouseEnter(e: MouseEvent, index: number) {
+        const target = e.currentTarget as HTMLElement;
+        const rect = target.getBoundingClientRect();
+        hoveredImage = {
+            src: getThumbnailUrl(index),
+            y: rect.top + rect.height / 2,
+            x: rect.left
+        };
+    }
+
+    function handleMouseLeave() {
+        hoveredImage = null;
+    }
 </script>
 
 <div class="thumbnail-pane">
@@ -68,7 +84,13 @@
         <div class="grid" style="--zoom: {zoom}">
 
             {#each Array(pageCount) as _, i}
-                <div class="thumbnail-wrapper" use:lazyLoad={i}>
+                <div 
+                    class="thumbnail-wrapper" 
+                    use:lazyLoad={i}
+                    onmouseenter={(e) => handleMouseEnter(e, i)}
+                    onmouseleave={handleMouseLeave}
+                    role="group"
+                >
                     {#if loadedState[i]}
                         <div class="image-container" style="background-image: url('{getThumbnailUrl(i)}')"></div>
                     {:else}
@@ -81,6 +103,10 @@
             {/each}
         </div>
     </div>
+    
+    {#if hoveredImage}
+        <PreviewTooltip src={hoveredImage.src} y={hoveredImage.y} anchorX={hoveredImage.x} />
+    {/if}
 </div>
 
 <style>

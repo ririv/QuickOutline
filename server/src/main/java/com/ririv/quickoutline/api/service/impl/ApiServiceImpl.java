@@ -367,13 +367,7 @@ public class ApiServiceImpl implements ApiService {
 
     @Override
     public int getPageCount() {
-        checkFileOpen();
-        try {
-            String[] labels = pdfPageLabelService.getPageLabels(currentFilePath);
-            return labels != null ? labels.length : 0;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return pdfImageService.getLastTotalPages();
     }
 
     @Override
