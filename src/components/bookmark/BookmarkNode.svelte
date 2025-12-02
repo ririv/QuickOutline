@@ -11,7 +11,11 @@
 
     let isEditingTitle = $state(false);
     let isEditingPage = $state(false);
-    let isExpanded = $state(true);
+    
+    // Initialize expanded state if missing
+    if (bookmark.expanded === undefined) {
+        bookmark.expanded = true;
+    }
 
     const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
 
@@ -64,10 +68,10 @@
         <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * 24 + 4}px;">
             <button 
                 class="bg-transparent border-none cursor-pointer flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors outline-none shrink-0"
-                onclick={() => isExpanded = !isExpanded} 
+                onclick={() => bookmark.expanded = !bookmark.expanded} 
                 style="visibility: {bookmark.children.length > 0 ? 'visible' : 'hidden'}; width: 24px; height: 24px;"
             >
-                <span class="inline-block transition-transform duration-200 origin-center {isExpanded ? 'rotate-90' : ''}">
+                <span class="inline-block transition-transform duration-200 origin-center {bookmark.expanded ? 'rotate-90' : ''}">
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <path d="M2.5 1.66667L7.5 5L2.5 8.33333L2.5 1.66667Z" />
                     </svg>
@@ -130,7 +134,7 @@
         </div>
     </div>
 
-    {#if isExpanded && bookmark.children.length > 0}
+    {#if bookmark.expanded && bookmark.children.length > 0}
         <div>
             {#each bookmark.children as child}
                 <BookmarkNode bookmark={child} />

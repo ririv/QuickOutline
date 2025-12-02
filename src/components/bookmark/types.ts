@@ -1,7 +1,8 @@
 export interface Bookmark {
     id: string;
     title: string;
-    page: number | null; // Changed to allow null, matching Java Integer
+    page: string | null; // Changed to string to match backend model (flexibility) and frontend input
     level: number;
     children: Bookmark[];
+    expanded?: boolean;
 }

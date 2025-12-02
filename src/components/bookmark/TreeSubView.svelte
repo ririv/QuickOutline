@@ -25,6 +25,21 @@
         }
     });
 
+    let isAllExpanded = $state(true);
+
+    function toggleAll() {
+        isAllExpanded = !isAllExpanded;
+        function traverse(nodes: Bookmark[]) {
+            for (const node of nodes) {
+                node.expanded = isAllExpanded;
+                if (node.children && node.children.length > 0) {
+                    traverse(node.children);
+                }
+            }
+        }
+        traverse(bookmarks);
+    }
+
     // Simple debounce function (copied from TextSubView for consistency)
     function debounce<T extends any[]>(func: (...args: T) => void, delay: number) {
         return function(this: any, ...args: T) {
@@ -88,8 +103,29 @@
 
 <div class="tree-subview-container">
     <div class="tree-header">
-        <div class="tree-column-title">Title</div>
-        <div class="tree-column-page">Page</div>
+        <div class="tree-column-title relative flex items-center justify-center">
+            <div class="absolute left-2 flex gap-1">
+                <button 
+                    class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer border-none bg-transparent p-0" 
+                    onclick={toggleAll}
+                    title={isAllExpanded ? "Collapse All" : "Expand All"}
+                >
+                    {#if isAllExpanded}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M7 4L12 9L17 4"/>
+                            <path d="M7 20L12 15L17 20"/>
+                        </svg>
+                    {:else}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M7 9L12 4L17 9"/>
+                            <path d="M7 15L12 20L17 15"/>
+                        </svg>
+                    {/if}
+                </button>
+            </div>
+            <span>Title</span>
+        </div>
+        <div class="tree-column-page flex items-center justify-center">Page</div>
     </div>
     <div class="tree-body">
         {#each bookmarks as bookmark}
@@ -117,7 +153,6 @@
     }
     .tree-header {
         display: flex;
-        border-bottom: 1px solid #d1d1d1;
         background-color: white;
         color: #888888;
         font-weight: 500;
@@ -131,7 +166,6 @@
         flex: 0.1;
         min-width: 80px;
         padding: 8px 12px;
-        border-left: 1px solid #d1d1d1;
     }
     .tree-body {
         flex: 1;
