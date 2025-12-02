@@ -183,7 +183,7 @@
             <button 
                 bind:this={getContentsBtnEl} 
                 onclick={handleGetContentsClick}
-                class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100 active:bg-gray-200"
+                class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100"
                 use:ripple
             >
                 <img src={downloadIcon} alt="Load" class="w-4 h-4 opacity-70 group-hover:opacity-100" />
@@ -207,7 +207,7 @@
             <button 
                 bind:this={setContentsBtnEl} 
                 onclick={handleSetContentsClick}
-                class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#2D8CF0] hover:bg-[#1E74D4] active:bg-[#155AA8]"
+                class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#2D8CF0] hover:bg-[#1E74D4]"
                 use:ripple={{ color: 'rgba(255, 255, 255, 0.3)' }}
             >
                 <img src={uploadIcon} alt="Apply" class="w-4 h-4 invert" />
