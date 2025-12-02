@@ -118,7 +118,9 @@
                         use:ripple
                         onclick={addRule}
                     >
-                        <img src={plusIcon} alt="" class="w-4 h-4 opacity-70" />
+                        <svg class="w-4 h-4 opacity-70" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
                         Add Rule
                     </button>
                 </div>
@@ -144,11 +146,14 @@
 
             <div class="bottom-actions">
                  <button 
-                    class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#2D8CF0] hover:bg-[#1E74D4]"
-                    use:ripple={{ color: 'rgba(255, 255, 255, 0.3)' }}
+                    class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-[#409eff] rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#ecf5ff] border border-[#d9ecff] hover:bg-[#d9ecff] active:bg-[#c6e2ff]"
+                    use:ripple={{ color: 'rgba(64,158,255,0.2)' }}
                     onclick={apply}
                 >
-                    <img src={uploadIcon} alt="" class="w-4 h-4 invert" />
+                    <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 4.5L12.5 9H10V14H6V9H3.5L8 4.5Z" />
+                        <path d="M3 2H13V3.5H3V2Z" />
+                    </svg>
                     Set Page Label
                 </button>
             </div>
