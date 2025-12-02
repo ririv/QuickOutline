@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { ripple } from '@/lib/actions/ripple';
 
   type ButtonType = 'primary' | 'important';
   type RippleColor = 'dark' | 'light';
@@ -34,41 +35,12 @@
     primary: 'bg-el-plain-primary-bg text-el-primary border-el-plain-primary-border hover:bg-el-plain-primary-bg-hover',
     important: 'bg-el-plain-important-bg text-el-important border-el-plain-important-border hover:bg-el-plain-important-bg-hover'
   };
-
-  // --- Ripple Effect Logic (unchanged) ---
-
-  function rippleEffect(event: MouseEvent) {
-    const btn = event.currentTarget as HTMLElement;
-    const circle = document.createElement('span');
-    const diameter = Math.max(btn.clientWidth, btn.clientHeight);
-    const radius = diameter / 2;
-
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${event.clientX - btn.getBoundingClientRect().left - radius}px`;
-    circle.style.top = `${event.clientY - btn.getBoundingClientRect().top - radius}px`;
-
-    circle.classList.add('ripple', rippleColor);
-
-    const oldRipple = btn.querySelector('.ripple');
-    if (oldRipple) {
-      oldRipple.remove();
-    }
-
-    btn.appendChild(circle);
-
-    setTimeout(() => {
-        if(circle.parentElement) {
-            circle.parentElement.removeChild(circle);
-        }
-    }, 600);
-  }
-
 </script>
 
 <button
   bind:this={element}
   class={`${baseClasses} ${typeClasses[type]} ${className || ''}`}
-  onmousedown={rippleEffect}
+  use:ripple={{ color: rippleColor === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)' }}
   onclick={onclick}
   {...rest}
 >
@@ -76,29 +48,5 @@
 </button>
 
 <style>
-  /* 
-    Ripple effect styles are moved here from global.css.
-    They are marked as :global() because the <span> is dynamically created in JavaScript.
-  */
-  :global(.ripple) {
-    position: absolute;
-    border-radius: 50%;
-    transform: scale(0);
-    animation: ripple-animation 600ms linear;
-  }
-
-  :global(.ripple.dark) {
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-
-  :global(.ripple.light) {
-    background-color: rgba(255, 255, 255, 0.4);
-  }
-
-  @keyframes ripple-animation {
-    to {
-        transform: scale(4);
-        opacity: 0;
-    }
-  }
+  /* No more ripple styles needed here */
 </style>
