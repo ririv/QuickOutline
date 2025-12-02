@@ -99,7 +99,7 @@
                 
                 <div class="form-group">
                     <label for="prefix">Prefix</label>
-                    <input id="prefix" type="text" bind:value={prefix} class="input" />
+                    <input id="prefix" type="text" bind:value={prefix} class="input" placeholder="Optional" />
                 </div>
 
                 <div class="form-group">
@@ -109,7 +109,7 @@
 
                 <div class="form-group">
                     <label for="startPage">Start Page</label>
-                    <input id="startPage" type="text" bind:value={startPage} class="input" />
+                    <input id="startPage" type="text" bind:value={startPage} class="input" placeholder="e.g. 1 (Required)" />
                 </div>
 
                 <div class="actions">
@@ -126,21 +126,26 @@
                 </div>
             </div>
 
-            <div class="separator"></div>
+            <div class="separator bg-gray-200 h-px my-4"></div>
 
             <div class="rule-list-section">
                 <h3 class="title">Rule List</h3>
-                <div class="rule-list">
+                <div class="rule-list rounded-md border border-gray-200 bg-gray-50 p-0 overflow-hidden">
                     {#each rules as rule (rule.id)}
-                        <div class="rule-item">
-                            <span class="rule-text">
-                                From Page {rule.fromPage}: Style={rule.styleDisplay}, Prefix='{rule.prefix}', Start={rule.start}
+                        <div class="rule-item hover:bg-gray-100 transition-colors border-b border-gray-200 last:border-0 px-3 py-2">
+                            <span class="rule-text text-sm text-gray-600">
+                                <strong>P{rule.fromPage}:</strong> {rule.prefix}{rule.styleDisplay} (Start {rule.start})
                             </span>
                             <button class="graph-button graph-button-important" onclick={() => deleteRule(rule.id)} title="Delete Rule">
                                 <img src={deleteIcon} alt="Delete" />
                             </button>
                         </div>
                     {/each}
+                    {#if rules.length === 0}
+                        <div class="p-4 text-center text-xs text-gray-400 italic">
+                            No rules added yet.
+                        </div>
+                    {/if}
                 </div>
             </div>
 
