@@ -1,10 +1,12 @@
 package com.ririv.quickoutline.server;
 
 import com.ririv.quickoutline.api.WebSocketSessionManager;
+import com.ririv.quickoutline.api.service.ApiService;
 import com.ririv.quickoutline.api.service.RpcProcessor;
-import com.ririv.quickoutline.api.service.impl.ApiServiceImpl;
 import com.ririv.quickoutline.api.WebSocketRpcHandler;
+import com.ririv.quickoutline.api.service.impl.ApiServiceImpl;
 import com.ririv.quickoutline.api.state.ApiBookmarkState;
+import com.ririv.quickoutline.api.state.CurrentFileState;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
 import com.ririv.quickoutline.service.FontManager;
@@ -33,15 +35,17 @@ public class SidecarApp {
 
         // 2. Initialize State and Managers
         ApiBookmarkState apiBookmarkState = new ApiBookmarkState();
+        CurrentFileState currentFileState = new CurrentFileState();
         WebSocketSessionManager sessionManager = new WebSocketSessionManager();
 
         // 3. 初始化 API 实现
-        ApiServiceImpl apiService = new ApiServiceImpl(
+        ApiService apiService = new ApiServiceImpl(
                 pdfOutlineService,
                 pdfTocPageGeneratorService,
                 pdfPageLabelService,
                 pdfImageService, // 注入共享的实例
                 apiBookmarkState,
+                currentFileState,
                 syncWithExternalEditorService,
                 sessionManager
         );

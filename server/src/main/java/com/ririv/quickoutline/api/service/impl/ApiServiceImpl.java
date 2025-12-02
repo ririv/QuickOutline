@@ -2,6 +2,7 @@ package com.ririv.quickoutline.api.service.impl;
 
 import com.google.gson.Gson;
 import com.ririv.quickoutline.api.state.ApiBookmarkState;
+import com.ririv.quickoutline.api.state.CurrentFileState;
 import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.api.service.ApiService;
@@ -37,16 +38,16 @@ public class ApiServiceImpl implements ApiService {
     private final PdfPageLabelService pdfPageLabelService;
     private final PdfImageService pdfImageService;
     private final ApiBookmarkState apiBookmarkState;
+    private final CurrentFileState currentFileState;
     private final SyncWithExternalEditorService syncService;
     private final WebSocketSessionManager sessionManager;
-
-    private String currentFilePath;
 
     public ApiServiceImpl(PdfOutlineService pdfOutlineService,
                           PdfTocPageGeneratorService pdfTocPageGeneratorService,
                           PdfPageLabelService pdfPageLabelService,
                           PdfImageService pdfImageService,
                           ApiBookmarkState apiBookmarkState,
+                          CurrentFileState currentFileState,
                           SyncWithExternalEditorService syncService,
                           WebSocketSessionManager sessionManager) {
         this.pdfOutlineService = pdfOutlineService;
@@ -54,19 +55,20 @@ public class ApiServiceImpl implements ApiService {
         this.pdfPageLabelService = pdfPageLabelService;
         this.pdfImageService = pdfImageService;
         this.apiBookmarkState = apiBookmarkState;
+        this.currentFileState = currentFileState;
         this.syncService = syncService;
         this.sessionManager = sessionManager;
     }
 
     private void checkFileOpen() {
-        if (currentFilePath == null) throw new IllegalStateException("No file open");
+        if (!currentFileState.isOpen()) throw new IllegalStateException("No file open");
     }
 
     @Override
     public void openFile(String filePath) {
         try {
             pdfOutlineService.checkOpenFile(filePath);
-            this.currentFilePath = filePath;
+            currentFileState.open(filePath);
             this.pdfImageService.openSession(new File(filePath));
             this.apiBookmarkState.clear(); // Clear state on new file
         } catch (Exception e) {
@@ -76,14 +78,14 @@ public class ApiServiceImpl implements ApiService {
 
     @Override
     public String getCurrentFilePath() {
-        return currentFilePath;
+        return currentFileState.getFilePath();
     }
 
     @Override
     public String getOutline(int offset) {
         checkFileOpen();
         try {
-            String content = pdfOutlineService.getContents(currentFilePath, offset);
+            String content = pdfOutlineService.getContents(currentFileState.getFilePath(), offset);
 
             // Sync State: Parse back to object to hold in memory
             Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(content, Method.INDENT);
@@ -100,7 +102,7 @@ public class ApiServiceImpl implements ApiService {
     public BookmarkDto getOutlineAsBookmark(int offset) {
         checkFileOpen();
         try {
-            Bookmark root = pdfOutlineService.getOutlineAsBookmark(currentFilePath, offset);
+            Bookmark root = pdfOutlineService.getOutlineAsBookmark(currentFileState.getFilePath(), offset);
 
             // Sync State
             apiBookmarkState.setRootBookmark(root);
@@ -147,7 +149,7 @@ public class ApiServiceImpl implements ApiService {
         if (destFilePath != null && !destFilePath.trim().isEmpty()) {
             return destFilePath;
         }
-        return calculateAutoDestPath(currentFilePath);
+        return calculateAutoDestPath(currentFileState.getFilePath());
     }
 
     private String calculateAutoDestPath(String srcPath) {
@@ -204,7 +206,7 @@ public class ApiServiceImpl implements ApiService {
         ViewScaleType scaleType = (viewMode != null) ? viewMode : ViewScaleType.NONE;
 
         try {
-            pdfOutlineService.setOutline(targetRoot, currentFilePath, actualDest, targetOffset, scaleType);
+            pdfOutlineService.setOutline(targetRoot, currentFileState.getFilePath(), actualDest, targetOffset, scaleType);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -236,7 +238,7 @@ public class ApiServiceImpl implements ApiService {
 
         try {
             pdfTocPageGeneratorService.createTocPage(
-                    currentFilePath,
+                    currentFileState.getFilePath(),
                     actualDest,
                     config.title(),
                     config.insertPos(),
@@ -330,7 +332,7 @@ public class ApiServiceImpl implements ApiService {
 
     @Override
     public String[] getPageLabels(String srcFilePath) {
-        String path = srcFilePath != null ? srcFilePath : currentFilePath;
+        String path = srcFilePath != null ? srcFilePath : currentFileState.getFilePath();
         if (path == null) throw new IllegalStateException("No file specified and no file open");
         try {
             return pdfPageLabelService.getPageLabels(path);
@@ -345,7 +347,7 @@ public class ApiServiceImpl implements ApiService {
         String actualDest = resolveDestFilePath(destFilePath);
         List<PageLabel> finalLabels = pdfPageLabelService.convertRulesToPageLabels(rules);
         try {
-            pdfPageLabelService.setPageLabels(currentFilePath, actualDest, finalLabels);
+            pdfPageLabelService.setPageLabels(currentFileState.getFilePath(), actualDest, finalLabels);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -355,7 +357,7 @@ public class ApiServiceImpl implements ApiService {
     public List<String> simulatePageLabels(List<PageLabelRule> rules) {
         checkFileOpen();
         try {
-            String[] existingLabels = pdfPageLabelService.getPageLabels(currentFilePath);
+            String[] existingLabels = pdfPageLabelService.getPageLabels(currentFileState.getFilePath());
             int totalPages = existingLabels == null ? 0 : existingLabels.length;
             if (totalPages == 0) return Collections.emptyList();
 
