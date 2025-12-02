@@ -1,15 +1,29 @@
 <script lang="ts">
     import type { Bookmark } from "./types";
     import BookmarkNode from "./BookmarkNode.svelte";
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount, onDestroy, setContext } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore';
     import { rpc } from '@/lib/api/rpc';
     import { messageStore } from '@/stores/messageStore';
     import { get } from 'svelte/store';
+    import { appStore } from '@/stores/appStore';
+    import PreviewTooltip from '../PreviewTooltip.svelte';
 
     let bookmarks = $state<Bookmark[]>([]);
     let unsubscribeStore: () => void;
     let debounceTimer: number | undefined;
+    
+    // Preview State
+    let hoveredPage = $state<{src: string, y: number, x: number} | null>(null);
+
+    setContext('previewContext', {
+        show: (src: string, y: number, x: number) => {
+            hoveredPage = { src, y, x };
+        },
+        hide: () => {
+            hoveredPage = null;
+        }
+    });
 
     // Simple debounce function (copied from TextSubView for consistency)
     function debounce<T extends any[]>(func: (...args: T) => void, delay: number) {
@@ -82,6 +96,14 @@
             <BookmarkNode {bookmark} />
         {/each}
     </div>
+    
+    {#if hoveredPage}
+        <PreviewTooltip 
+            src={hoveredPage.src} 
+            y={hoveredPage.y} 
+            anchorX={hoveredPage.x} 
+        />
+    {/if}
 </div>
 
 <style>

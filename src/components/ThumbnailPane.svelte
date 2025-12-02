@@ -13,13 +13,14 @@
 
     // 性能优化方案：使用布尔数组代替 Set
     // 初始化为空，依靠下方的 $effect 根据 pageCount 填充
-    let loadedState = $state<boolean[]>([]);
+    let loadedState = $state<boolean[]>(new Array(pageCount).fill(false));
     let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
+    let closeTimer: number | undefined;
 
-    // 监听 pageCount 变化，如果页数变了（例如文档加载完成），重置加载状态数组
+    // 监听 pageCount 变化
     $effect(() => {
         if (loadedState.length !== pageCount) {
-            // 创建指定长度的数组，全部填充为 false
+            console.log('PageCount changed:', pageCount);
             loadedState = new Array(pageCount).fill(false);
         }
     });
@@ -49,12 +50,16 @@
 
     function getThumbnailUrl(index: number) {
         if ($appStore.serverPort && $appStore.serverPort > 0) {
-            return `http://127.0.0.1:${$appStore.serverPort}/page_images/${index}.png`;
+            const url = `http://127.0.0.1:${$appStore.serverPort}/page_images/${index}.png`;
+            // console.log('Generating thumbnail URL:', url); // Debug
+            return url;
         }
+        console.warn('Server port not set when requesting thumbnail');
         return '';
     }
 
     function handleMouseEnter(e: MouseEvent, index: number) {
+        clearTimeout(closeTimer);
         const target = e.currentTarget as HTMLElement;
         const rect = target.getBoundingClientRect();
         hoveredImage = {
@@ -65,12 +70,19 @@
     }
 
     function handleMouseLeave() {
-        hoveredImage = null;
+        // closeTimer = setTimeout(() => {
+            hoveredImage = null;
+        // }, 150);
+    }
+
+    function keepAlive() {
+        clearTimeout(closeTimer);
     }
 </script>
 
 <div class="thumbnail-pane">
     <div class="controls">
+        <span class="text-xs text-gray-500 mr-2">Pages: {pageCount}</span>
         <img src={landscapeIcon} class="icon landscape-small" alt="Zoom Out" />
         <StyledSlider
             min={0.5}
@@ -81,9 +93,14 @@
         <img src={landscapeIcon} class="icon landscape-large" alt="Zoom In" />
     </div>
     <div class="scroll-area">
+        {#if !$appStore.serverPort}
+            <div class="bg-red-100 text-red-700 p-2 text-center text-xs mb-2 border border-red-200 rounded">
+                Backend not connected (Port: {$appStore.serverPort})
+            </div>
+        {/if}
         <div class="grid" style="--zoom: {zoom}">
 
-            {#each Array(pageCount) as _, i}
+            {#each loadedState as isLoaded, i}
                 <div 
                     class="thumbnail-wrapper" 
                     use:lazyLoad={i}
@@ -91,7 +108,7 @@
                     onmouseleave={handleMouseLeave}
                     role="group"
                 >
-                    {#if loadedState[i]}
+                    {#if isLoaded}
                         <div class="image-container" style="background-image: url('{getThumbnailUrl(i)}')"></div>
                     {:else}
                         <div class="image-container placeholder"></div>
@@ -105,7 +122,11 @@
     </div>
     
     {#if hoveredImage}
-        <PreviewTooltip src={hoveredImage.src} y={hoveredImage.y} anchorX={hoveredImage.x} />
+        <PreviewTooltip 
+            src={hoveredImage.src} 
+            y={hoveredImage.y} 
+            anchorX={hoveredImage.x} 
+        />
     {/if}
 </div>
 
