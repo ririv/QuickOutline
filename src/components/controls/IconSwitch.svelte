@@ -24,7 +24,7 @@
 <div class={`inline-flex items-center gap-3 ${className}`}>
     <!-- Capsule Switch -->
     <div 
-        class="relative flex p-0.5 bg-gray-100 rounded-full gap-2 select-none shadow-sm border border-gray-200 cursor-pointer"
+        class="relative flex p-0.5 bg-gray-100 rounded-full gap-2 select-none border border-gray-200 cursor-pointer"
         onclick={() => value = options[(selectedIndex + 1) % options.length].value}
     >
         <!-- Sliding Indicator -->
