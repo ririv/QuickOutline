@@ -133,11 +133,18 @@
                 <div class="rule-list rounded-md border border-gray-200 bg-gray-50 p-0 overflow-hidden">
                     {#each rules as rule (rule.id)}
                         <div class="rule-item hover:bg-gray-100 transition-colors border-b border-gray-200 last:border-0 px-3 py-2">
-                            <span class="rule-text text-sm text-gray-600">
-                                <strong>P{rule.fromPage}:</strong> {rule.prefix}{rule.styleDisplay} (Start {rule.start})
-                            </span>
-                            <button class="graph-button graph-button-important" onclick={() => deleteRule(rule.id)} title="Delete Rule">
-                                <img src={deleteIcon} alt="Delete" />
+                            <div class="rule-left">
+                                <span class="page-badge">P{rule.fromPage}</span>
+                                <div class="rule-content">
+                                    <div class="rule-main">
+                                        {#if rule.prefix}<span class="rule-prefix">{rule.prefix}</span>{/if}
+                                        <span class="rule-style-text">{rule.styleDisplay}</span>
+                                    </div>
+                                    <div class="rule-sub">Start: {rule.start}</div>
+                                </div>
+                            </div>
+                            <button class="small-icon-button" onclick={() => deleteRule(rule.id)} title="Delete Rule">
+                                <img src={deleteIcon} alt="Delete" class="delete-icon" />
                             </button>
                         </div>
                     {/each}
@@ -228,22 +235,103 @@
     .rule-list {
         flex: 1;
         overflow-y: auto;
-        border: 1px solid #dcdfe6; /* using default border color var from global context manually here for now */
-        padding: 5px;
-        background: #fafafa;
+        border: 1px solid #dcdfe6;
+        padding: 8px; /* Changed from 5px */
+        background: white; /* Changed from #fafafa */
     }
     .rule-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 8px;
+        padding: 4px 8px; /* Reduced padding */
         border-bottom: 1px solid #f0f0f0;
         font-size: 13px;
-        background: white;
+        background: transparent;
+        border-radius: 4px;
+        margin-bottom: 2px; /* Reduced margin */
     }
-    .rule-text {
+    .rule-item:last-child {
+        margin-bottom: 0; /* No margin for the last item */
+        border-bottom: none; /* No border for the last item */
+    }
+    
+    .rule-left {
+        display: flex;
+        align-items: center;
+        gap: 8px; /* Reduced gap */
         flex: 1;
-        margin-right: 10px;
+        overflow: hidden;
+    }
+    
+    .page-badge {
+        background-color: #ecf5ff;
+        color: #409eff;
+        border: 1px solid #d9ecff;
+        border-radius: 4px;
+        padding: 1px 5px; /* Reduced padding */
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 32px; /* Slightly reduced min-width */
+        text-align: center;
+        flex-shrink: 0;
+    }
+    
+    .rule-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .rule-main {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 500;
+        color: #303133;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2; /* Tighter line height */
+    }
+    
+    .rule-prefix {
+        color: #606266;
+        background: #f4f4f5;
+        padding: 0 4px;
+        border-radius: 3px;
+        font-size: 11px;
+        border: 1px solid #e9e9eb;
+    }
+
+    .rule-style-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .rule-sub {
+        font-size: 10px; /* Slightly smaller font */
+        color: #909399;
+        margin-top: 0; /* Removed margin */
+        line-height: 1.2; /* Tighter line height */
+    }
+    .small-icon-button {
+        padding: 4px; /* Adjust padding to make the button smaller */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-radius: 4px;
+    }
+    .small-icon-button:hover {
+        background-color: #f0f0f0;
+    }
+    .delete-icon {
+        width: 16px;
+        height: 16px;
     }
     
     .bottom-actions {
