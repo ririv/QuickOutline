@@ -21,11 +21,18 @@ struct SidecarMessage {
     message: String,
 }
 
-pub fn start(app: &AppHandle) {
+pub fn start(app: &AppHandle, custom_port: Option<u16>) {
     let app_handle = app.clone();
 
     tauri::async_runtime::spawn(async move {
-        let sidecar_command = app_handle.shell().sidecar("app-sidecar").unwrap();
+        let mut sidecar_command = app_handle.shell().sidecar("app-sidecar").unwrap();
+
+        // If a custom port is provided, add it as an argument
+        if let Some(port) = custom_port {
+            sidecar_command = sidecar_command.args(&["--port", &port.to_string()]);
+            println!("Rust: Passing custom port {} to Java Sidecar.", port);
+        }
+        
         let (mut rx, _child) = sidecar_command
             .spawn()
             .expect("Failed to spawn java sidecar");
