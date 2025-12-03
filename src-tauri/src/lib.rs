@@ -2,7 +2,7 @@ mod java_sidecar;
 
 use std::sync::Mutex;
 use tauri::Manager;
-use std::env; // Add this import
+use tauri_plugin_cli::CliExt; // Import CliExt trait
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -11,35 +11,38 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut custom_port: Option<u16> = None;
-
-    let args: Vec<String> = env::args().collect();
-    // Start from the second argument to skip the executable name
-    let mut args_iter = args.into_iter().skip(1).peekable();
-
-    while let Some(arg) = args_iter.next() {
-        if arg == "--port" {
-            if let Some(port_str) = args_iter.next() {
-                if let Ok(port) = port_str.parse::<u16>() {
-                    custom_port = Some(port);
-                    println!("Rust: Custom port {} parsed from CLI arguments.", port);
-                } else {
-                    eprintln!("Rust: Invalid port number provided: {}", port_str);
-                }
-            } else {
-                eprintln!("Rust: --port argument requires a port number.");
-            }
-        }
-    }
-
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_cli::init()) // Initialize CLI plugin
         .manage(java_sidecar::JavaState {
             port: Mutex::new(None),
         })
         .setup(move |app| {
+            let mut custom_port: Option<u16> = None;
+
+            // Use the CLI plugin to parse arguments
+            match app.cli().matches() {
+                Ok(matches) => {
+                    if let Some(arg_data) = matches.args.get("port") {
+                        // Check if value is number or string and parse
+                        if let Some(port_val) = arg_data.value.as_u64() {
+                            custom_port = Some(port_val as u16);
+                            println!("Rust (CLI Plugin): Custom port {} parsed.", port_val);
+                        } else if let Some(port_str) = arg_data.value.as_str() {
+                            if let Ok(p) = port_str.parse::<u16>() {
+                                custom_port = Some(p);
+                                println!("Rust (CLI Plugin): Custom port {} parsed from string.", p);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Rust: Failed to match CLI args: {}", e);
+                }
+            }
+
             // 2. 调用解耦后的启动逻辑，并传入 custom_port
             java_sidecar::start(app.handle(), custom_port);
 

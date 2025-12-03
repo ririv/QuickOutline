@@ -40,5 +40,18 @@
     "resources": [
       "resources/java-runtime/"
     ]
+  },
+  "plugins": {
+    "cli": {
+      "description": "QuickOutline CLI",
+      "args": [
+        {
+          "name": "port",
+          "description": "Port for the Java sidecar",
+          "short": "p",
+          "takesValue": true
+        }
+      ]
+    }
   }
 }
