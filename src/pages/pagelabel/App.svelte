@@ -8,24 +8,8 @@
     import { ripple } from '@/lib/actions/ripple';
     import { messageStore } from '@/stores/messageStore';
     import { appStore } from '@/stores/appStore';
+    import { pageLabelStore, type PageLabelRule } from '@/stores/pageLabelStore';
 
-    // Models
-    interface PageLabelRule {
-        id: string; // unique id for UI list
-        style: string;
-        styleDisplay: string;
-        prefix: string;
-        start: number;
-        fromPage: number;
-    }
-
-    // State (Svelte 5 Runes)
-    let rules = $state<PageLabelRule[]>([]);
-    let numberingStyle = $state("1, 2, 3, ..."); // Default
-    let prefix = $state("");
-    let startNumber = $state("");
-    let startPage = $state("");
-    
     const styles = [
         "1, 2, 3, ...", 
         "I, II, III, ...", 
@@ -37,11 +21,12 @@
     // Equivalent to initialize()
     onMount(() => {
         console.log("PageLabelTab mounted");
-        // TODO: Fetch original page labels from backend
+        // TODO: Fetch original page labels from backend if needed, 
+        // currently store persists state in memory as long as the app is running.
     });
 
     function addRule() {
-        if (!startPage) {
+        if (!$pageLabelStore.startPage) {
              // Simple validation
              messageStore.add("Please enter Start Page", "WARNING");
              return;
@@ -49,35 +34,31 @@
 
         const newRule: PageLabelRule = {
             id: Date.now().toString(),
-            style: numberingStyle, // simplified for now
-            styleDisplay: numberingStyle,
-            prefix: prefix,
-            start: parseInt(startNumber) || 1,
-            fromPage: parseInt(startPage) || 1
+            style: $pageLabelStore.numberingStyle,
+            styleDisplay: $pageLabelStore.numberingStyle,
+            prefix: $pageLabelStore.prefix,
+            start: parseInt($pageLabelStore.startNumber) || 1,
+            fromPage: parseInt($pageLabelStore.startPage) || 1
         };
 
-        rules = [...rules, newRule];
-        
-        // Reset fields
-        startPage = "";
-        prefix = "";
-        startNumber = "";
+        pageLabelStore.addRule(newRule);
+        pageLabelStore.resetForm();
 
         simulate();
     }
 
     function deleteRule(ruleId: string) {
-        rules = rules.filter(r => r.id !== ruleId);
+        pageLabelStore.deleteRule(ruleId);
         simulate();
     }
 
     function simulate() {
-        console.log("Simulating labels with rules:", $state.snapshot(rules));
+        console.log("Simulating labels with rules:", $pageLabelStore.rules);
         // TODO: Call backend to simulate and update thumbnails/page labels
     }
 
     function apply() {
-        console.log("Applying rules:", $state.snapshot(rules));
+        console.log("Applying rules:", $pageLabelStore.rules);
         // TODO: Call backend to apply changes
     }
 
@@ -92,23 +73,23 @@
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
                     <div class="w-full">
-                        <StyledSelect options={styles} bind:value={numberingStyle} />
+                        <StyledSelect options={styles} bind:value={$pageLabelStore.numberingStyle} />
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="prefix" class="text-right text-sm text-[#333]">Prefix</label>
-                    <input id="prefix" type="text" bind:value={prefix} class="input" placeholder="Optional" />
+                    <input id="prefix" type="text" bind:value={$pageLabelStore.prefix} class="input" placeholder="Optional" />
                 </div>
 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="startNum" class="text-right text-sm text-[#333]">Start Number</label>
-                    <input id="startNum" type="text" bind:value={startNumber} placeholder="1" class="input" />
+                    <input id="startNum" type="text" bind:value={$pageLabelStore.startNumber} placeholder="1" class="input" />
                 </div>
 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="startPage" class="text-right text-sm text-[#333]">Start Page</label>
-                    <input id="startPage" type="text" bind:value={startPage} class="input" placeholder="e.g. 1 (Required)" />
+                    <input id="startPage" type="text" bind:value={$pageLabelStore.startPage} class="input" placeholder="e.g. 1 (Required)" />
                 </div>
 
                 <div class="flex justify-center mt-2.5">
@@ -131,7 +112,7 @@
             <div class="flex-1 overflow-hidden flex flex-col min-h-[150px]">
                 <h3 class="title">Rule List</h3>
                 <div class="flex-1 overflow-y-auto border border-el-default-border p-2 bg-white rounded-md">
-                    {#each rules as rule (rule.id)}
+                    {#each $pageLabelStore.rules as rule (rule.id)}
                         <div class="flex items-center justify-between px-2 py-1 border-b border-[#f0f0f0] text-[13px] bg-transparent rounded mb-0.5 hover:bg-gray-50 transition-colors last:border-0 last:mb-0">
                             <div class="flex items-center gap-2 flex-1 overflow-hidden">
                                 <span class="bg-el-plain-primary-bg text-el-primary border border-[#d9ecff] rounded px-1.5 py-0.5 text-xs font-semibold min-w-[32px] text-center shrink-0">
@@ -156,7 +137,7 @@
                             </button>
                         </div>
                     {/each}
-                    {#if rules.length === 0}
+                    {#if $pageLabelStore.rules.length === 0}
                         <div class="p-4 text-center text-xs text-gray-400 italic">
                             No rules added yet.
                         </div>
