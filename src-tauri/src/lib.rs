@@ -21,6 +21,7 @@ pub fn run() {
         })
         .setup(move |app| {
             let mut custom_port: Option<u16> = None;
+            let mut use_external_sidecar = false;
 
             // Use the CLI plugin to parse arguments
             match app.cli().matches() {
@@ -37,14 +38,28 @@ pub fn run() {
                             }
                         }
                     }
+                    if let Some(arg_data) = matches.args.get("external-sidecar") {
+                         use_external_sidecar = arg_data.value.as_bool().unwrap_or(false);
+                         if use_external_sidecar {
+                             println!("Rust (CLI Plugin): External sidecar mode enabled.");
+                         }
+                    }
                 }
                 Err(e) => {
                     eprintln!("Rust: Failed to match CLI args: {}", e);
                 }
             }
 
-            // 2. 调用解耦后的启动逻辑，并传入 custom_port
-            java_sidecar::start(app.handle(), custom_port);
+            if use_external_sidecar {
+                if let Some(port) = custom_port {
+                    java_sidecar::connect_external(app.handle(), port);
+                } else {
+                    eprintln!("Rust Error: --external-sidecar requires --port to be specified.");
+                }
+            } else {
+                // 2. 调用解耦后的启动逻辑，并传入 custom_port
+                java_sidecar::start(app.handle(), custom_port);
+            }
 
             // (可选) 调试时自动打开控制台
             #[cfg(debug_assertions)]

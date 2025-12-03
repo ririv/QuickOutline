@@ -78,3 +78,20 @@ pub fn start(app: &AppHandle, custom_port: Option<u16>) {
         }
     });
 }
+
+pub fn connect_external(app: &AppHandle, port: u16) {
+    // Update global state
+    if let Some(state) = app.try_state::<JavaState>() {
+        *state.port.lock().unwrap() = Some(port);
+        println!("Rust: Configured for external Java Sidecar on port {}", port);
+    }
+
+    // Emit java-ready event immediately
+    let message = format!("{{\"port\": {}}}", port);
+    let _ = app.emit(
+        "java-ready",
+        SidecarMessage {
+            message,
+        },
+    );
+}

@@ -9,3 +9,9 @@
 3. 第三层 (`cargo`)：cargo run 接收到 -- --port 8080。cargo 也会把第一个 --
    之后的内容视为“需要传递给最终二进制文件（你的 app）的参数”。所以它剥离掉一组 --，最终将 --port 8080 传递给你的 Rust
    程序。
+
+传单个参数完整命令
+`npm run tauri dev -- -- --port 8080`
+
+传两个参数完整命令
+`npm run tauri dev -- -- --port 8080 --external-sidecar`

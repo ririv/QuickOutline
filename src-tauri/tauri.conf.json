@@ -50,6 +50,12 @@
           "description": "Port for the Java sidecar",
           "short": "p",
           "takesValue": true
+        },
+        {
+          "name": "external-sidecar",
+          "description": "Do not start sidecar, connect to external instance",
+          "short": "e",
+          "takesValue": false
         }
       ]
     }
