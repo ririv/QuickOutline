@@ -11,8 +11,6 @@
 
     let { pageCount = 0, zoom = $bindable(1.0) }: Props = $props();
 
-    // 性能优化方案：使用布尔数组代替 Set
-    // 初始化为空，依靠下方的 $effect 根据 pageCount 填充
     let loadedState = $state<boolean[]>(new Array(pageCount).fill(false));
     let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
     let closeTimer: number | undefined;
@@ -29,10 +27,7 @@
     function lazyLoad(node: HTMLElement, index: number) {
         const observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting) {
-                // 【核心修改】
-                // Svelte 5 代理数组：直接修改索引是响应式的，且只会触发当前图片的更新
                 loadedState[index] = true;
-
                 observer.disconnect();
             }
         }, {
@@ -51,7 +46,6 @@
     function getThumbnailUrl(index: number) {
         if ($appStore.serverPort && $appStore.serverPort > 0) {
             const url = `http://127.0.0.1:${$appStore.serverPort}/page_images/${index}.png`;
-            // console.log('Generating thumbnail URL:', url); // Debug
             return url;
         }
         console.warn('Server port not set when requesting thumbnail');
@@ -70,13 +64,7 @@
     }
 
     function handleMouseLeave() {
-        // closeTimer = setTimeout(() => {
-            hoveredImage = null;
-        // }, 150);
-    }
-
-    function keepAlive() {
-        clearTimeout(closeTimer);
+        hoveredImage = null;
     }
 </script>
 
@@ -102,18 +90,26 @@
 
             {#each loadedState as isLoaded, i}
                 <div 
-                    class="thumbnail-wrapper" 
+                    class="outer-thumbnail-wrapper" 
                     use:lazyLoad={i}
-                    onmouseenter={(e) => handleMouseEnter(e, i)}
-                    onmouseleave={handleMouseLeave}
                     role="group"
                 >
-                    {#if isLoaded}
-                        <div class="image-container" style="background-image: url('{getThumbnailUrl(i)}')"></div>
-                    {:else}
-                        <div class="image-container placeholder"></div>
-                    {/if}
-                    <div class="page-number">{i + 1}</div>
+                    <div 
+                        class="thumbnail-card"
+                        onmouseenter={(e) => handleMouseEnter(e, i)}
+                        onmouseleave={handleMouseLeave}
+                        role="img"
+                        aria-label="Page {i + 1} thumbnail"
+                    >
+                        {#if isLoaded}
+                            <div class="image-container" style="background-image: url('{getThumbnailUrl(i)}')"></div>
+                        {:else}
+                            <div class="image-container placeholder"></div>
+                        {/if}
+                    </div>
+                    <div class="page-label-display text-xs text-gray-600 mt-1">
+                        {i + 1}
+                    </div>
                 </div>
             {:else}
                 <div class="empty-state">No thumbnails available</div>
@@ -158,31 +154,44 @@
         gap: 10px;
         justify-content: center;
     }
-    .thumbnail-wrapper {
+    .outer-thumbnail-wrapper {
         flex: 0 1 calc(100px * var(--zoom, 1));
         min-width: 0;
-        overflow: hidden;
+        box-sizing: border-box;
+        text-align: center;
+        transition: flex-basis 0.05s ease-out;
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        gap: 5px; /* Space between card and number */
+    }
+    .thumbnail-card { /* The actual "paper" */
+        width: 100%;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         background: white;
         padding: 5px;
         box-sizing: border-box;
-        text-align: center;
-        transition: flex-basis 0.05s ease-out;
+        overflow: hidden; /* For image-container to not overflow */
     }
     .image-container {
         width: 100%;
-        padding-top: 133.33%;
+        padding-top: 133.33%; /* Maintain aspect ratio */
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
+        flex-shrink: 0; 
     }
     .image-container.placeholder {
         background-color: #eee;
     }
-    .page-number {
+    .page-label-display {
         font-size: 12px;
         color: #666;
-        padding-top: 4px;
+        margin-top: 5px; /* Adjust as per gap */
+        white-space: nowrap; 
+        overflow: hidden;
+        text-overflow: ellipsis; 
+        width: 100%; 
     }
     .empty-state {
         width: 100%;
