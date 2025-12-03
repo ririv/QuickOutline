@@ -11,6 +11,9 @@
 
     let isEditingTitle = $state(false);
     let isEditingPage = $state(false);
+
+    let titleInput: HTMLInputElement | undefined = $state();
+    let pageInput: HTMLInputElement | undefined = $state();
     
     // Initialize expanded state if missing
     if (bookmark.expanded === undefined) {
@@ -22,17 +25,14 @@
     async function editTitle() {
         isEditingTitle = true;
         await tick(); // Wait for the DOM to update
-        // Find and focus the input, could be improved with a more specific selector if needed
-        const inputEl = document.querySelector('.title-cell input');
-        (inputEl as HTMLElement)?.focus();
+        titleInput?.focus();
     }
 
     async function editPage() {
         previewContext.hide(); // Hide preview when editing starts
         isEditingPage = true;
         await tick();
-        const inputEl = document.querySelector('.page-cell input');
-        (inputEl as HTMLElement)?.focus();
+        pageInput?.focus();
     }
 
     function handlePageMouseEnter(e: MouseEvent) {
@@ -85,6 +85,7 @@
                         type="text" 
                         class="w-full outline-none pl-3 pr-1.5 py-0.5 text-sm leading-tight bg-transparent rounded font-normal text-gray-900 font-sans"
                         bind:value={bookmark.title} 
+                        bind:this={titleInput}
                         onblur={() => isEditingTitle = false} 
                         onkeydown={e => e.key === 'Enter' && e.currentTarget.blur()} 
                         autofocus
@@ -108,21 +109,15 @@
                     <div class="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-3 bg-[#409eff] rounded-full"></div>
                     <input 
                         type="text" 
-                        class="w-full outline-none pl-3 pr-1.5 py-0.5 text-sm leading-tight bg-transparent text-center rounded font-normal text-gray-900 font-sans"
+                        class="w-full outline-none px-1.5 py-0.5 text-sm leading-tight bg-transparent text-center rounded font-normal text-gray-900 font-sans"
                         bind:value={bookmark.page} 
-                        onblur={() => isEditingPage = false} 
-                        onkeydown={e => e.key === 'Enter' && e.currentTarget.blur()} 
-                        oninput={(e) => {
-                            const target = e.currentTarget as HTMLInputElement;
-                            target.value = target.value.replace(/[^0-9]/g, '');
-                            bookmark.page = target.value;
-                        }}
-                        autofocus
+                        bind:this={pageInput}
+                        onblur={() => isEditingPage = false}
                     />
                 </div>
             {:else}
                 <div 
-                    class="pl-3 pr-1.5 py-0.5 m-0 text-sm leading-tight text-gray-500 text-center cursor-text w-full truncate hover:bg-gray-200 rounded-full transition-colors text-center font-sans whitespace-pre" 
+                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-gray-500 text-center cursor-text w-full truncate hover:bg-gray-200 rounded-full transition-colors font-sans whitespace-pre"
                     onclick={editPage}
                     onmouseenter={handlePageMouseEnter}
                     onmouseleave={handlePageMouseLeave}
