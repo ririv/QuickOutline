@@ -4,8 +4,6 @@
     import ThumbnailPane from '../../components/ThumbnailPane.svelte';
     import { onMount } from 'svelte';
     import deleteIcon from '../../assets/icons/delete-item.svg';
-    import plusIcon from '@/assets/icons/plus.svg';
-    import uploadIcon from '@/assets/icons/upload.svg';
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
     import { ripple } from '@/lib/actions/ripple';
     import { messageStore } from '@/stores/messageStore';
@@ -85,34 +83,35 @@
 
 </script>
 
-<main>
+<main class="h-full w-full overflow-hidden">
     <SplitPane initialSplit={30}>
         {#snippet left()}
-        <div class="control-pane">
-            <div class="form-section">
-                <div class="form-group">
-                    <label for="style">Page Number Style</label>
-                    <div style="width: 100%">
+        <div class="flex flex-col h-full p-4 bg-white box-border overflow-y-auto">
+            <!-- Form Section -->
+            <div class="flex flex-col gap-4">
+                <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
+                    <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
+                    <div class="w-full">
                         <StyledSelect options={styles} bind:value={numberingStyle} />
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="prefix">Prefix</label>
+                <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
+                    <label for="prefix" class="text-right text-sm text-[#333]">Prefix</label>
                     <input id="prefix" type="text" bind:value={prefix} class="input" placeholder="Optional" />
                 </div>
 
-                <div class="form-group">
-                    <label for="startNum">Start Number</label>
+                <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
+                    <label for="startNum" class="text-right text-sm text-[#333]">Start Number</label>
                     <input id="startNum" type="text" bind:value={startNumber} placeholder="1" class="input" />
                 </div>
 
-                <div class="form-group">
-                    <label for="startPage">Start Page</label>
+                <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
+                    <label for="startPage" class="text-right text-sm text-[#333]">Start Page</label>
                     <input id="startPage" type="text" bind:value={startPage} class="input" placeholder="e.g. 1 (Required)" />
                 </div>
 
-                <div class="actions">
+                <div class="flex justify-center mt-2.5">
                     <button 
                         class="inline-flex items-center justify-center w-[110px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100"
                         use:ripple
@@ -126,25 +125,34 @@
                 </div>
             </div>
 
-            <div class="separator bg-gray-200 h-px my-4"></div>
+            <div class="h-px bg-gray-200 my-5"></div>
 
-            <div class="rule-list-section">
+            <!-- Rule List Section -->
+            <div class="flex-1 overflow-hidden flex flex-col min-h-[150px]">
                 <h3 class="title">Rule List</h3>
-                <div class="rule-list rounded-md border border-gray-200 bg-gray-50 p-0 overflow-hidden">
+                <div class="flex-1 overflow-y-auto border border-el-default-border p-2 bg-white rounded-md">
                     {#each rules as rule (rule.id)}
-                        <div class="rule-item hover:bg-gray-100 transition-colors border-b border-gray-200 last:border-0 px-3 py-2">
-                            <div class="rule-left">
-                                <span class="page-badge">P{rule.fromPage}</span>
-                                <div class="rule-content">
-                                    <div class="rule-main">
-                                        {#if rule.prefix}<span class="rule-prefix">{rule.prefix}</span>{/if}
-                                        <span class="rule-style-text">{rule.styleDisplay}</span>
+                        <div class="flex items-center justify-between px-2 py-1 border-b border-[#f0f0f0] text-[13px] bg-transparent rounded mb-0.5 hover:bg-gray-50 transition-colors last:border-0 last:mb-0">
+                            <div class="flex items-center gap-2 flex-1 overflow-hidden">
+                                <span class="bg-el-plain-primary-bg text-el-primary border border-[#d9ecff] rounded px-1.5 py-0.5 text-xs font-semibold min-w-[32px] text-center shrink-0">
+                                    P{rule.fromPage}
+                                </span>
+                                
+                                <div class="flex flex-col justify-center overflow-hidden">
+                                    <div class="flex items-center gap-1 font-medium text-[#303133] whitespace-nowrap overflow-hidden text-ellipsis leading-tight">
+                                        {#if rule.prefix}
+                                            <span class="text-[#606266] bg-[#f4f4f5] px-1 rounded-[3px] text-[11px] border border-[#e9e9eb]">{rule.prefix}</span>
+                                        {/if}
+                                        <span class="overflow-hidden text-ellipsis">{rule.styleDisplay}</span>
                                     </div>
-                                    <div class="rule-sub">Start: {rule.start}</div>
+                                    <div class="text-[10px] text-[#909399] leading-tight">
+                                        Start: {rule.start}
+                                    </div>
                                 </div>
                             </div>
-                            <button class="small-icon-button" onclick={() => deleteRule(rule.id)} title="Delete Rule">
-                                <img src={deleteIcon} alt="Delete" class="delete-icon" />
+
+                            <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.id)} title="Delete Rule">
+                                <img src={deleteIcon} alt="Delete" class="w-4 h-4" />
                             </button>
                         </div>
                     {/each}
@@ -156,10 +164,10 @@
                 </div>
             </div>
 
-            <div class="bottom-actions">
+            <div class="mt-4 flex justify-center">
                  <button 
-                    class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-[#409eff] rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#ecf5ff] border border-[#d9ecff] hover:bg-[#d9ecff] active:bg-[#c6e2ff]"
-                    use:ripple={{ color: 'rgba(64,158,255,0.2)' }}
+                    class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-el-primary rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-el-plain-primary-bg border border-el-plain-primary-border hover:bg-el-plain-primary-bg-hover active:bg-el-plain-primary-border"
+                    use:ripple={{ color: 'var(--color-el-primary-shadow)' }}
                     onclick={apply}
                 >
                     <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -173,177 +181,9 @@
         {/snippet}
 
         {#snippet right()}
-        <div class="preview-pane">
+        <div class="h-full bg-[#f5f5f5]">
             <ThumbnailPane pageCount={$appStore.pageCount} />
         </div>
         {/snippet}
     </SplitPane>
 </main>
-
-<style>
-    main {
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
-    }
-    .control-pane {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        padding: 15px;
-        background: white;
-        box-sizing: border-box;
-        overflow-y: auto;
-    }
-    .form-section {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-    .form-group {
-        display: grid;
-        grid-template-columns: 120px 1fr; /* Increased label width */
-        align-items: center;
-        gap: 10px;
-    }
-    .form-group label {
-        text-align: right;
-        font-size: 14px;
-        color: #333;
-    }
-    /* .input style removed - provided by global.css */
-    
-    .actions {
-        display: flex;
-        justify-content: center;
-        margin-top: 10px;
-    }
-    .separator {
-        height: 1px;
-        background: #eee;
-        margin: 20px 0;
-    }
-    /* .title style removed - provided by global.css */
-
-    .rule-list-section {
-        flex: 1;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        min-height: 150px; /* Ensure list has space */
-    }
-    .rule-list {
-        flex: 1;
-        overflow-y: auto;
-        border: 1px solid #dcdfe6;
-        padding: 8px; /* Changed from 5px */
-        background: white; /* Changed from #fafafa */
-    }
-    .rule-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 4px 8px; /* Reduced padding */
-        border-bottom: 1px solid #f0f0f0;
-        font-size: 13px;
-        background: transparent;
-        border-radius: 4px;
-        margin-bottom: 2px; /* Reduced margin */
-    }
-    .rule-item:last-child {
-        margin-bottom: 0; /* No margin for the last item */
-        border-bottom: none; /* No border for the last item */
-    }
-    
-    .rule-left {
-        display: flex;
-        align-items: center;
-        gap: 8px; /* Reduced gap */
-        flex: 1;
-        overflow: hidden;
-    }
-    
-    .page-badge {
-        background-color: #ecf5ff;
-        color: #409eff;
-        border: 1px solid #d9ecff;
-        border-radius: 4px;
-        padding: 1px 5px; /* Reduced padding */
-        font-size: 12px;
-        font-weight: 600;
-        min-width: 32px; /* Slightly reduced min-width */
-        text-align: center;
-        flex-shrink: 0;
-    }
-    
-    .rule-content {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        overflow: hidden;
-    }
-    
-    .rule-main {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-weight: 500;
-        color: #303133;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.2; /* Tighter line height */
-    }
-    
-    .rule-prefix {
-        color: #606266;
-        background: #f4f4f5;
-        padding: 0 4px;
-        border-radius: 3px;
-        font-size: 11px;
-        border: 1px solid #e9e9eb;
-    }
-
-    .rule-style-text {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .rule-sub {
-        font-size: 10px; /* Slightly smaller font */
-        color: #909399;
-        margin-top: 0; /* Removed margin */
-        line-height: 1.2; /* Tighter line height */
-    }
-    .small-icon-button {
-        padding: 4px; /* Adjust padding to make the button smaller */
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: none;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        border-radius: 4px;
-    }
-    .small-icon-button:hover {
-        background-color: #f0f0f0;
-    }
-    .delete-icon {
-        width: 16px;
-        height: 16px;
-    }
-    
-    .bottom-actions {
-        margin-top: 15px;
-        display: flex;
-        justify-content: center;
-    }
-    
-    /* Button Styles removed - provided by global.css */
-    
-    .preview-pane {
-        height: 100%;
-        background: #f5f5f5;
-    }
-</style>
