@@ -22,6 +22,18 @@ import java.io.IOException;
 
 public class SidecarApp {
     public static void main(String[] args) throws IOException {
+        // Parse arguments
+        int port = 0;
+        for (int i = 0; i < args.length; i++) {
+            if ("--port".equals(args[i]) && i + 1 < args.length) {
+                try {
+                    port = Integer.parseInt(args[i + 1]);
+                } catch (NumberFormatException e) {
+                    System.err.println("Invalid port number: " + args[i + 1]);
+                }
+            }
+        }
+
         Vertx vertx = Vertx.vertx();
 
         // 1. 初始化服务，共享 PdfImageService
@@ -108,7 +120,7 @@ public class SidecarApp {
         });
 
         // 8. 监听端口
-        server.listen(0)
+        server.listen(port)
             .onSuccess(s -> {
                 System.out.println("{\"port\": " + s.actualPort() + "}");
             })
