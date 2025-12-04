@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { appStore } from '@/stores/appStore';
+    import { appStore, type ConnectionStatus } from '@/stores/appStore'; // Import ConnectionStatus
     import { rpc } from '@/lib/api/rpc';
 
     let port = $state(0);
     let currentPort = $state(0);
-    let status = $state<'idle' | 'connecting' | 'connected' | 'error'>('idle');
-    let message = $state('');
+    // Removed local status and message as it will come from appStore and RpcProvider
+    // let status = $state<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+    // let message = $state('');
 
     // Sync with store
     appStore.subscribe(state => {
@@ -15,34 +16,51 @@
         }
     });
 
+    // Helper to get descriptive status string
+    function getConnectionStatusText(status: ConnectionStatus): string {
+        switch (status) {
+            case 'init': return 'Initializing...';
+            case 'connecting': return 'Connecting...';
+            case 'connected': return 'Connected';
+            case 'error': return 'Disconnected/Error';
+            default: return 'Unknown';
+        }
+    }
+
+    // Helper to get status color class
+    function getConnectionStatusColor(status: ConnectionStatus): string {
+        switch (status) {
+            case 'connected': return 'text-green-600';
+            case 'error': return 'text-red-600';
+            case 'connecting': return 'text-yellow-600 animate-pulse'; // Use Tailwind pulse
+            default: return 'text-gray-500';
+        }
+    }
+
     async function handleConnect() {
         if (port <= 0 || port > 65535) {
-            message = 'Invalid port number';
-            status = 'error';
+            // Update appStore status to error if invalid port
+            appStore.setConnectionStatus('error'); 
+            // Note: RpcProvider will pick up this error and start auto-reconnect if needed.
             return;
         }
 
-        status = 'connecting';
-        message = 'Connecting...';
+        // Set status to connecting via appStore
+        appStore.setConnectionStatus('connecting'); 
 
         try {
             // Attempt to connect
             await rpc.connect(port);
             
-            // Update store if successful
+            // Update appStore if successful
             appStore.setServerPort(port);
+            appStore.setConnectionStatus('connected'); // Set connected status
             
-            status = 'connected';
-            message = 'Connected successfully!';
-            
-            // Reset status after a delay
-            setTimeout(() => {
-                status = 'idle';
-                message = '';
-            }, 2000);
+            // Note: RpcProvider already handles clearing reconnect timers etc.
+            // This button click effectively acts as a manual override.
         } catch (e: any) {
-            status = 'error';
-            message = `Connection failed: ${e.message}`;
+            appStore.setConnectionStatus('error'); // Set error status
+            // RpcProvider's auto-reconnect logic will take over if enabled
         }
     }
 </script>
@@ -64,22 +82,24 @@
                 />
                 <button 
                     class="px-4 py-2 rounded-md text-sm font-medium transition-all
-                           bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                           bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed
+                           min-w-[120px] text-center" 
                     onclick={handleConnect}
-                    disabled={status === 'connecting'}
+                    disabled={$appStore.connectionStatus === 'connecting'}
                 >
-                    {status === 'connecting' ? 'Connecting...' : 'Connect'}
+                    {getConnectionStatusText($appStore.connectionStatus) === 'Connecting...' ? 'Connecting...' : 'Connect'}
                 </button>
             </div>
-            <p class="text-xs text-gray-600 mt-0">Current Port: <strong class="font-bold">{currentPort || 'Not Connected'}</strong></p>
+            <p class="text-xs text-gray-600 mt-0">
+                Current Port: <strong class="font-bold mr-2">{currentPort || 'Not Connected'}</strong>
+                Status: <span class="font-bold {getConnectionStatusColor($appStore.connectionStatus)}">
+                            {getConnectionStatusText($appStore.connectionStatus)}
+                        </span>
+            </p>
             
-            {#if message}
-                <div class="mt-3 px-3 py-2 rounded-md text-sm
-                            {status === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : ''}
-                            {status === 'connected' ? 'bg-green-50 text-green-700 border border-green-200' : ''}">
-                    {message}
-                </div>
-            {/if}
+            <!-- Removed local message display -->
+            <!-- {#if message} ... {/if} -->
         </div>
     </div>
 </div>
+

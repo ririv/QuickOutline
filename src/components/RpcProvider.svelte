@@ -11,6 +11,7 @@
     let errorMessage = $state<string>('');
     let manualPort = $state('');
     let unlistenFn = $state<() => void>();
+    let reconnectTimer: number | undefined; // 自动重连计时器
 
     // UX 优化：是否显示 Loading 界面
     // 默认为 false，给予 200-300ms 的宽限期，防止闪烁
@@ -22,6 +23,9 @@
     }
 
     onMount(async () => {
+        // 监听断开连接事件
+        rpc.on('rpc-disconnected', handleDisconnect);
+
         // Android 环境直接秒连，不需要 Loading 逻辑
         // @ts-ignore
         const isAndroid = typeof window['AndroidRpc'] !== 'undefined';
@@ -105,16 +109,28 @@
 
     onDestroy(() => {
         if (unlistenFn) unlistenFn();
-        clearTimeout(loadingTimer); // 清理计时器
+        clearTimeout(loadingTimer);
+        clearInterval(reconnectTimer); // 清理重连计时器
+        rpc.off('rpc-disconnected', handleDisconnect);
     });
 
     async function performConnect(port: number, source: string = 'Manual') {
         if (status === 'connected') return;
 
-        // 如果是重试连接，立即显示 Loading，不需要宽限期
-        if (status === 'error') showLoadingUI = true;
+        const isAutoRetry = source === 'Auto-Retry';
 
-        status = 'connecting';
+        // 只有非自动重连时，才更新 UI 为 "connecting" (防止闪烁)
+        if (!isAutoRetry) {
+            // 关键修复：如果是手动尝试或新事件，立即停止之前的自动重连循环，确保以新端口为准
+            if (reconnectTimer) {
+                console.log(`[RpcProvider] Manual override: Stopping previous auto-reconnect loop.`);
+                clearInterval(reconnectTimer);
+                reconnectTimer = undefined;
+            }
+
+            if (status === 'error') showLoadingUI = true;
+            status = 'connecting';
+        }
 
         try {
             await rpc.connect(port);
@@ -122,13 +138,51 @@
             
             appStore.setServerPort(port);
 
-            // 连接成功，立即清除 Loading 计时器
+            // 连接成功，清理所有计时器
             clearTimeout(loadingTimer);
+            clearInterval(reconnectTimer); 
+            reconnectTimer = undefined;
+            
             status = 'connected';
         } catch (e: any) {
-            console.error(`[RpcProvider] Connection failed (Source: ${source})`, e);
-            handleError(e.message || String(e));
+            if (isAutoRetry) {
+                // 静默失败，不打扰用户
+                console.debug(`[RpcProvider] Auto-retry attempt failed: ${e.message}`);
+            } else {
+                console.error(`[RpcProvider] Connection failed (Source: ${source})`, e);
+                handleError(e.message || String(e));
+            }
+            
+            // 如果连接失败，且不在重连中，触发自动重连逻辑
+            if (!reconnectTimer && port > 0) {
+                initiateAutoReconnect(port);
+            }
         }
+    }
+
+    function handleDisconnect(info: any) {
+        console.warn("RpcProvider: Disconnected", info);
+        if (status === 'connected') {
+            const currentPort = appStore.serverPort || rpc.port;
+            handleError(`Connection lost: ${info.reason || 'Server stopped'}.\nWaiting for recovery...`);
+            
+            if (currentPort > 0) {
+                initiateAutoReconnect(currentPort);
+            }
+        }
+    }
+
+    function initiateAutoReconnect(port: number) {
+        if (reconnectTimer) return; // 防止重复启动
+        
+        console.log(`[RpcProvider] Starting auto-reconnect loop for port ${port}...`);
+        
+        reconnectTimer = window.setInterval(() => {
+            console.debug("[RpcProvider] Auto-reconnecting...");
+            // 尝试重连，使用 'Auto-Retry' 作为源，这会复用 performConnect 的逻辑
+            // 注意：performConnect 内部会处理成功时的计时器清理
+            performConnect(port, 'Auto-Retry');
+        }, 3000); // 每 3 秒重试一次
     }
 
     function handleError(msg: string) {

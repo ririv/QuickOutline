@@ -187,9 +187,13 @@ class RpcClient implements QuickOutlineApi {
                 }
             };
             
-            this.ws.onclose = () => {
-                 console.log("RPC: WebSocket closed");
-                 // Emit a disconnection event if needed
+            this.ws.onclose = (event) => {
+                 console.log("RPC: WebSocket closed", event);
+                 // Emit a disconnection event
+                 this.emit('rpc-disconnected', { 
+                     reason: event.reason || "Connection closed", 
+                     code: event.code 
+                 });
             };
         });
     }
