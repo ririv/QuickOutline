@@ -9,9 +9,10 @@
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
   
-  import { rpc, PageLabelNumberingStyle } from '@/lib/api/rpc';
+  import { rpc } from '@/lib/api/rpc';
   import { messageStore } from '@/stores/messageStore';
   import { docStore } from '@/stores/docStore';
+  import {PageLabelNumberingStyle} from "@/lib/styleMaps";
 
   let previewComponent: Preview;
   

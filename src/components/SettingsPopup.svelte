@@ -1,7 +1,8 @@
 <script lang="ts">
   import StyleList from './StyleList.svelte';
   import ArrowPopup from './controls/ArrowPopup.svelte';
-  import { PageLabelNumberingStyle } from '@/lib/api/rpc';
+
+  import {PageLabelNumberingStyle} from "@/lib/styleMaps";
 
   interface Props {
     type: 'offset' | 'pos' | 'style';

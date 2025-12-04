@@ -2,7 +2,9 @@
     import landscapeIcon from '../assets/icons/landscape.svg';
     import StyledSlider from './controls/StyledSlider.svelte';
     import { appStore } from '@/stores/appStore';
+    import { docStore } from '@/stores/docStore';
     import PreviewTooltip from './PreviewTooltip.svelte';
+    import { pageLabelStore } from '@/stores/pageLabelStore';
 
     interface Props {
         pageCount?: number;
@@ -15,11 +17,19 @@
     let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
     let closeTimer: number | undefined;
 
-    // 监听 pageCount 变化
+    // Derived state for displayed page labels
+    // Use backend simulated labels if available, otherwise fallback to simple numbering
+    const displayedPageLabels = $derived(
+        ($pageLabelStore.simulatedLabels && $pageLabelStore.simulatedLabels.length > 0)
+            ? $pageLabelStore.simulatedLabels
+            : Array.from({ length: $docStore.pageCount }, (_, i) => String(i + 1))
+    );
+
+    // Listener for pageCount changes
     $effect(() => {
-        if (loadedState.length !== pageCount) {
-            console.log('PageCount changed:', pageCount);
-            loadedState = new Array(pageCount).fill(false);
+        if (loadedState.length !== $docStore.pageCount) {
+            console.log('PageCount changed:', $docStore.pageCount);
+            loadedState = new Array($docStore.pageCount).fill(false);
         }
     });
 
@@ -31,7 +41,7 @@
                 observer.disconnect();
             }
         }, {
-            rootMargin: "200px" // 提前 200px 加载，体验更好
+            rootMargin: "200px" // Load 200px early
         });
 
         observer.observe(node);
@@ -70,7 +80,7 @@
 
 <div class="thumbnail-pane">
     <div class="controls">
-        <span class="text-xs text-gray-500 mr-2">Pages: {pageCount}</span>
+        <span class="text-xs text-gray-500 mr-2">Pages: {$docStore.pageCount}</span>
         <img src={landscapeIcon} class="icon landscape-small" alt="Zoom Out" />
         <StyledSlider
             min={0.5}
@@ -108,7 +118,7 @@
                         {/if}
                     </div>
                     <div class="page-label-display text-xs text-gray-600 mt-1">
-                        {i + 1}
+                        {displayedPageLabels[i] || (i + 1)}
                     </div>
                 </div>
             {:else}

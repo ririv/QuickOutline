@@ -1,6 +1,13 @@
 // web/src/lib/styleMaps.ts
 
-import { PageLabelNumberingStyle } from "./api/rpc";
+export enum PageLabelNumberingStyle {
+    DECIMAL_ARABIC_NUMERALS = "DECIMAL_ARABIC_NUMERALS",
+    UPPERCASE_ROMAN_NUMERALS = "UPPERCASE_ROMAN_NUMERALS",
+    LOWERCASE_ROMAN_NUMERALS = "LOWERCASE_ROMAN_NUMERALS",
+    UPPERCASE_LETTERS = "UPPERCASE_LETTERS",
+    LOWERCASE_LETTERS = "LOWERCASE_LETTERS",
+    NONE = "NONE"
+}
 
 interface StyleMapEntry {
     displayText: string;

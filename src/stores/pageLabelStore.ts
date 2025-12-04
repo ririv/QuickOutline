@@ -1,8 +1,8 @@
 import { writable } from 'svelte/store';
+import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/styleMaps";
 
 export interface PageLabelRule {
     id: string;
-    style: string;
     styleDisplay: string;
     prefix: string;
     start: number;
@@ -11,18 +11,20 @@ export interface PageLabelRule {
 
 export interface PageLabelState {
     rules: PageLabelRule[];
-    numberingStyle: string;
+    numberingStyle: PageLabelNumberingStyle;
     prefix: string;
     startNumber: string;
     startPage: string;
+    simulatedLabels: string[];
 }
 
 const initialState: PageLabelState = {
     rules: [],
-    numberingStyle: "1, 2, 3, ...",
+    numberingStyle: PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS,
     prefix: "",
     startNumber: "",
-    startPage: ""
+    startPage: "",
+    simulatedLabels: []
 };
 
 function createPageLabelStore() {
@@ -30,6 +32,8 @@ function createPageLabelStore() {
 
     return {
         subscribe,
+        set,
+        update,
         addRule: (rule: PageLabelRule) => update(state => ({
             ...state,
             rules: [...state.rules, rule]
@@ -48,6 +52,7 @@ function createPageLabelStore() {
             prefix: "",
             startNumber: ""
         })),
+        setSimulatedLabels: (labels: string[]) => update(state => ({ ...state, simulatedLabels: labels })),
         resetAll: () => set(initialState)
     };
 }

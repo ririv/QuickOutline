@@ -1,3 +1,4 @@
+import {PageLabelNumberingStyle} from "@/lib/styleMaps";
 
 /**
  * RPC 请求结构
@@ -19,15 +20,6 @@ export interface RpcResponse {
 
 // --- Data Models ---
 
-export enum PageLabelNumberingStyle {
-    DECIMAL_ARABIC_NUMERALS = "DECIMAL_ARABIC_NUMERALS",
-    UPPERCASE_ROMAN_NUMERALS = "UPPERCASE_ROMAN_NUMERALS",
-    LOWERCASE_ROMAN_NUMERALS = "LOWERCASE_ROMAN_NUMERALS",
-    UPPERCASE_LETTERS = "UPPERCASE_LETTERS",
-    LOWERCASE_LETTERS = "LOWERCASE_LETTERS",
-    NONE = "NONE"
-}
-
 export interface SectionConfig {
     left: string | null;
     center: string | null;
@@ -46,7 +38,7 @@ export interface TocConfig {
     footer: SectionConfig | null;
 }
 
-export interface PageLabelRule {
+export interface PageLabelRuleDto {
     fromPage: number;
     style: PageLabelNumberingStyle;
     prefix: string;
@@ -73,8 +65,8 @@ export interface QuickOutlineApi {
 
     // Page Labels
     getPageLabels(srcFilePath: string | null): Promise<string[]>;
-    setPageLabels(rules: PageLabelRule[], destFilePath: string | null): Promise<string>;
-    simulatePageLabels(rules: PageLabelRule[]): Promise<string[]>;
+    setPageLabels(rules: PageLabelRuleDto[], destFilePath: string | null): Promise<string>;
+    simulatePageLabels(rules: PageLabelRuleDto[]): Promise<string[]>;
 
     // Image Service (Async)
     getPageCount(): Promise<number>;
@@ -274,11 +266,11 @@ class RpcClient implements QuickOutlineApi {
         return this.send("getPageLabels", [srcFilePath]);
     }
 
-    public setPageLabels(rules: PageLabelRule[], destFilePath: string | null): Promise<string> {
+    public setPageLabels(rules: PageLabelRuleDto[], destFilePath: string | null): Promise<string> {
         return this.send("setPageLabels", [rules, destFilePath]);
     }
 
-    public simulatePageLabels(rules: PageLabelRule[]): Promise<string[]> {
+    public simulatePageLabels(rules: PageLabelRuleDto[]): Promise<string[]> {
         return this.send("simulatePageLabels", [rules]);
     }
 

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { PageLabelNumberingStyle } from '@/lib/api/rpc';
-  import { pageLabelStyleMap } from '@/lib/styleMaps';
+  import {PageLabelNumberingStyle, pageLabelStyleMap} from '@/lib/styleMaps';
 
   interface Props {
     selected?: PageLabelNumberingStyle;

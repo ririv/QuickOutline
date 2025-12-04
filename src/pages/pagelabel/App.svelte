@@ -8,21 +8,17 @@
     import { ripple } from '@/lib/actions/ripple';
     import { messageStore } from '@/stores/messageStore';
     import { docStore } from '@/stores/docStore';
-    import { pageLabelStore, type PageLabelRule } from '@/stores/pageLabelStore';
+    // Import Store Rule Type
+    import { pageLabelStore, type PageLabelRule as StoreRule } from '@/stores/pageLabelStore';
+    // Import RPC Rule Type (DTO) and Enum
+    import { rpc, type PageLabelRuleDto } from '@/lib/api/rpc';
+    import {PageLabelNumberingStyle, pageLabelStyleMap} from '@/lib/styleMaps';
 
-    const styles = [
-        "1, 2, 3, ...", 
-        "I, II, III, ...", 
-        "i, ii, iii, ...", 
-        "A, B, C, ...", 
-        "a, b, c, ..."
-    ];
+    const styles = pageLabelStyleMap.getAllStyles();
 
     // Equivalent to initialize()
     onMount(() => {
         console.log("PageLabelTab mounted");
-        // TODO: Fetch original page labels from backend if needed, 
-        // currently store persists state in memory as long as the app is running.
     });
 
     function addRule() {
@@ -32,10 +28,10 @@
              return;
         }
 
-        const newRule: PageLabelRule = {
+        // Create ViewModel object for the Store
+        const newRule: StoreRule = {
             id: Date.now().toString(),
-            style: $pageLabelStore.numberingStyle,
-            styleDisplay: $pageLabelStore.numberingStyle,
+            styleDisplay: $pageLabelStore.numberingStyle == PageLabelNumberingStyle.NONE ? "" : pageLabelStyleMap.getDisplayText($pageLabelStore.numberingStyle), // Keep display string in store
             prefix: $pageLabelStore.prefix,
             start: parseInt($pageLabelStore.startNumber) || 1,
             fromPage: parseInt($pageLabelStore.startPage) || 1
@@ -52,14 +48,43 @@
         simulate();
     }
 
-    function simulate() {
+    async function simulate() {
         console.log("Simulating labels with rules:", $pageLabelStore.rules);
-        // TODO: Call backend to simulate and update thumbnails/page labels
+        
+        // Convert ViewModel (StoreRule) to DTO (RpcRule)
+        const dtos: PageLabelRuleDto[] = $pageLabelStore.rules.map(r => ({
+            fromPage: r.fromPage,
+            start: r.start,
+            prefix: r.prefix,
+            // Map display string back to Enum for the backend
+            style: pageLabelStyleMap.getEnumName(r.styleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
+        }));
+
+        try {
+            const labels = await rpc.simulatePageLabels(dtos);
+            pageLabelStore.setSimulatedLabels(labels);
+        } catch (e) {
+            console.error("Simulation failed", e);
+        }
     }
 
     function apply() {
         console.log("Applying rules:", $pageLabelStore.rules);
-        // TODO: Call backend to apply changes
+        
+        // Also convert for apply() if needed, or apply logic might use the same DTOs
+        const dtos: PageLabelRuleDto[] = $pageLabelStore.rules.map(r => ({
+            fromPage: r.fromPage,
+            start: r.start,
+            prefix: r.prefix,
+            style: pageLabelStyleMap.getEnumName(r.styleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
+        }));
+        
+        // TODO: Call backend apply API with dtos
+        rpc.setPageLabels(dtos, null).then(() => {
+             messageStore.add("Page labels applied successfully!", "SUCCESS");
+        }).catch(e => {
+             messageStore.add("Failed to apply page labels: " + e.message, "ERROR");
+        });
     }
 
 </script>
@@ -73,7 +98,12 @@
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
                     <div class="w-full">
-                        <StyledSelect options={styles} bind:value={$pageLabelStore.numberingStyle} />
+                        <StyledSelect 
+                            options={styles} 
+                            labelKey="displayText"
+                            valueKey="enumName"
+                            bind:value={$pageLabelStore.numberingStyle} 
+                        />
                     </div>
                 </div>
                 

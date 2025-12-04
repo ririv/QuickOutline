@@ -1,8 +1,7 @@
 <script lang="ts">
   import SettingsPopup from './SettingsPopup.svelte';
   import { onMount } from 'svelte';
-  import { PageLabelNumberingStyle } from '@/lib/api/rpc';
-  import {pageLabelStyleMap} from "@/lib/styleMaps";
+  import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/styleMaps";
 
   interface Props {
     offset?: number;

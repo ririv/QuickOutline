@@ -1,32 +1,58 @@
-<script lang="ts">
+<script lang="ts" generics="T">
   import { clickOutside } from '@/lib/actions/clickOutside';
 
-  interface Props {
-    options: string[];
-    value?: string;
+  interface Props<T> {
+    options: T[];
+    value?: any;
     placeholder?: string;
     disabled?: boolean;
-    onchange?: (val: string) => void;
+    onchange?: (val: any) => void;
+    labelKey?: string;
+    valueKey?: string;
   }
 
   let { 
     options = [], 
-    value = $bindable(''), 
+    value = $bindable(), 
     placeholder = 'Select...',
     disabled = false,
-    onchange 
-  }: Props = $props();
+    onchange,
+    labelKey = 'label',
+    valueKey = 'value'
+  }: Props<T> = $props();
 
   let isOpen = $state(false);
+
+  function getLabel(opt: T): string {
+    if (typeof opt === 'object' && opt !== null && labelKey in opt) {
+      return String((opt as any)[labelKey]);
+    }
+    return String(opt);
+  }
+
+  function getValue(opt: T): any {
+    if (typeof opt === 'object' && opt !== null && valueKey in opt) {
+      return (opt as any)[valueKey];
+    }
+    return opt;
+  }
+
+  // Find the label for the current value
+  let currentLabel = $derived.by(() => {
+    if (value === undefined || value === null) return '';
+    const selectedOpt = options.find(opt => getValue(opt) === value);
+    return selectedOpt ? getLabel(selectedOpt) : '';
+  });
 
   function toggle() {
     if (!disabled) isOpen = !isOpen;
   }
 
-  function select(opt: string) {
-    value = opt;
+  function select(opt: T) {
+    const val = getValue(opt);
+    value = val;
     isOpen = false;
-    onchange?.(opt);
+    onchange?.(val);
   }
 
   function close() {
@@ -42,7 +68,7 @@
       tabindex="0"
       onkeydown={(e) => { if(e.key === 'Enter') toggle(); }}
   >
-      <span class="value {value ? '' : 'placeholder'}">{value || placeholder}</span>
+      <span class="value {value ? '' : 'placeholder'}">{currentLabel || value || placeholder}</span>
       <span class="arrow">
           <svg viewBox="0 0 1024 1024" width="12" height="12">
               <path d="M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z" fill="#999"></path>
@@ -53,16 +79,17 @@
   {#if isOpen}
       <div class="select-dropdown">
           {#each options as opt}
+              {@const optVal = getValue(opt)}
               <div 
-                  class="select-option {value === opt ? 'selected' : ''}" 
+                  class="select-option {value === optVal ? 'selected' : ''}" 
                   onclick={() => select(opt)}
                   role="option"
                   tabindex="0"
-                  aria-selected={value === opt}
+                  aria-selected={value === optVal}
                   onkeydown={(e) => { if(e.key === 'Enter') select(opt); }}
               >
-                  {opt}
-                  {#if value === opt}
+                  {getLabel(opt)}
+                  {#if value === optVal}
                       <span class="check">
                           <svg viewBox="0 0 1024 1024" width="12" height="12"><path d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 0 0-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1 0.4-12.8-6.3-12.8z" fill="#1677ff"></path></svg>
                       </span>
