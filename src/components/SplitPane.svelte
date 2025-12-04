@@ -1,9 +1,20 @@
 <script lang="ts">
-    // Simple resizeable split pane
+    import { type Snippet } from 'svelte';
+
+    interface Props {
+        initialSplit?: number;
+        left: Snippet;
+        right: Snippet;
+    }
+
+    let { 
+        initialSplit = $bindable(50),
+        left,
+        right
+    }: Props = $props();
+
     let container: HTMLDivElement;
     let isResizing = false;
-    
-    export let initialSplit = 50; // Percentage
     
     function startResize(e: MouseEvent) {
         isResizing = true;
@@ -34,14 +45,14 @@
 
 <div class="split-container" bind:this={container}>
     <div class="pane left" style="width: {initialSplit}%">
-        <slot name="left"></slot>
+        {@render left()}
     </div>
     
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="resizer" on:mousedown={startResize}></div>
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="resizer" onmousedown={startResize}></div>
     
     <div class="pane right" style="width: {100 - initialSplit}%">
-        <slot name="right"></slot>
+        {@render right()}
     </div>
 </div>
 
