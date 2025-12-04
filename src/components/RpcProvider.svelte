@@ -173,6 +173,15 @@
             <h2>Service Unavailable</h2>
             <pre class="error-msg">{errorMessage}</pre>
 
+            <div class="status-indicator mb-4 flex items-center justify-center gap-3">
+                <div class="relative flex h-3 w-3">
+                    <span class="absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-60 custom-ping"></span>
+                    <span class="absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-60 custom-ping delay-ping"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500 shadow-sm"></span>
+                </div>
+                <span class="text-yellow-600 font-semibold">Listening for Sidecar...</span>
+            </div>
+
             <div class="manual-connect">
                 <p class="hint">Enter Java Sidecar port manually:</p>
                 <div class="input-group">
@@ -189,8 +198,9 @@
         </div>
 
         <p class="hint-small">
-            Ensure 'SidecarApp' is running.<br>
-            Check console for: <code>{`{"port": ...}`}</code>
+            Please start your external 'SidecarApp' (e.g., from your IDE) on the configured port.
+            <br>
+            (Check console for details: <code class="bg-gray-200 px-1 py-0.5 rounded font-mono text-gray-800">{`{"port": ...}`}</code>)
         </p>
     </div>
 {/if}
@@ -346,5 +356,28 @@
         padding: 2px 4px;
         border-radius: 3px;
         font-family: monospace;
+    }
+
+    .custom-ping {
+        animation: ripple 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    .delay-ping {
+        animation-delay: 1s;
+    }
+
+    @keyframes ripple {
+        0% {
+            transform: scale(1);
+            opacity: 0.6;
+        }
+        75% {
+            transform: scale(2.5);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(2.5);
+            opacity: 0;
+        }
     }
 </style>

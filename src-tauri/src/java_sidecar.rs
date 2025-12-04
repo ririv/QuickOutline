@@ -80,18 +80,40 @@ pub fn start(app: &AppHandle, custom_port: Option<u16>) {
 }
 
 pub fn connect_external(app: &AppHandle, port: u16) {
+    let app_handle = app.clone();
+
     // Update global state
-    if let Some(state) = app.try_state::<JavaState>() {
+    if let Some(state) = app_handle.try_state::<JavaState>() {
         *state.port.lock().unwrap() = Some(port);
         println!("Rust: Configured for external Java Sidecar on port {}", port);
     }
 
-    // Emit java-ready event immediately
-    let message = format!("{{\"port\": {}}}", port);
-    let _ = app.emit(
-        "java-ready",
-        SidecarMessage {
-            message,
-        },
-    );
+    // Use a standard thread to poll for the external service
+    std::thread::spawn(move || {
+        println!("Rust: Waiting for external Sidecar at 127.0.0.1:{}...", port);
+        let address = format!("127.0.0.1:{}", port);
+        
+        loop {
+            // Try to connect to the TCP port
+            if std::net::TcpStream::connect(&address).is_ok() {
+                println!("Rust: External Sidecar is reachable!");
+                
+                // Wait a brief moment to ensure the server is fully ready to accept requests
+                std::thread::sleep(std::time::Duration::from_millis(500));
+
+                // Emit java-ready event immediately
+                let message = format!("{{\"port\": {}}}", port);
+                let _ = app_handle.emit(
+                    "java-ready",
+                    SidecarMessage {
+                        message,
+                    },
+                );
+                break;
+            }
+            
+            // Wait 1 second before retrying
+            std::thread::sleep(std::time::Duration::from_secs(1));
+        }
+    });
 }

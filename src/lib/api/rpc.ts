@@ -157,9 +157,9 @@ class RpcClient implements QuickOutlineApi {
                 resolve();
             };
 
-            this.ws.onerror = (err) => {
-                console.error("RPC: WebSocket error", err);
-                reject(err);
+            this.ws.onerror = (event) => {
+                console.error("RPC: WebSocket error", event);
+                reject(new Error("WebSocket connection failed. The backend service might be unavailable."));
             };
 
             this.ws.onmessage = (event) => {
