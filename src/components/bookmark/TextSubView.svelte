@@ -157,7 +157,7 @@
 
 <div class="flex flex-col h-full w-full bg-white">
     <!-- Top Toolbar -->
-    <div class="flex items-center justify-between shrink-0 py-2 px-2 bg-white border-b border-gray-100">
+    <div class="flex items-center justify-between shrink-0 py-2 px-2 bg-white">
         <!-- Mode Selector (IconSwitch) -->
         <IconSwitch 
             bind:value={method} 
