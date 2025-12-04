@@ -7,7 +7,7 @@
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
     import { ripple } from '@/lib/actions/ripple';
     import { messageStore } from '@/stores/messageStore';
-    import { appStore } from '@/stores/appStore';
+    import { docStore } from '@/stores/docStore';
     import { pageLabelStore, type PageLabelRule } from '@/stores/pageLabelStore';
 
     const styles = [
@@ -163,7 +163,7 @@
 
         {#snippet right()}
         <div class="h-full bg-[#f5f5f5]">
-            <ThumbnailPane pageCount={$appStore.pageCount} />
+            <ThumbnailPane pageCount={$docStore.pageCount} />
         </div>
         {/snippet}
     </SplitPane>

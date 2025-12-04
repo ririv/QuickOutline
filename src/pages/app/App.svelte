@@ -1,6 +1,7 @@
 <script lang="ts">
     import LeftPane from '../../components/LeftPane.svelte';
     import { appStore, FnTab } from '@/stores/appStore';
+    import { docStore } from '@/stores/docStore';
     import BookmarkTab from '../bookmark/App.svelte';
     import PageLabelTab from '../pagelabel/App.svelte';
     import TocGeneratorTab from '../toc/App.svelte';
@@ -9,7 +10,6 @@
     import MessageContainer from '../../components/common/MessageContainer.svelte';
     import FileHeader from '../../components/FileHeader.svelte';
     import Settings from '../../components/Settings.svelte';
-    import { rpc } from '@/lib/api/rpc';
     import { listen } from '@tauri-apps/api/event';
     import { onMount, onDestroy } from 'svelte';
 
@@ -43,7 +43,7 @@
                     if (paths && paths.length > 0) {
                         const pdfPath = paths.find(p => p.toLowerCase().endsWith('.pdf'));
                         if (pdfPath) {
-                            appStore.openFile(pdfPath);
+                            docStore.openFile(pdfPath);
                         }
                     }
                 }));
@@ -85,7 +85,7 @@
                 "If the Java backend is running locally, please enter the absolute file path manually:"
             );
             if (manualPath) {
-                appStore.openFile(manualPath);
+                docStore.openFile(manualPath);
             }
         }
     }

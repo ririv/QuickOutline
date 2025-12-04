@@ -11,7 +11,7 @@
   
   import { rpc, PageLabelNumberingStyle } from '@/lib/api/rpc';
   import { messageStore } from '@/stores/messageStore';
-  import { appStore } from '@/stores/appStore';
+  import { docStore } from '@/stores/docStore';
 
   let previewComponent: Preview;
   
@@ -32,7 +32,7 @@
 
   // Auto-load TOC when file changes
   $effect(() => {
-      const path = $appStore.currentFilePath;
+      const path = $docStore.currentFilePath;
       if (path) {
           loadOutline();
       } else {
