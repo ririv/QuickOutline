@@ -136,7 +136,8 @@
 <main>
   <div class="content-area">
       <SplitPane initialSplit={50}>
-        <div slot="left" class="h-full flex-col">
+        {#snippet left()}
+        <div class="h-full flex-col left-panel">
           <!-- Header Trigger & Editor -->
           <CollapseTrigger 
             position="top" 
@@ -175,7 +176,10 @@
             ontoggle={() => showFooter = !showFooter} 
           />
         </div>
-        <div slot="right" class="h-full">
+        {/snippet}
+        
+        {#snippet right()}
+        <div class="h-full right-panel">
           <!-- Pass payload via prop -->
           <Preview 
             bind:this={previewComponent} 
@@ -184,6 +188,7 @@
             onrefresh={triggerPreview} 
           />
         </div>
+        {/snippet}
       </SplitPane>
   </div>
   
@@ -237,12 +242,12 @@
     
     /* Hide the editor pane explicitly if global CSS doesn't catch it */
     .editor-wrapper, 
-    :global([slot="left"]),
+    :global(.left-panel),
     :global(.status-bar) {
         display: none !important;
     }
     
-    :global([slot="right"]) {
+    :global(.right-panel) {
         height: auto !important;
         overflow: visible !important;
     }

@@ -25,12 +25,17 @@
             <TreeSubView />
         {:else}
             <SplitPane initialSplit={50}>
-                <div slot="left" style="height: 100%; width: 100%;">
+                {#snippet left()}
+                <div style="height: 100%; width: 100%;">
                     <TextSubView />
                 </div>
-                <div slot="right" style="height: 100%; width: 100%;">
+                {/snippet}
+                
+                {#snippet right()}
+                <div style="height: 100%; width: 100%;">
                     <TreeSubView />
                 </div>
+                {/snippet}
             </SplitPane>
         {/if}
     </main>

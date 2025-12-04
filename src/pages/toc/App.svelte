@@ -143,7 +143,8 @@
 <main>
   <div class="content-area">
       <SplitPane initialSplit={40}>
-        <div slot="left" class="left-panel">
+        {#snippet left()}
+        <div class="left-panel">
           <!-- Header Trigger & Editor -->
           <CollapseTrigger 
             position="top" 
@@ -186,11 +187,14 @@
             ontoggle={() => showFooter = !showFooter} 
           />
         </div>
+        {/snippet}
         
-        <div slot="right" class="h-full">
+        {#snippet right()}
+        <div class="h-full">
           <!-- mode="image" uses the JSON image updates -->
           <Preview bind:this={previewComponent} mode="image" onrefresh={triggerPreview} />
         </div>
+        {/snippet}
       </SplitPane>
   </div>
 
