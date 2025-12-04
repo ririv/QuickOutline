@@ -62,19 +62,60 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
+        position: relative;
     }
     .pane {
         height: 100%;
         overflow: hidden;
     }
+    
+    /* 
+     * Resizer Strategy:
+     * 1. The element itself is 0-width to minimize layout impact.
+     * 2. ::after is the wide, transparent HIT AREA.
+     * 3. ::before is the VISUAL LINE.
+     */
     .resizer {
-        width: 5px;
-        background: #ddd;
-        cursor: col-resize; /* 重新添加 */
-        z-index: 10;
-        transition: background 0.2s;
+        width: 0;
+        position: relative;
+        z-index: 100;
+        flex-shrink: 0;
+        user-select: none;
     }
-    .resizer:hover, .resizer:active {
-        background: #1677ff;
+    
+    /* Hit Area: Wide and transparent */
+    .resizer::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -5px; /* Center 10px area over 0px anchor */
+        width: 10px;
+        cursor: col-resize;
+        background: transparent;
+        z-index: 10;
+    }
+
+    /* Visual Line: Narrow and colored */
+    .resizer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        /* Center 1px line: -0.5px offset */
+        left: -0.5px; 
+        width: 1px;
+        background-color: #e5e5e5;
+        transition: all 0.15s ease-out;
+        z-index: 9;
+        pointer-events: none; /* Clicks go to ::after */
+    }
+
+    /* Interaction: Hover hit area -> Transform visual line */
+    .resizer:hover::before, .resizer:active::before {
+        background-color: #1677ff;
+        width: 4px;
+        /* Center 4px line: -2px offset */
+        left: -2px;
     }
 </style>
