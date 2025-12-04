@@ -9,13 +9,14 @@
         min?: string | number;
         step?: string | number;
         autofocus?: boolean;
+        numericType?: 'integer' | 'unsigned-integer'; // Restrict input to integers (signed or unsigned)
         oninput?: (e: Event) => void;
         onchange?: (e: Event) => void;
     }
 
     let {
         value = $bindable(''),
-        type = 'text',
+        type = 'text', // 默认 type 为 text
         placeholder = '',
         disabled = false,
         id = '',
@@ -23,15 +24,124 @@
         min,
         step,
         autofocus = false,
+        numericType,
         oninput,
         onchange
     }: Props = $props();
+
+    // 内部实际渲染的 type，如果启用了数字限制，则强制为 text
+    const actualType = numericType ? 'text' : type;
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (!numericType) return;
+
+        // 允许导航和编辑键
+        const allowedKeys = [
+            'Backspace', 'Delete', 'Tab', 'Enter', 'Escape',
+            'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+            'Home', 'End'
+        ];
+        
+        // 允许 Ctrl/Cmd + A/C/V/X/Z
+        if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x', 'z'].includes(e.key.toLowerCase())) {
+            return;
+        }
+
+        if (allowedKeys.includes(e.key)) {
+            return;
+        }
+
+        // 允许数字 0-9
+        if (/^[0-9]$/.test(e.key)) {
+            return;
+        }
+
+        // 允许负号（仅当 numericType 为 'integer' 时）
+        // 注意：这里不做严格的位置检查，只做简单放行，严格清洗在 input 事件中
+        if (numericType === 'integer' && e.key === '-') {
+            return;
+        }
+
+        // 阻止其他所有键
+        e.preventDefault();
+    }
+
+    function handlePaste(e: ClipboardEvent) {
+        if (!numericType) return;
+        
+        e.preventDefault();
+        
+        const pastedText = (e.clipboardData || (window as any).clipboardData).getData('text');
+        
+        // 简单的预清洗
+        let cleanText = '';
+        if (numericType === 'integer') {
+             // 允许数字和负号，后续逻辑会处理位置
+             cleanText = pastedText.replace(/[^0-9-]/g, '');
+        } else {
+             cleanText = pastedText.replace(/[^0-9]/g, '');
+        }
+        
+        if (cleanText) {
+             const inputEl = e.target as HTMLInputElement;
+             const start = inputEl.selectionStart ?? 0;
+             const end = inputEl.selectionEnd ?? 0;
+             
+             // 使用 setRangeText 替代 execCommand，并正确处理光标位置
+             // 'end' 模式会将光标移到插入内容之后
+             inputEl.setRangeText(cleanText, start, end, 'end');
+             
+             // 必须手动触发事件以通知 Svelte 和其他监听器
+             inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+             inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+
+    // 处理内部输入事件，用于清洗由输入法(IME)或非键盘操作（如拖放）引入的非法字符
+    function handleInternalInput(e: Event) {
+        if (numericType) {
+            const inputElement = e.target as HTMLInputElement;
+            const originalValue = inputElement.value;
+            
+            let cleanedValue = '';
+            
+            if (numericType === 'integer') {
+                // 允许负数的清洗逻辑
+                // 1. 移除非数字和非负号
+                let temp = originalValue.replace(/[^0-9-]/g, '');
+                
+                // 2. 处理负号位置：只能出现在开头，且只能有一个
+                const hasMinus = temp.startsWith('-');
+                temp = temp.replace(/-/g, ''); // 移除所有负号
+                
+                if (hasMinus) {
+                    cleanedValue = '-' + temp;
+                } else {
+                    cleanedValue = temp;
+                }
+            } else {
+                // 只允许正整数
+                cleanedValue = originalValue.replace(/[^0-9]/g, '');
+            }
+
+            // 1. 立即修正 DOM，保证视觉上没有字母
+            if (originalValue !== cleanedValue) {
+                inputElement.value = cleanedValue;
+            }
+
+            // 2. 关键：强制将清洗后的值赋给 value 变量
+            // 这样 Svelte (以及绑定的 Store) 才会收到干净的值，防止脏数据进入 Store
+            value = cleanedValue;
+        }
+        // 调用外部传入的 oninput 回调
+        if (oninput) oninput(e);
+    }
 </script>
 
 <!-- svelte-ignore a11y_autofocus -->
 <input
         {id}
-        {type}
+        type={actualType}
         bind:value
         {placeholder}
         {disabled}
@@ -39,7 +149,9 @@
         {step}
         {autofocus}
         class="styled-input {className}"
-        {oninput}
+        onkeydown={handleKeydown}
+        onpaste={handlePaste}
+        oninput={handleInternalInput}
         {onchange}
 />
 

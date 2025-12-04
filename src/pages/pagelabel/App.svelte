@@ -115,12 +115,12 @@
 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="startNum" class="text-right text-sm text-[#333]">Start Number</label>
-                    <StyledInput id="startNum" type="number" bind:value={$pageLabelStore.startNumber} placeholder="1" />
+                    <StyledInput id="startNum" type="number" min="1" step="1" bind:value={$pageLabelStore.startNumber} placeholder="1" numericType="unsigned-integer" />
                 </div>
 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="startPage" class="text-right text-sm text-[#333]">Start Page</label>
-                    <StyledInput id="startPage" type="number" bind:value={$pageLabelStore.startPage} placeholder="e.g. 1 (Required)" />
+                    <StyledInput id="startPage" type="number" min="1" step="1" bind:value={$pageLabelStore.startPage} placeholder="e.g. 1 (Required)" numericType="unsigned-integer" />
                 </div>
 
                 <div class="flex justify-center mt-2.5">

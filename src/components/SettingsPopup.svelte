@@ -38,12 +38,12 @@
   {#if type === 'offset'}
       <!-- svelte-ignore a11y_label_has_associated_control -->
       <label>Page Offset</label>
-      <StyledInput type="number" bind:value={offset} oninput={onchange} autofocus />
+      <StyledInput type="number" bind:value={offset} oninput={onchange} autofocus numericType="integer" />
       <div class="hint">Adjusts the starting page number.</div>
   {:else if type === 'pos'}
       <!-- svelte-ignore a11y_label_has_associated_control -->
       <label>Insert Position</label>
-      <StyledInput type="number" bind:value={insertPos} />
+      <StyledInput type="number" bind:value={insertPos} numericType="unsigned-integer" />
       <div class="hint">Page number to insert TOC at.</div>
   {:else if type === 'style'}
       <StyleList selected={style} onselect={handleStyleSelect} />
