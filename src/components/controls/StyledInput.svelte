@@ -10,6 +10,8 @@
         step?: string | number;
         autofocus?: boolean;
         numericType?: 'integer' | 'unsigned-integer'; // Restrict input to integers (signed or unsigned)
+        icon?: string; // Icon path
+        width?: string; // Custom width
         oninput?: (e: Event) => void;
         onchange?: (e: Event) => void;
     }
@@ -25,6 +27,8 @@
         step,
         autofocus = false,
         numericType,
+        icon,
+        width,
         oninput,
         onchange
     }: Props = $props();
@@ -131,6 +135,7 @@
 
             // 2. 关键：强制将清洗后的值赋给 value 变量
             // 这样 Svelte (以及绑定的 Store) 才会收到干净的值，防止脏数据进入 Store
+            // 并在后续重绘时被错误地显示出来。
             value = cleanedValue;
         }
         // 调用外部传入的 oninput 回调
@@ -139,23 +144,54 @@
 </script>
 
 <!-- svelte-ignore a11y_autofocus -->
-<input
-        {id}
-        type={actualType}
-        bind:value
-        {placeholder}
-        {disabled}
-        {min}
-        {step}
-        {autofocus}
-        class="styled-input {className}"
-        onkeydown={handleKeydown}
-        onpaste={handlePaste}
-        oninput={handleInternalInput}
-        {onchange}
-/>
+{#if icon}
+    <div 
+        class="styled-input-wrapper group {className}" 
+        class:disabled={disabled}
+        style={width ? `width: ${width};` : ''}
+    >
+        <img 
+            src={icon} 
+            alt="icon" 
+            class="icon"
+        />
+        <input
+            {id}
+            type={actualType}
+            bind:value
+            {placeholder}
+            {disabled}
+            {min}
+            {step}
+            {autofocus}
+            class="inner-input"
+            onkeydown={handleKeydown}
+            onpaste={handlePaste}
+            oninput={handleInternalInput}
+            {onchange}
+        />
+    </div>
+{:else}
+    <input
+            {id}
+            type={actualType}
+            bind:value
+            {placeholder}
+            {disabled}
+            {min}
+            {step}
+            {autofocus}
+            class="styled-input {className}"
+            style={width ? `width: ${width};` : ''}
+            onkeydown={handleKeydown}
+            onpaste={handlePaste}
+            oninput={handleInternalInput}
+            {onchange}
+    />
+{/if}
 
 <style>
+    /* Base styles shared or reused */
     .styled-input {
         background-color: white;
         border: 1px solid #dcdfe6; /* el-default-border */
@@ -181,6 +217,64 @@
     .styled-input:disabled {
         background-color: #f5f7fa;
         border-color: #e4e7ed;
+        color: #c0c4cc;
+        cursor: not-allowed;
+    }
+
+    /* Wrapper mode (with icon) */
+    .styled-input-wrapper {
+        background-color: white;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px;
+        padding: 6px 11px;
+        display: flex;
+        align-items: center;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+        width: 100%; /* Default width */
+    }
+
+    .styled-input-wrapper:hover {
+        border-color: #409eff;
+    }
+
+    .styled-input-wrapper:focus-within {
+        border-color: #409eff;
+        box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+    }
+
+    .styled-input-wrapper.disabled {
+        background-color: #f5f7fa;
+        border-color: #e4e7ed;
+        cursor: not-allowed;
+    }
+
+    .icon {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px; /* Equivalent to mr-2 */
+        opacity: 0.6;
+        color: #99a1af; /* Equivalent to text-gray-400 */
+        transition: opacity 0.2s;
+        user-select: none;
+    }
+
+    .styled-input-wrapper:focus-within .icon {
+        opacity: 1;
+    }
+
+    .inner-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        color: #606266;
+        font-size: 14px;
+        flex: 1;
+        width: 0; /* Allow flex shrink */
+        padding: 0;
+    }
+    
+    .inner-input:disabled {
         color: #c0c4cc;
         cursor: not-allowed;
     }

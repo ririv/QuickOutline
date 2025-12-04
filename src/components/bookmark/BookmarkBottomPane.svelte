@@ -11,7 +11,7 @@
     import SetContentsPopup from './SetContentsPopup.svelte';
     import type { ViewScaleType } from './SetContentsPopup.svelte';
     import GraphButton from '../controls/GraphButton.svelte';
-    import IconInput from '../controls/IconInput.svelte';
+    import StyledInput from '../controls/StyledInput.svelte';
     import { ripple } from '@/lib/actions/ripple';
     
     import { rpc } from '@/lib/api/rpc';
@@ -56,6 +56,9 @@
 
     // Sync offsetValue with bookmarkStore
     bookmarkStore.subscribe(state => {
+        // 如果当前输入框只有负号，说明用户正在输入负数，不要被 Store 的 0 覆盖
+        if (offsetValue === '-') return;
+
         const currentOffset = state.offset === 0 ? '' : String(state.offset);
         if (offsetValue !== currentOffset) {
             offsetValue = currentOffset;
@@ -229,12 +232,13 @@
         </div>
 
         <!-- Offset Input Group -->
-        <IconInput 
+        <StyledInput 
             icon={offsetIcon}
             placeholder="Offset"
             bind:value={offsetValue}
             oninput={handleOffsetInput}
             width="100px"
+            numericType="integer"
         />
     </div>
 
