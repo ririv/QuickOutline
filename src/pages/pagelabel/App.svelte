@@ -5,6 +5,7 @@
     import { onMount } from 'svelte';
     import deleteIcon from '../../assets/icons/delete-item.svg';
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
+    import StyledInput from "@/components/controls/StyledInput.svelte";
     import { ripple } from '@/lib/actions/ripple';
     import { messageStore } from '@/stores/messageStore';
     import { docStore } from '@/stores/docStore';
@@ -109,17 +110,17 @@
                 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="prefix" class="text-right text-sm text-[#333]">Prefix</label>
-                    <input id="prefix" type="text" bind:value={$pageLabelStore.prefix} class="input" placeholder="Optional" />
+                    <StyledInput id="prefix" type="text" bind:value={$pageLabelStore.prefix} placeholder="Optional" />
                 </div>
 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="startNum" class="text-right text-sm text-[#333]">Start Number</label>
-                    <input id="startNum" type="text" bind:value={$pageLabelStore.startNumber} placeholder="1" class="input" />
+                    <StyledInput id="startNum" type="number" bind:value={$pageLabelStore.startNumber} placeholder="1" />
                 </div>
 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="startPage" class="text-right text-sm text-[#333]">Start Page</label>
-                    <input id="startPage" type="text" bind:value={$pageLabelStore.startPage} class="input" placeholder="e.g. 1 (Required)" />
+                    <StyledInput id="startPage" type="number" bind:value={$pageLabelStore.startPage} placeholder="e.g. 1 (Required)" />
                 </div>
 
                 <div class="flex justify-center mt-2.5">

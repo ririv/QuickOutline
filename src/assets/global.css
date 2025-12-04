@@ -58,13 +58,6 @@ input, textarea, [contenteditable="true"] {
 /* --- Common Controls Styles (Ported from JavaFX) --- */
 
 /* Input/Select */
-@layer components {
-  .input {
-    @apply bg-white border border-el-default-border rounded text-el-default-text py-[6px] px-[11px] text-sm outline-none transition-colors duration-200 w-full box-border
-           hover:border-el-primary
-           focus:border-el-primary focus:ring-2 focus:ring-el-primary/20;
-  }
-}
 /* Title */
 .title {
     font-size: 12px;    font-weight: bold;

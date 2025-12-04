@@ -1,6 +1,7 @@
 <script lang="ts">
   import StyleList from './StyleList.svelte';
   import ArrowPopup from './controls/ArrowPopup.svelte';
+  import StyledInput from './controls/StyledInput.svelte';
 
   import {PageLabelNumberingStyle} from "@/lib/styleMaps";
 
@@ -37,13 +38,12 @@
   {#if type === 'offset'}
       <!-- svelte-ignore a11y_label_has_associated_control -->
       <label>Page Offset</label>
-      <!-- svelte-ignore a11y_autofocus -->
-      <input type="number" bind:value={offset} oninput={onchange} class="styled-input" autofocus />
+      <StyledInput type="number" bind:value={offset} oninput={onchange} autofocus />
       <div class="hint">Adjusts the starting page number.</div>
   {:else if type === 'pos'}
       <!-- svelte-ignore a11y_label_has_associated_control -->
       <label>Insert Position</label>
-      <input type="number" bind:value={insertPos} class="styled-input" />
+      <StyledInput type="number" bind:value={insertPos} />
       <div class="hint">Page number to insert TOC at.</div>
   {:else if type === 'style'}
       <StyleList selected={style} onselect={handleStyleSelect} />
@@ -64,20 +64,5 @@
       font-size: 11px;
       color: #888;
       line-height: 1.4;
-  }
-
-  .styled-input {
-      width: 100%;
-      padding: 6px 8px; /* Slightly less padding */
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 13px;
-      box-sizing: border-box;
-      outline: none;
-      transition: border 0.2s;
-  }
-  .styled-input:focus {
-      border-color: #1677ff;
-      box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
   }
 </style>
