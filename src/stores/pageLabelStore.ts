@@ -16,6 +16,7 @@ export interface PageLabelState {
     startNumber: string;
     startPage: string;
     simulatedLabels: string[];
+    originalLabels: string[];
 }
 
 const initialState: PageLabelState = {
@@ -24,7 +25,8 @@ const initialState: PageLabelState = {
     prefix: "",
     startNumber: "",
     startPage: "",
-    simulatedLabels: []
+    simulatedLabels: [],
+    originalLabels: []
 };
 
 function createPageLabelStore() {
@@ -42,6 +44,10 @@ function createPageLabelStore() {
             ...state,
             rules: state.rules.filter(r => r.id !== ruleId)
         })),
+        removeAllRules: () => update(state => ({
+            ...state,
+            rules: []
+        })),
         updateForm: (updates: Partial<PageLabelState>) => update(state => ({
             ...state,
             ...updates
@@ -53,6 +59,7 @@ function createPageLabelStore() {
             startNumber: ""
         })),
         setSimulatedLabels: (labels: string[]) => update(state => ({ ...state, simulatedLabels: labels })),
+        setOriginalLabels: (labels: string[]) => update(state => ({ ...state, originalLabels: labels })),
         resetAll: () => set(initialState)
     };
 }

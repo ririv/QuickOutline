@@ -3,7 +3,13 @@
     import SplitPane from '../../components/SplitPane.svelte';
     import ThumbnailPane from '../../components/ThumbnailPane.svelte';
     import { onMount } from 'svelte';
-    import deleteIcon from '../../assets/icons/delete-item.svg';
+    import Icon from "@/components/Icon.svelte";
+    
+    import deleteIcon from '../../assets/icons/delete-item.svg?raw';
+    import trashIcon from '../../assets/icons/trash.svg';
+    import addIcon from '../../assets/icons/plus.svg?raw';
+    import applyIcon from '../../assets/icons/success.svg?raw';
+
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
     import StyledInput from "@/components/controls/StyledInput.svelte";
     import { ripple } from '@/lib/actions/ripple';
@@ -14,13 +20,18 @@
     // Import RPC Rule Type (DTO) and Enum
     import { rpc, type PageLabelRuleDto } from '@/lib/api/rpc';
     import {PageLabelNumberingStyle, pageLabelStyleMap} from '@/lib/styleMaps';
+    import GraphButton from "@/components/controls/GraphButton.svelte";
 
     const styles = pageLabelStyleMap.getAllStyles();
 
-    // Equivalent to initialize()
-    onMount(() => {
-        console.log("PageLabelTab mounted");
-    });
+    // Sync original labels from docStore to pageLabelStore and handle initialization
+    $: if ($docStore.originalPageLabels) {
+        pageLabelStore.setOriginalLabels($docStore.originalPageLabels);
+        // If no rules exist, show original labels
+        if ($pageLabelStore.rules.length === 0) {
+            pageLabelStore.setSimulatedLabels($docStore.originalPageLabels);
+        }
+    }
 
     function addRule() {
         if (!$pageLabelStore.startPage) {
@@ -47,6 +58,13 @@
     function deleteRule(ruleId: string) {
         pageLabelStore.deleteRule(ruleId);
         simulate();
+    }
+
+    function clearRules() {
+        pageLabelStore.removeAllRules();
+        // Restore original labels to the preview
+        pageLabelStore.setSimulatedLabels($docStore.originalPageLabels);
+        pageLabelStore.resetForm();
     }
 
     async function simulate() {
@@ -129,9 +147,7 @@
                         use:ripple
                         onclick={addRule}
                     >
-                        <svg class="w-4 h-4 opacity-70" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
+                        <Icon data={addIcon} class="w-4 h-4 opacity-70" />
                         Add Rule
                     </button>
                 </div>
@@ -141,7 +157,18 @@
 
             <!-- Rule List Section -->
             <div class="flex-1 overflow-hidden flex flex-col min-h-[150px]">
-                <h3 class="title">Rule List</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="title m-0">Rule List</h3>
+                    <GraphButton class="graph-button-important group"
+                                 onclick={clearRules}
+                                 title="Clear All Rules">
+                        <img
+                            src={trashIcon}
+                            alt="Delete"
+                            class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
+                        />
+                    </GraphButton>
+                </div>
                 <div class="flex-1 overflow-y-auto border border-el-default-border p-2 bg-white rounded-md">
                     {#each $pageLabelStore.rules as rule (rule.id)}
                         <div class="flex items-center justify-between px-2 py-1 border-b border-[#f0f0f0] text-[13px] bg-transparent rounded mb-0.5 hover:bg-gray-50 transition-colors last:border-0 last:mb-0">
@@ -164,7 +191,7 @@
                             </div>
 
                             <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.id)} title="Delete Rule">
-                                <img src={deleteIcon} alt="Delete" class="w-4 h-4" />
+                                <Icon data={deleteIcon} class="w-4 h-4 text-red-500" />
                             </button>
                         </div>
                     {/each}
@@ -182,10 +209,7 @@
                     use:ripple={{ color: 'var(--color-el-primary-shadow)' }}
                     onclick={apply}
                 >
-                    <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 4.5L12.5 9H10V14H6V9H3.5L8 4.5Z" />
-                        <path d="M3 2H13V3.5H3V2Z" />
-                    </svg>
+                    <Icon data={applyIcon} class="w-4 h-4" />
                     Set Page Label
                 </button>
             </div>

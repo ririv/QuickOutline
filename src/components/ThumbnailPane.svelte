@@ -24,6 +24,13 @@
             ? $pageLabelStore.simulatedLabels
             : Array.from({ length: $docStore.pageCount }, (_, i) => String(i + 1))
     );
+    
+    const originalLabels = $derived($docStore.originalPageLabels || []);
+
+    function isLabelModified(index: number, currentLabel: string) {
+        if (!originalLabels || originalLabels.length <= index) return false;
+        return currentLabel !== originalLabels[index];
+    }
 
     // Listener for pageCount changes
     $effect(() => {
@@ -78,51 +85,54 @@
     }
 </script>
 
-<div class="thumbnail-pane">
-    <div class="controls">
+<div class="flex flex-col h-full bg-[#f5f5f5] border-l border-[#ddd]">
+    <div class="flex items-center p-2.5 gap-2.5 border-b border-[#eee] bg-white">
         <span class="text-xs text-gray-500 mr-2">Pages: {$docStore.pageCount}</span>
-        <img src={landscapeIcon} class="icon landscape-small" alt="Zoom Out" />
+        <img src={landscapeIcon} class="block opacity-60 w-3 h-3" alt="Zoom Out" />
         <StyledSlider
             min={0.5}
             max={3.0}
             step={0.01}
             bind:value={zoom}
         />
-        <img src={landscapeIcon} class="icon landscape-large" alt="Zoom In" />
+        <img src={landscapeIcon} class="block opacity-60 w-5 h-5" alt="Zoom In" />
     </div>
-    <div class="scroll-area">
+    <div class="flex-1 overflow-y-auto p-2.5">
         {#if !$appStore.serverPort}
             <div class="bg-red-100 text-red-700 p-2 text-center text-xs mb-2 border border-red-200 rounded">
                 Backend not connected (Port: {$appStore.serverPort})
             </div>
         {/if}
-        <div class="grid" style="--zoom: {zoom}">
+        <div class="flex flex-wrap gap-2.5 justify-center" style="--zoom: {zoom}">
 
             {#each loadedState as isLoaded, i}
                 <div 
-                    class="outer-thumbnail-wrapper" 
+                    class="flex-none w-[calc(100px*var(--zoom,1))] min-w-0 box-border text-center transition-[flex-basis] duration-75 ease-out flex flex-col items-center gap-1.5" 
                     use:lazyLoad={i}
                     role="group"
                 >
                     <div 
-                        class="thumbnail-card"
+                        class="w-full shadow-[0_2px_5px_rgba(0,0,0,0.1)] bg-white p-1.5 box-border overflow-hidden"
                         onmouseenter={(e) => handleMouseEnter(e, i)}
                         onmouseleave={handleMouseLeave}
                         role="img"
                         aria-label="Page {i + 1} thumbnail"
                     >
                         {#if isLoaded}
-                            <div class="image-container" style="background-image: url('{getThumbnailUrl(i)}')"></div>
+                            <div class="w-full pt-[133.33%] bg-contain bg-no-repeat bg-center shrink-0" style="background-image: url('{getThumbnailUrl(i)}')"></div>
                         {:else}
-                            <div class="image-container placeholder"></div>
+                            <div class="w-full pt-[133.33%] bg-contain bg-no-repeat bg-center shrink-0 bg-[#eee]"></div>
                         {/if}
                     </div>
-                    <div class="page-label-display text-xs text-gray-600 mt-1">
+                    <div 
+                        class="text-xs mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis w-full {isLabelModified(i, displayedPageLabels[i] || '') ? 'text-[#666] font-bold' : 'text-[#666]'}"
+                        title="{i + 1} / {$docStore.pageCount}"
+                    >
                         {displayedPageLabels[i] || (i + 1)}
                     </div>
                 </div>
             {:else}
-                <div class="empty-state">No thumbnails available</div>
+                <div class="w-full text-center text-[#999] mt-5">No thumbnails available</div>
             {/each}
         </div>
     </div>
@@ -135,90 +145,3 @@
         />
     {/if}
 </div>
-
-<style>
-    .thumbnail-pane {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        background: #f5f5f5;
-        border-left: 1px solid #ddd;
-    }
-    .controls {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        gap: 10px;
-        border-bottom: 1px solid #eee;
-        background: #fff;
-    }
-
-    .scroll-area {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-    }
-    .grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        justify-content: center;
-    }
-    .outer-thumbnail-wrapper {
-        flex: 0 1 calc(100px * var(--zoom, 1));
-        min-width: 0;
-        box-sizing: border-box;
-        text-align: center;
-        transition: flex-basis 0.05s ease-out;
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        gap: 5px; /* Space between card and number */
-    }
-    .thumbnail-card { /* The actual "paper" */
-        width: 100%;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        background: white;
-        padding: 5px;
-        box-sizing: border-box;
-        overflow: hidden; /* For image-container to not overflow */
-    }
-    .image-container {
-        width: 100%;
-        padding-top: 133.33%; /* Maintain aspect ratio */
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-        flex-shrink: 0; 
-    }
-    .image-container.placeholder {
-        background-color: #eee;
-    }
-    .page-label-display {
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px; /* Adjust as per gap */
-        white-space: nowrap; 
-        overflow: hidden;
-        text-overflow: ellipsis; 
-        width: 100%; 
-    }
-    .empty-state {
-        width: 100%;
-        text-align: center;
-        color: #999;
-        margin-top: 20px;
-    }
-    .icon {
-        display: block;
-        opacity: 0.6;
-    }
-    .landscape-small {
-        width: 12px;
-        height: 12px;
-    }
-    .landscape-large {
-        width: 20px;
-        height: 20px;
-    }
-</style>
