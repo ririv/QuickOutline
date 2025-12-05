@@ -1,8 +1,6 @@
 plugins {
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.1.0'
 
-    // 参考 https://github.com/openjfx/javafx-gradle-plugin#extra-plugins
     // 不加入此会出现找不到模块错误
     id 'org.javamodularity.moduleplugin' version '2.0.0'
 
@@ -26,10 +24,6 @@ java {
 
 version = '2.3.0'
 
-javafx {
-    version = '25'
-    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing', 'javafx.web' ]
-}
 
 application{
     mainModule.set("quickoutline")
@@ -131,7 +125,7 @@ def args = [
     // 注意：类名必须完全匹配报错信息中的类名
     '-Dorg.slf4j.simpleLogger.log.com.itextpdf.styledxmlparser.css.parse.syntax.CssParserStateController=OFF',
     // https://github.com/openjdk/jfx/blob/jfx25/doc-files/release-notes-24.md#javafx-applications-must-use---enable-native-access
-    '--enable-native-access=javafx.graphics,javafx.web,javafx.media,ALL-UNNAMED',
+    '--enable-native-access=ALL-UNNAMED',
     '-Djavafx.enablePreview=true',
 //    '-Dprism.order=es2,d3d',
 //    '-Dprism.verbose=true', // 开发时开启，发布时关掉
@@ -205,7 +199,7 @@ jlink {
         // 安装器类型和图标（按平台动态配置）
         if (os.isWindows()) {
             installerType = 'msi'
-            icon = 'src/main/resources/com/ririv/quickoutline/view/images/icon.ico'
+            icon = 'src/main/resources/icon/icon.ico'
             installerOptions = [
                     '--win-shortcut',
                     '--win-dir-chooser',
@@ -213,14 +207,14 @@ jlink {
             ]
         } else if (os.isMacOsX()) {
             installerType = 'dmg'
-            icon = 'src/main/resources/com/ririv/quickoutline/view/images/icon.icns'
+            icon = 'src/main/resources/icon/icon.icns'
             installerOptions = [
                     '--mac-package-name', 'QuickOutline',
                     '--mac-package-identifier', 'com.ririv.quickoutline'
             ]
         } else if (os.isLinux()) {
             installerType = 'deb' // 或 'rpm'（根据需求选择）
-            icon = 'src/main/resources/com/ririv/quickoutline/view/images/icon.png' // Linux 支持 PNG/SVG
+            icon = 'src/main/resources/icon/icon.png' // Linux 支持 PNG/SVG
             installerOptions = [
                     '--linux-shortcut', // 创建桌面快捷方式
                     '--linux-menu-group', 'Development', // 应用被如何归类，有一些标准并且常用的类别名称
