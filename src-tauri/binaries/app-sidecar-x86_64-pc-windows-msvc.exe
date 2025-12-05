@@ -1,0 +1,4 @@
+@echo off
+set "PARENT_DIR=%~dp0"
+:: 指向 resources/java-runtime/bin/QuickOutlineSidecar.bat
+"%PARENT_DIR%..\resources\java-runtime\bin\QuickOutlineSidecar.bat"

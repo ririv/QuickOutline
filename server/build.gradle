@@ -162,7 +162,7 @@ jlink {
     addExtraDependencies("jackson-core")
 
     launcher {
-        name = 'QuickOutline'
+        name = 'QuickOutlineSidecar'
         jvmArgs = args
     }
 

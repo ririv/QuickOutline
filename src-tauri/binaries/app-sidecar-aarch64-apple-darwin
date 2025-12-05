@@ -1,0 +1,27 @@
+#!/bin/bash
+
+PARENT_DIR=$(dirname "$0")
+
+# 1. 尝试 Release 模式路径 (macOS App Bundle: Contents/MacOS -> Contents/Resources)
+PATH_RELEASE="$PARENT_DIR/../Resources/resources/java-runtime/bin/QuickOutlineSidecar"
+
+# 2. 尝试 Dev 模式路径 (target/debug/app-sidecar -> target/debug/resources)
+PATH_DEV="$PARENT_DIR/resources/java-runtime/bin/QuickOutlineSidecar"
+
+# 3. 自动检测并选择存在的路径
+if [ -f "$PATH_RELEASE" ]; then
+    EXEC_PATH="$PATH_RELEASE"
+elif [ -f "$PATH_DEV" ]; then
+    EXEC_PATH="$PATH_DEV"
+else
+    echo "Error: Java Runtime not found!"
+    echo "Checked Release Path: $PATH_RELEASE"
+    echo "Checked Dev Path:     $PATH_DEV"
+    exit 1
+fi
+
+# 给执行权限 (防止复制过程丢失权限)
+chmod +x "$EXEC_PATH"
+
+# 执行，"$@" 用于透传参数 (如 --port)
+exec "$EXEC_PATH" "$@"
