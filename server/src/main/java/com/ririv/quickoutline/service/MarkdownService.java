@@ -1,14 +1,13 @@
 package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.pdfProcess.PdfPageGenerator;
-import com.ririv.quickoutline.pdfProcess.itextImpl.ItextHtmlConverter;
+import com.ririv.quickoutline.pdfProcess.itextImpl.html2pdf.ItextHtmlConverter;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextPdfPageGenerator;
 import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import com.ririv.quickoutline.utils.PayloadsJsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.function.Consumer;
 

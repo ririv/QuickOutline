@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.pdfProcess.itextImpl;
+package com.ririv.quickoutline.pdfProcess.itextImpl.html2pdf;
 
 import com.itextpdf.html2pdf.css.apply.ICssApplier;
 import com.itextpdf.html2pdf.css.apply.impl.BlockCssApplier;

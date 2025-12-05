@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.pdfProcess.itextImpl;
+package com.ririv.quickoutline.pdfProcess.itextImpl.html2pdf;
 
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
@@ -7,10 +7,10 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.event.PdfDocumentEvent;
 import com.ririv.quickoutline.model.SectionConfig;
 import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
+import com.ririv.quickoutline.pdfProcess.itextImpl.HeaderFooterEventHandler;
 import com.ririv.quickoutline.service.DownloadEvent;
 import com.ririv.quickoutline.service.FontManager;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.function.Consumer;
 
@@ -72,7 +72,7 @@ public class ItextHtmlConverter implements com.ririv.quickoutline.pdfProcess.Htm
                 }
                 
                 pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, 
-                        new HeaderFooterEventHandler(new com.itextpdf.layout.Document(pdfDoc), 
+                        new HeaderFooterEventHandler(new com.itextpdf.layout.Document(pdfDoc),
                                 PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS, 
                                 font, 1, -1, header, footer));
 

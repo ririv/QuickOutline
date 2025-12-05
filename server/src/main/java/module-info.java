@@ -106,4 +106,6 @@ module quickoutline {
     exports com.ririv.quickoutline.pdfProcess.numbering;
     opens com.ririv.quickoutline.pdfProcess.numbering to com.google.guice;
     opens com.ririv.quickoutline.api.model to com.google.gson;
+    exports com.ririv.quickoutline.pdfProcess.itextImpl.html2pdf;
+    opens com.ririv.quickoutline.pdfProcess.itextImpl.html2pdf to com.google.guice;
 }
