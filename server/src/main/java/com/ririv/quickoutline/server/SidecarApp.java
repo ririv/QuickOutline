@@ -9,10 +9,7 @@ import com.ririv.quickoutline.api.state.ApiBookmarkState;
 import com.ririv.quickoutline.api.state.CurrentFileState;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
-import com.ririv.quickoutline.service.FontManager;
-import com.ririv.quickoutline.service.PdfOutlineService;
-import com.ririv.quickoutline.service.PdfPageLabelService;
-import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
+import com.ririv.quickoutline.service.*;
 import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import io.vertx.core.Vertx;
@@ -37,6 +34,7 @@ public class SidecarApp {
         Vertx vertx = Vertx.vertx();
 
         // 1. 初始化服务，共享 PdfImageService
+        PdfCheckService pdfCheckService = new PdfCheckService();
         PdfImageService pdfImageService = new PdfImageService();
         PdfOutlineService pdfOutlineService = new PdfOutlineService();
         FontManager fontManager = new FontManager();
@@ -52,6 +50,7 @@ public class SidecarApp {
 
         // 3. 初始化 API 实现
         ApiService apiService = new ApiServiceImpl(
+                pdfCheckService,
                 pdfOutlineService,
                 pdfTocPageGeneratorService,
                 pdfPageLabelService,

@@ -9,10 +9,7 @@ import com.ririv.quickoutline.api.service.ApiService;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
-import com.ririv.quickoutline.service.PageLabelRule;
-import com.ririv.quickoutline.service.PdfOutlineService;
-import com.ririv.quickoutline.service.PdfPageLabelService;
-import com.ririv.quickoutline.service.PdfTocPageGeneratorService;
+import com.ririv.quickoutline.service.*;
 import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
@@ -34,6 +31,8 @@ public class ApiServiceImpl implements ApiService {
     private static final Logger log = LoggerFactory.getLogger(ApiServiceImpl.class);
 
     private final PdfOutlineService pdfOutlineService;
+
+    private final PdfCheckService pdfCheckService;
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
     private final PdfPageLabelService pdfPageLabelService;
     private final PdfImageService pdfImageService;
@@ -42,7 +41,8 @@ public class ApiServiceImpl implements ApiService {
     private final SyncWithExternalEditorService syncService;
     private final WebSocketSessionManager sessionManager;
 
-    public ApiServiceImpl(PdfOutlineService pdfOutlineService,
+    public ApiServiceImpl(PdfCheckService pdfCheckService,
+                          PdfOutlineService pdfOutlineService,
                           PdfTocPageGeneratorService pdfTocPageGeneratorService,
                           PdfPageLabelService pdfPageLabelService,
                           PdfImageService pdfImageService,
@@ -50,6 +50,7 @@ public class ApiServiceImpl implements ApiService {
                           CurrentFileState currentFileState,
                           SyncWithExternalEditorService syncService,
                           WebSocketSessionManager sessionManager) {
+        this.pdfCheckService = pdfCheckService;
         this.pdfOutlineService = pdfOutlineService;
         this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
         this.pdfPageLabelService = pdfPageLabelService;
@@ -67,7 +68,7 @@ public class ApiServiceImpl implements ApiService {
     @Override
     public void openFile(String filePath) {
         try {
-            pdfOutlineService.checkOpenFile(filePath);
+            pdfCheckService.checkOpenFile(filePath);
             currentFileState.open(filePath);
             this.pdfImageService.openSession(new File(filePath));
             this.apiBookmarkState.clear(); // Clear state on new file

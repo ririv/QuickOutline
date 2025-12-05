@@ -43,10 +43,6 @@ public class PdfOutlineService {
         return textProcessor.process(text, method);
     }
 
-    public void checkOpenFile(String srcFilepath) throws IOException {
-        if (srcFilepath.isEmpty()) throw new RuntimeException("PDF路径为空");
-        if (outlineProcessor.checkEncrypted(srcFilepath)) throw new EncryptedPdfException();
-    }
 
     //此offset用于减，即 偏移后的偏移量-offset = 原页码（v2.0+目前没有应用场景）
     public String getContents(String srcFilepath, int offset) throws NoOutlineException {

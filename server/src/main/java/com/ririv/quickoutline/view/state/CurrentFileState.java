@@ -1,5 +1,6 @@
 package com.ririv.quickoutline.view.state;
 
+import com.ririv.quickoutline.service.PdfCheckService;
 import jakarta.inject.Inject;
 import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.pdfProcess.PdfRenderSession;
@@ -20,11 +21,11 @@ public class CurrentFileState implements AutoCloseable {
     // Per-current-file PageRenderSession shared across components
     private final ObjectProperty<PdfRenderSession> pageRenderSessionProperty = new SimpleObjectProperty<>();
 
-    private final PdfOutlineService pdfOutlineService;
+    private final PdfCheckService pdfCheckService;
 
     @Inject
-    public CurrentFileState(PdfOutlineService pdfOutlineService) {
-        this.pdfOutlineService = pdfOutlineService;
+    public CurrentFileState(PdfCheckService pdfCheckService) {
+        this.pdfCheckService = pdfCheckService;
         destFileWrapper = new ReadOnlyObjectWrapper<>();
         destFileWrapper.bind(Bindings.createObjectBinding(() -> {
             Path src = srcFileProperty.get();
@@ -104,7 +105,7 @@ public class CurrentFileState implements AutoCloseable {
             return;
         }
         // Centralized validation
-        pdfOutlineService.checkOpenFile(file.toString());
+        pdfCheckService.checkOpenFile(file.toString());
         this.srcFileProperty.set(file);
     }
 
@@ -113,7 +114,7 @@ public class CurrentFileState implements AutoCloseable {
      */
     public void validateFile(Path file) throws IOException, EncryptedPdfException, com.itextpdf.io.exceptions.IOException {
         if (file == null) return;
-        pdfOutlineService.checkOpenFile(file.toString());
+        pdfCheckService.checkOpenFile(file.toString());
     }
 
     /**
