@@ -67,10 +67,6 @@ dependencies {
     // 如果需要字体支持（比如渲染中文等非西文字符）
     implementation 'org.apache.pdfbox:fontbox:3.0.3'
 
-    // Guice for Dependency Injection
-    implementation 'com.google.inject:guice:7.0.0'
-    // Force Guava to a newer version to fix CVE-2023-2976
-    implementation 'com.google.guava:guava:33.5.0-jre'
     implementation 'com.google.code.gson:gson:2.13.2'
 
     implementation 'jakarta.inject:jakarta.inject-api:2.0.1'

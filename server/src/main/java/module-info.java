@@ -30,8 +30,6 @@ module quickoutline {
 //    requires openai.java.core;
 //    requires openai.java.client.okhttp;
 
-    requires com.google.guice;
-    requires com.google.common;
     requires com.google.gson;
 
     requires org.apache.pdfbox;
@@ -48,7 +46,6 @@ module quickoutline {
 
     requires io.vertx.core;
 
-    opens com.ririv.quickoutline.service to com.google.guice;
 
     exports com.ririv.quickoutline.model;
     exports com.ririv.quickoutline.utils;
@@ -60,19 +57,11 @@ module quickoutline {
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions;
     exports com.ririv.quickoutline.pdfProcess.itextImpl;
-    opens com.ririv.quickoutline.pdfProcess.itextImpl to com.google.guice;
-    opens com.ririv.quickoutline.pdfProcess to com.google.guice;
     exports com.ririv.quickoutline.pdfProcess.itextImpl.model;
-    opens com.ririv.quickoutline.pdfProcess.itextImpl.model to com.google.guice;
-    opens com.ririv.quickoutline.service.syncWithExternelEditor to com.google.guice;
     exports com.ririv.quickoutline.service.webserver;
     exports com.ririv.quickoutline.service.pdfpreview;
-    opens com.ririv.quickoutline.service.pdfpreview to com.google.guice;
     exports com.ririv.quickoutline.service.pdfpreview.strategy;
-    opens com.ririv.quickoutline.service.pdfpreview.strategy to com.google.guice;
     exports com.ririv.quickoutline.pdfProcess.numbering;
-    opens com.ririv.quickoutline.pdfProcess.numbering to com.google.guice;
     opens com.ririv.quickoutline.api.model to com.google.gson;
     exports com.ririv.quickoutline.pdfProcess.itextImpl.html2pdf;
-    opens com.ririv.quickoutline.pdfProcess.itextImpl.html2pdf to com.google.guice;
 }
