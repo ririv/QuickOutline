@@ -1,15 +1,15 @@
 <script lang="ts">
-    import LeftPane from '../../components/LeftPane.svelte';
+    import LeftPane from './components/LeftPane.svelte';
     import { appStore, FnTab } from '@/stores/appStore';
     import { docStore } from '@/stores/docStore';
-    import BookmarkTab from '../bookmark/App.svelte';
-    import PageLabelTab from '../pagelabel/App.svelte';
-    import TocGeneratorTab from '../toc/App.svelte';
-    import MarkdownTab from '../markdown/App.svelte';
-    import RpcProvider from '../../components/RpcProvider.svelte';
-    import MessageContainer from '../../components/common/MessageContainer.svelte';
-    import FileHeader from '../../components/FileHeader.svelte';
-    import Settings from '../../components/Settings.svelte';
+    import BookmarkTab from './pages/bookmark/App.svelte';
+    import PageLabelTab from './pages/pagelabel/App.svelte';
+    import TocGeneratorTab from './pages/toc/App.svelte';
+    import MarkdownTab from './pages/markdown/App.svelte';
+    import RpcProvider from './components/RpcProvider.svelte';
+    import MessageContainer from './components/common/MessageContainer.svelte';
+    import FileHeader from './components/FileHeader.svelte';
+    import Settings from './components/Settings.svelte';
     import { listen } from '@tauri-apps/api/event';
     import { onMount, onDestroy } from 'svelte';
 
