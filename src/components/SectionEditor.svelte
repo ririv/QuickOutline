@@ -1,6 +1,7 @@
 <script lang="ts">
     import ArrowPopup from './controls/ArrowPopup.svelte';
     import PositionDiagram from './PositionDiagram.svelte';
+    import Tooltip from './Tooltip.svelte';
 
     interface SectionConfig {
         left: string;
@@ -201,10 +202,12 @@
 
     <div class="right-tools">
       {#if type === 'footer'}
-        <div class="tooltip-container">
+        <Tooltip position="top" rightAligned={true} className="flex items-center">
           <span class="hint-icon">?</span>
-          <div class="tooltip">Use <code>&lbrace;p&rbrace;</code> for page number</div>
-        </div>
+          {#snippet popup()}
+            Use <code>{'{p}'}</code> for page number
+          {/snippet}
+        </Tooltip>
       {/if}
       <button
           class="toggle-line-btn" class:active={config.drawLine}
@@ -519,50 +522,10 @@
         user-select: none;
     }
 
-    .tooltip-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
-    .tooltip {
-        visibility: hidden;
-        background-color: #333;
-        color: #fff;
-        text-align: center;
-        border-radius: 4px;
-        padding: 4px 8px;
-        position: absolute;
-        z-index: 1;
-        bottom: 125%; /* Position above */
-        right: 0;
-        font-size: 11px;
-        white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.2s;
-        pointer-events: none;
-    }
-
-    .tooltip::after {
-        content: "";
-        position: absolute;
-        top: 100%; /* At the bottom of the tooltip */
-        right: 4px;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: #333 transparent transparent transparent;
-    }
-
-    .tooltip-container:hover .tooltip {
-        visibility: visible;
-        opacity: 1;
-    }
-
     code {
-        font-family: monospace;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0 2px;
-        border-radius: 2px;
+      font-family: monospace;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0 2px;
+      border-radius: 2px;
     }
 </style>

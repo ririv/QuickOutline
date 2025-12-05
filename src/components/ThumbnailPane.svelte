@@ -5,6 +5,7 @@
     import { docStore } from '@/stores/docStore';
     import PreviewTooltip from './PreviewTooltip.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore';
+    import Tooltip from './Tooltip.svelte';
 
     interface Props {
         pageCount?: number;
@@ -124,11 +125,14 @@
                             <div class="w-full pt-[133.33%] bg-contain bg-no-repeat bg-center shrink-0 bg-[#eee]"></div>
                         {/if}
                     </div>
-                    <div 
-                        class="text-xs mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis w-full {isLabelModified(i, displayedPageLabels[i] || '') ? 'text-[#666] font-bold' : 'text-[#666]'}"
-                        title="{i + 1} / {$docStore.pageCount}"
-                    >
-                        {displayedPageLabels[i] || (i + 1)}
+                    <div class="w-full flex justify-center mt-1.5">
+                        <Tooltip content="{i + 1} / {$docStore.pageCount}" position="top">
+                             <div 
+                                class="text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-full {isLabelModified(i, displayedPageLabels[i] || '') ? 'text-[#666] font-bold' : 'text-[#666]'}"
+                            >
+                                {displayedPageLabels[i] || (i + 1)}
+                            </div>
+                        </Tooltip>
                     </div>
                 </div>
             {:else}
