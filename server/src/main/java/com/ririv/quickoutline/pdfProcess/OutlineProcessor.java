@@ -24,5 +24,4 @@ public interface OutlineProcessor {
 
     void deleteOutline(String srcFilePath, String destFilePath) throws IOException;
 
-    boolean checkEncrypted(String srcFilePath) throws IOException;
 }

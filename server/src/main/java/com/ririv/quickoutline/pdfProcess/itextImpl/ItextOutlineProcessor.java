@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 import static com.ririv.quickoutline.model.Bookmark.buildLine;
+import static com.ririv.quickoutline.pdfProcess.itextImpl.ItextPdfCheckerUtils.checkEncrypted;
 
 
 public class ItextOutlineProcessor implements OutlineProcessor {
@@ -130,13 +131,6 @@ public class ItextOutlineProcessor implements OutlineProcessor {
         }
     }
 
-    public boolean checkEncrypted(String srcFilePath) throws IOException {
-        PdfReader reader = new PdfReader(srcFilePath);
-        PdfDocument doc = new PdfDocument(reader);
-        boolean isEncrypted = reader.isEncrypted();
-        doc.close();
-        return isEncrypted;
-    }
 
     //https://kb.itextpdf.com/itext/how-to-create-hierarchical-bookmarks
     @Override
