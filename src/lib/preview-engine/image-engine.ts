@@ -61,11 +61,19 @@ export function handleImageUpdate(jsonString: string, container: HTMLElement) {
         newImg.className = 'preload';
 
         newImg.onload = () => {
-            newImg.className = 'current';
-            // 移除旧图
-            const oldImages = pageDiv.querySelectorAll('img:not(.current)');
-            oldImages.forEach(img => {
-                if (img !== newImg) pageDiv.removeChild(img);
+            // 下一帧触发动画
+            requestAnimationFrame(() => {
+                newImg.className = 'current';
+                
+                // 延迟移除旧图以显示淡入效果
+                const oldImages = Array.from(pageDiv.querySelectorAll('img:not(.current)'));
+                if (oldImages.length > 0) {
+                    setTimeout(() => {
+                        oldImages.forEach(img => {
+                                                                            if (img !== newImg) img.remove();
+                                                                        });
+                                                                    }, 300); // 与 CSS transition 保持一致
+                }
             });
         };
 

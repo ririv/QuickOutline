@@ -220,6 +220,9 @@
         display: block;
         width: 100%;
         height: 100%;
+        position: absolute; /* Ensure overlap for double buffering */
+        top: 0;
+        left: 0;
         pointer-events: auto;
         shape-rendering: auto;
         text-rendering: geometricPrecision;
@@ -235,6 +238,18 @@
         top: 0;
         left: 0;
         image-rendering: auto;
+    }
+
+    /* Double Buffering Animation States */
+    :global(.page-wrapper .current) {
+        opacity: 1;
+        transition: opacity 0.3s ease-out;
+        z-index: 2;
+    }
+
+    :global(.page-wrapper .preload) {
+        opacity: 0;
+        z-index: 3; /* New content loads on top */
     }
 
     /* Container Styles */

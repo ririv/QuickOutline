@@ -212,7 +212,7 @@ function renderPageNode(pageDiv: HTMLElement, svgContent: string) {
 
                 const oldSvgs = Array.from(pageDiv.querySelectorAll('svg')).filter(el => el !== newSvg);
                 if (oldSvgs.length > 0) {
-                    setTimeout(() => oldSvgs.forEach(el => el.remove()), 300);
+                    setTimeout(() => oldSvgs.forEach(el => el.remove()), 300); // 与 CSS transition 保持一致
                 }
             });
         }
