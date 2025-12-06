@@ -17,16 +17,6 @@
 
   let previewComponent: Preview;
   
-  // State
-  let tocContent = $state('');
-  let title = $state('Table of Contents');
-  let offset = $state(0);
-  let insertPos = $state(1);
-  let style = $state(PageLabelNumberingStyle.NONE); // 【关键修正】现在直接绑定枚举名
-  
-  let headerConfig = $state({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
-  let footerConfig = $state({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
-  
   let showHeader = $state(false);
   let showFooter = $state(false);
   
@@ -36,47 +26,35 @@
   $effect(() => {
       const path = $docStore.currentFilePath;
       
-      // If we have cached content for this file, use it
-      if (tocStore.hasContentFor(path)) {
-          tocContent = tocStore.getContent();
-          // Trigger initial preview
-          triggerPreview();
-      } else if (path) {
-          // Otherwise load from RPC
-          loadOutline();
-      } else {
-          tocContent = '';
+      // Only load if path has changed (new file opened)
+      // If path matches tocStore, we are just remounting (switching tabs), 
+      // so we rely on onMount to restore state from store.
+      if (tocStore.filePath !== path) {
+          if (path) {
+              loadOutline();
+          } else {
+              tocStore.setFile(null);
+          }
       }
   });
 
   async function loadOutline() {
       try {
-          // Default offset 0. Ideally offset should be managed per file.
           const outline = await rpc.getOutline(0);
-          if (outline) {
-              tocContent = outline;
-              // Sync to store immediately so we don't reload on next mount
-              tocStore.setFile($docStore.currentFilePath, outline);
-              // Trigger initial preview
-              triggerPreview();
-          }
+          // Initialize store with new file and default config
+          tocStore.setFile($docStore.currentFilePath, outline || '');
+          triggerPreview();
       } catch (e) {
           console.error("Failed to load outline", e);
       }
   }
   
   function handleContentChange(val: string) {
-      tocContent = val;
-      // Update store on every change
       tocStore.updateContent(val);
-      // Ensure store knows which file this content belongs to (if not already set)
-      if ($docStore.currentFilePath) {
-          tocStore.setFile($docStore.currentFilePath, val);
-      }
       triggerPreview();
   }
   
-  function hasContent(config: typeof headerConfig) {
+  function hasContent(config: typeof tocStore.headerConfig) {
       const hasText = Object.entries(config).some(([k, v]) => {
           if (k === 'drawLine') return false;
           return typeof v === 'string' && v.trim().length > 0 && v !== '{p}';
@@ -84,24 +62,36 @@
       return hasText || config.drawLine;
   }
   
-  // Use $effect to react to changes in headerConfig or footerConfig
+  // React to config changes
   $effect(() => {
-    const headerJson = JSON.stringify(headerConfig);
-    const footerJson = JSON.stringify(footerConfig);
+    // Create dependencies on store properties to trigger updates
+    const _ = { 
+        h: JSON.stringify(tocStore.headerConfig), 
+        f: JSON.stringify(tocStore.footerConfig),
+        t: tocStore.title,
+        o: tocStore.offset,
+        i: tocStore.insertPos,
+        s: tocStore.style
+    };
 
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-        if (headerJson !== '{"left":"","center":"","right":"","inner":"","outer":"","drawLine":false}' ||
-            footerJson !== '{"left":"","center":"{p}","right":"","inner":"","outer":"","drawLine":false}') {
-            triggerPreview();
-        }
+        triggerPreview();
     }, 500);
+
+    return () => clearTimeout(debounceTimer);
   });
   
-  // onMount not strictly needed for bridge anymore, RPC is initialized by RpcProvider
-  // but we can trigger an initial preview if there's content
+  // onMount: just trigger preview if we have content (e.g. switching back to tab)
   onMount(() => {
-      if (tocContent) {
+      if (tocStore.previewData) {
+          // Restore cached preview immediately without RPC call
+          previewComponent?.renderImage(tocStore.previewData);
+          // Restore scroll position after render (timeout to ensure DOM updated)
+          setTimeout(() => {
+              previewComponent?.restoreScroll(tocStore.scrollTop);
+          }, 0);
+      } else if (tocStore.content) {
           triggerPreview();
       }
   });
@@ -109,49 +99,51 @@
   async function triggerPreview() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
-      if (!tocContent) {
-          return; // Or clear preview?
+      if (!tocStore.content) {
+          return; 
       }
       
       const config = {
-        tocContent,
-        title,
-        offset,
-        insertPos, // insertPos is part of config, even if unused for preview
-        style: style, // 直接使用绑定的枚举名
-        header: headerConfig,
-        footer: footerConfig
+        tocContent: tocStore.content,
+        title: tocStore.title,
+        offset: tocStore.offset,
+        insertPos: tocStore.insertPos,
+        style: tocStore.style,
+        header: tocStore.headerConfig,
+        footer: tocStore.footerConfig
       };
 
       try {
-        // rpc.generateTocPreview returns JSON string of ImagePageUpdate[]
         const resultJson = await rpc.generateTocPreview(config);
-        previewComponent?.renderImage(resultJson);
+        // Only update if we got valid images back
+        if (resultJson && resultJson !== "[]") {
+            tocStore.previewData = resultJson; // Cache result
+            previewComponent?.renderImage(resultJson);
+        }
       } catch (e: any) {
         console.error("Preview failed", e);
-        // messageStore.add("Preview failed: " + e.message, "ERROR"); // Maybe too noisy for debounce
       }
     }, 500);
   }
 
   async function handleGenerate() {
-      if (!tocContent) {
+      if (!tocStore.content) {
           messageStore.add("Please enter TOC content first.", "WARNING");
           return;
       }
 
       const config = {
-        tocContent,
-        title,
-        offset,
-        insertPos,
-        style: style, // 直接使用绑定的枚举名
-        header: headerConfig,
-        footer: footerConfig
+        tocContent: tocStore.content,
+        title: tocStore.title,
+        offset: tocStore.offset,
+        insertPos: tocStore.insertPos,
+        style: tocStore.style,
+        header: tocStore.headerConfig,
+        footer: tocStore.footerConfig
       };
       
       try {
-          await rpc.generateTocPage(config, null); // destFilePath null means overwrite/auto
+          await rpc.generateTocPage(config, null); 
           messageStore.add("Table of Contents generated successfully!", "SUCCESS");
       } catch (e: any) {
           console.error("Generate failed", e);
@@ -171,25 +163,25 @@
             position="top" 
             label="Header" 
             expanded={showHeader} 
-            hasContent={hasContent(headerConfig)}
+            hasContent={hasContent(tocStore.headerConfig)}
             ontoggle={() => showHeader = !showHeader} 
           />
           {#if showHeader}
             <div transition:slide={{ duration: 200 }}>
               <SectionEditor 
                 type="header"
-                bind:config={headerConfig} 
+                bind:config={tocStore.headerConfig} 
               />
             </div>
           {/if}
 
           <div class="header">
-            <input type="text" bind:value={title} oninput={triggerPreview} placeholder="Title" class="title-input"/>
+            <input type="text" bind:value={tocStore.title} oninput={triggerPreview} placeholder="Title" class="title-input"/>
           </div>
           
           <div class="editor-wrapper">
             <TocEditor 
-                bind:value={tocContent} 
+                bind:value={tocStore.content} 
                 onchange={handleContentChange} 
                 placeholder="Enter TOC here..."
             />
@@ -200,7 +192,7 @@
             <div transition:slide={{ duration: 200 }}>
               <SectionEditor 
                 type="footer"
-                bind:config={footerConfig} 
+                bind:config={tocStore.footerConfig} 
               />
             </div>
           {/if}
@@ -208,7 +200,7 @@
             position="bottom" 
             label="Footer" 
             expanded={showFooter} 
-            hasContent={hasContent(footerConfig)}
+            hasContent={hasContent(tocStore.footerConfig)}
             ontoggle={() => showFooter = !showFooter} 
           />
         </div>
@@ -216,17 +208,21 @@
         
         {#snippet right()}
         <div class="h-full">
-          <!-- mode="image" uses the JSON image updates -->
-          <Preview bind:this={previewComponent} mode="image" onrefresh={triggerPreview} />
+          <Preview 
+            bind:this={previewComponent} 
+            mode="image" 
+            onrefresh={triggerPreview} 
+            onScroll={(top) => tocStore.scrollTop = top}
+          />
         </div>
         {/snippet}
       </SplitPane>
   </div>
 
   <StatusBar 
-      bind:offset 
-      bind:insertPos 
-      bind:style 
+      bind:offset={tocStore.offset} 
+      bind:insertPos={tocStore.insertPos} 
+      bind:style={tocStore.style} 
       onGenerate={handleGenerate} 
       onParamChange={triggerPreview} 
   />

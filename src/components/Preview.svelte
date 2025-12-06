@@ -9,6 +9,7 @@
     import PagedRenderer from "./renderers/PagedRenderer.svelte";
     export let mode: "svg" | "image" | "paged" = "paged"; // Default to paged
     export let onrefresh: (() => void | Promise<void>) | undefined = undefined; // onrefresh might be async
+    export let onScroll: ((top: number) => void) | undefined = undefined;
 
     // Payload for PagedRenderer
     export let pagedPayload: {
@@ -38,6 +39,10 @@
     export const setDoubleBuffer = (enable: boolean) => {
         setDoubleBuffering(enable);
     };
+    export const restoreScroll = (top: number) => {
+        if (viewport) viewport.scrollTop = top;
+    };
+    
     function updateSliderBackground(val: number) {
         const min = 0.5;
         const max = 3.0;
@@ -73,6 +78,10 @@
     }
 
     function handleScroll() {
+        if (onScroll && viewport) {
+            onScroll(viewport.scrollTop);
+        }
+        
         // Only SVG mode needs scroll notification to manage virtual rendering
         if (mode === "svg" && !isScrolling) {
             window.requestAnimationFrame(() => {
