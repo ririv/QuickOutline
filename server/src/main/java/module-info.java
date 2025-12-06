@@ -38,7 +38,6 @@ module quickoutline {
     requires org.apache.xmlgraphics.batik.anim;
     requires org.apache.xmlgraphics.batik.transcoder;
     requires org.apache.xmlgraphics.batik.svggen;
-    requires de.rototor.pdfbox.graphics2d;
     requires org.apache.xmlgraphics.batik.dom;
     requires org.apache.pdfbox.io;
 
