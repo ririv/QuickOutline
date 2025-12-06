@@ -200,21 +200,23 @@ function renderPageNode(pageDiv: HTMLElement, svgContent: string) {
         // --- 双缓冲加载逻辑 ---
         const parser = new DOMParser();
         const doc = parser.parseFromString(svgContent, "image/svg+xml");
-        const newSvg = doc.documentElement;
+        const parsedElement = doc.documentElement;
 
-        if (newSvg.tagName.toLowerCase() === 'svg') {
-            newSvg.classList.add('preload');
-            pageDiv.appendChild(newSvg);
+        if (parsedElement instanceof SVGSVGElement) {
+            parsedElement.classList.add('preload');
+            pageDiv.appendChild(parsedElement);
 
             requestAnimationFrame(() => {
-                newSvg.classList.add('current');
-                newSvg.classList.remove('preload');
+                parsedElement.classList.add('current');
+                parsedElement.classList.remove('preload');
 
-                const oldSvgs = Array.from(pageDiv.querySelectorAll('svg')).filter(el => el !== newSvg);
+                const oldSvgs = Array.from(pageDiv.querySelectorAll('svg')).filter(el => el !== parsedElement);
                 if (oldSvgs.length > 0) {
                     setTimeout(() => oldSvgs.forEach(el => el.remove()), 300); // 与 CSS transition 保持一致
                 }
             });
+        } else {
+            console.error("Parsed document element is not an SVGSVGElement", parsedElement);
         }
     } else {
         // --- 直接替换逻辑 ---
