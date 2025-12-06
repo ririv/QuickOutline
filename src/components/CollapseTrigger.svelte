@@ -1,9 +1,11 @@
 <script lang="ts">
+  import type {SectionConfig} from "@/lib/api/rpc";
+
   interface Props {
     position: 'top' | 'bottom';
     label?: string;
     expanded?: boolean;
-    hasContent?: boolean;
+    content?: SectionConfig;
     ontoggle?: () => void;
   }
 
@@ -11,7 +13,7 @@
     position, 
     label = '', 
     expanded = false, 
-    hasContent = false,
+    content = {} as SectionConfig,
     ontoggle 
   }: Props = $props();
 
@@ -26,12 +28,21 @@
   function handleMouseLeave() {
       isHovered = false;
   }
+
+  function hasContent(config: SectionConfig) {
+      const hasText = Object.entries(config).some(([k, v]) => {
+          if (k === 'drawLine') return false;
+          return typeof v === 'string' && v.trim().length > 0 && v !== '{p}';
+      });
+      return hasText || config.drawLine;
+  }
+
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div 
-  class="collapse-trigger {position} {expanded ? 'expanded' : ''} {isHovered ? 'hover' : ''} {hasContent ? 'has-content-line' : ''}" 
+  class="collapse-trigger {position} {expanded ? 'expanded' : ''} {isHovered ? 'hover' : ''} {content.drawLine ? 'has-content-line' : ''}"
   onclick={ontoggle}
   onmouseenter={handleMouseEnter}
   onmouseleave={handleMouseLeave}
@@ -41,7 +52,7 @@
   <div class="static-divider"></div>
   
   <!-- Persistent hint dot (centered) when collapsed and not hovered -->
-  <div class="center-dot" class:visible={hasContent && !expanded}></div>
+  <div class="center-dot" class:visible={hasContent(content) && !expanded}></div>
 
   <div class="content">
     <span class="icon-wrapper">
@@ -55,7 +66,7 @@
         <!-- Inner dot (follows icon) for hover/expanded state -->
         <span 
           class="dot" 
-          class:has-content={hasContent}
+          class:has-content={hasContent(content)}
         ></span>
     </span>
     <span class="hint-text">{label}</span>

@@ -54,14 +54,6 @@
       triggerPreview();
   }
   
-  function hasContent(config: typeof tocStore.headerConfig) {
-      const hasText = Object.entries(config).some(([k, v]) => {
-          if (k === 'drawLine') return false;
-          return typeof v === 'string' && v.trim().length > 0 && v !== '{p}';
-      });
-      return hasText || config.drawLine;
-  }
-  
   // React to config changes
   $effect(() => {
     // Create dependencies on store properties to trigger updates
@@ -163,7 +155,7 @@
             position="top" 
             label="Header" 
             expanded={showHeader} 
-            hasContent={hasContent(tocStore.headerConfig)}
+            content={tocStore.headerConfig}
             ontoggle={() => showHeader = !showHeader} 
           />
           {#if showHeader}
@@ -200,7 +192,7 @@
             position="bottom" 
             label="Footer" 
             expanded={showFooter} 
-            hasContent={hasContent(tocStore.footerConfig)}
+            content={tocStore.footerConfig}
             ontoggle={() => showFooter = !showFooter} 
           />
         </div>

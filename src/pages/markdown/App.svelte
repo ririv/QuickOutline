@@ -31,13 +31,6 @@
   
   let debounceTimer: number; // For live preview debounce
 
-  function hasContent(config: typeof headerConfig) {
-      const hasText = Object.entries(config).some(([k, v]) => {
-          if (k === 'drawLine') return false;
-          return typeof v === 'string' && v.trim().length > 0 && v !== '{p}';
-      });
-      return hasText || config.drawLine;
-  }
 
   onMount(() => {
     // Initialize Bridge to route Java calls to components
@@ -143,7 +136,7 @@
             position="top" 
             label="Header" 
             expanded={showHeader} 
-            hasContent={hasContent(headerConfig)}
+            content={headerConfig}
             ontoggle={() => showHeader = !showHeader} 
           />
           {#if showHeader}
@@ -172,7 +165,7 @@
             position="bottom" 
             label="Footer" 
             expanded={showFooter} 
-            hasContent={hasContent(footerConfig)}
+            content={footerConfig}
             ontoggle={() => showFooter = !showFooter} 
           />
         </div>
