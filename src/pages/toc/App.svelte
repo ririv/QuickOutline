@@ -1,7 +1,7 @@
 <script lang="ts">
   import SplitPane from '../../components/SplitPane.svelte';
   import Preview from '../../components/Preview.svelte';
-  import SimpleEditor from '../../components/SimpleEditor.svelte';
+  import TocEditor from '../../components/TocEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
   import SectionEditor from '../../components/SectionEditor.svelte';
   import CollapseTrigger from '../../components/CollapseTrigger.svelte';
@@ -167,7 +167,11 @@
           </div>
           
           <div class="editor-wrapper">
-            <SimpleEditor bind:value={tocContent} onchange={triggerPreview} placeholder="Enter TOC here..." />
+            <TocEditor 
+                bind:value={tocContent} 
+                onchange={triggerPreview} 
+                placeholder="Enter TOC here..."
+            />
           </div>
 
           <!-- Footer Trigger & Editor -->

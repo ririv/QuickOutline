@@ -14,11 +14,17 @@
     "update:sidecar": "node scripts/update-sidecar.cjs"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.0",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/search": "^6.5.11",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.8",
     "@tailwindcss/vite": "^4.1.17",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.4.2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-shell": "^2.3.3",
+    "codemirror": "^6.0.2",
     "pagedjs": "^0.4.3",
     "tailwindcss": "^4.1.17",
     "vditor": "^3.11.2"
