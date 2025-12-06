@@ -33,6 +33,26 @@
     function handleInput() {
     }
 
+    function handleInputDoubleClick(e: MouseEvent) {
+        const currentValue = config[activePos];
+        if (currentValue && currentValue.length > 0) {
+            return;
+        }
+
+        const target = e.currentTarget as HTMLElement;
+        const rect = target.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+
+        if (clickX < width / 3) {
+            setActive('left');
+        } else if (clickX > 2 * width / 3) {
+            setActive('right');
+        } else {
+            setActive('center');
+        }
+    }
+
     function toggleDrawLine() {
         config.drawLine = !config.drawLine;
         justToggled = true; // Set to true after any toggle
@@ -240,6 +260,7 @@
     <input
         bind:value={config[activePos]}
         oninput={handleInput}
+        ondblclick={handleInputDoubleClick}
         placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) (e.g. &lbrace;p&rbrace;)..."
         style:text-align={activePos === 'right' ? 'right' : activePos === 'center' ? 'center' : 'left'}
         type="text"
