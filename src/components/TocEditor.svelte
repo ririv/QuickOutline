@@ -102,6 +102,10 @@
     "&.cm-focused": {
         outline: "none"
     },
+    // Hover effect for the editor content area
+    "&.cm-editor:hover .cm-scroller": {
+        backgroundColor: "rgba(0, 0, 0, 0.02)"
+    },
     ".cm-activeLine": {
         backgroundColor: "transparent" // Disable default active line bg if unwanted
     },
