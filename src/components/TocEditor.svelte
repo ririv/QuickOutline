@@ -118,7 +118,7 @@
     }
 
     update(update: ViewUpdate) {
-      if (update.docChanged || update.viewportChanged || update.selectionSet) {
+      if (update.docChanged || update.viewportChanged || update.selectionSet || update.focusChanged) {
         this.decorations = this.computeDecorations(update.view);
       }
     }
@@ -127,13 +127,18 @@
       const builder = new RangeSetBuilder<Decoration>();
       
       // Get current cursor line(s) to exclude them from formatting
+      // Only exclude if the editor HAS FOCUS. If blurred, show all widgets.
       const selection = view.state.selection;
+      const hasFocus = view.hasFocus;
       const cursorLines = new Set<number>();
-      for (const range of selection.ranges) {
-          const startLine = view.state.doc.lineAt(range.from).number;
-          const endLine = view.state.doc.lineAt(range.to).number;
-          for (let i = startLine; i <= endLine; i++) {
-              cursorLines.add(i);
+      
+      if (hasFocus) {
+          for (const range of selection.ranges) {
+              const startLine = view.state.doc.lineAt(range.from).number;
+              const endLine = view.state.doc.lineAt(range.to).number;
+              for (let i = startLine; i <= endLine; i++) {
+                  cursorLines.add(i);
+              }
           }
       }
 

@@ -12,6 +12,7 @@
   import { rpc } from '@/lib/api/rpc';
   import { messageStore } from '@/stores/messageStore';
   import { docStore } from '@/stores/docStore';
+  import { tocStore } from '@/stores/tocStore.svelte';
   import {PageLabelNumberingStyle} from "@/lib/styleMaps";
 
   let previewComponent: Preview;
@@ -34,7 +35,14 @@
   // Auto-load TOC when file changes
   $effect(() => {
       const path = $docStore.currentFilePath;
-      if (path) {
+      
+      // If we have cached content for this file, use it
+      if (tocStore.hasContentFor(path)) {
+          tocContent = tocStore.getContent();
+          // Trigger initial preview
+          triggerPreview();
+      } else if (path) {
+          // Otherwise load from RPC
           loadOutline();
       } else {
           tocContent = '';
@@ -47,12 +55,25 @@
           const outline = await rpc.getOutline(0);
           if (outline) {
               tocContent = outline;
+              // Sync to store immediately so we don't reload on next mount
+              tocStore.setFile($docStore.currentFilePath, outline);
               // Trigger initial preview
               triggerPreview();
           }
       } catch (e) {
           console.error("Failed to load outline", e);
       }
+  }
+  
+  function handleContentChange(val: string) {
+      tocContent = val;
+      // Update store on every change
+      tocStore.updateContent(val);
+      // Ensure store knows which file this content belongs to (if not already set)
+      if ($docStore.currentFilePath) {
+          tocStore.setFile($docStore.currentFilePath, val);
+      }
+      triggerPreview();
   }
   
   function hasContent(config: typeof headerConfig) {
@@ -169,7 +190,7 @@
           <div class="editor-wrapper">
             <TocEditor 
                 bind:value={tocContent} 
-                onchange={triggerPreview} 
+                onchange={handleContentChange} 
                 placeholder="Enter TOC here..."
             />
           </div>
