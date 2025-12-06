@@ -78,17 +78,12 @@
             cdn: cdnPath, // Use local resources copied by plugin
             height: '100%',
             width: '100%',
-            mode: 'sv', // Split view or instant rendering? Original was 'sv'
+            mode: 'ir', // Instant rendering (single column WYSIWYG)
             lang: 'zh_CN',
             placeholder: '在这里输入 Markdown ...',
             cache: { enable: false },
-            toolbarConfig: { pin: true },
-            toolbar: [
-                'headings', 'bold', 'italic', 'strike', 'link', '|',
-                'list', 'ordered-list', 'check', '|',
-                'quote', 'code', 'inline-code', 'code-theme', '|',
-                'table', 'preview', 'outline'
-            ],
+            toolbarConfig: { pin: false }, // No toolbar to pin
+            toolbar: [], // Disable built-in toolbar
             tab: '    ', // 4 spaces
             resize: {
                 enable: false, // 禁用自带的调整大小手柄，由外部容器控制
@@ -189,5 +184,20 @@
         height: 100%;
         width: 100%;
         user-select: text; /* 允许在编辑器内选中文本（覆盖全局禁止） */
+    }
+
+    /* Remove Vditor border */
+    :global(.vditor) {
+        border: none !important;
+    }
+
+    /* Hide toolbar completely */
+    :global(.vditor-toolbar) {
+        display: none !important;
+    }
+
+    /* Remove content padding if toolbar is hidden */
+    :global(.vditor-content) {
+        padding-top: 0 !important;
     }
 </style>
