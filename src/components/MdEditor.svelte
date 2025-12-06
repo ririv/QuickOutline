@@ -103,6 +103,19 @@
             },
             after: () => {
                 if (initialMarkdown) vditorInstance.setValue(initialMarkdown);
+                
+                // Clear inline padding from .vditor-reset to ensure our CSS takes effect
+                const vditorResetElement = element.querySelector('.vditor-reset') as HTMLElement;
+                if (vditorResetElement) {
+                    vditorResetElement.style.padding = '';
+                    // vditorResetElement.style.backgroundColor = 'transparent'; // Removed JS force-set
+                }
+
+                // Fix content padding if Vditor still adds it
+                const content = element.querySelector('.vditor-content') as HTMLElement;
+                if (content) {
+                    content.style.paddingTop = '0';
+                }
             }
         });
     };
@@ -184,11 +197,18 @@
         height: 100%;
         width: 100%;
         user-select: text; /* 允许在编辑器内选中文本（覆盖全局禁止） */
+        background-color: white; /* Default background */
+        transition: background-color 0.2s; /* Smooth transition for hover */
+    }
+
+    .editor-container:hover {
+        background-color: rgba(0, 0, 0, 0.02) !important; /* Force apply hover color */
     }
 
     /* Remove Vditor border */
     :global(.vditor) {
         border: none !important;
+        background-color: transparent !important; /* Always transparent to show parent */
     }
 
     /* Hide toolbar completely */
@@ -197,7 +217,22 @@
     }
 
     /* Remove content padding if toolbar is hidden */
-    :global(.vditor-content) {
+    :global(.vditor-content),
+    :global(.vditor-ir),
+    :global(.vditor-ir--wysiwyg) {
         padding-top: 0 !important;
+        background-color: transparent !important; /* Always transparent to show parent */
+    }
+
+    /* Match SimpleEditor styles: Font & Padding */
+    :global(.vditor-reset) {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        padding-top: 16px !important;
+        padding-bottom: 16px !important;
+        padding-left: 20px !important; /* Set to 20px per user test */
+        padding-right: 20px !important; /* Set to 20px for symmetry */
+        background-color: transparent !important; /* Always transparent to show parent */
     }
 </style>

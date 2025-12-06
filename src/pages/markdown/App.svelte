@@ -227,9 +227,11 @@
   }
   
   .editor-wrapper {
-      flex: 1;
+      flex: 1; /* Make editor fill remaining space */
       overflow: hidden;
       position: relative;
+      padding: 10px; /* Add padding to match TOC/SimpleEditor layout */
+      background-color: white; /* Ensure wrapper background is white */
   }
 
   @media print {
