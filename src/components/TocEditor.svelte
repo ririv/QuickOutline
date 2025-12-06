@@ -65,11 +65,15 @@
         lineHeight: "1.6",
         padding: "16px 22px"
     },
+    // Global reset for line padding to ensure alignment
     ".cm-line": {
+        padding: "0"
+    },
+    // Only apply flex to lines with the leader widget
+    ".cm-flex-line": {
         display: "flex !important", 
         alignItems: "baseline",
-        width: "100%",
-        padding: "0"
+        width: "100%"
     },
     ".toc-leader-widget": {
         display: "flex",
@@ -154,7 +158,14 @@
                   const sepStart = line.from + titleLen;
                   const lineEnd = line.from + text.length;
                   
-                  // Replace [Spaces + Page] with [LeaderWidget(Page)]
+                  // 1. First add the line class (at line start)
+                  builder.add(
+                      line.from,
+                      line.from,
+                      Decoration.line({ attributes: { class: "cm-flex-line" } })
+                  );
+
+                  // 2. Then add the widget replacement (at separator position)
                   builder.add(
                       sepStart, 
                       lineEnd, 
@@ -185,7 +196,7 @@
       extensions: [
         history(),
         highlightActiveLine(),
-        highlightActiveLineGutter(), // Optional
+        // highlightActiveLineGutter(), // Remove potentially layout-shifting gutter
         // lineNumbers(), // Optional, maybe noisy for TOC
         indentOnInput(),
         keymap.of([
