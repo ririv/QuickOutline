@@ -223,3 +223,13 @@
         {/snippet}
     </SplitPane>
 </main>
+
+<style>
+    .title {
+        font-size: 12px;
+        font-weight: bold;
+        color: #9198a1;
+        margin-bottom: 10px;
+        display: block;
+    }
+</style>

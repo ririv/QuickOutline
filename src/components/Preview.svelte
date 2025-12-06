@@ -210,6 +210,11 @@
         min-height: 842pt;
     }
 
+    :global(.page-wrapper) {
+        width: 595pt;
+        height: 842pt;
+    }
+
     /* SVG/Image Engine Specific Styles - Restored */
     :global(.page-wrapper svg) {
         display: block;

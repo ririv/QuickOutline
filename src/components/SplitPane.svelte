@@ -118,4 +118,15 @@
         /* Center 4px line: -2px offset */
         left: -2px;
     }
+
+    /* --- Global Protection during Drag --- */
+    :global(body.is-resizing) {
+        cursor: col-resize !important;
+    }
+
+    :global(body.is-resizing *) {
+        pointer-events: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
 </style>

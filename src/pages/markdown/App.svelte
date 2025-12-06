@@ -242,12 +242,12 @@
     
     /* Hide the editor pane explicitly if global CSS doesn't catch it */
     .editor-wrapper, 
-    :global(.left-panel),
+    .left-panel,
     :global(.status-bar) {
         display: none !important;
     }
     
-    :global(.right-panel) {
+    .right-panel {
         height: auto !important;
         overflow: visible !important;
     }

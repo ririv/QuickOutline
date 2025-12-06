@@ -88,7 +88,7 @@
     }
 
     /* Styling for Hyperlink to match buttons or have a distinct look */
-    .info-item :global(a) {
+    .info-item a {
         color: #1677ff;
         text-decoration: none;
         display: flex;
@@ -97,7 +97,7 @@
         transition: color 0.2s;
     }
 
-    .info-item :global(a:hover) {
+    .info-item a:hover {
         color: #409eff;
         text-decoration: underline;
     }

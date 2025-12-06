@@ -43,7 +43,11 @@
 </ArrowPopup>
 
 <style>
-    /*
-      The .title class is still defined in global.css.
-    */
+    .title {
+        font-size: 12px;
+        font-weight: bold;
+        color: #9198a1;
+        margin-bottom: 10px;
+        display: block;
+    }
 </style>
