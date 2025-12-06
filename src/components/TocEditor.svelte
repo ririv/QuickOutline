@@ -2,8 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import { EditorState, RangeSetBuilder } from '@codemirror/state';
   import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, ViewPlugin, Decoration, type ViewUpdate, WidgetType } from '@codemirror/view';
-  import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-  import { indentOnInput } from '@codemirror/language';
+  import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+  import { indentOnInput, indentUnit } from '@codemirror/language';
   import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 
   // --- Props ---
@@ -208,17 +208,12 @@
         // highlightActiveLineGutter(), // Remove potentially layout-shifting gutter
         // lineNumbers(), // Optional, maybe noisy for TOC
         indentOnInput(),
+        indentUnit.of("    "), // Set indentation to 4 spaces
         keymap.of([
+            indentWithTab, // Standard Tab/Shift-Tab behavior
             ...defaultKeymap, 
             ...historyKeymap, 
-            ...searchKeymap,
-            {
-                key: "Tab",
-                run: (view) => {
-                    view.dispatch(view.state.replaceSelection("    "));
-                    return true;
-                }
-            }
+            ...searchKeymap
         ]),
         tocTheme,
         tocPlugin,
