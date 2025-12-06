@@ -50,6 +50,8 @@
     }
 
     ignoreEvent() { return false; }
+
+    eq(other: LeaderWidget) { return other.page == this.page; }
   }
 
   // Match: Title + (at least 1 space/tab) + PageNumber(digits) + EndOfLine
@@ -75,7 +77,8 @@
         alignItems: "baseline",
         // marginLeft: "4px", // 根据最新要求，移除此行
         cursor: "default",
-        userSelect: "none"
+        userSelect: "none",
+        animation: "leaderFadeIn 0.3s ease-out forwards" // 添加淡入动画
     },
     ".toc-leader-dots": {
         flexGrow: "1",

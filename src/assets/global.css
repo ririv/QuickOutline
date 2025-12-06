@@ -76,3 +76,8 @@ input, textarea, [contenteditable="true"] {
     background: transparent;
 }
 
+/* --- Animations --- */
+@keyframes leaderFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
