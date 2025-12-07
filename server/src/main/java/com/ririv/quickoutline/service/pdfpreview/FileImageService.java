@@ -19,6 +19,7 @@ public class FileImageService {
     private static final Logger log = LoggerFactory.getLogger(FileImageService.class);
 
     private final Map<Integer, byte[]> cache = new ConcurrentHashMap<>();
+    private final Map<Integer, byte[]> thumbCache = new ConcurrentHashMap<>();
     private PdfRenderSession session;
     private int totalPages = 0;
 
@@ -38,6 +39,7 @@ public class FileImageService {
             session = null;
         }
         cache.clear();
+        thumbCache.clear();
         totalPages = 0;
     }
 
@@ -61,6 +63,31 @@ public class FileImageService {
                     .thenApply(data -> {
                         if (data != null) {
                             cache.put(pageIndex, data);
+                        }
+                        return data;
+                    });
+        }
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    public CompletableFuture<byte[]> getThumbnail(int pageIndex) {
+        // 1. Check Cache
+        byte[] cached = thumbCache.get(pageIndex);
+        if (cached != null) {
+            return CompletableFuture.completedFuture(cached);
+        }
+
+        // 2. Render from Session
+        if (session != null) {
+            if (pageIndex < 0 || pageIndex >= totalPages) {
+                return CompletableFuture.completedFuture(null);
+            }
+            // Use THUMBNAIL_SCALE (1.0) or even smaller if needed
+            return session.renderToPngWithScaleAsync(pageIndex, PdfRenderSession.THUMBNAIL_SCALE)
+                    .thenApply(data -> {
+                        if (data != null) {
+                            thumbCache.put(pageIndex, data);
                         }
                         return data;
                     });

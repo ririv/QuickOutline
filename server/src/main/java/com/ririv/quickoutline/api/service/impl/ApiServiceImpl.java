@@ -320,6 +320,11 @@ public class ApiServiceImpl implements ApiService {
     }
 
     @Override
+    public CompletableFuture<byte[]> getFileThumbnailAsync(int pageIndex) {
+        return fileImageService.getThumbnail(pageIndex);
+    }
+
+    @Override
     public CompletableFuture<byte[]> getPreviewImageAsync(int pageIndex) {
         return previewImageService.getImage(pageIndex);
     }

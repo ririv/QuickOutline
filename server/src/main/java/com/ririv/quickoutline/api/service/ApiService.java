@@ -63,6 +63,11 @@ public interface ApiService {
     CompletableFuture<byte[]> getFileImageAsync(int pageIndex);
 
     /**
+     * Gets thumbnail image data from the currently opened file.
+     */
+    CompletableFuture<byte[]> getFileThumbnailAsync(int pageIndex);
+
+    /**
      * Gets image data from the current preview stream (TOC generation).
      */
     CompletableFuture<byte[]> getPreviewImageAsync(int pageIndex);

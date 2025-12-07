@@ -88,7 +88,15 @@ public class SidecarApp {
             
             // 1. File Images (No Cache)
             if (path.startsWith("/file_images/")) {
-                handleImageRequest(req, path, "/file_images/", false, apiService::getFileImageAsync);
+                // Check query params for type=thumb
+                String query = req.query();
+                boolean isThumb = query != null && query.contains("type=thumb");
+                
+                if (isThumb) {
+                    handleImageRequest(req, path, "/file_images/", false, apiService::getFileThumbnailAsync);
+                } else {
+                    handleImageRequest(req, path, "/file_images/", false, apiService::getFileImageAsync);
+                }
             }
             // 2. Preview Images (Cached, assumes ?v=... is used)
             else if (path.startsWith("/preview_images/")) {

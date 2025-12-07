@@ -63,10 +63,19 @@
 
     function getThumbnailUrl(index: number) {
         if ($appStore.serverPort && $appStore.serverPort > 0) {
-            const url = `http://127.0.0.1:${$appStore.serverPort}/file_images/${index}.png?v=${$docStore.version}`;
+            const url = `http://127.0.0.1:${$appStore.serverPort}/file_images/${index}.png?v=${$docStore.version}&type=thumb`;
             return url;
         }
         console.warn('Server port not set when requesting thumbnail');
+        return '';
+    }
+
+    function getNormalImageUrl(index: number) {
+        if ($appStore.serverPort && $appStore.serverPort > 0) {
+            const url = `http://127.0.0.1:${$appStore.serverPort}/file_images/${index}.png?v=${$docStore.version}`;
+            return url;
+        }
+        console.warn('Server port not set when requesting normal image');
         return '';
     }
 
@@ -75,7 +84,7 @@
         const target = e.currentTarget as HTMLElement;
         const rect = target.getBoundingClientRect();
         hoveredImage = {
-            src: getThumbnailUrl(index),
+            src: getNormalImageUrl(index),
             y: rect.top + rect.height / 2,
             x: rect.left
         };
