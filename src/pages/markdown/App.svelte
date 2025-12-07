@@ -9,25 +9,12 @@
   import { confirm } from '@/stores/confirm.svelte'; // Import confirm helper
   import { initBridge } from '@/lib/bridge';
   import '../../assets/global.css';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { slide } from 'svelte/transition';
+  import { markdownStore } from '@/stores/markdownStore.svelte';
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
-  
-  // Payload state for Preview component
-  let currentPagedPayload: any = $state(null);
-
-  // State for StatusBar
-  let insertPos = $state(1);
-  // style is not used in Markdown tab currently, but binding is required by StatusBar prop
-  let style = $state('None');
-  
-  let headerConfig = $state({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
-  let footerConfig = $state({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
-  
-  let showHeader = $state(false);
-  let showFooter = $state(false);
   
   let debounceTimer: number; // For live preview debounce
 
@@ -41,14 +28,36 @@
       onSetSvgDoubleBuffering: (enable) => (previewComponent as any)?.setDoubleBuffer && (previewComponent as any).setDoubleBuffer(enable),
 
       // Editor actions
-      onInitVditor: (md) => editorComponent?.init(md),
+      onInitVditor: (md) => {
+          editorComponent?.init(md);
+          // Also update store if init comes from outside
+          markdownStore.updateContent(md);
+      },
       onInsertContent: (text) => editorComponent?.insertValue(text),
       onGetContent: () => editorComponent?.getValue(),
-      onSetContent: (md) => editorComponent?.setValue(md),
+      onSetContent: (md) => {
+          editorComponent?.setValue(md);
+          markdownStore.updateContent(md);
+      },
       onInsertImageMarkdown: (path) => editorComponent?.insertImageMarkdown(path),
       onGetContentHtml: () => editorComponent?.getContentHtml(),
       onGetPayloads: () => editorComponent?.getPayloads(),
     });
+
+    // Restore content from store if available
+    if (markdownStore.content) {
+        // Use setTimeout to ensure editor is mounted and init called (MdEditor init is in onMount)
+        setTimeout(() => {
+            editorComponent?.setValue(markdownStore.content);
+        }, 0);
+    }
+  });
+
+  onDestroy(() => {
+      // Save content to store on unmount
+      if (editorComponent) {
+          markdownStore.updateContent(editorComponent.getValue());
+      }
   });
 
 
@@ -59,8 +68,8 @@
 
     const request = {
       ...payload,
-      header: headerConfig,
-      footer: footerConfig
+      header: markdownStore.headerConfig,
+      footer: markdownStore.footerConfig
     };
 
     // Assuming Java bridge has updatePreview method that accepts json string
@@ -82,10 +91,10 @@
     // Note: style is not used in Markdown PDF generation currently, but we pass it anyway
     const request = {
       ...payload, // html, styles
-      insertPos,
-      style,
-      header: headerConfig,
-      footer: footerConfig
+      insertPos: markdownStore.insertPos,
+      style: markdownStore.style,
+      header: markdownStore.headerConfig,
+      footer: markdownStore.footerConfig
     };
 
     if (window.javaBridge && window.javaBridge.renderPdf) {
@@ -101,10 +110,10 @@
       const payload = JSON.parse(payloadJson);
       
       // Update the reactive state, which will trigger Preview -> PagedRenderer
-      currentPagedPayload = {
+      markdownStore.currentPagedPayload = {
           ...payload,
-          header: headerConfig,
-          footer: footerConfig
+          header: markdownStore.headerConfig,
+          footer: markdownStore.footerConfig
       };
   }
 
@@ -135,15 +144,15 @@
           <CollapseTrigger 
             position="top" 
             label="Header" 
-            expanded={showHeader} 
-            content={headerConfig}
-            ontoggle={() => showHeader = !showHeader} 
+            expanded={markdownStore.showHeader} 
+            content={markdownStore.headerConfig}
+            ontoggle={() => markdownStore.showHeader = !markdownStore.showHeader} 
           />
-          {#if showHeader}
+          {#if markdownStore.showHeader}
             <div transition:slide={{ duration: 200 }}>
               <SectionEditor 
                 type="header"
-                bind:config={headerConfig} 
+                bind:config={markdownStore.headerConfig} 
               />
             </div>
           {/if}
@@ -153,20 +162,20 @@
           </div>
 
           <!-- Footer Trigger & Editor -->
-          {#if showFooter}
+          {#if markdownStore.showFooter}
             <div transition:slide={{ duration: 200 }}>
               <SectionEditor 
                 type="footer"
-                bind:config={footerConfig} 
+                bind:config={markdownStore.footerConfig} 
               />
             </div>
           {/if}
           <CollapseTrigger 
             position="bottom" 
             label="Footer" 
-            expanded={showFooter} 
-            content={footerConfig}
-            ontoggle={() => showFooter = !showFooter} 
+            expanded={markdownStore.showFooter} 
+            content={markdownStore.footerConfig}
+            ontoggle={() => markdownStore.showFooter = !markdownStore.showFooter} 
           />
         </div>
         {/snippet}
@@ -177,7 +186,7 @@
           <Preview 
             bind:this={previewComponent} 
             mode="paged" 
-            pagedPayload={currentPagedPayload}
+            pagedPayload={markdownStore.currentPagedPayload}
             onrefresh={triggerPreview} 
           />
         </div>
@@ -186,8 +195,8 @@
   </div>
   
   <StatusBar 
-      bind:insertPos 
-      bind:style 
+      bind:insertPos={markdownStore.insertPos} 
+      bind:style={markdownStore.style} 
       showOffset={false} 
       showStyle={false}
       onGenerate={handleGenerate} 
