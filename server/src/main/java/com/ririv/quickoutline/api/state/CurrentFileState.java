@@ -15,7 +15,7 @@ public class CurrentFileState {
         return filePath;
     }
 
-    public boolean isOpen() {
+    public boolean isExist() {
         return filePath != null && !filePath.trim().isEmpty();
     }
 

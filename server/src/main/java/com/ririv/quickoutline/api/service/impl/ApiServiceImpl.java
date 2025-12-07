@@ -62,7 +62,7 @@ public class ApiServiceImpl implements ApiService {
     }
 
     private void checkFileOpen() {
-        if (!currentFileState.isOpen()) throw new IllegalStateException("No file open");
+        if (!currentFileState.isExist()) throw new IllegalStateException("No file open");
     }
 
     @Override
@@ -117,7 +117,6 @@ public class ApiServiceImpl implements ApiService {
 
     @Override
     public BookmarkDto syncFromText(String text) {
-        checkFileOpen();
         // Parse Text -> Domain
         Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
 
@@ -130,7 +129,6 @@ public class ApiServiceImpl implements ApiService {
 
     @Override
     public String syncFromTree(BookmarkDto dto) {
-        checkFileOpen();
         // DTO -> Domain
         Bookmark root = dto.toDomain();
 
@@ -356,7 +354,6 @@ public class ApiServiceImpl implements ApiService {
 
     @Override
     public List<String> simulatePageLabels(List<PageLabelRule> rules) {
-        checkFileOpen();
         try {
             String[] existingLabels = pdfPageLabelService.getPageLabels(currentFileState.getFilePath());
             int totalPages = existingLabels == null ? 0 : existingLabels.length;
