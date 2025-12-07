@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store'; // Import get
-    import { bookmarkStore } from '@/stores/bookmarkStore';
+    import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { rpc } from '@/lib/api/rpc';
     import { messageStore } from '@/stores/messageStore';
     import type { Bookmark } from './types';

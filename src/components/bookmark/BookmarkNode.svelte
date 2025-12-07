@@ -3,7 +3,7 @@
     import BookmarkNode from "./BookmarkNode.svelte"; // Self-import for recursion
     import { tick, getContext } from "svelte";
     import { appStore } from '@/stores/appStore';
-    import { bookmarkStore } from '@/stores/bookmarkStore';
+    import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore';
 
     interface Props {

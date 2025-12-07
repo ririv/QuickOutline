@@ -15,7 +15,7 @@
     import { ripple } from '@/lib/actions/ripple';
     
     import { rpc } from '@/lib/api/rpc';
-    import { bookmarkStore } from '@/stores/bookmarkStore';
+    import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { messageStore } from '@/stores/messageStore';
     import { get } from 'svelte/store';
     import type { Bookmark } from '@/components/bookmark/types';

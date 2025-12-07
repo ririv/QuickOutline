@@ -2,7 +2,7 @@
     import type { Bookmark } from "./types";
     import BookmarkNode from "./BookmarkNode.svelte";
     import { onMount, onDestroy, setContext } from 'svelte';
-    import { bookmarkStore } from '@/stores/bookmarkStore';
+    import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { rpc } from '@/lib/api/rpc';
     import { messageStore } from '@/stores/messageStore';
     import { get } from 'svelte/store';
