@@ -190,6 +190,7 @@ jlink {
         // def installerOptionsParams = [ ... ] // <--- 整个错误定义的代码块已被删除
 
         println('Current OS: '+os)
+        println ">> BUILD JAVA INFO: ${System.getProperty('java.version')} (${System.getProperty('java.vendor')})"
 
 
         // 安装器类型和图标（按平台动态配置）
