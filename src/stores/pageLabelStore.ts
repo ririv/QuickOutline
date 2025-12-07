@@ -3,7 +3,7 @@ import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/styleMaps";
 
 export interface PageLabelRule {
     id: string;
-    styleDisplay: string;
+    numberingStyleDisplay: string;
     prefix: string;
     start: number;
     fromPage: number;

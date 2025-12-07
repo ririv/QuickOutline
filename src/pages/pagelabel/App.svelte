@@ -43,7 +43,7 @@
         // Create ViewModel object for the Store
         const newRule: StoreRule = {
             id: Date.now().toString(),
-            styleDisplay: $pageLabelStore.numberingStyle == PageLabelNumberingStyle.NONE ? "" : pageLabelStyleMap.getDisplayText($pageLabelStore.numberingStyle), // Keep display string in store
+            numberingStyleDisplay: $pageLabelStore.numberingStyle == PageLabelNumberingStyle.NONE ? "" : pageLabelStyleMap.getDisplayText($pageLabelStore.numberingStyle), // Keep display string in store
             prefix: $pageLabelStore.prefix,
             start: parseInt($pageLabelStore.startNumber) || 1,
             fromPage: parseInt($pageLabelStore.startPage) || 1
@@ -76,7 +76,7 @@
             start: r.start,
             prefix: r.prefix,
             // Map display string back to Enum for the backend
-            style: pageLabelStyleMap.getEnumName(r.styleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
+            style: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
         }));
 
         try {
@@ -95,7 +95,7 @@
             fromPage: r.fromPage,
             start: r.start,
             prefix: r.prefix,
-            style: pageLabelStyleMap.getEnumName(r.styleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
+            style: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
         }));
         
         // TODO: Call backend apply API with dtos
@@ -182,7 +182,7 @@
                                         {#if rule.prefix}
                                             <span class="text-[#606266] bg-[#f4f4f5] px-1 rounded-[3px] text-[11px] border border-[#e9e9eb]">{rule.prefix}</span>
                                         {/if}
-                                        <span class="overflow-hidden text-ellipsis">{rule.styleDisplay}</span>
+                                        <span class="overflow-hidden text-ellipsis">{rule.numberingStyleDisplay}</span>
                                     </div>
                                     <div class="text-[10px] text-[#909399] leading-tight">
                                         Start: {rule.start}

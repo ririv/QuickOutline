@@ -20,7 +20,7 @@ export class TocState {
     title = $state('Table of Contents');
     offset = $state(0);
     insertPos = $state(1);
-    style = $state(PageLabelNumberingStyle.NONE);
+    numberingStyle = $state(PageLabelNumberingStyle.NONE);
     
     headerConfig = $state<SectionConfig>({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
     footerConfig = $state<SectionConfig>({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
@@ -50,7 +50,7 @@ export class TocState {
         this.title = 'Table of Contents';
         this.offset = 0;
         this.insertPos = 1;
-        this.style = PageLabelNumberingStyle.NONE;
+        this.numberingStyle = PageLabelNumberingStyle.NONE;
         this.headerConfig = { left: '', center: '', right: '', inner: '', outer: '', drawLine: false };
         this.footerConfig = { left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false };
     }

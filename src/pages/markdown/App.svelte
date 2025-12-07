@@ -92,7 +92,7 @@
     const request = {
       ...payload, // html, styles
       insertPos: markdownStore.insertPos,
-      style: markdownStore.style,
+      style: markdownStore.numberingStyle,
       header: markdownStore.headerConfig,
       footer: markdownStore.footerConfig
     };
@@ -196,7 +196,7 @@
   
   <StatusBar 
       bind:insertPos={markdownStore.insertPos} 
-      bind:style={markdownStore.style} 
+      bind:style={markdownStore.numberingStyle}
       showOffset={false} 
       showStyle={false}
       onGenerate={handleGenerate} 

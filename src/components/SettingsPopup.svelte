@@ -9,7 +9,7 @@
     type: 'offset' | 'pos' | 'style';
     offset?: number;
     insertPos?: number;
-    style?: PageLabelNumberingStyle; // 改为枚举名
+    numberingStyle?: PageLabelNumberingStyle; // 改为枚举名
     onchange?: () => void;
     triggerEl: HTMLElement; // Prop for positioning
   }
@@ -18,13 +18,13 @@
     type, 
     offset = $bindable(0),
     insertPos = $bindable(1),
-    style = $bindable(PageLabelNumberingStyle.NONE),
+    numberingStyle = $bindable(PageLabelNumberingStyle.NONE),
     onchange,
     triggerEl
   }: Props = $props();
 
   function handleStyleSelect(s: PageLabelNumberingStyle) {
-      style = s;
+      numberingStyle = s;
       onchange?.();
   }
 </script>
@@ -46,7 +46,7 @@
       <StyledInput type="number" bind:value={insertPos} numericType="unsigned-integer" />
       <div class="hint">Page number to insert TOC at.</div>
   {:else if type === 'style'}
-      <StyleList selected={style} onselect={handleStyleSelect} />
+      <StyleList selected={numberingStyle} onselect={handleStyleSelect} />
   {/if}
 </ArrowPopup>
 

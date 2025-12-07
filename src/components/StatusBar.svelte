@@ -6,9 +6,9 @@
   interface Props {
     offset?: number;
     insertPos?: number;
-    style?: PageLabelNumberingStyle; // 改为枚举名
+    numberingStyle?: PageLabelNumberingStyle; // 改为枚举名
     showOffset?: boolean;
-    showStyle?: boolean;
+    showNumberingStyle?: boolean;
     onGenerate?: () => void;
     onParamChange?: () => void;
   }
@@ -16,9 +16,9 @@
   let { 
     offset = $bindable(0),
     insertPos = $bindable(1),
-    style = $bindable(PageLabelNumberingStyle.NONE),
+    numberingStyle = $bindable(PageLabelNumberingStyle.NONE),
     showOffset = true,
-    showStyle = true,
+    showNumberingStyle = true,
     onGenerate,
     onParamChange
   }: Props = $props();
@@ -71,7 +71,7 @@
               </span> Offset: {offset}
           </div>
           {#if activePopup === 'offset'}
-              <SettingsPopup type="offset" bind:offset bind:insertPos bind:style onchange={onParamChange} triggerEl={offsetBtnEl} />
+              <SettingsPopup type="offset" bind:offset bind:insertPos bind:numberingStyle onchange={onParamChange} triggerEl={offsetBtnEl} />
           {/if}
       </div>
   {/if}
@@ -90,11 +90,11 @@
           </span> Pos: {insertPos}
       </div>
       {#if activePopup === 'pos'}
-          <SettingsPopup type="pos" bind:offset bind:insertPos bind:style onchange={onParamChange} triggerEl={posBtnEl} />
+          <SettingsPopup type="pos" bind:offset bind:insertPos bind:numberingStyle onchange={onParamChange} triggerEl={posBtnEl} />
       {/if}
   </div>
 
-  {#if showStyle}
+  {#if showNumberingStyle}
   <div class="status-item-wrapper">
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -106,10 +106,10 @@
       >
           <span class="icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
-          </span> Page Num: {pageLabelStyleMap.getDisplayText(style)}
+          </span> Page Num: {pageLabelStyleMap.getDisplayText(numberingStyle)}
       </div>
       {#if activePopup === 'style'}
-          <SettingsPopup type="style" bind:offset bind:insertPos bind:style onchange={onPopupChange} triggerEl={styleBtnEl} />
+          <SettingsPopup type="style" bind:offset bind:insertPos bind:numberingStyle onchange={onPopupChange} triggerEl={styleBtnEl} />
       {/if}
   </div>
   {/if}

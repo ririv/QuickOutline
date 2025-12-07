@@ -63,7 +63,7 @@
         t: tocStore.title,
         o: tocStore.offset,
         i: tocStore.insertPos,
-        s: tocStore.style
+        s: tocStore.numberingStyle
     };
 
     clearTimeout(debounceTimer);
@@ -100,7 +100,7 @@
         title: tocStore.title,
         offset: tocStore.offset,
         insertPos: tocStore.insertPos,
-        style: tocStore.style,
+        style: tocStore.numberingStyle,
         header: tocStore.headerConfig,
         footer: tocStore.footerConfig
       };
@@ -129,7 +129,7 @@
         title: tocStore.title,
         offset: tocStore.offset,
         insertPos: tocStore.insertPos,
-        style: tocStore.style,
+        style: tocStore.numberingStyle,
         header: tocStore.headerConfig,
         footer: tocStore.footerConfig
       };
@@ -214,7 +214,7 @@
   <StatusBar 
       bind:offset={tocStore.offset} 
       bind:insertPos={tocStore.insertPos} 
-      bind:style={tocStore.style} 
+      bind:numberingStyle={tocStore.numberingStyle}
       onGenerate={handleGenerate} 
       onParamChange={triggerPreview} 
   />

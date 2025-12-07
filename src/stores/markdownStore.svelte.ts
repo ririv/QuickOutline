@@ -1,3 +1,5 @@
+import {PageLabelNumberingStyle} from "@/lib/styleMaps";
+
 interface SectionConfig {
     left: string;
     center: string;
@@ -13,7 +15,7 @@ export class MarkdownState {
 
     // Status Bar State
     insertPos = $state(1);
-    style = $state('None');
+    numberingStyle = $state(PageLabelNumberingStyle.NONE);
 
     // Section Configs
     headerConfig = $state<SectionConfig>({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
