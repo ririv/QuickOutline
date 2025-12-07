@@ -47,7 +47,7 @@ export function handleImageUpdate(jsonString: string, container: HTMLElement) {
         // 标记为已加载
         pageDiv.dataset.loaded = "true";
 
-        const newUrl = `${baseUrl}/page_images/${u.pageIndex}.png?v=${u.version}`;
+        const newUrl = `${baseUrl}/preview_images/${u.pageIndex}.png?v=${u.version}`;
         const currentImg = pageDiv.querySelector('img.current') as HTMLImageElement;
 
         // 缓存命中检查

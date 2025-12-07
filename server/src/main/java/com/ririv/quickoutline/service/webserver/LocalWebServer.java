@@ -193,11 +193,11 @@ public class LocalWebServer {
         });
 
         // 注册图片 Handler
-        // 支持 /page_images/0.png (默认) 和 /page_images/{docId}/0.png
-        server.createContext("/page_images/", exchange -> {
-            // URL 类似: /page_images/0.png?v=123456  或者 /page_images/doc-123/0.png?v=...
+        // 支持 /file_images/0.png (默认) 和 /file_images/{docId}/0.png
+        server.createContext("/file_images/", exchange -> {
+            // URL 类似: /file_images/0.png?v=123456  或者 /file_images/doc-123/0.png?v=...
             String path = exchange.getRequestURI().getPath();
-            String subPath = path.substring("/page_images/".length()); 
+            String subPath = path.substring("/file_images/".length()); 
             
             String docId = DEFAULT_DOC_ID;
             String key = subPath;

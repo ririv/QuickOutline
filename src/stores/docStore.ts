@@ -5,12 +5,14 @@ interface DocState {
     currentFilePath: string | null;
     pageCount: number;
     originalPageLabels: string[];
+    version: number; // Timestamp to force refresh images
 }
 
 const initialState: DocState = {
     currentFilePath: null,
     pageCount: 0,
     originalPageLabels: [],
+    version: 0,
 };
 
 function createDocStore() {
@@ -30,11 +32,12 @@ function createDocStore() {
             try {
                 const count = await rpc.getPageCount(); // 获取页数
                 const labels = await rpc.getPageLabels(null); // 获取原始页码标签
-                update(state => ({ ...state, currentFilePath: path, pageCount: count, originalPageLabels: labels }));
+                const ver = Date.now(); // Generate a new version for cache busting
+                update(state => ({ ...state, currentFilePath: path, pageCount: count, originalPageLabels: labels, version: ver }));
             } catch (e) {
                 console.error("Failed to get page count or labels after opening file:", e);
                 // 如果获取页数失败，则清除文件信息
-                update(state => ({ ...state, currentFilePath: null, pageCount: 0, originalPageLabels: [] }));
+                update(state => ({ ...state, currentFilePath: null, pageCount: 0, originalPageLabels: [], version: 0 }));
             }
         },
 

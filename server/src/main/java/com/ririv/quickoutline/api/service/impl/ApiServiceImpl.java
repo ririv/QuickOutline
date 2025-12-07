@@ -10,7 +10,9 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.PageLabel;
 import com.ririv.quickoutline.pdfProcess.ViewScaleType;
 import com.ririv.quickoutline.service.*;
-import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
+import com.ririv.quickoutline.service.pdfpreview.FileImageService;
+import com.ririv.quickoutline.service.pdfpreview.ImagePageUpdate;
+import com.ririv.quickoutline.service.pdfpreview.PreviewImageService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import org.slf4j.Logger;
@@ -26,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.api.WebSocketSessionManager;
+import jakarta.inject.Inject;
 
 public class ApiServiceImpl implements ApiService {
     private static final Logger log = LoggerFactory.getLogger(ApiServiceImpl.class);
@@ -35,17 +38,20 @@ public class ApiServiceImpl implements ApiService {
     private final PdfCheckService pdfCheckService;
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
     private final PdfPageLabelService pdfPageLabelService;
-    private final PdfImageService pdfImageService;
+    private final FileImageService fileImageService;
+    private final PreviewImageService previewImageService;
     private final ApiBookmarkState apiBookmarkState;
     private final CurrentFileState currentFileState;
     private final SyncWithExternalEditorService syncService;
     private final WebSocketSessionManager sessionManager;
 
+    @Inject
     public ApiServiceImpl(PdfCheckService pdfCheckService,
                           PdfOutlineService pdfOutlineService,
                           PdfTocPageGeneratorService pdfTocPageGeneratorService,
                           PdfPageLabelService pdfPageLabelService,
-                          PdfImageService pdfImageService,
+                          FileImageService fileImageService,
+                          PreviewImageService previewImageService,
                           ApiBookmarkState apiBookmarkState,
                           CurrentFileState currentFileState,
                           SyncWithExternalEditorService syncService,
@@ -54,7 +60,8 @@ public class ApiServiceImpl implements ApiService {
         this.pdfOutlineService = pdfOutlineService;
         this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
         this.pdfPageLabelService = pdfPageLabelService;
-        this.pdfImageService = pdfImageService;
+        this.fileImageService = fileImageService;
+        this.previewImageService = previewImageService;
         this.apiBookmarkState = apiBookmarkState;
         this.currentFileState = currentFileState;
         this.syncService = syncService;
@@ -70,7 +77,10 @@ public class ApiServiceImpl implements ApiService {
         try {
             pdfCheckService.checkOpenFile(filePath);
             currentFileState.open(filePath);
-            this.pdfImageService.openSession(new File(filePath));
+            
+            // Delegate to FileImageService and clear preview
+            previewImageService.clear();
+            this.fileImageService.openFile(new File(filePath));
             this.apiBookmarkState.clear(); // Clear state on new file
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -292,7 +302,8 @@ public class ApiServiceImpl implements ApiService {
                 return new Gson().toJson(Collections.emptyList());
             }
 
-            List<PdfImageService.ImagePageUpdate> updates = pdfImageService.diffPdfToImages(finalStream);
+            // Delegate to PreviewImageService
+            List<ImagePageUpdate> updates = previewImageService.updatePreview(finalStream);
             log.info("Found {} updated image(s) for preview.", updates.size());
 
             return new Gson().toJson(updates);
@@ -304,14 +315,19 @@ public class ApiServiceImpl implements ApiService {
     }
 
     @Override
-    public CompletableFuture<byte[]> getPreviewImageDataAsync(int pageIndex) {
-        return pdfImageService.getImageData(pageIndex);
+    public CompletableFuture<byte[]> getFileImageAsync(int pageIndex) {
+        return fileImageService.getImage(pageIndex);
+    }
+
+    @Override
+    public CompletableFuture<byte[]> getPreviewImageAsync(int pageIndex) {
+        return previewImageService.getImage(pageIndex);
     }
 
     @Override
     public String getThumbnail(int pageIndex) {
-        checkFileOpen();
-        byte[] data = pdfImageService.getImageData(pageIndex).join();
+        // Thumbnails (Base64) are typically for the file itself
+        byte[] data = getFileImageAsync(pageIndex).join();
         if (data == null || data.length == 0) return null;
         return java.util.Base64.getEncoder().encodeToString(data);
     }
@@ -367,7 +383,11 @@ public class ApiServiceImpl implements ApiService {
 
     @Override
     public int getPageCount() {
-        return pdfImageService.getLastTotalPages();
+        // Delegate to the appropriate service
+        if (previewImageService.isActive()) {
+            return previewImageService.getTotalPages();
+        }
+        return fileImageService.getTotalPages();
     }
 
     @Override
@@ -425,5 +445,10 @@ public class ApiServiceImpl implements ApiService {
                 sessionManager.sendEvent("external-editor-error", "Failed to launch or sync with external editor.");
             }
         );
+    }
+    
+    @Override
+    public void clearPreview() {
+        previewImageService.clear();
     }
 }

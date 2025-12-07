@@ -63,7 +63,7 @@
 
     function getThumbnailUrl(index: number) {
         if ($appStore.serverPort && $appStore.serverPort > 0) {
-            const url = `http://127.0.0.1:${$appStore.serverPort}/page_images/${index}.png`;
+            const url = `http://127.0.0.1:${$appStore.serverPort}/file_images/${index}.png?v=${$docStore.version}`;
             return url;
         }
         console.warn('Server port not set when requesting thumbnail');
@@ -104,6 +104,7 @@
                 Backend not connected (Port: {$appStore.serverPort})
             </div>
         {/if}
+        {#key $docStore.version}
         <div class="flex flex-wrap gap-2.5 justify-center" style="--zoom: {zoom}">
 
             {#each loadedState as isLoaded, i}
@@ -139,6 +140,7 @@
                 <div class="w-full text-center text-[#999] mt-5">No thumbnails available</div>
             {/each}
         </div>
+        {/key}
     </div>
     
     {#if hoveredImage}

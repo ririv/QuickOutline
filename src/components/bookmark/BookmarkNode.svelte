@@ -55,7 +55,7 @@
         const pageIndex = effectivePageNum - 1;
         
         if ($appStore.serverPort && $appStore.serverPort > 0) {
-            const src = `http://127.0.0.1:${$appStore.serverPort}/page_images/${pageIndex}.png`;
+            const src = `http://127.0.0.1:${$appStore.serverPort}/file_images/${pageIndex}.png?v=${$docStore.version}`;
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
             previewContext.show(src, rect.top + rect.height / 2, rect.left);
         } else {

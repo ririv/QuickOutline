@@ -76,6 +76,12 @@
   
   // onMount: just trigger preview if we have content (e.g. switching back to tab)
   onMount(() => {
+      // Check if store matches current file
+      if (tocStore.filePath !== $docStore.currentFilePath) {
+          // Store is stale, do not render previewData
+          return;
+      }
+
       if (tocStore.previewData) {
           // Restore cached preview immediately without RPC call
           previewComponent?.renderImage(tocStore.previewData);

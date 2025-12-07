@@ -10,7 +10,8 @@ import com.ririv.quickoutline.api.state.CurrentFileState;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
 import com.ririv.quickoutline.service.*;
-import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
+import com.ririv.quickoutline.service.pdfpreview.FileImageService;
+import com.ririv.quickoutline.service.pdfpreview.PreviewImageService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
@@ -33,9 +34,10 @@ public class SidecarApp {
 
         Vertx vertx = Vertx.vertx();
 
-        // 1. 初始化服务，共享 PdfImageService
+        // 1. 初始化服务
         PdfCheckService pdfCheckService = new PdfCheckService();
-        PdfImageService pdfImageService = new PdfImageService();
+        FileImageService fileImageService = new FileImageService(); // New
+        PreviewImageService previewImageService = new PreviewImageService(); // New
         PdfOutlineService pdfOutlineService = new PdfOutlineService();
         FontManager fontManager = new FontManager();
         TocPageGenerator tocPageGenerator = new iTextTocPageGenerator(fontManager);
@@ -54,7 +56,8 @@ public class SidecarApp {
                 pdfOutlineService,
                 pdfTocPageGeneratorService,
                 pdfPageLabelService,
-                pdfImageService, // 注入共享的实例
+                fileImageService, // Inject new service
+                previewImageService, // Inject new service
                 apiBookmarkState,
                 currentFileState,
                 syncWithExternalEditorService,
@@ -81,41 +84,22 @@ public class SidecarApp {
 
         // 7. 配置 HTTP 请求处理器
         server.requestHandler(req -> {
-            // 图片服务
-            if (req.path().startsWith("/page_images/")) {
-                try {
-                    // 解析 /page_images/0.png -> 0
-                    String[] parts = req.path().split("/");
-                    String pageNumStr = parts[parts.length - 1].split("\\.")[0];
-                    int pageIndex = Integer.parseInt(pageNumStr);
-
-                    apiService.getPreviewImageDataAsync(pageIndex)
-                        .thenAccept(imageData -> {
-                            if (imageData != null) {
-                                req.response()
-                                   .putHeader("Access-Control-Allow-Origin", "*")
-                                   .putHeader("Content-Type", "image/png")
-                                   .putHeader("Cache-Control", "public, max-age=31536000")
-                                   .end(io.vertx.core.buffer.Buffer.buffer(imageData));
-                            } else {
-                                req.response().setStatusCode(404).end("Image not found");
-                            }
-                        })
-                        .exceptionally(e -> {
-                            req.response().setStatusCode(500).end("Error serving image: " + e.getMessage());
-                            return null;
-                        });
-                } catch (Exception e) {
-                    req.response().setStatusCode(500).end("Error serving image: " + e.getMessage());
-                }
-            } 
-            // 如果不是 WebSocket 升级请求，也不是图片请求，则返回欢迎页
+            String path = req.path();
+            
+            // 1. File Images (No Cache)
+            if (path.startsWith("/file_images/")) {
+                handleImageRequest(req, path, "/file_images/", false, apiService::getFileImageAsync);
+            }
+            // 2. Preview Images (Cached, assumes ?v=... is used)
+            else if (path.startsWith("/preview_images/")) {
+                handleImageRequest(req, path, "/preview_images/", true, apiService::getPreviewImageAsync);
+            }
+            // 3. Default Handler
             else if (req.headers().get("Upgrade") == null || !req.headers().get("Upgrade").equalsIgnoreCase("websocket")) {
                 req.response()
                    .putHeader("content-type", "text/plain; charset=utf-8")
                    .end("QuickOutline Sidecar is running.");
             }
-            // (如果是 WebSocket 升级请求，则由 webSocketHandler 处理)
         });
 
         // 8. 监听端口
@@ -127,5 +111,39 @@ public class SidecarApp {
                 System.err.println("Failed to bind: " + err.getMessage());
                 System.exit(1);
             });
+    }
+
+    private static void handleImageRequest(io.vertx.core.http.HttpServerRequest req, String path, String prefix, boolean cacheable, java.util.function.Function<Integer, java.util.concurrent.CompletableFuture<byte[]>> provider) {
+        try {
+            // Parse /prefix/0.png -> 0
+            String[] parts = path.split("/");
+            String pageNumStr = parts[parts.length - 1].split("\\.")[0];
+            int pageIndex = Integer.parseInt(pageNumStr);
+
+            provider.apply(pageIndex)
+                .thenAccept(imageData -> {
+                    if (imageData != null) {
+                        var resp = req.response()
+                           .putHeader("Access-Control-Allow-Origin", "*")
+                           .putHeader("Content-Type", "image/png");
+                        
+                        if (cacheable) {
+                            resp.putHeader("Cache-Control", "public, max-age=31536000");
+                        } else {
+                            resp.putHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+                        }
+                           
+                        resp.end(io.vertx.core.buffer.Buffer.buffer(imageData));
+                    } else {
+                        req.response().setStatusCode(404).end("Image not found");
+                    }
+                })
+                .exceptionally(e -> {
+                    req.response().setStatusCode(500).end("Error serving image: " + e.getMessage());
+                    return null;
+                });
+        } catch (Exception e) {
+            req.response().setStatusCode(500).end("Error parsing image request: " + e.getMessage());
+        }
     }
 }

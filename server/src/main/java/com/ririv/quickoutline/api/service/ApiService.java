@@ -57,7 +57,15 @@ public interface ApiService {
     String getThumbnail(int pageIndex);
     java.util.Map<Integer, String> getThumbnails(List<Integer> pageIndices);
     
-    CompletableFuture<byte[]> getPreviewImageDataAsync(int pageIndex);
+    /**
+     * Gets image data from the currently opened file.
+     */
+    CompletableFuture<byte[]> getFileImageAsync(int pageIndex);
+
+    /**
+     * Gets image data from the current preview stream (TOC generation).
+     */
+    CompletableFuture<byte[]> getPreviewImageAsync(int pageIndex);
 
     // --- Utils ---
     BookmarkDto parseTextToTree(String text);
@@ -68,4 +76,9 @@ public interface ApiService {
      * @param textContent The content to be written to a temporary file and opened.
      */
     void openExternalEditor(String textContent);
+    
+    /**
+     * Clears any active preview mode, reverting the image service to file-based images.
+     */
+    void clearPreview();
 }
