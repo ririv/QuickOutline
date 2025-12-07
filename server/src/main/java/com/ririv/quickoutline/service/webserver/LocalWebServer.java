@@ -1,6 +1,5 @@
 package com.ririv.quickoutline.service.webserver;
 
-import com.ririv.quickoutline.service.pdfpreview.PdfImageService;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
