@@ -1,16 +1,14 @@
 <script lang="ts">
     import type { Bookmark } from "./types";
     import BookmarkNode from "./BookmarkNode.svelte";
-    import { onMount, onDestroy, setContext } from 'svelte';
+    import { onMount, onDestroy, setContext, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { rpc } from '@/lib/api/rpc';
     import { messageStore } from '@/stores/messageStore';
-    import { get } from 'svelte/store';
     import { appStore } from '@/stores/appStore';
     import PreviewTooltip from '../PreviewTooltip.svelte';
 
     let bookmarks = $state<Bookmark[]>([]);
-    let unsubscribeStore: () => void;
     let debounceTimer: number | undefined;
     
     // Preview State
@@ -75,34 +73,36 @@
 
     onMount(() => {
         // Initialize bookmarks from store
-        bookmarks = get(bookmarkStore).tree;
-
-        // Subscribe to store changes from other sources (e.g., TextSubView, Get Contents)
-        unsubscribeStore = bookmarkStore.subscribe(state => {
-            // Check for deep equality to avoid unnecessary updates and re-renders if the tree is the same
-            if (JSON.stringify(state.tree) !== JSON.stringify(bookmarks)) {
-                bookmarks = state.tree;
-            }
-        });
+        bookmarks = bookmarkStore.tree;
     });
 
     onDestroy(() => {
-        if (unsubscribeStore) {
-            unsubscribeStore();
-        }
         clearTimeout(debounceTimer); // Clear any pending debounced calls
     });
 
-    // React to changes in the bookmarks array and trigger debounced sync
+    // Sync from Store to Local
     $effect(() => {
-        // We need a deep watch for changes in the tree structure
-        // Svelte's $state reactivity tracks changes at the top level.
-        // For nested objects, we rely on the fact that direct mutations to properties
-        // of objects within the array are observed.
-        // Stringify for simple deep comparison, but consider more efficient deep equality for large trees.
-        // For now, simple stringify to detect any changes and trigger sync.
-        debouncedSyncTreeWithBackend(bookmarks);
-        bookmarkStore.setTree(bookmarks); // Keep the store's tree up-to-date with local mutations
+        const storeTree = bookmarkStore.tree; // Track store
+        untrack(() => {
+             // Check for deep equality to avoid unnecessary updates and re-renders if the tree is the same
+             if (JSON.stringify(storeTree) !== JSON.stringify(bookmarks)) {
+                 bookmarks = storeTree;
+             }
+        });
+    });
+
+    // Sync from Local to Store & Backend
+    $effect(() => {
+        // Track local bookmarks changes (including deep changes due to JSON.stringify usage implicitly or just access)
+        // Accessing bookmarks to pass it tracks it.
+        const currentBookmarks = bookmarks;
+        
+        untrack(() => {
+            debouncedSyncTreeWithBackend(currentBookmarks);
+            if (JSON.stringify(bookmarkStore.tree) !== JSON.stringify(currentBookmarks)) {
+                bookmarkStore.setTree(currentBookmarks); // Keep the store's tree up-to-date with local mutations
+            }
+        });
     });
 </script>
 

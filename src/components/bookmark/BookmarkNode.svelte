@@ -48,7 +48,7 @@
             return;
         }
 
-        const offset = $bookmarkStore.offset || 0;
+        const offset = bookmarkStore.offset || 0;
         const showOffset = offsetContext.show;
 
         const effectivePageNum = showOffset ? (pageNum + offset) : pageNum;
@@ -72,7 +72,7 @@
         if (!bookmark.page) return '';
         const pageNum = parseInt(bookmark.page, 10);
         if (isNaN(pageNum)) return bookmark.page;
-        const offset = $bookmarkStore.offset || 0;
+        const offset = bookmarkStore.offset || 0;
         return offsetContext.show ? String(pageNum + offset) : bookmark.page;
     });
 
@@ -81,7 +81,7 @@
         const pageNum = parseInt(bookmark.page, 10);
         if (isNaN(pageNum)) return false;
         
-        const offset = $bookmarkStore.offset || 0;
+        const offset = bookmarkStore.offset || 0;
         const count = $docStore.pageCount;
         
         if (count > 0) {

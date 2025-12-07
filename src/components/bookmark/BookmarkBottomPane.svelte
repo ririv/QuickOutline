@@ -17,8 +17,8 @@
     import { rpc } from '@/lib/api/rpc';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { messageStore } from '@/stores/messageStore';
-    import { get } from 'svelte/store';
     import type { Bookmark } from '@/components/bookmark/types';
+    import { untrack } from 'svelte';
 
     interface Props {
         view: 'text' | 'tree' | 'double';
@@ -55,14 +55,17 @@
     }, 500);
 
     // Sync offsetValue with bookmarkStore
-    bookmarkStore.subscribe(state => {
-        // 如果当前输入框只有负号，说明用户正在输入负数，不要被 Store 的 0 覆盖
-        if (offsetValue === '-') return;
+    $effect(() => {
+        const currentStoreOffset = bookmarkStore.offset;
+        untrack(() => {
+            // 如果当前输入框只有负号，说明用户正在输入负数，不要被 Store 的 0 覆盖
+            if (offsetValue === '-') return;
 
-        const currentOffset = state.offset === 0 ? '' : String(state.offset);
-        if (offsetValue !== currentOffset) {
-            offsetValue = currentOffset;
-        }
+            const currentOffsetStr = currentStoreOffset === 0 ? '' : String(currentStoreOffset);
+            if (offsetValue !== currentOffsetStr) {
+                offsetValue = currentOffsetStr;
+            }
+        });
     });
 
     function handleOffsetInput(e: Event) {
@@ -131,8 +134,8 @@
     async function handleSetContentsClick() {
         console.log('Set contents click with view scale:', viewMode);
         try {
-            const state = get(bookmarkStore);
-            if (!state.text || !state.text.trim()) {
+            const text = bookmarkStore.text;
+            if (!text || !text.trim()) {
                 messageStore.add('No outline text to save. Please enter some text first.', 'WARNING');
                 return;
             }
@@ -141,7 +144,7 @@
             await rpc.updateOffset(offset);
 
             // 2. Use saveOutlineFromText which updates backend state AND saves in one go.
-            await rpc.saveOutlineFromText(state.text, null, offset, viewMode);
+            await rpc.saveOutlineFromText(text, null, offset, viewMode);
             
             messageStore.add('Outline saved successfully!', 'SUCCESS');
         } catch (e: any) {

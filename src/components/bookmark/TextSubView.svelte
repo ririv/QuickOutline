@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { get } from 'svelte/store'; // Import get
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { rpc } from '@/lib/api/rpc';
     import { messageStore } from '@/stores/messageStore';
@@ -17,7 +16,6 @@
     ];
 
     let textValue = $state('');
-    let unsubscribeStore: () => void;
     let debounceTimer: number | undefined;
     let highlightedMode = $state<string | null>(null); // State for highlight value
     let isExternalEditing = $state(false); // State for external editor mode
@@ -74,14 +72,7 @@
 
     onMount(() => {
         // Initialize textValue from store
-        textValue = get(bookmarkStore).text;
-
-        // Subscribe to store changes from other sources (e.g., TreeSubView, Get Contents)
-        unsubscribeStore = bookmarkStore.subscribe(state => {
-            if (state.text !== textValue) {
-                textValue = state.text;
-            }
-        });
+        textValue = bookmarkStore.text;
 
         // Register RPC listeners
         rpc.on('external-editor-update', onExternalUpdate);
@@ -91,9 +82,6 @@
     });
 
     onDestroy(() => {
-        if (unsubscribeStore) {
-            unsubscribeStore();
-        }
         clearTimeout(debounceTimer); // Clear any pending debounced calls
         
         // Unregister RPC listeners
@@ -101,6 +89,13 @@
         rpc.off('external-editor-start', onExternalStart);
         rpc.off('external-editor-end', onExternalEnd);
         rpc.off('external-editor-error', onExternalError);
+    });
+
+    // Sync from Store to Local
+    $effect(() => {
+        if (bookmarkStore.text !== textValue) {
+            textValue = bookmarkStore.text;
+        }
     });
 
 
