@@ -33,14 +33,14 @@ export interface TocConfig {
     tocContent: string;
     title: string;
     insertPos: number;
-    style: PageLabelNumberingStyle;
+    numberingStyle: PageLabelNumberingStyle;
     header: SectionConfig | null;
     footer: SectionConfig | null;
 }
 
 export interface PageLabelRuleDto {
     fromPage: number;
-    style: PageLabelNumberingStyle;
+    numberingStyle: PageLabelNumberingStyle;
     prefix: string;
     start: number;
 }

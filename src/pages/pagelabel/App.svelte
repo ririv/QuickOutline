@@ -76,7 +76,7 @@
             start: r.start,
             prefix: r.prefix,
             // Map display string back to Enum for the backend
-            style: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
+            numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
         }));
 
         try {
@@ -95,7 +95,7 @@
             fromPage: r.fromPage,
             start: r.start,
             prefix: r.prefix,
-            style: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
+            numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
         }));
         
         // TODO: Call backend apply API with dtos
