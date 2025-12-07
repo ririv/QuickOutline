@@ -3,6 +3,8 @@
     import BookmarkNode from "./BookmarkNode.svelte"; // Self-import for recursion
     import { tick, getContext } from "svelte";
     import { appStore } from '@/stores/appStore';
+    import { bookmarkStore } from '@/stores/bookmarkStore';
+    import { docStore } from '@/stores/docStore';
 
     interface Props {
         bookmark: Bookmark;
@@ -21,6 +23,7 @@
     }
 
     const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
+    const offsetContext = getContext<{ show: boolean }>('offsetContext');
 
     async function editTitle() {
         isEditingTitle = true;
@@ -45,7 +48,11 @@
             return;
         }
 
-        const pageIndex = pageNum - 1;
+        const offset = $bookmarkStore.offset || 0;
+        const showOffset = offsetContext.show;
+
+        const effectivePageNum = showOffset ? (pageNum + offset) : pageNum;
+        const pageIndex = effectivePageNum - 1;
         
         if ($appStore.serverPort && $appStore.serverPort > 0) {
             const src = `http://127.0.0.1:${$appStore.serverPort}/page_images/${pageIndex}.png`;
@@ -59,6 +66,30 @@
     function handlePageMouseLeave() {
         previewContext.hide();
     }
+
+    // Computed page to display
+    let displayedPage = $derived.by(() => {
+        if (!bookmark.page) return '';
+        const pageNum = parseInt(bookmark.page, 10);
+        if (isNaN(pageNum)) return bookmark.page;
+        const offset = $bookmarkStore.offset || 0;
+        return offsetContext.show ? String(pageNum + offset) : bookmark.page;
+    });
+
+    let isOutOfRange = $derived.by(() => {
+        if (!bookmark.page) return false;
+        const pageNum = parseInt(bookmark.page, 10);
+        if (isNaN(pageNum)) return false;
+        
+        const offset = $bookmarkStore.offset || 0;
+        const count = $docStore.pageCount;
+        
+        if (count > 0) {
+            // Check if calculated page (original + offset) exceeds total pages
+            return (pageNum + offset) > count;
+        }
+        return false;
+    });
 
 </script>
 
@@ -117,14 +148,14 @@
                 </div>
             {:else}
                 <div 
-                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-gray-500 text-center cursor-text w-full truncate hover:bg-gray-200 rounded-full transition-colors font-sans whitespace-pre"
+                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-center cursor-text w-full truncate hover:bg-gray-200 rounded-full transition-colors font-sans whitespace-pre {isOutOfRange ? 'text-red-600 font-medium' : 'text-gray-500'}"
                     onclick={editPage}
                     onmouseenter={handlePageMouseEnter}
                     onmouseleave={handlePageMouseLeave}
                     role="button"
                     tabindex="0"
                     onkeydown={(e) => e.key === 'Enter' && editPage()}
-                >{bookmark.page}</div><!-- whitespace-pre: 避免空格折叠，保持与编辑态 input 宽度一致，消除布局跳动 -->
+                >{displayedPage}</div><!-- whitespace-pre: 避免空格折叠，保持与编辑态 input 宽度一致，消除布局跳动 -->
             {/if}
         </div>
     </div>
