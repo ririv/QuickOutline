@@ -196,9 +196,9 @@
   
   <StatusBar 
       bind:insertPos={markdownStore.insertPos} 
-      bind:style={markdownStore.numberingStyle}
+      bind:numberingStyle={markdownStore.numberingStyle}
       showOffset={false} 
-      showStyle={false}
+      showNumberingStyle={false}
       onGenerate={handleGenerate} 
       onParamChange={() => { /* No specific action for param changes in Markdown tab */ }}
   />
