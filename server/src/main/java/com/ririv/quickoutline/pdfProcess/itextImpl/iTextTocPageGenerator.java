@@ -146,7 +146,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
      */
     private void registerPageNumberHandler(PdfDocument pdfDoc, Document doc, PageLabelNumberingStyle style,
                                            PdfFont font, int startPageNum, SectionConfig header, SectionConfig footer) {
-        // Even if style is NONE, we might have header/footer content, so we should register the handler if header/footer exists
+        // Even if numberingStyle is NONE, we might have header/footer content, so we should register the handler if header/footer exists
         if ((style != null && style != PageLabelNumberingStyle.NONE) || header != null || footer != null) {
             // totalTocPages 传 -1，让 Handler 自己去获取或计算
             pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE,

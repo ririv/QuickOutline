@@ -140,7 +140,7 @@ public class PdfSvgService {
                             "viewBox=\"0 0 %s %s\" " +
                             "width=\"100%%\" height=\"100%%\" " +
                             "preserveAspectRatio=\"xMidYMid meet\" " +
-                            "style=\"display:block; overflow:hidden; " +
+                            "numberingStyle=\"display:block; overflow:hidden; " +
                             "text-rendering: optimizeSpeed; shape-rendering: crispEdges;\">",
 //                            "text-rendering: geometricPrecision; shape-rendering: geometricPrecision;\">",
                     fmt(width), fmt(height));

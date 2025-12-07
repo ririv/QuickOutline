@@ -107,7 +107,7 @@ public class PdfPageLabelService {
     public List<PageLabel> convertRulesToPageLabels(List<PageLabelRule> rules) {
         Map<Integer, PageLabel> pageLabelsMap = new TreeMap<>();
         for (PageLabelRule rule : rules) {
-            PageLabel pageLabel = new PageLabel(rule.fromPage(), rule.style(), rule.prefix(), rule.start());
+            PageLabel pageLabel = new PageLabel(rule.fromPage(), rule.numberingStyle(), rule.prefix(), rule.start());
             pageLabelsMap.put(rule.fromPage(), pageLabel);
         }
         return new ArrayList<>(pageLabelsMap.values());

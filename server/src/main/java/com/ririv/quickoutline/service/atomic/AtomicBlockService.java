@@ -262,7 +262,7 @@ public class AtomicBlockService {
     // 必须保留 wrapHtmlWithContext 来注入 CSS，否则 convertToElements 解析出的对象没有样式
     private String wrapHtmlWithContext(String fragmentHtml) {
         String css = getGlobalCss();
-        return "<html><head><style>" + css + "body{margin:0;padding:0;background:transparent}.vditor-reset{width:100%}</style></head><body><div class='vditor-reset'>" + fragmentHtml + "</div></body></html>";
+        return "<html><head><numberingStyle>" + css + "body{margin:0;padding:0;background:transparent}.vditor-reset{width:100%}</numberingStyle></head><body><div class='vditor-reset'>" + fragmentHtml + "</div></body></html>";
     }
 
     private void loadGlobalCss() {

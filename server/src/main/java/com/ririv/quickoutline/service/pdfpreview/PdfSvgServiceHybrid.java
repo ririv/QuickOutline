@@ -140,7 +140,7 @@ public class PdfSvgServiceHybrid {
         public String getSvgResult() {
             flushTextBuffer();
             return String.format(java.util.Locale.US,
-                    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 %s %s' width='100%%' height='100%%' style='overflow:hidden;'>" +
+                    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 %s %s' width='100%%' height='100%%' numberingStyle='overflow:hidden;'>" +
                             "<defs>%s</defs>" +
                             "<g transform='translate(0, %s) scale(1, -1)'>%s</g>" +
                             "</svg>",
@@ -248,7 +248,7 @@ public class PdfSvgServiceHybrid {
             // 透明文字层
             contentBuffer.append(String.format(java.util.Locale.US,
                     "<text transform='translate(%f %f) scale(1, -1)' " +
-                            "font-family='sans-serif' font-size='%f' fill='transparent' style='white-space:pre; cursor:text;'>%s</text>",
+                            "font-family='sans-serif' font-size='%f' fill='transparent' numberingStyle='white-space:pre; cursor:text;'>%s</text>",
                     x, y, currentFontSize, escapeXml(textBuffer.toString())
             ));
 

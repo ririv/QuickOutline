@@ -9,7 +9,7 @@ import com.ririv.quickoutline.pdfProcess.PageLabel;
  */
 public record PageLabelRule(
         int fromPage,
-        PageLabel.PageLabelNumberingStyle style,
+        PageLabel.PageLabelNumberingStyle numberingStyle,
         String prefix,
         int start
 ) {}

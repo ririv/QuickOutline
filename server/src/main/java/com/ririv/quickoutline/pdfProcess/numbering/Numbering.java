@@ -28,7 +28,7 @@ public interface Numbering {
             return (prefix != null ? prefix : "") + number;
         }
         String label = switch (style) {
-            case NONE -> ""; // For NONE style, display nothing.
+            case NONE -> ""; // For NONE numberingStyle, display nothing.
             case DECIMAL_ARABIC_NUMERALS -> String.valueOf(number);
             case UPPERCASE_ROMAN_NUMERALS -> numbering.toRomanUpperCase(number);
             case LOWERCASE_ROMAN_NUMERALS -> numbering.toRomanLowerCase(number);
