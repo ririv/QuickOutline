@@ -4,7 +4,7 @@ import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PageLabelRule;
-import com.ririv.quickoutline.pdfProcess.ViewScaleType;
+import com.ririv.quickoutline.model.ViewScaleType;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

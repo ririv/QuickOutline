@@ -11,17 +11,12 @@ import com.itextpdf.layout.Canvas;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.SectionConfig;
-import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
+import com.ririv.quickoutline.model.PageLabel.PageLabelNumberingStyle;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas; // Added import
-import com.ririv.quickoutline.pdfProcess.numbering.Numbering;
 
 import java.util.function.BiConsumer;
 
-import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlphabetNumberLowerCase;
-import static com.itextpdf.kernel.numbering.EnglishAlphabetNumbering.toLatinAlphabetNumberUpperCase;
-import static com.itextpdf.kernel.numbering.RomanNumbering.toRomanLowerCase;
-import static com.itextpdf.kernel.numbering.RomanNumbering.toRomanUpperCase;
 import static com.ririv.quickoutline.pdfProcess.numbering.Numbering.formatPageNumber;
 
 /**

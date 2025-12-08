@@ -1,7 +1,7 @@
 package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.exception.InvalidPageLabelRuleException;
-import com.ririv.quickoutline.pdfProcess.PageLabel;
+import com.ririv.quickoutline.model.PageLabel;
 import com.ririv.quickoutline.pdfProcess.PageLabelProcessor;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextPageLabelProcessor;
 

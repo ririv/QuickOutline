@@ -1,5 +1,7 @@
 package com.ririv.quickoutline.pdfProcess;
 
+import com.ririv.quickoutline.model.PageLabel;
+
 import java.io.IOException;
 import java.util.List;
 

@@ -6,7 +6,7 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.event.PdfDocumentEvent;
 import com.ririv.quickoutline.model.SectionConfig;
-import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
+import com.ririv.quickoutline.model.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.pdfProcess.itextImpl.HeaderFooterEventHandler;
 import com.ririv.quickoutline.service.DownloadEvent;
 import com.ririv.quickoutline.service.FontManager;

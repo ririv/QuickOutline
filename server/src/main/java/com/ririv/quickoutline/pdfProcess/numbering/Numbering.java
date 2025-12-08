@@ -1,6 +1,6 @@
 package com.ririv.quickoutline.pdfProcess.numbering;
 
-import com.ririv.quickoutline.pdfProcess.PageLabel;
+import com.ririv.quickoutline.model.PageLabel;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextNumbering;
 
 public interface Numbering {

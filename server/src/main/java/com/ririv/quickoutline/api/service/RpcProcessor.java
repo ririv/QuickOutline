@@ -10,7 +10,7 @@ import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.service.PageLabelRule;
 import com.ririv.quickoutline.utils.RpcUtils;
-import com.ririv.quickoutline.pdfProcess.ViewScaleType;
+import com.ririv.quickoutline.model.ViewScaleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

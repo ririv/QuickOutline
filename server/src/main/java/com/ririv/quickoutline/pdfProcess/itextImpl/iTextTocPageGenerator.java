@@ -19,7 +19,7 @@ import com.itextpdf.layout.properties.TabAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.model.SectionConfig;
-import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
+import com.ririv.quickoutline.model.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.service.FontManager;
 import jakarta.inject.Inject;

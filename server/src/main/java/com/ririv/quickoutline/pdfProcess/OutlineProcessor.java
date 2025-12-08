@@ -3,6 +3,7 @@ package com.ririv.quickoutline.pdfProcess;
 
 
 import com.ririv.quickoutline.model.Bookmark;
+import com.ririv.quickoutline.model.ViewScaleType;
 
 import java.io.IOException;
 

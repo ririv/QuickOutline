@@ -4,7 +4,7 @@ import com.itextpdf.kernel.pdf.PageLabelNumberingStyle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import com.ririv.quickoutline.pdfProcess.PageLabel;
+import com.ririv.quickoutline.model.PageLabel;
 import com.ririv.quickoutline.pdfProcess.PageLabelProcessor;
 
 import java.io.File;

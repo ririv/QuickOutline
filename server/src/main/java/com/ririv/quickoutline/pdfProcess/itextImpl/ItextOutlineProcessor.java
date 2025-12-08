@@ -9,7 +9,7 @@ import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
-import com.ririv.quickoutline.pdfProcess.ViewScaleType;
+import com.ririv.quickoutline.model.ViewScaleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

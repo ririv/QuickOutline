@@ -1,4 +1,4 @@
-package com.ririv.quickoutline.pdfProcess;
+package com.ririv.quickoutline.model;
 
 public enum ViewScaleType {
     FIT_TO_WIDTH,

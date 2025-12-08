@@ -1,11 +1,10 @@
 package com.ririv.quickoutline.service;
 
 
-import com.ririv.quickoutline.exception.EncryptedPdfException;
 import com.ririv.quickoutline.exception.NoOutlineException;
 import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
-import com.ririv.quickoutline.pdfProcess.ViewScaleType;
+import com.ririv.quickoutline.model.ViewScaleType;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextOutlineProcessor;
 import com.ririv.quickoutline.textProcess.TextProcessor;
 import com.ririv.quickoutline.textProcess.methods.Method;

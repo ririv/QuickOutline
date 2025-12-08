@@ -2,11 +2,10 @@ package com.ririv.quickoutline.pdfProcess;
 
 import com.ririv.quickoutline.model.SectionConfig;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.pdfProcess.PageLabel.PageLabelNumberingStyle;
+import com.ririv.quickoutline.model.PageLabel.PageLabelNumberingStyle;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.function.Consumer;
 
 public interface TocPageGenerator {

@@ -1,7 +1,7 @@
 
 package com.ririv.quickoutline.service;
 
-import com.ririv.quickoutline.pdfProcess.PageLabel;
+import com.ririv.quickoutline.model.PageLabel;
 
 /**
  * Represents a user-defined rule for page labeling.
