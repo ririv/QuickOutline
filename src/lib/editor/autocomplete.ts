@@ -40,32 +40,52 @@ function getHeadings(state: EditorState) {
 
 // The completion source function
 export function linkHeadingCompletion(context: CompletionContext): CompletionResult | null {
-    // We want to trigger when cursor is after # inside a link url: [Link](#...)
+    const pos = context.pos;
+    const doc = context.state.doc;
+    const line = doc.lineAt(pos);
+    const rel = pos - line.from;
+    const s = line.text;
+
+    // Find last '(' before cursor and check pattern [...](|here)
+    const openParenIdx = s.lastIndexOf('(', rel);
+    if (openParenIdx < 0) return null;
+
+    // Check for ']' immediately before '('
+    const rb = openParenIdx - 1;
+    if (rb < 0 || s[rb] !== ']') return null;
+
+    // Check for corresponding '[' before ']
+    const lb = s.lastIndexOf('[', rb);
+    if (lb < 0) return null;
+
+    const closeParenIdx = s.indexOf(')', rel);
+    // Determine bounds of the URL part
+    const urlFrom = line.from + openParenIdx + 1;
+    const urlTo = closeParenIdx >= 0 ? line.from + closeParenIdx : pos;
+
+    // Ensure cursor is within the URL part
+    if (pos < urlFrom || pos > urlTo) return null;
+
+    // Only trigger if the URL part typed so far starts with '#'
+    const typed = doc.sliceString(urlFrom, pos);
+    if (!typed.startsWith('#')) return null;
+
+        // If explicitly requested or triggering after '#', show completions
+        // We want to complete the slug after the '#'
+        if (context.explicit || typed.startsWith('#')) {
+            const options = getHeadings(context.state).map(h => ({
+                label: h.label,
+                detail: h.detail, // e.g., "H1"
+                apply: h.apply, 
+                type: h.detail // Use "H1", "H2" etc as custom type for icon styling
+            }));
     
-    // Pattern: 
-    // 1. We are inside a Link url part: `[text](...)`
-    // 2. The content starts with #
-    
-    // Regex explanation:
-    // Match `](` followed by `#` and then optional word characters (including Chinese, hyphens).
-    // Note: We don't try to match the full `[text]` part backwards as it's complex and `matchBefore` is limited.
-    // Matching `](` is usually sufficient context.
-    
-    const before = context.matchBefore(/]\(#[\w\u4e00-\u9fa5-]*$/);
-    
-    if (!before) return null;
-    
-    // Calculate start of completion (the # character)
-    const hashIndex = before.text.indexOf('#');
-    const from = before.from + hashIndex; // position of #
-    
-    if (context.explicit || before) {
-        return {
-            from: from,
-            options: getHeadings(context.state),
-            filter: true // Fuzzy filter by default
-        };
-    }
-    
+            return {
+                from: urlFrom, 
+                to: urlTo,
+                options: options,
+                filter: false 
+            };
+        }    
     return null;
 }
