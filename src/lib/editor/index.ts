@@ -1,12 +1,13 @@
 import { EditorState, Prec } from '@codemirror/state';
-import { EditorView, keymap, placeholder, showTooltip, drawSelection } from '@codemirror/view';
+import { EditorView, keymap, placeholder, showTooltip, drawSelection, dropCursor } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { searchKeymap } from '@codemirror/search';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'; // Removed bracketMatching and bracketMatchingKeymap
+import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { GFM } from '@lezer/markdown';
+import { bracketMatching } from '@codemirror/language'; // Correct import for bracketMatching
 
 import { myHighlightStyle, baseTheme } from './theme';
 import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState } from './extensions';
@@ -40,6 +41,9 @@ export class MarkdownEditor {
                 placeholder(options.placeholder || ''),
                 EditorView.lineWrapping,
                 drawSelection(), // Fix cursor artifacts by using custom selection drawing
+                dropCursor(), // Add dropCursor
+                highlightSelectionMatches(), // Add highlightSelectionMatches
+                bracketMatching(), // Add bracketMatching
                 autocompletion({ override: [linkHeadingCompletion] }), // Custom completion source
                 closeBrackets(),
                 showTooltip.compute(['selection'], mathTooltip), // Enable Math Tooltip
