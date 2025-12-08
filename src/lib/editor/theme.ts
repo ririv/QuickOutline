@@ -11,7 +11,7 @@ export const myHighlightStyle = HighlightStyle.define([
     { tag: tags.emphasis, fontStyle: "italic" },
     { tag: tags.monospace, backgroundColor: "rgba(27, 31, 35, 0.05)", borderRadius: "3px", padding: "0.2em 0.4em", fontFamily: "monospace" },
     { tag: tags.link, color: "#0366d6", textDecoration: "underline" },
-    { tag: tags.list, paddingLeft: "1em" },
+    { tag: tags.list },
     { tag: tags.quote, borderLeft: "4px solid #dfe2e5", paddingLeft: "1em", color: "#6a737d", fontStyle: "italic" }, // Blockquote
 ]);
 
