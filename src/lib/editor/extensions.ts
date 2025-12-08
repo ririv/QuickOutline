@@ -2,9 +2,9 @@ import { Decoration, type DecorationSet, EditorView, showTooltip, type Tooltip, 
 import { RangeSetBuilder, type EditorState, StateField, StateEffect } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
-import { HorizontalRuleWidget, CheckboxWidget, ImageWidget, MathWidget, BulletWidget, OrderedListWidget } from './widgets';
 import katex from 'katex';
 import { MathExtension } from './math-extension';
+import { blockProviders, inlineProviders, type DecoratorContext } from './decorators';
 
 export { MathExtension }; 
 
@@ -81,7 +81,8 @@ export const livePreviewState = StateField.define<DecorationSet>({
 function buildBlockDecorations(state: EditorState) {
     const builder = new RangeSetBuilder<Decoration>();
     const selection = state.selection.main;
-    const hasFocus = state.field(focusState, false);
+    // state.field(field, false) returns T | undefined. Ensure boolean.
+    const hasFocus = state.field(focusState, false) || false;
     const tree = syntaxTree(state);
 
     tree.iterate({
@@ -96,119 +97,16 @@ function buildBlockDecorations(state: EditorState) {
                                       (selection.from <= nodeFrom && selection.to >= nodeTo);
             }
 
-            if (node.name === 'BlockMath') {
-                const text = state.sliceDoc(nodeFrom, nodeTo);
-                
-                // Robustly extract formula by finding the delimiting $$
-                // Find start index of first $$
-                const startIdx = text.indexOf('$$');
-                // Find start index of last $$
-                const endIdx = text.lastIndexOf('$$');
-                
-                let formula = text;
-                if (startIdx !== -1 && endIdx !== -1 && startIdx < endIdx) {
-                    // Slice strictly between the first $$ and the last $$
-                    // startIdx + 2 skips the opening $$
-                    formula = text.slice(startIdx + 2, endIdx).trim();
-                } else if (startIdx !== -1) {
-                    // Only found start $$, maybe unclosed or being typed
-                    formula = text.slice(startIdx + 2).trim();
-                }
+            const ctx: DecoratorContext = {
+                state,
+                node,
+                builder,
+                isCursorOverlapping,
+                hasFocus
+            };
 
-                if (isCursorOverlapping) {
-                    builder.add(nodeTo, nodeTo, Decoration.widget({
-                        widget: new MathWidget(formula, true),
-                        side: 1, 
-                        block: true 
-                    }));
-                } else {
-                    builder.add(nodeFrom, nodeTo, Decoration.replace({
-                        widget: new MathWidget(formula, true),
-                        block: true
-                    }));
-                }
-                return;
-            }
-
-            // --- Blockquotes (>) --- 
-            if (node.name === 'Blockquote') {
-                for (let cur = node.node.firstChild; cur; cur = cur.nextSibling) {
-                    if (cur.name === 'QuoteMark') {
-                        builder.add(cur.from, cur.to, Decoration.replace({}));
-                    }
-                }
-                const startLine = state.doc.lineAt(nodeFrom);
-                const endLine = state.doc.lineAt(nodeTo);
-                for (let i = startLine.number; i <= endLine.number; i++) {
-                    const line = state.doc.line(i);
-                    builder.add(line.from, line.from, Decoration.line({ class: 'cm-blockquote-line' }));
-                }
-                return; 
-            }
-            
-            // --- Fenced Code Blocks (```) ---
-            if (node.name === 'FencedCode') {
-                const startLine = state.doc.lineAt(nodeFrom);
-                const endLine = state.doc.lineAt(nodeTo);
-                
-                // Calculate ranges to hide (if not editing)
-                let openFenceRange = null;
-                let closeFenceRange = null;
-
-                if (!isCursorOverlapping) {
-                    // Opening fence range
-                    let openFenceEnd = nodeFrom + 3; 
-                    let firstChild = node.node.firstChild;
-                    if (firstChild && firstChild.name === 'CodeMark') {
-                        let next = firstChild.nextSibling;
-                        if (next && next.name === 'CodeInfo') {
-                            openFenceEnd = next.to;
-                        } else {
-                            openFenceEnd = firstChild.to;
-                        }
-                    }
-                    openFenceRange = { from: nodeFrom, to: openFenceEnd };
-
-                    // Closing fence range
-                    let lastChild = node.node.lastChild;
-                    if (lastChild && lastChild.name === 'CodeMark') {
-                        closeFenceRange = { from: lastChild.from, to: lastChild.to };
-                    } else {
-                        // Fallback if parser structure is weird or incomplete
-                        closeFenceRange = { from: nodeTo - 3, to: nodeTo };
-                    }
-                }
-
-                // Iterate lines and add decorations in STRICT order
-                for (let i = startLine.number; i <= endLine.number; i++) {
-                    const line = state.doc.line(i);
-                    
-                    // 1. Add Line Decoration (Background) - always at line.from
-                    builder.add(line.from, line.from, Decoration.line({ class: 'cm-fenced-code-line' }));
-                    
-                    // 2. Add Replacement Decorations (Content)
-                    // Opening Fence Replacement
-                    if (openFenceRange && i === startLine.number) {
-                        // openFenceRange.from is nodeFrom, which is usually startLine.from
-                        // Since Line Decoration is at line.from, and Replace is >= line.from, order is OK.
-                        // But if they are at same pos, order matters? 
-                        // Line decorations are point decorations. Range decorations are ranges.
-                        // Usually builder handles point/range at same pos if added correctly?
-                        // Wait, builder.add(from, to, val).
-                        // If from is same, point (line) vs range.
-                        // Line decs MUST come before content decs at same pos? Or separate?
-                        // Actually, Decoration.line is 0-length.
-                        // Let's add line dec first.
-                        builder.add(openFenceRange.from, openFenceRange.to, Decoration.replace({}));
-                    }
-                    
-                    // Closing Fence Replacement
-                    if (closeFenceRange && i === endLine.number) {
-                        // closeFenceRange.from is >= line.from
-                        builder.add(closeFenceRange.from, closeFenceRange.to, Decoration.replace({}));
-                    }
-                }
-                return;
+            for (const provider of blockProviders) {
+                provider(ctx);
             }
         }
     });
@@ -253,100 +151,16 @@ export const livePreviewView = ViewPlugin.fromClass(class {
                         return;
                     }
                     
-                    const text = state.sliceDoc(nodeFrom, nodeTo);
+                    const ctx: DecoratorContext = {
+                        state,
+                        node,
+                        builder,
+                        isCursorOverlapping,
+                        hasFocus
+                    };
 
-                    if (node.name === 'InlineMath') {
-                        const formula = text.slice(1, -1); 
-                        builder.add(nodeFrom, nodeTo, Decoration.replace({
-                            widget: new MathWidget(formula, false)
-                        }));
-                        return;
-                    }
-
-                    // --- DisplayMath ($$...$$ inline) ---
-                    if (node.name === 'DisplayMath') {
-                        const formula = text.slice(2, -2); // Strip $$
-                        builder.add(nodeFrom, nodeTo, Decoration.replace({
-                            widget: new MathWidget(formula, true) // displayMode: true
-                        }));
-                        return;
-                    }
-
-                    if (node.name === 'QuoteMark') {
-                        builder.add(nodeFrom, nodeTo, Decoration.replace({}));
-                        return;
-                    }
-
-                    // Removed CodeMark and CodeInfo handling from here.
-                    // They are fully managed by livePreviewState (Block handling).
-                    // When focused: livePreviewState shows source -> marks are visible.
-                    // When unfocused: livePreviewState hides lines -> marks are hidden.
-
-                    if (node.name === 'HorizontalRule') {
-                        builder.add(nodeFrom, nodeTo, Decoration.replace({
-                            widget: new HorizontalRuleWidget()
-                        }));
-                        return;
-                    }
-
-                    if (node.name === 'TaskMarker') {
-                        const isChecked = text.toLowerCase().includes('[x]');
-                        const prevNode = syntaxTree(state).resolve(nodeFrom - 1, -1);
-                        let startReplace = nodeFrom;
-                        if (prevNode && prevNode.name === 'ListMark') {
-                            startReplace = prevNode.from;
-                        }
-                        builder.add(startReplace, nodeTo, Decoration.replace({
-                            widget: new CheckboxWidget(isChecked)
-                        }));
-                        return;
-                    }
-
-                    if (node.name === 'ListMark') {
-                        const isUnordered = /^[-*+]/.test(text);
-                        if (isUnordered) {
-                            builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                widget: new BulletWidget()
-                            }));
-                        } else {
-                            const numberPart = text.trim();
-                            builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                widget: new OrderedListWidget(numberPart)
-                            }));
-                        }
-                        return;
-                    }
-
-                    if (node.name === 'Image') {
-                        const match = text.match(/^!\[(.*?)\]\((.*?)\)$/);
-                        if (match) {
-                            builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                widget: new ImageWidget(match[2], match[1])
-                            }));
-                        }
-                        return;
-                    }
-
-                    if (node.name === 'StrongEmphasis') {
-                        builder.add(nodeFrom, nodeFrom + 2, Decoration.replace({}));
-                        builder.add(nodeTo - 2, nodeTo, Decoration.replace({}));
-                    }
-                    
-                    else if (node.name === 'Emphasis') {
-                        builder.add(nodeFrom, nodeFrom + 1, Decoration.replace({}));
-                        builder.add(nodeTo - 1, nodeTo, Decoration.replace({}));
-                    }
-
-                    else if (node.name.startsWith('ATXHeading')) {
-                        const hashEnd = text.indexOf(' ') + 1;
-                        if (hashEnd > 0) {
-                            builder.add(nodeFrom, nodeFrom + hashEnd, Decoration.replace({}));
-                        }
-                    }
-                    
-                    else if (node.name === 'InlineCode') {
-                        builder.add(nodeFrom, nodeFrom + 1, Decoration.replace({}));
-                        builder.add(nodeTo - 1, nodeTo, Decoration.replace({}));
+                    for (const provider of inlineProviders) {
+                        provider(ctx);
                     }
                 }
             });
