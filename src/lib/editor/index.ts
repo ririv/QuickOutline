@@ -9,7 +9,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/
 import { GFM } from '@lezer/markdown';
 
 import { myHighlightStyle, baseTheme } from './theme';
-import { livePreview, MathExtension, mathTooltip } from './extensions';
+import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState } from './extensions';
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
 import { linkHeadingCompletion } from './autocomplete';
@@ -41,7 +41,8 @@ export class MarkdownEditor {
                 EditorView.lineWrapping,
                 autocompletion({ override: [linkHeadingCompletion] }), // Custom completion source
                 closeBrackets(),
-                showTooltip.compute(['selection'], mathTooltip), // Enable Math Tooltip (computed from selection)
+                showTooltip.compute(['selection'], mathTooltip), // Enable Math Tooltip
+                focusState, // Track focus state
                 markdown({ 
                     base: markdownLanguage, 
                     codeLanguages: languages,
@@ -49,10 +50,11 @@ export class MarkdownEditor {
                 }),
                 syntaxHighlighting(myHighlightStyle),
                 baseTheme,
-                livePreview,
+                livePreviewState, // Block-level replacements (StateField)
+                livePreviewView,  // Inline replacements (ViewPlugin)
                 EditorView.domEventHandlers({
-                    focus: (e, v) => v.dispatch({ effects: [] }),
-                    blur: (e, v) => v.dispatch({ effects: [] })
+                    focus: (e, v) => v.dispatch({ effects: setFocusState.of(true) }),
+                    blur: (e, v) => v.dispatch({ effects: setFocusState.of(false) })
                 })
             ]
         });

@@ -1,47 +1,12 @@
-import { ViewPlugin, Decoration, type DecorationSet, ViewUpdate, EditorView, showTooltip, type Tooltip } from '@codemirror/view';
-import { RangeSetBuilder, type EditorState } from '@codemirror/state';
+import { Decoration, type DecorationSet, EditorView, showTooltip, type Tooltip, ViewPlugin, ViewUpdate } from '@codemirror/view';
+import { RangeSetBuilder, type EditorState, StateField, StateEffect } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { HorizontalRuleWidget, CheckboxWidget, ImageWidget, MathWidget, BulletWidget, OrderedListWidget } from './widgets';
 import katex from 'katex';
+import { MathExtension } from './math-extension';
 
-// --- Custom Lezer Extension for Math ---
-export const MathExtension = {
-    defineNodes: [
-        { name: "InlineMath", style: tags.special(tags.content) },
-        { name: "BlockMath", style: tags.special(tags.content) }
-    ],
-    parseInline: [{
-        name: "InlineMath",
-        parse(cx: any, next: number, pos: number) {
-            if (next != 36) return -1; // '$'
-            
-            // BlockMath: $$...$$
-            if (cx.char(pos + 1) == 36) {
-                let end = pos + 2;
-                while (end < cx.end) {
-                    if (cx.char(end) == 36 && cx.char(end + 1) == 36) {
-                        cx.addElement(cx.elt("BlockMath", pos, end + 2));
-                        return end + 2;
-                    }
-                    end++;
-                }
-                return -1;
-            }
-
-            // InlineMath: $...$
-            let end = pos + 1;
-            while (end < cx.end) {
-                if (cx.char(end) == 36) {
-                    cx.addElement(cx.elt("InlineMath", pos, end + 1));
-                    return end + 1;
-                }
-                end++;
-            }
-            return -1;
-        }
-    }]
-};
+export { MathExtension }; 
 
 // --- Math Tooltip (Cursor based) ---
 export function mathTooltip(state: EditorState): Tooltip | null {
@@ -87,8 +52,110 @@ export function mathTooltip(state: EditorState): Tooltip | null {
     return null;
 }
 
-// --- Typora-like Live Preview Logic (Hiding Markers) ---
-export const livePreview = ViewPlugin.fromClass(class {
+// --- Focus State Field ---
+export const setFocusState = StateEffect.define<boolean>();
+export const focusState = StateField.define<boolean>({
+    create() { return false; },
+    update(val, tr) {
+        for (let e of tr.effects) {
+            if (e.is(setFocusState)) return e.value;
+        }
+        return val;
+    }
+});
+
+// 1. StateField for Block Replacements
+export const livePreviewState = StateField.define<DecorationSet>({
+    create(state) {
+        return buildBlockDecorations(state);
+    },
+    update(decorations, tr) {
+        if (tr.docChanged || tr.selection || tr.effects.some(e => e.is(setFocusState))) {
+            return buildBlockDecorations(tr.state);
+        }
+        return decorations;
+    },
+    provide: f => EditorView.decorations.from(f)
+});
+
+function buildBlockDecorations(state: EditorState) {
+    const builder = new RangeSetBuilder<Decoration>();
+    const selection = state.selection.main;
+    const hasFocus = state.field(focusState, false);
+    const tree = syntaxTree(state);
+
+    tree.iterate({
+        enter: (node) => {
+            const nodeFrom = node.from;
+            const nodeTo = node.to;
+            
+            let isCursorOverlapping = false;
+            if (hasFocus) {
+                isCursorOverlapping = (selection.from >= nodeFrom && selection.from <= nodeTo) || 
+                                      (selection.to >= nodeFrom && selection.to <= nodeTo) ||
+                                      (selection.from <= nodeFrom && selection.to >= nodeTo);
+            }
+
+            if (node.name === 'BlockMath') {
+                const text = state.sliceDoc(nodeFrom, nodeTo);
+                
+                // Robustly extract formula by finding the delimiting $$
+                // Find start index of first $$
+                const startIdx = text.indexOf('$$');
+                // Find start index of last $$
+                const endIdx = text.lastIndexOf('$$');
+                
+                let formula = text;
+                if (startIdx !== -1 && endIdx !== -1 && startIdx < endIdx) {
+                    // Slice strictly between the first $$ and the last $$
+                    // startIdx + 2 skips the opening $$
+                    formula = text.slice(startIdx + 2, endIdx).trim();
+                } else if (startIdx !== -1) {
+                    // Only found start $$, maybe unclosed or being typed
+                    formula = text.slice(startIdx + 2).trim();
+                }
+
+                if (isCursorOverlapping) {
+                    builder.add(nodeTo, nodeTo, Decoration.widget({
+                        widget: new MathWidget(formula, true),
+                        side: 1, 
+                        block: true 
+                    }));
+                } else {
+                    builder.add(nodeFrom, nodeTo, Decoration.replace({
+                        widget: new MathWidget(formula, true),
+                        block: true
+                    }));
+                }
+                return;
+            }
+
+            if (node.name === 'Blockquote') {
+                const startLine = state.doc.lineAt(nodeFrom);
+                const endLine = state.doc.lineAt(nodeTo);
+                for (let i = startLine.number; i <= endLine.number; i++) {
+                    const line = state.doc.line(i);
+                    builder.add(line.from, line.from, Decoration.line({ class: 'cm-blockquote-line' }));
+                }
+                return; 
+            }
+            
+            if (node.name === 'FencedCode') {
+                const startLine = state.doc.lineAt(nodeFrom);
+                const endLine = state.doc.lineAt(nodeTo);
+                for (let i = startLine.number; i <= endLine.number; i++) {
+                    const line = state.doc.line(i);
+                    builder.add(line.from, line.from, Decoration.line({ class: 'cm-fenced-code-line' }));
+                }
+                return;
+            }
+        }
+    });
+    return builder.finish();
+}
+
+// 2. ViewPlugin for Inline Replacements
+export const livePreviewView = ViewPlugin.fromClass(class {
     decorations: DecorationSet;
 
     constructor(view: EditorView) {
@@ -113,54 +180,38 @@ export const livePreview = ViewPlugin.fromClass(class {
                 enter: (node) => {
                     const nodeFrom = node.from;
                     const nodeTo = node.to;
-                    const text = state.sliceDoc(nodeFrom, nodeTo);
                     
                     let isCursorOverlapping = false;
                     if (hasFocus) {
-                            isCursorOverlapping = (selection.from >= nodeFrom && selection.from <= nodeTo) || 
-                                                (selection.to >= nodeFrom && selection.to <= nodeTo) ||
-                                                (selection.from <= nodeFrom && selection.to >= nodeTo);
+                        isCursorOverlapping = (selection.from >= nodeFrom && selection.from <= nodeTo) || 
+                                              (selection.to >= nodeFrom && selection.to <= nodeTo) ||
+                                              (selection.from <= nodeFrom && selection.to >= nodeTo);
                     }
 
                     if (isCursorOverlapping) {
                         return;
                     }
-
-                    // --- Blockquotes (>) ---
-                    if (node.name === 'Blockquote') {
-                        // Find the QuoteMark node within the Blockquote
-                        for (let cur = node.node.firstChild; cur; cur = cur.nextSibling) {
-                            if (cur.name === 'QuoteMark') {
-                                builder.add(cur.from, cur.to, Decoration.replace({}));
-                            }
-                        }
-                        // Add line decoration for the entire blockquote lines
-                        // Correct iteration over lines
-                        const startLine = state.doc.lineAt(nodeFrom);
-                        const endLine = state.doc.lineAt(nodeTo);
-                        for (let i = startLine.number; i <= endLine.number; i++) {
-                            const line = state.doc.line(i);
-                            builder.add(line.from, line.from, Decoration.line({ class: 'cm-blockquote-line' }));
-                        }
-                        return; // Prevent processing children as they're part of blockquote
-                    }
                     
-                    // --- Fenced Code Blocks (```) ---
-                    if (node.name === 'FencedCode') {
-                        // Hide fences
-                        builder.add(nodeFrom, nodeFrom + 3, Decoration.replace({})); // Hide opening fence ```
-                        builder.add(nodeTo - 3, nodeTo, Decoration.replace({}));     // Hide closing fence ```
-                        // Add line decoration for the code block lines
-                        const startLine = state.doc.lineAt(nodeFrom);
-                        const endLine = state.doc.lineAt(nodeTo);
-                        for (let i = startLine.number; i <= endLine.number; i++) {
-                            const line = state.doc.line(i);
-                            builder.add(line.from, line.from, Decoration.line({ class: 'cm-fenced-code-line' }));
-                        }
-                        return; // Prevent processing children
+                    const text = state.sliceDoc(nodeFrom, nodeTo);
+
+                    if (node.name === 'InlineMath') {
+                        const formula = text.slice(1, -1); 
+                        builder.add(nodeFrom, nodeTo, Decoration.replace({
+                            widget: new MathWidget(formula, false)
+                        }));
+                        return;
                     }
 
-                    // --- Horizontal Rule (---) ---
+                    if (node.name === 'QuoteMark') {
+                        builder.add(nodeFrom, nodeTo, Decoration.replace({}));
+                        return;
+                    }
+
+                    if (node.name === 'CodeMark') {
+                        builder.add(nodeFrom, nodeTo, Decoration.replace({}));
+                        return;
+                    }
+
                     if (node.name === 'HorizontalRule') {
                         builder.add(nodeFrom, nodeTo, Decoration.replace({
                             widget: new HorizontalRuleWidget()
@@ -168,100 +219,54 @@ export const livePreview = ViewPlugin.fromClass(class {
                         return;
                     }
 
-                    // --- Task List ([ ] or [x]) ---
                     if (node.name === 'TaskMarker') {
-                            const isChecked = text.toLowerCase().includes('[x]');
-                            
-                            const prevNode = syntaxTree(state).resolve(nodeFrom - 1, -1);
-                            
-                            let startReplace = nodeFrom;
-                            if (prevNode && prevNode.name === 'ListMark') {
-                                startReplace = prevNode.from;
-                            }
-                            
-                            builder.add(startReplace, nodeTo, Decoration.replace({
-                                widget: new CheckboxWidget(isChecked)
-                            }));
-                            return;
+                        const isChecked = text.toLowerCase().includes('[x]');
+                        const prevNode = syntaxTree(state).resolve(nodeFrom - 1, -1);
+                        let startReplace = nodeFrom;
+                        if (prevNode && prevNode.name === 'ListMark') {
+                            startReplace = prevNode.from;
+                        }
+                        builder.add(startReplace, nodeTo, Decoration.replace({
+                            widget: new CheckboxWidget(isChecked)
+                        }));
+                        return;
                     }
 
-                    // --- List Markers (-, *, + or 1.) ---
-                    // Use Widgets to replace markers so they respect indentation naturally
                     if (node.name === 'ListMark') {
-                        // Unordered: -, *, +
-                        // Check if starts with -, *, or + (without requiring a trailing space)
-                        const isUnordered = /^[-*+]/.test(text); 
-                        
+                        const isUnordered = /^[-*+]/.test(text);
                         if (isUnordered) {
-                             builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                 widget: new BulletWidget()
-                             }));
+                            builder.add(nodeFrom, nodeTo, Decoration.replace({
+                                widget: new BulletWidget()
+                            }));
                         } else {
-                             // Ordered list: 1.
-                             // Extract the number part (e.g. "1.")
-                             const numberPart = text.trim();
-                             builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                 widget: new OrderedListWidget(numberPart)
-                             }));
+                            const numberPart = text.trim();
+                            builder.add(nodeFrom, nodeTo, Decoration.replace({
+                                widget: new OrderedListWidget(numberPart)
+                            }));
                         }
                         return;
                     }
 
-                    // --- Images (![alt](url)) ---
                     if (node.name === 'Image') {
                         const match = text.match(/^!\[(.*?)\]\((.*?)\)$/);
                         if (match) {
-                            const alt = match[1];
-                            const url = match[2];
                             builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                widget: new ImageWidget(url, alt)
+                                widget: new ImageWidget(match[2], match[1])
                             }));
-                            return; 
                         }
+                        return;
                     }
 
-                    if (node.name === 'InlineMath') {
-                            const formula = text.slice(1, -1); // Strip $
-                            builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                widget: new MathWidget(formula, false)
-                            }));
-                    } else if (node.name === 'BlockMath') {
-                            const formula = text.slice(2, -2); // Strip $$
-                            
-                            console.log(`[BlockMath Debug] Node: from=${nodeFrom}, to=${nodeTo}, formula='${formula}'`);
-                            console.log(`[BlockMath Debug] isCursorOverlapping: ${isCursorOverlapping}`);
-
-                            // If cursor overlaps (editing), show BOTH source and preview
-                            if (isCursorOverlapping) {
-                                // Add preview widget at the end of the block
-                                builder.add(nodeTo, nodeTo, Decoration.widget({
-                                    widget: new MathWidget(formula, true),
-                                    side: 1, // Render after the content
-                                    block: true // Ensure it renders as a block element
-                                }));
-                                console.log(`[BlockMath Debug] Added preview widget at nodeTo=${nodeTo}`);
-                            } else {
-                                // Not editing: Replace source with preview (standard behavior)
-                                builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                    widget: new MathWidget(formula, true)
-                                }));
-                                console.log(`[BlockMath Debug] Replaced source with preview from=${nodeFrom}, to=${nodeTo}`);
-                            }
-                    }
-
-                    // --- Bold (**text**) ---
                     if (node.name === 'StrongEmphasis') {
                         builder.add(nodeFrom, nodeFrom + 2, Decoration.replace({}));
                         builder.add(nodeTo - 2, nodeTo, Decoration.replace({}));
                     }
                     
-                    // --- Italic (*text* or _text_) ---
                     else if (node.name === 'Emphasis') {
                         builder.add(nodeFrom, nodeFrom + 1, Decoration.replace({}));
                         builder.add(nodeTo - 1, nodeTo, Decoration.replace({}));
                     }
 
-                    // --- Headings (# H1) ---
                     else if (node.name.startsWith('ATXHeading')) {
                         const hashEnd = text.indexOf(' ') + 1;
                         if (hashEnd > 0) {
@@ -269,11 +274,10 @@ export const livePreview = ViewPlugin.fromClass(class {
                         }
                     }
                     
-                    // --- Inline Code (`code`) ---
-                        else if (node.name === 'InlineCode') {
+                    else if (node.name === 'InlineCode') {
                         builder.add(nodeFrom, nodeFrom + 1, Decoration.replace({}));
                         builder.add(nodeTo - 1, nodeTo, Decoration.replace({}));
-                        }
+                    }
                 }
             });
         }
