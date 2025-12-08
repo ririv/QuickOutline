@@ -1,14 +1,18 @@
-import { EditorState } from '@codemirror/state';
+import { EditorState, Prec } from '@codemirror/state';
 import { EditorView, keymap, placeholder } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { searchKeymap } from '@codemirror/search';
+import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { GFM } from '@lezer/markdown';
 
 import { myHighlightStyle, baseTheme } from './theme';
 import { livePreview, MathExtension } from './extensions';
+import { markdownKeymap } from './commands';
+import { tableKeymap } from './table-helper';
+import { linkHeadingCompletion } from './autocomplete';
 
 export interface MarkdownEditorOptions {
     initialValue?: string;
@@ -24,13 +28,23 @@ export class MarkdownEditor {
             doc: options.initialValue || '',
             extensions: [
                 history(),
-                keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+                // Use Prec.high for table keymap to ensure it overrides default behaviors like indent
+                Prec.high(keymap.of(tableKeymap)),
+                keymap.of([
+                    ...markdownKeymap,
+                    ...closeBracketsKeymap,
+                    ...defaultKeymap, 
+                    ...historyKeymap, 
+                    ...searchKeymap
+                ]),
                 placeholder(options.placeholder || ''),
                 EditorView.lineWrapping,
-                markdown({
-                    base: markdownLanguage,
+                autocompletion({ override: [linkHeadingCompletion] }), // Custom completion source
+                closeBrackets(),
+                markdown({ 
+                    base: markdownLanguage, 
                     codeLanguages: languages,
-                    extensions: [GFM, MathExtension]
+                    extensions: [GFM, MathExtension] 
                 }),
                 syntaxHighlighting(myHighlightStyle),
                 baseTheme,
@@ -47,7 +61,6 @@ export class MarkdownEditor {
             parent: options.parent
         });
     }
-
     getValue(): string {
         return this.view.state.doc.toString();
     }

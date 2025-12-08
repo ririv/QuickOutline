@@ -24,17 +24,10 @@
 
     onMount(() => {
         init('# Hello CodeMirror 6\n\nTry typing **bold text** or *italic* here.\n\nMove cursor inside and outside the styled text to see the magic!');
-        
-        const handleTab = (e: KeyboardEvent) => {
-             if (e.key === 'Tab' && editor) {
-                 e.preventDefault();
-                 editor.view.dispatch(editor.view.state.replaceSelection('    '));
-             }
-        };
-        editorElement.addEventListener('keydown', handleTab);
-        
+
+
         return () => {
-             editorElement?.removeEventListener('keydown', handleTab);
+             // Clean up any other manual listeners here if added later.
         };
     });
 

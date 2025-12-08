@@ -90,9 +90,13 @@ export const livePreview = ViewPlugin.fromClass(class {
                             }
                         }
                         // Add line decoration for the entire blockquote lines
-                        state.doc.iterLines(nodeFrom, nodeTo, (line) => {
+                        // Correct iteration over lines
+                        const startLine = state.doc.lineAt(nodeFrom);
+                        const endLine = state.doc.lineAt(nodeTo);
+                        for (let i = startLine.number; i <= endLine.number; i++) {
+                            const line = state.doc.line(i);
                             builder.add(line.from, line.from, Decoration.line({ class: 'cm-blockquote-line' }));
-                        });
+                        }
                         return; // Prevent processing children as they're part of blockquote
                     }
                     
@@ -102,9 +106,12 @@ export const livePreview = ViewPlugin.fromClass(class {
                         builder.add(nodeFrom, nodeFrom + 3, Decoration.replace({})); // Hide opening fence ```
                         builder.add(nodeTo - 3, nodeTo, Decoration.replace({}));     // Hide closing fence ```
                         // Add line decoration for the code block lines
-                        state.doc.iterLines(nodeFrom, nodeTo, (line) => {
-                             builder.add(line.from, line.from, Decoration.line({ class: 'cm-fenced-code-line' }));
-                        });
+                        const startLine = state.doc.lineAt(nodeFrom);
+                        const endLine = state.doc.lineAt(nodeTo);
+                        for (let i = startLine.number; i <= endLine.number; i++) {
+                            const line = state.doc.line(i);
+                            builder.add(line.from, line.from, Decoration.line({ class: 'cm-fenced-code-line' }));
+                        }
                         return; // Prevent processing children
                     }
 
