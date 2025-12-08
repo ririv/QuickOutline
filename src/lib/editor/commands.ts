@@ -86,6 +86,29 @@ export const insertLink: StateCommand = ({ state, dispatch }) => {
     return true;
 };
 
+export const handleCodeFence: StateCommand = ({ state, dispatch }) => {
+    const { from, empty } = state.selection.main;
+    if (!empty) return false;
+    
+    const line = state.doc.lineAt(from);
+    const textBefore = line.text.slice(0, from - line.from);
+    
+    // Check if we are typing the 3rd backtick on a line that only contains backticks (and whitespace)
+    if (/^\s*``$/.test(textBefore)) {
+        // We are about to type the 3rd one.
+        // Insert: `\n\n```
+        // And move cursor to middle line.
+        
+        const insert = '`\n\n```';
+        dispatch(state.update({
+            changes: { from, insert },
+            selection: { anchor: from + 2 } // After `\n (cursor on the empty line)
+        }));
+        return true;
+    }
+    return false;
+};
+
 // --- Keymap ---
 
 export const markdownKeymap: KeyBinding[] = [
@@ -95,4 +118,5 @@ export const markdownKeymap: KeyBinding[] = [
     { key: "Mod-u", run: toggleWrapper('<u>', '</u>'), preventDefault: true }, // Not standard MD but requested
     { key: "Mod-k", run: insertLink, preventDefault: true },
     { key: "Mod-Alt-s", run: toggleStrikethrough, preventDefault: true },
+    { key: "`", run: handleCodeFence }, // Don't prevent default if not handled (let it insert `)
 ];

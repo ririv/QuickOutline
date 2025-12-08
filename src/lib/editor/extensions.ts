@@ -130,7 +130,13 @@ function buildBlockDecorations(state: EditorState) {
                 return;
             }
 
+            // --- Blockquotes (>) --- 
             if (node.name === 'Blockquote') {
+                for (let cur = node.node.firstChild; cur; cur = cur.nextSibling) {
+                    if (cur.name === 'QuoteMark') {
+                        builder.add(cur.from, cur.to, Decoration.replace({}));
+                    }
+                }
                 const startLine = state.doc.lineAt(nodeFrom);
                 const endLine = state.doc.lineAt(nodeTo);
                 for (let i = startLine.number; i <= endLine.number; i++) {
@@ -140,12 +146,67 @@ function buildBlockDecorations(state: EditorState) {
                 return; 
             }
             
+            // --- Fenced Code Blocks (```) ---
             if (node.name === 'FencedCode') {
                 const startLine = state.doc.lineAt(nodeFrom);
                 const endLine = state.doc.lineAt(nodeTo);
+                
+                // Calculate ranges to hide (if not editing)
+                let openFenceRange = null;
+                let closeFenceRange = null;
+
+                if (!isCursorOverlapping) {
+                    // Opening fence range
+                    let openFenceEnd = nodeFrom + 3; 
+                    let firstChild = node.node.firstChild;
+                    if (firstChild && firstChild.name === 'CodeMark') {
+                        let next = firstChild.nextSibling;
+                        if (next && next.name === 'CodeInfo') {
+                            openFenceEnd = next.to;
+                        } else {
+                            openFenceEnd = firstChild.to;
+                        }
+                    }
+                    openFenceRange = { from: nodeFrom, to: openFenceEnd };
+
+                    // Closing fence range
+                    let lastChild = node.node.lastChild;
+                    if (lastChild && lastChild.name === 'CodeMark') {
+                        closeFenceRange = { from: lastChild.from, to: lastChild.to };
+                    } else {
+                        // Fallback if parser structure is weird or incomplete
+                        closeFenceRange = { from: nodeTo - 3, to: nodeTo };
+                    }
+                }
+
+                // Iterate lines and add decorations in STRICT order
                 for (let i = startLine.number; i <= endLine.number; i++) {
                     const line = state.doc.line(i);
+                    
+                    // 1. Add Line Decoration (Background) - always at line.from
                     builder.add(line.from, line.from, Decoration.line({ class: 'cm-fenced-code-line' }));
+                    
+                    // 2. Add Replacement Decorations (Content)
+                    // Opening Fence Replacement
+                    if (openFenceRange && i === startLine.number) {
+                        // openFenceRange.from is nodeFrom, which is usually startLine.from
+                        // Since Line Decoration is at line.from, and Replace is >= line.from, order is OK.
+                        // But if they are at same pos, order matters? 
+                        // Line decorations are point decorations. Range decorations are ranges.
+                        // Usually builder handles point/range at same pos if added correctly?
+                        // Wait, builder.add(from, to, val).
+                        // If from is same, point (line) vs range.
+                        // Line decs MUST come before content decs at same pos? Or separate?
+                        // Actually, Decoration.line is 0-length.
+                        // Let's add line dec first.
+                        builder.add(openFenceRange.from, openFenceRange.to, Decoration.replace({}));
+                    }
+                    
+                    // Closing Fence Replacement
+                    if (closeFenceRange && i === endLine.number) {
+                        // closeFenceRange.from is >= line.from
+                        builder.add(closeFenceRange.from, closeFenceRange.to, Decoration.replace({}));
+                    }
                 }
                 return;
             }
@@ -216,10 +277,10 @@ export const livePreviewView = ViewPlugin.fromClass(class {
                         return;
                     }
 
-                    if (node.name === 'CodeMark') {
-                        builder.add(nodeFrom, nodeTo, Decoration.replace({}));
-                        return;
-                    }
+                    // Removed CodeMark and CodeInfo handling from here.
+                    // They are fully managed by livePreviewState (Block handling).
+                    // When focused: livePreviewState shows source -> marks are visible.
+                    // When unfocused: livePreviewState hides lines -> marks are hidden.
 
                     if (node.name === 'HorizontalRule') {
                         builder.add(nodeFrom, nodeTo, Decoration.replace({
