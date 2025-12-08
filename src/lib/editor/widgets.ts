@@ -131,13 +131,12 @@ export class MathWidget extends WidgetType {
     eq(other: MathWidget) { return other.formula === this.formula && other.displayMode === this.displayMode; }
 
     toDOM() {
-        const tagName = this.displayMode ? "div" : "span";
-        const element = document.createElement(tagName);
+        const element = document.createElement("span");
         element.className = this.displayMode ? "cm-math-block" : "cm-math-inline";
+        // Don't force display: block. Let KaTeX or context decide.
+        // If it's a block widget in CM, CM handles the block layout.
         if (this.displayMode) {
-                element.style.display = "block";
-                element.style.textAlign = "center";
-                element.style.margin = "1em 0";
+             element.style.minHeight = "1em";
         }
         try {
             katex.render(this.formula, element, {

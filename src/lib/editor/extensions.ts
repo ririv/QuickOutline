@@ -202,6 +202,15 @@ export const livePreviewView = ViewPlugin.fromClass(class {
                         return;
                     }
 
+                    // --- DisplayMath ($$...$$ inline) ---
+                    if (node.name === 'DisplayMath') {
+                        const formula = text.slice(2, -2); // Strip $$
+                        builder.add(nodeFrom, nodeTo, Decoration.replace({
+                            widget: new MathWidget(formula, true) // displayMode: true
+                        }));
+                        return;
+                    }
+
                     if (node.name === 'QuoteMark') {
                         builder.add(nodeFrom, nodeTo, Decoration.replace({}));
                         return;

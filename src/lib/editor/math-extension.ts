@@ -31,26 +31,15 @@ class BlockMathLeafParser implements LeafBlockParser {
 export const MathExtension: MarkdownConfig = {
     defineNodes: [
         { name: "BlockMath", block: true, style: tags.special(tags.content) },
+        { name: "DisplayMath", style: tags.special(tags.content) }, // Inline display math
         { name: "InlineMath", style: tags.special(tags.content) }
     ],
     parseBlock: [{
         name: "BlockMath",
         // We use 'leaf' instead of 'parse' to handle this as a Paragraph-like block.
-        // This avoids the complexity of eager parsing and type issues.
         leaf(cx: BlockContext, leaf: LeafBlock): LeafBlockParser | null {
-            // Check if the potential paragraph starts with $$
-            // leaf.content contains the text of the first line of the block so far
-            // But leaf.content might accumulate?
-            // `leaf` is called when a new leaf block is started (e.g. a paragraph).
-            // We check if this "paragraph" is actually a BlockMath.
-            
             const match = /^(\s*)\$\$/.exec(leaf.content);
             if (match) {
-                // It starts with $$, so it's ours!
-                // We takeover.
-                // Note: leaf.content implies the parser has already consumed the line into 'leaf'?
-                // Or we need to verify indentation? 
-                // Let's assume standard $$ start.
                 if (leaf.content.trim().startsWith('$$')) {
                      return new BlockMathLeafParser();
                 }
@@ -62,6 +51,22 @@ export const MathExtension: MarkdownConfig = {
         name: "InlineMath",
         parse(cx, next, pos) {
             if (next != 36) return -1; // '$'
+            
+            // Check for DisplayMath $$...$$ (Inline context)
+            if (cx.char(pos + 1) == 36) {
+                let end = pos + 2;
+                while (end < cx.end) {
+                    if (cx.char(end) == 36 && cx.char(end + 1) == 36) {
+                        cx.addElement(cx.elt("DisplayMath", pos, end + 2));
+                        return end + 2;
+                    }
+                    end++;
+                }
+                // If unclosed, treat as plain text or let it fall through? 
+                // Or treat as InlineMath start if we want to support $ inside $$? Unlikely.
+                return -1; 
+            }
+            
             // InlineMath $...$
             let end = pos + 1;
             while (end < cx.end) {
