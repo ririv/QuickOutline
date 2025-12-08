@@ -1,5 +1,5 @@
 import { EditorState, Prec } from '@codemirror/state';
-import { EditorView, keymap, placeholder } from '@codemirror/view';
+import { EditorView, keymap, placeholder, showTooltip } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
@@ -9,7 +9,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/
 import { GFM } from '@lezer/markdown';
 
 import { myHighlightStyle, baseTheme } from './theme';
-import { livePreview, MathExtension } from './extensions';
+import { livePreview, MathExtension, mathTooltip } from './extensions';
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
 import { linkHeadingCompletion } from './autocomplete';
@@ -31,7 +31,7 @@ export class MarkdownEditor {
                 // Use Prec.high for table keymap to ensure it overrides default behaviors like indent
                 Prec.high(keymap.of(tableKeymap)),
                 keymap.of([
-                    ...markdownKeymap,
+                    ...markdownKeymap, 
                     ...closeBracketsKeymap,
                     ...defaultKeymap, 
                     ...historyKeymap, 
@@ -41,6 +41,7 @@ export class MarkdownEditor {
                 EditorView.lineWrapping,
                 autocompletion({ override: [linkHeadingCompletion] }), // Custom completion source
                 closeBrackets(),
+                showTooltip.compute(['selection'], mathTooltip), // Enable Math Tooltip (computed from selection)
                 markdown({ 
                     base: markdownLanguage, 
                     codeLanguages: languages,
@@ -60,8 +61,7 @@ export class MarkdownEditor {
             state: startState,
             parent: options.parent
         });
-    }
-    getValue(): string {
+    }    getValue(): string {
         return this.view.state.doc.toString();
     }
 

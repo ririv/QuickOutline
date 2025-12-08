@@ -131,22 +131,23 @@ export class MathWidget extends WidgetType {
     eq(other: MathWidget) { return other.formula === this.formula && other.displayMode === this.displayMode; }
 
     toDOM() {
-        const span = document.createElement("span");
-        span.className = this.displayMode ? "cm-math-block" : "cm-math-inline";
+        const tagName = this.displayMode ? "div" : "span";
+        const element = document.createElement(tagName);
+        element.className = this.displayMode ? "cm-math-block" : "cm-math-inline";
         if (this.displayMode) {
-                span.style.display = "block";
-                span.style.textAlign = "center";
-                span.style.margin = "1em 0";
+                element.style.display = "block";
+                element.style.textAlign = "center";
+                element.style.margin = "1em 0";
         }
         try {
-            katex.render(this.formula, span, {
+            katex.render(this.formula, element, {
                 displayMode: this.displayMode,
                 throwOnError: false
             });
         } catch (e) {
-            span.textContent = this.formula;
-            span.style.color = "red";
+            element.textContent = this.formula;
+            element.style.color = "red";
         }
-        return span;
+        return element;
     }
 }

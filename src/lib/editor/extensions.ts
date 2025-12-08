@@ -1,8 +1,9 @@
-import { ViewPlugin, Decoration, type DecorationSet, ViewUpdate, EditorView } from '@codemirror/view';
-import { RangeSetBuilder } from '@codemirror/state';
+import { ViewPlugin, Decoration, type DecorationSet, ViewUpdate, EditorView, showTooltip, type Tooltip } from '@codemirror/view';
+import { RangeSetBuilder, type EditorState } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { HorizontalRuleWidget, CheckboxWidget, ImageWidget, MathWidget, BulletWidget, OrderedListWidget } from './widgets';
+import katex from 'katex';
 
 // --- Custom Lezer Extension for Math ---
 export const MathExtension = {
@@ -41,6 +42,50 @@ export const MathExtension = {
         }
     }]
 };
+
+// --- Math Tooltip (Cursor based) ---
+export function mathTooltip(state: EditorState): Tooltip | null {
+    const { main } = state.selection;
+    if (!main.empty) return null;
+    
+    const pos = main.head;
+    const node = syntaxTree(state).resolveInner(pos, -1);
+    
+    if (node.name === 'InlineMath') {
+        const from = node.from;
+        const to = node.to;
+        const text = state.sliceDoc(from, to);
+        const formula = text.slice(1, -1); // Strip $
+        
+        return {
+            pos: from,
+            above: true,
+            strictSide: true,
+            create: () => {
+                const dom = document.createElement("div");
+                dom.className = "cm-math-tooltip";
+                dom.style.padding = "4px 8px";
+                dom.style.backgroundColor = "#fff";
+                dom.style.border = "1px solid #ddd";
+                dom.style.borderRadius = "4px";
+                dom.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+                dom.style.zIndex = "100";
+                
+                try {
+                    katex.render(formula, dom, {
+                        throwOnError: false,
+                        displayMode: false
+                    });
+                } catch (e) {
+                    dom.textContent = "Invalid Formula";
+                    dom.style.color = "red";
+                }
+                return { dom };
+            }
+        };
+    }
+    return null;
+}
 
 // --- Typora-like Live Preview Logic (Hiding Markers) ---
 export const livePreview = ViewPlugin.fromClass(class {
@@ -182,9 +227,26 @@ export const livePreview = ViewPlugin.fromClass(class {
                             }));
                     } else if (node.name === 'BlockMath') {
                             const formula = text.slice(2, -2); // Strip $$
-                            builder.add(nodeFrom, nodeTo, Decoration.replace({
-                                widget: new MathWidget(formula, true)
-                            }));
+                            
+                            console.log(`[BlockMath Debug] Node: from=${nodeFrom}, to=${nodeTo}, formula='${formula}'`);
+                            console.log(`[BlockMath Debug] isCursorOverlapping: ${isCursorOverlapping}`);
+
+                            // If cursor overlaps (editing), show BOTH source and preview
+                            if (isCursorOverlapping) {
+                                // Add preview widget at the end of the block
+                                builder.add(nodeTo, nodeTo, Decoration.widget({
+                                    widget: new MathWidget(formula, true),
+                                    side: 1, // Render after the content
+                                    block: true // Ensure it renders as a block element
+                                }));
+                                console.log(`[BlockMath Debug] Added preview widget at nodeTo=${nodeTo}`);
+                            } else {
+                                // Not editing: Replace source with preview (standard behavior)
+                                builder.add(nodeFrom, nodeTo, Decoration.replace({
+                                    widget: new MathWidget(formula, true)
+                                }));
+                                console.log(`[BlockMath Debug] Replaced source with preview from=${nodeFrom}, to=${nodeTo}`);
+                            }
                     }
 
                     // --- Bold (**text**) ---
