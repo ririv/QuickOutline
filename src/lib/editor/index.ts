@@ -1,13 +1,13 @@
 import { EditorState, Prec, Compartment } from '@codemirror/state';
 import { EditorView, keymap, placeholder, showTooltip, drawSelection, dropCursor } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { syntaxHighlighting } from '@codemirror/language';
+import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'; // Removed bracketMatching and bracketMatchingKeymap
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { GFM } from '@lezer/markdown';
-import { bracketMatching } from '@codemirror/language'; // Correct import for bracketMatching
+import { bracketMatching } from '@codemirror/language';
 
 import { myHighlightStyle, baseTheme } from './theme';
 import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState } from './extensions';
@@ -21,10 +21,13 @@ export interface MarkdownEditorOptions {
     parent: HTMLElement;
 }
 
+export type EditorMode = 'live' | 'source' | 'rich-source';
+
 export class MarkdownEditor {
     view: EditorView;
-    private previewCompartment = new Compartment();
-    private isSourceMode = false;
+    private extensionCompartment = new Compartment();
+    private styleCompartment = new Compartment();
+    private currentMode: EditorMode = 'source'; // Default mode
 
     constructor(options: MarkdownEditorOptions) {
         const startState = EditorState.create({
@@ -32,8 +35,8 @@ export class MarkdownEditor {
             extensions: [
                 history(),
                 keymap.of([
+                    ...tableKeymap, // Ensure table keymap is evaluated first for Tab/Enter
                     ...markdownKeymap, 
-                    ...tableKeymap, // Add bracket matching keymap
                     ...closeBracketsKeymap,
                     ...defaultKeymap, 
                     ...historyKeymap, 
@@ -54,11 +57,13 @@ export class MarkdownEditor {
                     codeLanguages: languages,
                     extensions: [GFM, MathExtension] 
                 }),
-                syntaxHighlighting(myHighlightStyle),
+                
+                // Dynamic Styling
+                this.styleCompartment.of(syntaxHighlighting(defaultHighlightStyle)),
                 baseTheme,
                 
                 // Dynamic Live Preview Extensions
-                this.previewCompartment.of([livePreviewState, livePreviewView]),
+                this.extensionCompartment.of([]),
                 
                 EditorView.domEventHandlers({
                     focus: (e, v) => v.dispatch({ effects: setFocusState.of(true) }),
@@ -73,16 +78,36 @@ export class MarkdownEditor {
         });
     }
 
-    toggleSourceMode() {
-        this.isSourceMode = !this.isSourceMode;
-        this.view.dispatch({
-            effects: this.previewCompartment.reconfigure(
-                this.isSourceMode ? [] : [livePreviewState, livePreviewView]
-            )
-        });
+    setMode(mode: EditorMode) {
+        this.currentMode = mode;
+        const effects = [];
+
+        // Configure Extensions (Preview logic)
+        if (mode === 'live') {
+            effects.push(this.extensionCompartment.reconfigure([livePreviewState, livePreviewView]));
+        } else {
+            effects.push(this.extensionCompartment.reconfigure([]));
+        }
+
+        // Configure Styles
+        if (mode === 'source') {
+            effects.push(this.styleCompartment.reconfigure(syntaxHighlighting(defaultHighlightStyle)));
+        } else {
+            // Both 'live' and 'rich-source' use the rich styling
+            effects.push(this.styleCompartment.reconfigure(syntaxHighlighting(myHighlightStyle)));
+        }
+
+        this.view.dispatch({ effects });
     }
 
-    getValue(): string {        return this.view.state.doc.toString();
+    toggleSourceMode() {
+        // Simple toggle between 'live' and 'source' for compatibility
+        const newMode = this.currentMode === 'live' ? 'source' : 'live';
+        this.setMode(newMode);
+    }
+
+    getValue(): string {
+        return this.view.state.doc.toString();
     }
 
     setValue(val: string) {
