@@ -11,6 +11,7 @@
     export const insertImageMarkdown = (path: string) => editor?.insertImageMarkdown(path);
     export const getContentHtml = async () => "Preview not implemented yet";
     export const getPayloads = async () => JSON.stringify({ html: "", styles: "" });
+    export const toggleSourceMode = () => editor?.toggleSourceMode(); // Expose toggle
 
     // Init function (exposed)
     export const init = (initialMarkdown: string = '') => {
