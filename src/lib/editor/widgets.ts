@@ -3,6 +3,10 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
 export class BulletWidget extends WidgetType {
+    eq(other: BulletWidget) { return true; } // All bullets are the same, reuse DOM
+
+    ignoreEvent() { return false; }
+
     toDOM() {
         const span = document.createElement("span");
         span.className = "cm-bullet-widget";
