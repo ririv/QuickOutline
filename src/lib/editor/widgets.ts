@@ -2,6 +2,35 @@ import { WidgetType, EditorView } from '@codemirror/view';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
+export class BulletWidget extends WidgetType {
+    toDOM() {
+        const span = document.createElement("span");
+        span.className = "cm-bullet-widget";
+        span.textContent = "•";
+        span.style.paddingRight = "0.5em";
+        span.style.color = "#555";
+        span.style.fontWeight = "bold";
+        return span;
+    }
+}
+
+export class OrderedListWidget extends WidgetType {
+    constructor(readonly number: string) { super(); }
+    
+    eq(other: OrderedListWidget) { return other.number === this.number; }
+    
+    toDOM() {
+        const span = document.createElement("span");
+        span.className = "cm-ordered-widget";
+        span.textContent = this.number;
+        span.style.paddingRight = "0.5em";
+        span.style.color = "#555";
+        span.style.fontWeight = "bold";
+        // Use monospaced or aligned font if possible to avoid wobble
+        return span;
+    }
+}
+
 export class HorizontalRuleWidget extends WidgetType {
     toDOM() {
         const hr = document.createElement("hr");

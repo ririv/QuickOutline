@@ -2,7 +2,7 @@ import { ViewPlugin, Decoration, type DecorationSet, ViewUpdate, EditorView } fr
 import { RangeSetBuilder } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
-import { HorizontalRuleWidget, CheckboxWidget, ImageWidget, MathWidget } from './widgets';
+import { HorizontalRuleWidget, CheckboxWidget, ImageWidget, MathWidget, BulletWidget, OrderedListWidget } from './widgets';
 
 // --- Custom Lezer Extension for Math ---
 export const MathExtension = {
@@ -138,6 +138,28 @@ export const livePreview = ViewPlugin.fromClass(class {
                                 widget: new CheckboxWidget(isChecked)
                             }));
                             return;
+                    }
+
+                    // --- List Markers (-, *, + or 1.) ---
+                    // Use Widgets to replace markers so they respect indentation naturally
+                    if (node.name === 'ListMark') {
+                        // Unordered: -, *, +
+                        // Check if starts with -, *, or + (without requiring a trailing space)
+                        const isUnordered = /^[-*+]/.test(text); 
+                        
+                        if (isUnordered) {
+                             builder.add(nodeFrom, nodeTo, Decoration.replace({
+                                 widget: new BulletWidget()
+                             }));
+                        } else {
+                             // Ordered list: 1.
+                             // Extract the number part (e.g. "1.")
+                             const numberPart = text.trim();
+                             builder.add(nodeFrom, nodeTo, Decoration.replace({
+                                 widget: new OrderedListWidget(numberPart)
+                             }));
+                        }
+                        return;
                     }
 
                     // --- Images (![alt](url)) ---
