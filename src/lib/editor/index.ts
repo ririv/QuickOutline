@@ -1,5 +1,5 @@
 import { EditorState, Prec } from '@codemirror/state';
-import { EditorView, keymap, placeholder, showTooltip } from '@codemirror/view';
+import { EditorView, keymap, placeholder, showTooltip, drawSelection } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
@@ -39,6 +39,7 @@ export class MarkdownEditor {
                 ]),
                 placeholder(options.placeholder || ''),
                 EditorView.lineWrapping,
+                drawSelection(), // Fix cursor artifacts by using custom selection drawing
                 autocompletion({ override: [linkHeadingCompletion] }), // Custom completion source
                 closeBrackets(),
                 showTooltip.compute(['selection'], mathTooltip), // Enable Math Tooltip

@@ -33,7 +33,7 @@
     *   当光标紧挨着一个正在被“销毁并立即重建”的 DOM 元素时，浏览器的渲染引擎（尤其是 Webkit/Blink 内核）在处理光标绘制（Caret Painting）时可能会出现 Bug。
     *   旧的光标层（Layer）没有被及时清除，而新的光标层已经绘制出来，导致页面上出现视觉上的“光标分身”或“残影”。
 
-## 解决方案：强制 Widget DOM 复用
+## 解决方案一：强制 Widget DOM 复用 (已实施)
 
 通过为 `BulletWidget` 实现 `eq()` 方法，显式告诉 CodeMirror 只要 Widget 的类型和属性相同，就**复用现有 DOM 元素**。
 
@@ -63,8 +63,66 @@ export class BulletWidget extends WidgetType {
 
 ### 效果
 
-修复后，CodeMirror 在更新 Decorations 时会尽可能地保留并复用 `BulletWidget` 对应的 DOM 元素。DOM 结构保持稳定，减少了不必要的 DOM 抖动。浏览器光标渲染恢复正常，光标残影问题彻底消失。
+修复后，CodeMirror 在更新 Decorations 时会尽可能地保留并复用 `BulletWidget` 对应的 DOM 元素。DOM 结构保持稳定，减少了不必要的 DOM 抖动。浏览器光标渲染恢复正常，光标残影问题得以缓解或消除。
+
+---
+
+## 解决方案二：使用 CodeMirror 自定义光标绘制 (drawSelection)
+
+即使进行了 Widget DOM 复用优化，在某些极端场景或浏览器环境下（尤其是在 Widget 边界进行操作时），浏览器原生光标绘制仍然可能出现微小的伪影。CodeMirror 6 提供了更彻底的解决方案：完全接管光标的绘制。
+
+### 场景：数学公式的光标残影
+
+这个问题不仅出现在列表中，在实现 **即时渲染数学公式**（如 `$E=mc^2$`）时也会遇到，且更为棘手。
+
+**场景**：
+1.  用户输入 `$x$`，编辑器立即将其渲染为一个包含 KaTeX 公式的 Widget (`<span>...</span>`)。
+2.  用户按下 `Backspace` 删除末尾的 `$`。
+3.  CodeMirror 检测到语法不再匹配 `InlineMath`，于是决定**移除**该 Widget，恢复显示普通文本 `$x`。
+
+**问题**：
+由于 KaTeX 渲染生成的 DOM 结构非常复杂（包含多层嵌套的 span, svg 等），当这个复杂的 Widget 在一瞬间被从文档流中移除时，浏览器（尤其是 Webkit/Blink 内核）的光标重绘逻辑（Caret Painting）容易出现严重的滞后或计算错误，导致屏幕上残留一个“不闪烁的旧光标”，同时显示一个新的光标。
+
+**解决方案**：
+对于这种 **Widget 被销毁**（而非复用）导致的残影，`eq()` 方法无法解决（因为没有 Widget 可以复用了）。唯一的、彻底的解决方案是启用 **`drawSelection()`** 扩展。
+
+通过 `drawSelection()`，CodeMirror 完全接管了光标和选区的绘制，不再依赖浏览器不稳定的原生光标渲染，从而彻底消除了此类残影。
+
+### 原理
+
+`drawSelection()` 扩展会禁用浏览器原生的光标，并使用 CodeMirror 自己的 DOM 元素来模拟绘制光标和选区。由于这些 DOM 元素是由 CodeMirror 精确控制的，它们能够更好地与编辑器的 Decorations 和 Widget 协调工作，从而彻底避免原生浏览器光标的渲染 Bug。
+
+### 修复代码
+
+在 `src/lib/editor/index.ts` 中，将 `drawSelection()` 扩展添加到编辑器的配置中：
+
+```typescript
+import { drawSelection } from '@codemirror/view'; // 引入 drawSelection
+
+// ...
+
+export class MarkdownEditor {
+    // ...
+    constructor(options: MarkdownEditorOptions) {
+        const startState = EditorState.create({
+            // ...
+            extensions: [
+                // ... 其他扩展 ...
+                drawSelection(), // 启用 CodeMirror 自定义光标绘制
+                // ...
+            ]
+        });
+        // ...
+    }
+}
+```
+
+### 效果
+
+通过 `drawSelection()`，CodeMirror 不再依赖浏览器原生的光标绘制，而是使用其高度优化的 DOM 模拟方案。这彻底解决了因浏览器渲染机制导致的各种光标残影问题，使得光标在复杂 Widget 场景下始终保持稳定和精准。
+
+---
 
 ## 最佳实践总结
 
-在 CodeMirror 6 中编写自定义 `WidgetType` 时，**务必仔细考虑并实现 `eq()` 方法**。对于无状态或状态稳定的 Widget，返回 `true` 可以显著提升性能，减少 DOM 操作，并避免各类由 DOM 抖动导致的渲染伪影和 Bug。此方法是实现高性能、稳定 CodeMirror 自定义渲染的关键。
+在 CodeMirror 6 中编写自定义 `WidgetType` 时，**务必仔细考虑并实现 `eq()` 方法**（减少 DOM 抖动）。同时，**启用 `drawSelection()` 扩展**是解决各类光标渲染问题（包括残影）的“银弹”，它确保了复杂编辑器场景下的光标视觉稳定性。
