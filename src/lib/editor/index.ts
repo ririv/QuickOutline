@@ -10,7 +10,7 @@ import { GFM } from '@lezer/markdown';
 import { bracketMatching } from '@codemirror/language';
 import { classHighlighter } from '@lezer/highlight';
 
-import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting, gridTableTheme, academicTableTheme } from './theme';
+import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting, gridTableTheme, academicTableTheme, vsCodeLightHighlightStyle } from './theme';
 import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState } from './extensions';
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
@@ -41,7 +41,7 @@ export class MarkdownEditor {
         // Determine initial syntax highlighting based on mode
         const initialSyntaxHighlighting = this.currentMode === 'source'
             ? [
-                syntaxHighlighting(defaultHighlightStyle),
+                syntaxHighlighting(vsCodeLightHighlightStyle),
                 syntaxHighlighting(classHighlighter) // Enable CSS classes for scoped styling
             ]
             : [
@@ -112,7 +112,7 @@ export class MarkdownEditor {
         // Configure Styles
         const newSyntaxHighlighting = mode === 'source'
             ? [
-                syntaxHighlighting(defaultHighlightStyle),
+                syntaxHighlighting(vsCodeLightHighlightStyle),
                 syntaxHighlighting(classHighlighter)
             ]
             : [

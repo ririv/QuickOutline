@@ -14,7 +14,7 @@
     export const setMode = (mode: EditorMode) => editor?.setMode(mode); // Expose setMode
 
     // Init function (exposed)
-    export const init = (initialMarkdown: string = '', initialMode: EditorMode = 'live') => {
+    export const init = (initialMarkdown: string = '', initialMode: EditorMode = 'source') => {
         if (editor) return;
         editor = new MarkdownEditor({
             parent: editorElement,
@@ -26,7 +26,7 @@
 
     onMount(() => {
         // Ensure init() is called here with default values
-        init('# Hello CodeMirror 6\n\nTry typing **bold text** or *italic* here.\n\nMove cursor inside and outside the styled text to see the magic!', 'live');
+        init('# Hello CodeMirror 6\n\nTry typing **bold text** or *italic* here.\n\nMove cursor inside and outside the styled text to see the magic!');
 
         return () => {
              // Clean up any other manual listeners here if added later.

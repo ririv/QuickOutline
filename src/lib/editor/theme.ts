@@ -216,3 +216,29 @@ export const academicTableTheme = EditorView.theme({
         borderBottom: "none",
     },
 });
+
+// --- VS Code Light Highlight Style (Markdown Optimized) ---
+export const vsCodeLightHighlightStyle = HighlightStyle.define([
+    // Markdown Specifics
+    { tag: tags.heading, fontWeight: "bold", color: "#005cc5" }, // Blue headings
+    { tag: tags.list, color: "#735c0f" }, // Yellow/Orange bullets
+    { tag: tags.quote, color: "#22863a", fontStyle: "italic" }, // Green quotes
+    { tag: tags.link, color: "#032f62", textDecoration: "underline" },
+    { tag: tags.url, color: "#032f62", textDecoration: "underline" },
+    { tag: tags.strong, fontWeight: "bold", color: "#24292e" },
+    { tag: tags.emphasis, fontStyle: "italic", color: "#24292e" },
+    { tag: tags.monospace, color: "#24292e" }, // Inline code text color
+    
+    // Markdown Markers (hash, star, bracket)
+    { tag: tags.processingInstruction, color: "#005cc5" }, 
+    { tag: tags.meta, color: "#6a737d" },
+
+    // General Code Syntax (VS Code Light flavor)
+    { tag: tags.keyword, color: "#d73a49" },
+    { tag: tags.atom, color: "#6f42c1" },
+    { tag: tags.number, color: "#005cc5" },
+    { tag: tags.string, color: "#032f62" },
+    { tag: tags.comment, color: "#6a737d", fontStyle: "italic" },
+    { tag: [tags.definition(tags.variableName), tags.function(tags.variableName)], color: "#6f42c1" },
+    { tag: tags.variableName, color: "#24292e" },
+]);
