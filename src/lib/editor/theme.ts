@@ -23,7 +23,7 @@ export const baseTheme = EditorView.theme({
     },
     ".cm-scroller": { fontFamily: "inherit" },
     ".cm-content": {
-        padding: "40px 60px", // Typora-like padding
+        padding: "16px 22px",
         maxWidth: "900px",
         margin: "0 auto",
     },
