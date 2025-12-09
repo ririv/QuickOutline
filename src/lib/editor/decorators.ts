@@ -1,8 +1,17 @@
-import { Decoration } from '@codemirror/view';
 import { EditorState, RangeSetBuilder } from '@codemirror/state';
-import {type SyntaxNodeRef} from '@lezer/common';
+import { Decoration } from '@codemirror/view';
+import { type SyntaxNodeRef, type SyntaxNode } from '@lezer/common';
 import { HorizontalRuleWidget, CheckboxWidget, ImageWidget, MathWidget, BulletWidget, OrderedListWidget, TableWidget } from './widgets';
 import { syntaxTree } from '@codemirror/language';
+
+// --- Helper Functions ---
+function hasDescendant(node: SyntaxNode, name: string): boolean {
+    if (node.name === name) return true;
+    for (let child = node.firstChild; child; child = child.nextSibling) {
+        if (hasDescendant(child, name)) return true;
+    }
+    return false;
+}
 
 // --- Interfaces ---
 
@@ -18,6 +27,18 @@ export interface DecoratorContext {
 export type DecoratorProvider = (ctx: DecoratorContext) => void;
 
 // --- Block Providers (for livePreviewState) ---
+
+export const taskListClassProvider: DecoratorProvider = ({ state, node, builder }) => {
+    if (node.name !== 'ListItem') return;
+
+    // Check if this ListItem contains a TaskMarker
+    if (hasDescendant(node.node, 'TaskMarker')) {
+        // Add class to the line
+        // ListItem usually starts at line start (including indentation)
+        const line = state.doc.lineAt(node.from);
+        builder.add(line.from, line.from, Decoration.line({ class: 'cm-task-list-item' }));
+    }
+};
 
 export const blockMathProvider: DecoratorProvider = ({ state, node, builder, isCursorOverlapping }) => {
     if (node.name !== 'BlockMath') return;
@@ -192,22 +213,98 @@ export const horizontalRuleProvider: DecoratorProvider = ({ node, builder }) => 
     }
 };
 
-export const taskListProvider: DecoratorProvider = ({ state, node, builder }) => {
+export const taskListProvider: DecoratorProvider = ({ state, node, builder, isCursorOverlapping, hasFocus }) => {
     if (node.name !== 'TaskMarker') return;
+    
+    // 1. If cursor is directly on the TaskMarker, show source
+    if (isCursorOverlapping) return;
+
+    // 2. Refined Source Reveal: Only show source if cursor is in the "Hotspot"
+    // Hotspot = from ListItem start to TaskMarker end.
+    // This allows cursor in the text content (e.g. "abc") to still see the widget.
+    
+    let ancestor = node.node.parent;
+    while (ancestor && ancestor.name !== 'ListItem') {
+        ancestor = ancestor.parent;
+    }
+
+    if (ancestor && ancestor.name === 'ListItem') {
+        const selection = state.selection.main;
+        // Sensitive area: [ListItem.from, TaskMarker.to]
+        // Note: node.to is the end of TaskMarker
+        if (hasFocus && selection.from >= ancestor.from && selection.to <= node.to) {
+             return; 
+        }
+    }
+
     const text = state.sliceDoc(node.from, node.to);
     const isChecked = text.toLowerCase().includes('[x]');
     const prevNode = syntaxTree(state).resolve(node.from - 1, -1);
     let startReplace = node.from;
+    
+    // If preceded by a ListMark (e.g. "- [ ]"), we want to replace that too visually?
+    // Actually, with the CSS hide strategy, we don't strictly need to replace the ListMark here
+    // if we are hiding the BulletWidget.
+    // BUT, the text "-" itself is hidden by BulletWidget's replacement decoration.
+    // If we hide BulletWidget, we might see the raw "-".
+    // Wait, BulletWidget is a REPLACEMENT decoration. If we display:none the widget, the replacement is still active (so raw text is hidden), but the widget is invisible.
+    // Perfect.
+    
+    // However, existing logic tried to extend replacement range.
     if (prevNode && prevNode.name === 'ListMark') {
         startReplace = prevNode.from;
     }
+    
+    // Add Checkbox Widget
     builder.add(startReplace, node.to, Decoration.replace({
         widget: new CheckboxWidget(isChecked)
     }));
+    
+    // Line Decoration logic moved to taskListClassProvider in blockProviders
+    // to prevent "Ranges must be added sorted" error
 };
 
-export const listProvider: DecoratorProvider = ({ state, node, builder }) => {
+export const listProvider: DecoratorProvider = ({ state, node, builder, isCursorOverlapping, hasFocus }) => {
     if (node.name !== 'ListMark') return;
+
+    // 1. If cursor is overlapping the ListMark itself, don't render widget
+    if (isCursorOverlapping) return;
+
+    // 2. Refined Source Reveal: Only show source if cursor is in the "Hotspot"
+    const parent = node.node.parent;
+    if (parent && parent.name === 'ListItem') {
+        const selection = state.selection.main;
+        
+        // Find TaskMarker end to define hotspot
+        let hotspotEnd = node.to; // Default to ListMark end
+        
+        // Try to find a TaskMarker sibling (or nephew via Task)
+        // Since we can't easily traverse down from here without re-querying state tree or iterating siblings
+        // Let's iterate next siblings of node.node
+        let curr = node.node.nextSibling;
+        while (curr) {
+            if (curr.name === 'TaskMarker') {
+                hotspotEnd = curr.to;
+                break;
+            }
+            if (curr.name === 'Task') {
+                // Task contains TaskMarker
+                // We can assume Task end is TaskMarker end for hotspot purposes (or close enough)
+                hotspotEnd = curr.to;
+                break;
+            }
+            // If we hit Paragraph or Blockquote, we went too far
+            if (curr.name === 'Paragraph' || curr.name === 'Blockquote') break;
+            
+            curr = curr.nextSibling;
+        }
+
+        if (hasFocus && selection.from >= parent.from && selection.to <= hotspotEnd) {
+             return; 
+        }
+    }
+
+    // Unconditionally render bullet. We rely on CSS (.cm-task-list-item .cm-bullet-widget { display: none }) to hide it for tasks.
     const text = state.sliceDoc(node.from, node.to);
     const isUnordered = /^[-*+]/.test(text);
     if (isUnordered) {
@@ -269,6 +366,7 @@ export const headingProvider: DecoratorProvider = ({ state, node, builder }) => 
 };
 
 export const blockProviders = [
+    taskListClassProvider, // Added new provider for task list classes
     blockMathProvider,
     fencedCodeProvider,
     blockquoteProvider,

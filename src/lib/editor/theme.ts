@@ -83,6 +83,11 @@ export const baseThemeStyles = {
         lineHeight: "1.5"
     },
     
+    // Hide bullet widget in task lists (handled by CheckboxWidget)
+    ".cm-task-list-item .cm-bullet-widget": {
+        display: "none"
+    },
+    
     // 2. Edit Mode (Source View) - Always present in base theme
     ".cm-table-edit-mode": {
         fontFamily: "monospace", // Critical for pipe alignment
