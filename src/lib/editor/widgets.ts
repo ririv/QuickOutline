@@ -150,3 +150,60 @@ export class MathWidget extends WidgetType {
         return element;
     }
 }
+
+export class TableWidget extends WidgetType {
+    constructor(readonly rawText: string) { super(); }
+
+    eq(other: TableWidget) { return other.rawText === this.rawText; }
+
+    toDOM() {
+        const table = document.createElement("table");
+        table.className = "cm-table-widget";
+        
+        const rows = this.rawText.trim().split('\n');
+        if (rows.length === 0) return table;
+
+        // Helper to parse a row line into cells
+        const parseRow = (line: string) => {
+            // Remove leading/trailing pipes if exist, then split
+            const content = line.trim().replace(/^\||\|$/g, '');
+            return content.split('|');
+        };
+
+        // 1. Header
+        const headerCells = parseRow(rows[0]);
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+        headerCells.forEach(cell => {
+            const th = document.createElement("th");
+            th.textContent = cell.trim();
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // 2. Alignment Row (Optional: parse for style, currently skip visual rendering)
+        // Usually the 2nd row is |---|---|
+        let startBodyRow = 1;
+        if (rows.length > 1 && /^[|\s-:]+$/.test(rows[1])) {
+            startBodyRow = 2;
+            // TODO: Parse alignment (:--) from rows[1] if needed
+        }
+
+        // 3. Body
+        const tbody = document.createElement("tbody");
+        for (let i = startBodyRow; i < rows.length; i++) {
+            const cells = parseRow(rows[i]);
+            const tr = document.createElement("tr");
+            cells.forEach(cell => {
+                const td = document.createElement("td");
+                td.textContent = cell.trim();
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+
+        return table;
+    }
+}

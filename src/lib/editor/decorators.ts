@@ -1,7 +1,7 @@
 import { Decoration } from '@codemirror/view';
 import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import {type SyntaxNodeRef} from '@lezer/common';
-import { HorizontalRuleWidget, CheckboxWidget, ImageWidget, MathWidget, BulletWidget, OrderedListWidget } from './widgets';
+import { HorizontalRuleWidget, CheckboxWidget, ImageWidget, MathWidget, BulletWidget, OrderedListWidget, TableWidget } from './widgets';
 import { syntaxTree } from '@codemirror/language';
 
 // --- Interfaces ---
@@ -119,6 +119,27 @@ export const blockquoteProvider: DecoratorProvider = ({ state, node, builder }) 
     for (let i = startLine.number; i <= endLine.number; i++) {
         const line = state.doc.line(i);
         builder.add(line.from, line.from, Decoration.line({ class: 'cm-blockquote-line' }));
+    }
+};
+
+export const tableProvider: DecoratorProvider = ({ state, node, builder, isCursorOverlapping }) => {
+    if (node.name !== 'Table') return;
+
+    if (isCursorOverlapping) {
+        // Edit Mode: Source view with monospace font
+        const startLine = state.doc.lineAt(node.from);
+        const endLine = state.doc.lineAt(node.to);
+        for (let i = startLine.number; i <= endLine.number; i++) {
+            const line = state.doc.line(i);
+            builder.add(line.from, line.from, Decoration.line({ class: 'cm-table-edit-mode' }));
+        }
+    } else {
+        // Preview Mode: Render as HTML Table Widget
+        const text = state.sliceDoc(node.from, node.to);
+        builder.add(node.from, node.to, Decoration.replace({
+            widget: new TableWidget(text),
+            block: true
+        }));
     }
 };
 
@@ -249,7 +270,8 @@ export const headingProvider: DecoratorProvider = ({ state, node, builder }) => 
 export const blockProviders = [
     blockMathProvider,
     fencedCodeProvider,
-    blockquoteProvider
+    blockquoteProvider,
+    tableProvider
 ];
 
 export const inlineProviders = [

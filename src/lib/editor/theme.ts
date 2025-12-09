@@ -43,6 +43,47 @@ export const baseTheme = EditorView.theme({
         lineHeight: "1.5"
     },
     
+    // --- Table Styling (Academic Paper Style) ---
+    
+    ".cm-table-widget": {
+        borderCollapse: "collapse",
+        width: "100%",
+        margin: "1em 0",
+        fontSize: "0.9em",
+        borderTop: "2px solid #000", // Top border for the entire table
+        borderBottom: "2px solid #000", // Bottom border for the entire table
+    },
+    ".cm-table-widget th, .cm-table-widget td": {
+        border: "none", // Remove all individual cell borders
+        padding: "8px 12px",
+        textAlign: "left",
+        verticalAlign: "top",
+    },
+    ".cm-table-widget th": {
+        fontWeight: "bold",
+        backgroundColor: "inherit", // Remove background color
+        borderBottom: "1px solid #000", // Thin line under header
+        paddingBottom: "10px",
+        paddingTop: "10px",
+    },
+    ".cm-table-widget td": {
+        // No border by default, rely on table's top/bottom border and header's bottom border
+        // Optional: a very light line after each row for readability
+        borderBottom: "1px solid #eee",
+        backgroundColor: "inherit", // Ensure no alternating background
+    },
+    ".cm-table-widget tr:last-child td": {
+        borderBottom: "none", // Last row doesn't need a line as table has a bottom border
+    },
+
+    // 2. Edit Mode (Source View)
+    ".cm-table-edit-mode": {
+        fontFamily: "monospace", // Critical for pipe alignment
+        whiteSpace: "pre",       // Critical for preserving spaces
+        color: "#24292e",
+        backgroundColor: "rgba(0,0,0,0.02)" // Subtle background for context
+    },
+
     // --- Autocomplete Tooltip Styling ---
     ".cm-tooltip": {
         border: "none",
