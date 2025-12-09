@@ -37,7 +37,7 @@ function customTaskListPlugin(md: MarkdownIt) {
 
                 // Create checkbox token
                 const checkboxToken = new state.Token('html_inline', '', 0);
-                checkboxToken.content = `<input type="checkbox" class="task-list-item-checkbox" ${isChecked ? 'checked' : ''} disabled> `;
+                checkboxToken.content = `<span class="custom-checkbox ${isChecked ? 'checked' : ''}"></span> `;
                 
                 // Insert checkbox at the start of inline children
                 children.unshift(checkboxToken);

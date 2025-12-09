@@ -151,13 +151,45 @@
         .markdown-body ol li { list-style-type: decimal; }
         .markdown-body ul ul, .markdown-body ol ul, .markdown-body ul ol, .markdown-body ol ol { margin-top: 0; margin-bottom: 0; }
 
-        /* Task List Specifics - Aligned with Bullets */
-        .markdown-body .task-list-item { list-style-type: none; position: relative; }
-        .markdown-body .task-list-item input[type="checkbox"] { 
+        /* Task List Specifics - Custom Checkbox */
+        .markdown-body .task-list-item { 
+            list-style-type: none; 
+            position: relative; 
+        }
+        
+        /* Custom Checkbox Container */
+        .markdown-body .custom-checkbox {
             position: absolute;
-            left: -1.4em; /* Position in the padding area, similar to list bullets */
-            top: 0.25em;  /* Align visually with text line-height */
-            margin: 0;
+            left: -1.5em; 
+            top: 0.25em;  
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid #d0d7de; 
+            border-radius: 3px;
+            background-color: #fff;
+            display: inline-block;
+            box-sizing: border-box;
+            line-height: 1;
+        }
+
+        /* Checked State */
+        .markdown-body .custom-checkbox.checked {
+            background-color: #0969da; 
+            border-color: #0969da;
+        }
+
+        /* Checkmark */
+        .markdown-body .custom-checkbox.checked::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 5L4.5 8L10.5 1' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 10px;
         }
         
         /* Injected Math and Code Highlighting Styles */
