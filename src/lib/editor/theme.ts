@@ -43,40 +43,7 @@ export const baseTheme = EditorView.theme({
         lineHeight: "1.5"
     },
     
-    // --- Table Styling (Academic Paper Style) ---
-    
-    ".cm-table-widget": {
-        borderCollapse: "collapse",
-        width: "100%",
-        margin: "1em 0",
-        fontSize: "0.9em",
-        borderTop: "2px solid #000", // Top border for the entire table
-        borderBottom: "2px solid #000", // Bottom border for the entire table
-    },
-    ".cm-table-widget th, .cm-table-widget td": {
-        border: "none", // Remove all individual cell borders
-        padding: "8px 12px",
-        textAlign: "left",
-        verticalAlign: "top",
-    },
-    ".cm-table-widget th": {
-        fontWeight: "bold",
-        backgroundColor: "inherit", // Remove background color
-        borderBottom: "1px solid #000", // Thin line under header
-        paddingBottom: "10px",
-        paddingTop: "10px",
-    },
-    ".cm-table-widget td": {
-        // No border by default, rely on table's top/bottom border and header's bottom border
-        // Optional: a very light line after each row for readability
-        borderBottom: "1px solid #eee",
-        backgroundColor: "inherit", // Ensure no alternating background
-    },
-    ".cm-table-widget tr:last-child td": {
-        borderBottom: "none", // Last row doesn't need a line as table has a bottom border
-    },
-
-    // 2. Edit Mode (Source View)
+    // 2. Edit Mode (Source View) - Always present in base theme
     ".cm-table-edit-mode": {
         fontFamily: "monospace", // Critical for pipe alignment
         whiteSpace: "pre",       // Critical for preserving spaces
@@ -190,4 +157,62 @@ export const codeBlockSyntaxHighlighting = EditorView.theme({
     ".cm-fenced-code-line .tok-propertyName, .cm-fenced-code-line .tok-attributeName": { color: "#005cc5" },
     ".cm-fenced-code-line .tok-variableName": { color: "#24292e" },
     ".cm-fenced-code-line .tok-squareBracket, .cm-fenced-code-line .tok-brace, .cm-fenced-code-line .tok-punctuation": { color: "#24292e" },
+});
+
+// --- Table Themes (Selectable) ---
+
+// 1. Grid/Spreadsheet Style (Default)
+export const gridTableTheme = EditorView.theme({
+    ".cm-table-widget": {
+        borderCollapse: "collapse",
+        width: "100%",
+        margin: "1em 0",
+        fontSize: "0.9em",
+        border: "1px solid #ddd",
+    },
+    ".cm-table-widget th, .cm-table-widget td": {
+        border: "1px solid #ddd",
+        padding: "8px 12px",
+        textAlign: "left",
+        verticalAlign: "top",
+    },
+    ".cm-table-widget th": {
+        fontWeight: "bold",
+        backgroundColor: "#fcfcfc",
+    },
+    ".cm-table-widget tr:nth-child(even)": {
+        backgroundColor: "#f8f9fa",
+    },
+});
+
+// 2. Academic Paper Style (Clean, no vertical borders)
+export const academicTableTheme = EditorView.theme({
+    ".cm-table-widget": {
+        borderCollapse: "collapse",
+        width: "100%",
+        margin: "1em 0",
+        fontSize: "0.9em",
+        borderTop: "2px solid #000",
+        borderBottom: "2px solid #000",
+    },
+    ".cm-table-widget th, .cm-table-widget td": {
+        border: "none",
+        padding: "8px 12px",
+        textAlign: "left",
+        verticalAlign: "top",
+    },
+    ".cm-table-widget th": {
+        fontWeight: "bold",
+        backgroundColor: "inherit",
+        borderBottom: "1px solid #000", // Header underline
+        paddingBottom: "10px",
+        paddingTop: "10px",
+    },
+    ".cm-table-widget td": {
+        borderBottom: "1px solid #eee", // Light row separator
+        backgroundColor: "inherit",
+    },
+    ".cm-table-widget tr:last-child td": {
+        borderBottom: "none",
+    },
 });

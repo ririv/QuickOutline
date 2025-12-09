@@ -10,7 +10,7 @@ import { GFM } from '@lezer/markdown';
 import { bracketMatching } from '@codemirror/language';
 import { classHighlighter } from '@lezer/highlight';
 
-import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting } from './theme';
+import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting, gridTableTheme, academicTableTheme } from './theme';
 import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState } from './extensions';
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
@@ -20,6 +20,7 @@ export interface MarkdownEditorOptions {
     initialValue?: string;
     placeholder?: string;
     initialMode?: EditorMode; // Add initialMode option
+    tableStyle?: 'grid' | 'academic'; // <--- 新增这行
     parent: HTMLElement;
 }
 
@@ -47,6 +48,7 @@ export class MarkdownEditor {
                 syntaxHighlighting(myHighlightStyle),
                 syntaxHighlighting(classHighlighter) // Enable CSS classes for scoped styling
             ];
+        const tableTheme = options.tableStyle === 'academic' ? academicTableTheme : gridTableTheme;
 
         const startState = EditorState.create({
             doc: options.initialValue || '',
@@ -75,14 +77,14 @@ export class MarkdownEditor {
                     codeLanguages: languages,
                     extensions: [GFM, MathExtension]
                 }),
+                // Dynamic Styling
+                this.styleCompartment.of(initialSyntaxHighlighting),
+                baseTheme,
+                codeBlockSyntaxHighlighting,
+                tableTheme,
 
-                                // Dynamic Styling
-                                this.styleCompartment.of(initialSyntaxHighlighting),
-                                baseTheme,
-                                codeBlockSyntaxHighlighting,
-                                
-                                // Dynamic Live Preview Extensions
-                                this.extensionCompartment.of(initialLivePreviewExtensions),
+                // Dynamic Live Preview Extensions
+                this.extensionCompartment.of(initialLivePreviewExtensions),
                 EditorView.domEventHandlers({
                     focus: (e, v) => v.dispatch({ effects: setFocusState.of(true) }),
                     blur: (e, v) => v.dispatch({ effects: setFocusState.of(false) })
