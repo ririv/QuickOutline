@@ -143,6 +143,22 @@
         .markdown-body pre code { background-color: transparent; padding: 0; }
         .markdown-body blockquote { padding: 0 1em; color: #6a737d; border-left: 0.25em solid #dfe2e5; margin: 0 0 16px 0; }
         .markdown-body img { max-width: 100%; box-sizing: content-box; background-color: #fff; }
+
+        /* --- List Styles --- */
+        .markdown-body ul, .markdown-body ol { margin-top: 0; margin-bottom: 16px; padding-left: 2em; }
+        .markdown-body li { margin-bottom: 4px; }
+        .markdown-body ul li { list-style-type: disc; }
+        .markdown-body ol li { list-style-type: decimal; }
+        .markdown-body ul ul, .markdown-body ol ul, .markdown-body ul ol, .markdown-body ol ol { margin-top: 0; margin-bottom: 0; }
+
+        /* Task List Specifics - Aligned with Bullets */
+        .markdown-body .task-list-item { list-style-type: none; position: relative; }
+        .markdown-body .task-list-item input[type="checkbox"] { 
+            position: absolute;
+            left: -1.4em; /* Position in the padding area, similar to list bullets */
+            top: 0.25em;  /* Align visually with text line-height */
+            margin: 0;
+        }
         
         /* Injected Math and Code Highlighting Styles */
         ${katexCss}
