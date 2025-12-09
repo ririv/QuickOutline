@@ -18,6 +18,7 @@ import { linkHeadingCompletion } from './autocomplete';
 export interface MarkdownEditorOptions {
     initialValue?: string;
     placeholder?: string;
+    initialMode?: EditorMode; // Add initialMode option
     parent: HTMLElement;
 }
 
@@ -27,9 +28,20 @@ export class MarkdownEditor {
     view: EditorView;
     private extensionCompartment = new Compartment();
     private styleCompartment = new Compartment();
-    private currentMode: EditorMode = 'source'; // Default mode
+    private currentMode: EditorMode;
 
     constructor(options: MarkdownEditorOptions) {
+        this.currentMode = options.initialMode || 'live'; // Set initial mode
+
+        // Determine initial extensions and styles based on mode
+        const initialExtensions = this.currentMode === 'live' 
+            ? [livePreviewState, livePreviewView] 
+            : [];
+            
+        const initialStyle = this.currentMode === 'source'
+            ? syntaxHighlighting(defaultHighlightStyle)
+            : syntaxHighlighting(myHighlightStyle);
+
         const startState = EditorState.create({
             doc: options.initialValue || '',
             extensions: [
@@ -59,11 +71,11 @@ export class MarkdownEditor {
                 }),
                 
                 // Dynamic Styling
-                this.styleCompartment.of(syntaxHighlighting(defaultHighlightStyle)),
+                this.styleCompartment.of(initialStyle),
                 baseTheme,
                 
                 // Dynamic Live Preview Extensions
-                this.extensionCompartment.of([]),
+                this.extensionCompartment.of(initialExtensions),
                 
                 EditorView.domEventHandlers({
                     focus: (e, v) => v.dispatch({ effects: setFocusState.of(true) }),
@@ -90,20 +102,13 @@ export class MarkdownEditor {
         }
 
         // Configure Styles
-        if (mode === 'source') {
+        if (mode === 'source') { // Pure source mode (default CodeMirror highlighting)
             effects.push(this.styleCompartment.reconfigure(syntaxHighlighting(defaultHighlightStyle)));
-        } else {
-            // Both 'live' and 'rich-source' use the rich styling
+        } else { // 'live' and 'rich-source' both use rich styling
             effects.push(this.styleCompartment.reconfigure(syntaxHighlighting(myHighlightStyle)));
         }
 
         this.view.dispatch({ effects });
-    }
-
-    toggleSourceMode() {
-        // Simple toggle between 'live' and 'source' for compatibility
-        const newMode = this.currentMode === 'live' ? 'source' : 'live';
-        this.setMode(newMode);
     }
 
     getValue(): string {

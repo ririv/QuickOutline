@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { MarkdownEditor } from '@/lib/editor';
+    import { MarkdownEditor, type EditorMode } from '@/lib/editor';
 
     let editorElement: HTMLDivElement;
     let editor: MarkdownEditor;
@@ -11,21 +11,22 @@
     export const insertImageMarkdown = (path: string) => editor?.insertImageMarkdown(path);
     export const getContentHtml = async () => "Preview not implemented yet";
     export const getPayloads = async () => JSON.stringify({ html: "", styles: "" });
-    export const toggleSourceMode = () => editor?.toggleSourceMode(); // Expose toggle
+    export const setMode = (mode: EditorMode) => editor?.setMode(mode); // Expose setMode
 
     // Init function (exposed)
-    export const init = (initialMarkdown: string = '') => {
+    export const init = (initialMarkdown: string = '', initialMode: EditorMode = 'live') => {
         if (editor) return;
         editor = new MarkdownEditor({
             parent: editorElement,
             initialValue: initialMarkdown,
-            placeholder: '开始输入...'
+            placeholder: '开始输入...',
+            initialMode: initialMode
         });
     };
 
     onMount(() => {
-        init('# Hello CodeMirror 6\n\nTry typing **bold text** or *italic* here.\n\nMove cursor inside and outside the styled text to see the magic!');
-
+        // Ensure init() is called here with default values
+        init('# Hello CodeMirror 6\n\nTry typing **bold text** or *italic* here.\n\nMove cursor inside and outside the styled text to see the magic!', 'live');
 
         return () => {
              // Clean up any other manual listeners here if added later.
