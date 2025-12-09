@@ -2,6 +2,41 @@ import { EditorView } from '@codemirror/view';
 import { HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 
+// --- Theme Variables (CSS Custom Properties) ---
+// These are the source of truth for colors.
+export const defaultThemeVars = {
+    // Syntax Highlighting (GitHub Light)
+    "--syntax-comment": "#6a737d",
+    "--syntax-keyword": "#d73a49",
+    "--syntax-string": "#032f62",
+    "--syntax-regexp": "#032f62",
+    "--syntax-number": "#005cc5",
+    "--syntax-bool": "#005cc5",
+    "--syntax-function": "#6f42c1", // Definition, Function, Type
+    "--syntax-variable": "#24292e", // Atom, Label, Namespace, Variable
+    "--syntax-property": "#005cc5",
+    "--syntax-punctuation": "#24292e",
+
+    // Editor UI
+    "--editor-bg": "#ffffff",
+    "--editor-text": "#24292e",
+    "--code-block-bg": "#f6f8fa",
+    "--blockquote-border": "#dfe2e5",
+    "--blockquote-text": "#6a737d",
+    
+    // Table UI
+    "--table-border": "#ddd",
+    "--table-header-bg": "#fcfcfc",
+    "--table-row-alt-bg": "#f8f9fa",
+    "--table-header-underline": "#000",
+    "--table-row-underline": "#eee"
+};
+
+// Apply variables to Editor
+export const themeVariables = EditorView.theme({
+    "&": defaultThemeVars
+});
+
 export const myHighlightStyle = HighlightStyle.define([
     { tag: tags.heading1, fontSize: "2em", fontWeight: "bold", borderBottom: "1px solid #eee", display: "inline-block", width: "100%", paddingBottom: "0.3em", marginBottom: "0.5em" },
     { tag: tags.heading2, fontSize: "1.5em", fontWeight: "bold", borderBottom: "1px solid #eee", display: "inline-block", width: "100%", paddingBottom: "0.3em" },
@@ -12,7 +47,7 @@ export const myHighlightStyle = HighlightStyle.define([
     { tag: tags.monospace, backgroundColor: "rgba(27, 31, 35, 0.05)", borderRadius: "3px", padding: "0.2em 0.4em", fontFamily: "monospace" },
     { tag: tags.link, color: "#0366d6", textDecoration: "underline" },
     { tag: tags.list },
-    { tag: tags.quote, borderLeft: "4px solid #dfe2e5", paddingLeft: "1em", color: "#6a737d", fontStyle: "italic" }, // Blockquote
+    { tag: tags.quote, borderLeft: "4px solid var(--blockquote-border)", paddingLeft: "1em", color: "var(--blockquote-text)", fontStyle: "italic" } // Blockquote
 ]);
 
 // Export raw styles for reuse in Preview (Paged.js)
@@ -20,23 +55,27 @@ export const baseThemeStyles = {
     "&": {
         height: "100%",
         fontSize: "16px",
-        fontFamily: "'Inter', sans-serif"
+        fontFamily: "'Inter', sans-serif",
+        color: "var(--editor-text)",
+        backgroundColor: "var(--editor-bg)"
     },
     ".cm-scroller": { fontFamily: "inherit" },
     ".cm-content": {
         padding: "16px 22px",
-        maxWidth: "900px",
-        margin: "0 auto",
+        // maxWidth: "900px",    // Removed: now dynamic or full width
+        // margin: "0 auto",     // Removed: now dynamic or full width
+        minHeight: "100%", // Ensure content area expands to fill available height
+        flexGrow: "1" // Allow content area to fill available horizontal space
     },
     "&.cm-focused": { outline: "none" },
     ".cm-blockquote-line": {
-        borderLeft: "4px solid #dfe2e5",
+        borderLeft: "4px solid var(--blockquote-border)",
         paddingLeft: "1em",
-        color: "#6a737d",
+        color: "var(--blockquote-text)",
         fontStyle: "italic"
     },
     ".cm-fenced-code-line": {
-        backgroundColor: "#f6f8fa",
+        backgroundColor: "var(--code-block-bg)",
         padding: "0.5em 1em",
         borderRadius: "4px",
         fontFamily: "monospace",
@@ -48,14 +87,14 @@ export const baseThemeStyles = {
     ".cm-table-edit-mode": {
         fontFamily: "monospace", // Critical for pipe alignment
         whiteSpace: "pre",       // Critical for preserving spaces
-        color: "#24292e",
+        color: "var(--editor-text)",
         backgroundColor: "rgba(0,0,0,0.02)" // Subtle background for context
     },
 
     // --- Autocomplete Tooltip Styling ---
     ".cm-tooltip": {
         border: "none",
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--editor-bg)",
         borderRadius: "8px",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0,0,0,0.1)",
         padding: "4px 0",
@@ -63,7 +102,7 @@ export const baseThemeStyles = {
     },
     ".cm-tooltip-autocomplete": {
         "& > ul": {
-            fontFamily: "'Inter', sans-serif",
+            fontFamily: "inherit",
             whiteSpace: "nowrap",
             overflow: "hidden auto",
             maxWidth: "700px",
@@ -147,19 +186,19 @@ export const baseTheme = EditorView.theme(baseThemeStyles);
 // These rules ONLY apply inside code block lines (.cm-fenced-code-line)
 // This guarantees strict isolation from Markdown prose.
 export const codeBlockStyles = {
-    ".cm-fenced-code-line .tok-comment": { color: "#6a737d", fontStyle: "italic" },
-    ".cm-fenced-code-line .tok-keyword, .cm-fenced-code-line .tok-operatorKeyword, .cm-fenced-code-line .tok-modifier": { color: "#d73a49" },
-    ".cm-fenced-code-line .tok-string, .cm-fenced-code-line .tok-regexp": { color: "#032f62" },
-    ".cm-fenced-code-line .tok-number, .cm-fenced-code-line .tok-bool, .cm-fenced-code-line .tok-null": { color: "#005cc5" },
+    ".cm-fenced-code-line .tok-comment": { color: "var(--syntax-comment)", fontStyle: "italic" },
+    ".cm-fenced-code-line .tok-keyword, .cm-fenced-code-line .tok-operatorKeyword, .cm-fenced-code-line .tok-modifier": { color: "var(--syntax-keyword)" },
+    ".cm-fenced-code-line .tok-string, .cm-fenced-code-line .tok-regexp": { color: "var(--syntax-string)" },
+    ".cm-fenced-code-line .tok-number, .cm-fenced-code-line .tok-bool, .cm-fenced-code-line .tok-null": { color: "var(--syntax-number)" },
     
     // For composite tags like definition(variableName), classHighlighter adds multiple classes.
     // We target the specific combinations or the base classes.
-    ".cm-fenced-code-line .tok-definition, .cm-fenced-code-line .tok-function, .cm-fenced-code-line .tok-className, .cm-fenced-code-line .tok-typeName": { color: "#6f42c1" },
+    ".cm-fenced-code-line .tok-definition, .cm-fenced-code-line .tok-function, .cm-fenced-code-line .tok-className, .cm-fenced-code-line .tok-typeName": { color: "var(--syntax-function)" },
     
-    ".cm-fenced-code-line .tok-atom, .cm-fenced-code-line .tok-labelName, .cm-fenced-code-line .tok-namespace": { color: "#24292e" },
-    ".cm-fenced-code-line .tok-propertyName, .cm-fenced-code-line .tok-attributeName": { color: "#005cc5" },
-    ".cm-fenced-code-line .tok-variableName": { color: "#24292e" },
-    ".cm-fenced-code-line .tok-squareBracket, .cm-fenced-code-line .tok-brace, .cm-fenced-code-line .tok-punctuation": { color: "#24292e" },
+    ".cm-fenced-code-line .tok-atom, .cm-fenced-code-line .tok-labelName, .cm-fenced-code-line .tok-namespace": { color: "var(--syntax-variable)" },
+    ".cm-fenced-code-line .tok-propertyName, .cm-fenced-code-line .tok-attributeName": { color: "var(--syntax-property)" },
+    ".cm-fenced-code-line .tok-variableName": { color: "var(--syntax-variable)" },
+    ".cm-fenced-code-line .tok-squareBracket, .cm-fenced-code-line .tok-brace, .cm-fenced-code-line .tok-punctuation": { color: "var(--syntax-punctuation)" },
 };
 export const codeBlockSyntaxHighlighting = EditorView.theme(codeBlockStyles);
 
@@ -172,20 +211,20 @@ export const gridTableStyles = {
         width: "100%",
         margin: "1em 0",
         fontSize: "0.9em",
-        border: "1px solid #ddd",
+        border: "1px solid var(--table-border)",
     },
     ".cm-table-widget th, .cm-table-widget td": {
-        border: "1px solid #ddd",
+        border: "1px solid var(--table-border)",
         padding: "8px 12px",
         textAlign: "left",
         verticalAlign: "top",
     },
     ".cm-table-widget th": {
         fontWeight: "bold",
-        backgroundColor: "#fcfcfc",
+        backgroundColor: "var(--table-header-bg)",
     },
     ".cm-table-widget tr:nth-child(even)": {
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--table-row-alt-bg)",
     },
 };
 export const gridTableTheme = EditorView.theme(gridTableStyles);
@@ -197,8 +236,8 @@ export const academicTableStyles = {
         width: "100%",
         margin: "1em 0",
         fontSize: "0.9em",
-        borderTop: "2px solid #000",
-        borderBottom: "2px solid #000",
+        borderTop: "2px solid var(--table-header-underline)",
+        borderBottom: "2px solid var(--table-header-underline)",
     },
     ".cm-table-widget th, .cm-table-widget td": {
         border: "none",
@@ -209,12 +248,12 @@ export const academicTableStyles = {
     ".cm-table-widget th": {
         fontWeight: "bold",
         backgroundColor: "inherit",
-        borderBottom: "1px solid #000", // Header underline
+        borderBottom: "1px solid var(--table-header-underline)", // Header underline
         paddingBottom: "10px",
         paddingTop: "10px",
     },
     ".cm-table-widget td": {
-        borderBottom: "1px solid #eee", // Light row separator
+        borderBottom: "1px solid var(--table-row-underline)", // Light row separator
         backgroundColor: "inherit",
     },
     ".cm-table-widget tr:last-child td": {
@@ -226,25 +265,25 @@ export const academicTableTheme = EditorView.theme(academicTableStyles);
 // --- VS Code Light Highlight Style (Markdown Optimized) ---
 export const vsCodeLightHighlightStyle = HighlightStyle.define([
     // Markdown Specifics
-    { tag: tags.heading, fontWeight: "bold", color: "#005cc5" }, // Blue headings
+    { tag: tags.heading, fontWeight: "bold", color: "#005cc5" }, // Blue headings (Keep hardcoded or define new vars if needed, sticking to hardcoded for specific Markdown style)
     { tag: tags.list, color: "#735c0f" }, // Yellow/Orange bullets
-    { tag: tags.quote, color: "#22863a", fontStyle: "italic" }, // Green quotes
+    { tag: tags.quote, color: "var(--blockquote-text)", fontStyle: "italic" }, // Match vars
     { tag: tags.link, color: "#032f62", textDecoration: "underline" },
     { tag: tags.url, color: "#032f62", textDecoration: "underline" },
-    { tag: tags.strong, fontWeight: "bold", color: "#24292e" },
-    { tag: tags.emphasis, fontStyle: "italic", color: "#24292e" },
-    { tag: tags.monospace, color: "#24292e" }, // Inline code text color
+    { tag: tags.strong, fontWeight: "bold", color: "var(--editor-text)" },
+    { tag: tags.emphasis, fontStyle: "italic", color: "var(--editor-text)" },
+    { tag: tags.monospace, color: "var(--editor-text)" }, 
     
     // Markdown Markers (hash, star, bracket)
     { tag: tags.processingInstruction, color: "#005cc5" }, 
-    { tag: tags.meta, color: "#6a737d" },
+    { tag: tags.meta, color: "var(--syntax-comment)" },
 
-    // General Code Syntax (VS Code Light flavor)
-    { tag: tags.keyword, color: "#d73a49" },
-    { tag: tags.atom, color: "#6f42c1" },
-    { tag: tags.number, color: "#005cc5" },
-    { tag: tags.string, color: "#032f62" },
-    { tag: tags.comment, color: "#6a737d", fontStyle: "italic" },
-    { tag: [tags.definition(tags.variableName), tags.function(tags.variableName)], color: "#6f42c1" },
-    { tag: tags.variableName, color: "#24292e" },
+    // General Code Syntax (Use Variables for Consistency)
+    { tag: tags.keyword, color: "var(--syntax-keyword)" },
+    { tag: tags.atom, color: "var(--syntax-variable)" },
+    { tag: tags.number, color: "var(--syntax-number)" },
+    { tag: tags.string, color: "var(--syntax-string)" },
+    { tag: tags.comment, color: "var(--syntax-comment)", fontStyle: "italic" },
+    { tag: [tags.definition(tags.variableName), tags.function(tags.variableName)], color: "var(--syntax-function)" },
+    { tag: tags.variableName, color: "var(--syntax-variable)" },
 ]);

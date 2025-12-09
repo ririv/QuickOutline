@@ -10,7 +10,7 @@ import { GFM } from '@lezer/markdown';
 import { bracketMatching } from '@codemirror/language';
 import { classHighlighter } from '@lezer/highlight';
 
-import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting, gridTableTheme, academicTableTheme, vsCodeLightHighlightStyle } from './theme';
+import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting, gridTableTheme, academicTableTheme, vsCodeLightHighlightStyle, themeVariables } from './theme';
 import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState, previewModeState, setPreviewMode } from './extensions';
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
@@ -117,6 +117,7 @@ export class MarkdownEditor {
                 // Dynamic Styling
                 this.styleCompartment.of(initialSyntaxHighlighting),
                 baseTheme,
+                themeVariables, // Apply CSS variables
                 codeBlockSyntaxHighlighting,
                 tableTheme,
                 this.paddingCompartment.of(initialContentPadding), // Inject dynamic padding theme

@@ -1,4 +1,4 @@
-import { gridTableStyles, academicTableStyles, baseThemeStyles, codeBlockStyles } from './theme';
+import { gridTableStyles, academicTableStyles, baseThemeStyles, codeBlockStyles, defaultThemeVars } from './theme';
 
 // src/lib/editor/style-converter.ts
 
@@ -150,8 +150,16 @@ function convertCodeBlockStylesToHljs(styles: Record<string, any>, rootSelector 
  * @returns A complete CSS string.
  */
 export function getEditorPreviewCss(tableStyle: 'grid' | 'academic' | undefined, rootSelector = ".markdown-body"): string {
+    // 1. Generate CSS Variables Block
+    let varsCss = `${rootSelector} {\n`;
+    for (const [key, value] of Object.entries(defaultThemeVars)) {
+        varsCss += `    ${key}: ${value};\n`;
+    }
+    varsCss += "}\n";
+
     const baseCss = stylesToCss(baseThemeStyles, rootSelector);
     const tableCss = getTableThemeCss(tableStyle, rootSelector);
     const hljsCss = convertCodeBlockStylesToHljs(codeBlockStyles, rootSelector);
-    return baseCss + "\n" + tableCss + "\n" + hljsCss;
+    
+    return varsCss + "\n" + baseCss + "\n" + tableCss + "\n" + hljsCss;
 }
