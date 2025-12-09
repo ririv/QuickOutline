@@ -1,4 +1,4 @@
-import { EditorState, Prec, Compartment } from '@codemirror/state';
+import {EditorState, Prec, Compartment, type Extension} from '@codemirror/state';
 import { EditorView, keymap, placeholder, showTooltip, drawSelection, dropCursor } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
@@ -8,8 +8,9 @@ import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { GFM } from '@lezer/markdown';
 import { bracketMatching } from '@codemirror/language';
+import { classHighlighter } from '@lezer/highlight';
 
-import { myHighlightStyle, baseTheme } from './theme';
+import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting } from './theme';
 import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState } from './extensions';
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
@@ -33,14 +34,19 @@ export class MarkdownEditor {
     constructor(options: MarkdownEditorOptions) {
         this.currentMode = options.initialMode || 'live'; // Set initial mode
 
-        // Determine initial extensions and styles based on mode
-        const initialExtensions = this.currentMode === 'live' 
-            ? [livePreviewState, livePreviewView] 
-            : [];
-            
-        const initialStyle = this.currentMode === 'source'
-            ? syntaxHighlighting(defaultHighlightStyle)
-            : syntaxHighlighting(myHighlightStyle);
+        // Determine initial extensions based on mode (Live Preview)
+        const initialLivePreviewExtensions = (this.currentMode === 'live') ? [livePreviewState, livePreviewView] : [];
+
+        // Determine initial syntax highlighting based on mode
+        const initialSyntaxHighlighting = this.currentMode === 'source'
+            ? [
+                syntaxHighlighting(defaultHighlightStyle),
+                syntaxHighlighting(classHighlighter) // Enable CSS classes for scoped styling
+            ]
+            : [
+                syntaxHighlighting(myHighlightStyle),
+                syntaxHighlighting(classHighlighter) // Enable CSS classes for scoped styling
+            ];
 
         const startState = EditorState.create({
             doc: options.initialValue || '',
@@ -48,10 +54,10 @@ export class MarkdownEditor {
                 history(),
                 keymap.of([
                     ...tableKeymap, // Ensure table keymap is evaluated first for Tab/Enter
-                    ...markdownKeymap, 
+                    ...markdownKeymap,
                     ...closeBracketsKeymap,
-                    ...defaultKeymap, 
-                    ...historyKeymap, 
+                    ...defaultKeymap,
+                    ...historyKeymap,
                     ...searchKeymap
                 ]),
                 placeholder(options.placeholder || ''),
@@ -65,18 +71,18 @@ export class MarkdownEditor {
                 showTooltip.compute(['selection'], mathTooltip), // Enable Math Tooltip
                 focusState, // Track focus state
                 markdown({
-                    base: markdownLanguage, 
+                    base: markdownLanguage,
                     codeLanguages: languages,
-                    extensions: [GFM, MathExtension] 
+                    extensions: [GFM, MathExtension]
                 }),
-                
-                // Dynamic Styling
-                this.styleCompartment.of(initialStyle),
-                baseTheme,
-                
-                // Dynamic Live Preview Extensions
-                this.extensionCompartment.of(initialExtensions),
-                
+
+                                // Dynamic Styling
+                                this.styleCompartment.of(initialSyntaxHighlighting),
+                                baseTheme,
+                                codeBlockSyntaxHighlighting,
+                                
+                                // Dynamic Live Preview Extensions
+                                this.extensionCompartment.of(initialLivePreviewExtensions),
                 EditorView.domEventHandlers({
                     focus: (e, v) => v.dispatch({ effects: setFocusState.of(true) }),
                     blur: (e, v) => v.dispatch({ effects: setFocusState.of(false) })
@@ -102,11 +108,17 @@ export class MarkdownEditor {
         }
 
         // Configure Styles
-        if (mode === 'source') { // Pure source mode (default CodeMirror highlighting)
-            effects.push(this.styleCompartment.reconfigure(syntaxHighlighting(defaultHighlightStyle)));
-        } else { // 'live' and 'rich-source' both use rich styling
-            effects.push(this.styleCompartment.reconfigure(syntaxHighlighting(myHighlightStyle)));
-        }
+        const newSyntaxHighlighting = mode === 'source'
+            ? [
+                syntaxHighlighting(defaultHighlightStyle),
+                syntaxHighlighting(classHighlighter)
+            ]
+            : [
+                syntaxHighlighting(myHighlightStyle),
+                syntaxHighlighting(classHighlighter)
+            ];
+
+        effects.push(this.styleCompartment.reconfigure(newSyntaxHighlighting));
 
         this.view.dispatch({ effects });
     }
@@ -128,7 +140,7 @@ export class MarkdownEditor {
             selection: { anchor: range.from + val.length }
         });
     }
-    
+
     insertImageMarkdown(path: string) {
         this.insertValue(`\n![](${path})\n`);
     }

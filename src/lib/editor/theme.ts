@@ -126,8 +126,27 @@ export const baseTheme = EditorView.theme({
         backgroundColor: "#8e24aa", color: "white", 
         fontSize: "9px", borderRadius: "3px", padding: "2px 4px", fontWeight: "bold", verticalAlign: "middle"
     },
-    
+
     ".cm-completionIcon-keyword": { // Fallback
         display: "none"
     }
+});
+
+// --- Scoped Syntax Highlighting (Physical Scope via CSS) ---
+// These rules ONLY apply inside code block lines (.cm-fenced-code-line)
+// This guarantees strict isolation from Markdown prose.
+export const codeBlockSyntaxHighlighting = EditorView.theme({
+    ".cm-fenced-code-line .tok-comment": { color: "#6a737d", fontStyle: "italic" },
+    ".cm-fenced-code-line .tok-keyword, .cm-fenced-code-line .tok-operatorKeyword, .cm-fenced-code-line .tok-modifier": { color: "#d73a49" },
+    ".cm-fenced-code-line .tok-string, .cm-fenced-code-line .tok-regexp": { color: "#032f62" },
+    ".cm-fenced-code-line .tok-number, .cm-fenced-code-line .tok-bool, .cm-fenced-code-line .tok-null": { color: "#005cc5" },
+    
+    // For composite tags like definition(variableName), classHighlighter adds multiple classes.
+    // We target the specific combinations or the base classes.
+    ".cm-fenced-code-line .tok-definition, .cm-fenced-code-line .tok-function, .cm-fenced-code-line .tok-className, .cm-fenced-code-line .tok-typeName": { color: "#6f42c1" },
+    
+    ".cm-fenced-code-line .tok-atom, .cm-fenced-code-line .tok-labelName, .cm-fenced-code-line .tok-namespace": { color: "#24292e" },
+    ".cm-fenced-code-line .tok-propertyName, .cm-fenced-code-line .tok-attributeName": { color: "#005cc5" },
+    ".cm-fenced-code-line .tok-variableName": { color: "#24292e" },
+    ".cm-fenced-code-line .tok-squareBracket, .cm-fenced-code-line .tok-brace, .cm-fenced-code-line .tok-punctuation": { color: "#24292e" },
 });
