@@ -21,13 +21,19 @@ export interface MarkdownEditorOptions {
     initialValue?: string;
     placeholder?: string;
     initialMode?: EditorMode; // Add initialMode option
-    tableStyle?: 'grid' | 'academic'; // New option for table styling
+    stylesConfig?: Partial<StylesConfig>; // Generic styles config object
     contentPadding?: string; // New: optional padding for the content area, e.g., "10px 20px"
     onChange?: (doc: string) => void; // Callback when document changes
     parent: HTMLElement;
 }
 
 export type EditorMode = 'live' | 'source' | 'rich-source' | 'preview';
+
+// Define a type for the editor's exposeable styles configuration
+export type StylesConfig = {
+    tableStyle: 'grid' | 'academic';
+    // Add other configurable styles options here in the future
+};
 
 export class MarkdownEditor {
     view: EditorView;
@@ -37,9 +43,16 @@ export class MarkdownEditor {
     private editableCompartment = new Compartment(); // New: Compartment for editable state
     private currentMode: EditorMode;
     private mdParser = mdParser; // Use the imported mdParser
+    private _stylesConfig: StylesConfig; // Store editor's current styles configuration
 
     constructor(options: MarkdownEditorOptions) {
         this.currentMode = options.initialMode || 'live'; // Set initial mode
+        
+        // Initialize config with defaults
+        this._stylesConfig = { 
+            tableStyle: 'grid', // Default
+            ...options.stylesConfig // Override with provided options
+        };
 
         // Determine initial extensions based on mode (Live Preview)
         const initialLivePreviewExtensions = (this.currentMode === 'live' || this.currentMode === 'preview') 
@@ -57,8 +70,8 @@ export class MarkdownEditor {
                 syntaxHighlighting(classHighlighter) // Enable CSS classes for scoped styling
             ];
 
-        // Select table theme (default to 'grid')
-        const tableTheme = options.tableStyle === 'academic' ? academicTableTheme : gridTableTheme;
+        // Select table theme using the unified _stylesConfig
+        const tableTheme = this._stylesConfig.tableStyle === 'academic' ? academicTableTheme : gridTableTheme;
         
         // --- New: Dynamic Content Padding ---
         const initialContentPadding = options.contentPadding === undefined
@@ -178,6 +191,10 @@ export class MarkdownEditor {
     
     getHTML(): string {
         return this.mdParser.render(this.getValue());
+    }
+
+    getStylesConfig(): StylesConfig {
+        return this._stylesConfig;
     }
 
     setValue(val: string) {

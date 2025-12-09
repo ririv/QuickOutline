@@ -5,7 +5,7 @@ import katex from 'katex';
 
 // Import CSS content directly for offline usage (Vite feature)
 import katexCssContent from 'katex/dist/katex.min.css?inline';
-import highlightJsVsCssContent from 'highlight.js/styles/vs.css?inline';
+// highlightJsVsCssContent will be derived from CodeMirror's theme
 
 // Configure markdown-it instance
 export const mdParser: MarkdownIt = new MarkdownIt({
@@ -33,4 +33,3 @@ export const mdParser: MarkdownIt = new MarkdownIt({
 
 // Export CSS strings for injection into preview
 export const katexCss = katexCssContent;
-export const highlightJsVsCss = highlightJsVsCssContent;

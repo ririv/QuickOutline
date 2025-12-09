@@ -13,7 +13,7 @@
   import { slide } from 'svelte/transition';
   import { markdownStore } from '@/stores/markdownStore.svelte';
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
-  import { katexCss, highlightJsVsCss } from '@/lib/editor/markdown-renderer';
+  import { katexCss } from '@/lib/editor/markdown-renderer';
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
@@ -30,7 +30,8 @@
 
       // Editor actions
       onInitVditor: (md) => {
-          editorComponent?.init(md);
+          // Pass a default editorConfig, or load from markdownStore if available/desired
+          editorComponent?.init(md, 'live', { tableStyle: 'grid' });
           // Also update store if init comes from outside
           markdownStore.updateContent(md);
       },
@@ -49,7 +50,8 @@
     if (markdownStore.content) {
         // Use setTimeout to ensure editor is mounted and init called (MdEditor init is in onMount)
         setTimeout(() => {
-            editorComponent?.setValue(markdownStore.content);
+            // Re-initialize editor with restored content and default config
+            editorComponent?.init(markdownStore.content, 'live',  { tableStyle: 'grid' });
         }, 0);
     }
   });
@@ -114,7 +116,8 @@
       // Generate CSS from our shared theme objects
       // 1. Base Styles (Fonts, Colors, etc.)
       // 2. Table Styles (Selected Grid or Academic)
-      const editorThemeCss = getEditorPreviewCss(markdownStore.tableStyle, ".markdown-body");
+      const { tableStyle } = editorComponent.getStylesConfig(); // Get styles config from editor
+      const editorThemeCss = getEditorPreviewCss(tableStyle, ".markdown-body");
       
       const generatedCss = `
         .markdown-body { 
@@ -143,7 +146,6 @@
         
         /* Injected Math and Code Highlighting Styles */
         ${katexCss}
-        ${highlightJsVsCss}
       `;
 
       // Update the reactive state, which will trigger Preview -> PagedRenderer

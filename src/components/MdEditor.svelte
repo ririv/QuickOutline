@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { MarkdownEditor, type EditorMode } from '@/lib/editor';
+    import { MarkdownEditor, type EditorMode, type StylesConfig } from '@/lib/editor';
 
     let editorElement: HTMLDivElement;
     let editor: MarkdownEditor;
@@ -15,15 +15,17 @@
     export const getContentHtml = async () => editor?.getHTML() || '';
     export const getPayloads = async () => JSON.stringify({ html: editor?.getHTML() || "", styles: "" });
     export const setMode = (mode: EditorMode) => editor?.setMode(mode); // Expose setMode
+    export const getStylesConfig = () => editor?.getStylesConfig(); // Expose getStylesConfig
 
     // Init function (exposed)
-    export const init = (initialMarkdown: string = '', initialMode: EditorMode = 'live') => {
+    export const init = (initialMarkdown: string = '', initialMode: EditorMode = 'live', stylesConfig?: Partial<StylesConfig>) => {
         if (editor) return;
         editor = new MarkdownEditor({
             parent: editorElement,
             initialValue: initialMarkdown,
             placeholder: '开始输入...',
             initialMode: initialMode,
+            stylesConfig: stylesConfig, // Pass the generic config object
             onChange: (doc) => {
                 if (onchange) onchange(doc);
             }

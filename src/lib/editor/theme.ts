@@ -146,7 +146,7 @@ export const baseTheme = EditorView.theme(baseThemeStyles);
 // --- Scoped Syntax Highlighting (Physical Scope via CSS) ---
 // These rules ONLY apply inside code block lines (.cm-fenced-code-line)
 // This guarantees strict isolation from Markdown prose.
-export const codeBlockSyntaxHighlighting = EditorView.theme({
+export const codeBlockStyles = {
     ".cm-fenced-code-line .tok-comment": { color: "#6a737d", fontStyle: "italic" },
     ".cm-fenced-code-line .tok-keyword, .cm-fenced-code-line .tok-operatorKeyword, .cm-fenced-code-line .tok-modifier": { color: "#d73a49" },
     ".cm-fenced-code-line .tok-string, .cm-fenced-code-line .tok-regexp": { color: "#032f62" },
@@ -160,7 +160,8 @@ export const codeBlockSyntaxHighlighting = EditorView.theme({
     ".cm-fenced-code-line .tok-propertyName, .cm-fenced-code-line .tok-attributeName": { color: "#005cc5" },
     ".cm-fenced-code-line .tok-variableName": { color: "#24292e" },
     ".cm-fenced-code-line .tok-squareBracket, .cm-fenced-code-line .tok-brace, .cm-fenced-code-line .tok-punctuation": { color: "#24292e" },
-});
+};
+export const codeBlockSyntaxHighlighting = EditorView.theme(codeBlockStyles);
 
 // --- Table Themes (Selectable) ---
 
