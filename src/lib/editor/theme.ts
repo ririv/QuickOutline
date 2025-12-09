@@ -15,7 +15,8 @@ export const myHighlightStyle = HighlightStyle.define([
     { tag: tags.quote, borderLeft: "4px solid #dfe2e5", paddingLeft: "1em", color: "#6a737d", fontStyle: "italic" }, // Blockquote
 ]);
 
-export const baseTheme = EditorView.theme({
+// Export raw styles for reuse in Preview (Paged.js)
+export const baseThemeStyles = {
     "&": {
         height: "100%",
         fontSize: "16px",
@@ -138,7 +139,9 @@ export const baseTheme = EditorView.theme({
     ".cm-completionIcon-keyword": { // Fallback
         display: "none"
     }
-});
+};
+
+export const baseTheme = EditorView.theme(baseThemeStyles);
 
 // --- Scoped Syntax Highlighting (Physical Scope via CSS) ---
 // These rules ONLY apply inside code block lines (.cm-fenced-code-line)
@@ -162,7 +165,7 @@ export const codeBlockSyntaxHighlighting = EditorView.theme({
 // --- Table Themes (Selectable) ---
 
 // 1. Grid/Spreadsheet Style (Default)
-export const gridTableTheme = EditorView.theme({
+export const gridTableStyles = {
     ".cm-table-widget": {
         borderCollapse: "collapse",
         width: "100%",
@@ -183,10 +186,11 @@ export const gridTableTheme = EditorView.theme({
     ".cm-table-widget tr:nth-child(even)": {
         backgroundColor: "#f8f9fa",
     },
-});
+};
+export const gridTableTheme = EditorView.theme(gridTableStyles);
 
 // 2. Academic Paper Style (Clean, no vertical borders)
-export const academicTableTheme = EditorView.theme({
+export const academicTableStyles = {
     ".cm-table-widget": {
         borderCollapse: "collapse",
         width: "100%",
@@ -215,7 +219,8 @@ export const academicTableTheme = EditorView.theme({
     ".cm-table-widget tr:last-child td": {
         borderBottom: "none",
     },
-});
+};
+export const academicTableTheme = EditorView.theme(academicTableStyles);
 
 // --- VS Code Light Highlight Style (Markdown Optimized) ---
 export const vsCodeLightHighlightStyle = HighlightStyle.define([

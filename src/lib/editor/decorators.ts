@@ -12,6 +12,7 @@ export interface DecoratorContext {
     builder: RangeSetBuilder<Decoration>;
     isCursorOverlapping: boolean; // For blocks, overlaps entire block. For inline, overlaps node.
     hasFocus: boolean; // Global focus state
+    forcePreview?: boolean; // Force preview mode (ignoring cursor)
 }
 
 export type DecoratorProvider = (ctx: DecoratorContext) => void;

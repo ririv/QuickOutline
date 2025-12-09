@@ -12,12 +12,12 @@
   import { onMount, onDestroy } from 'svelte';
   import { slide } from 'svelte/transition';
   import { markdownStore } from '@/stores/markdownStore.svelte';
+  import { getEditorPreviewCss } from '@/lib/editor/style-converter';
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
   
   let debounceTimer: number; // For live preview debounce
-
 
   onMount(() => {
     // Initialize Bridge to route Java calls to components
@@ -106,12 +106,45 @@
 
   async function triggerPreview() {
       if (!editorComponent) return;
-      const payloadJson = await editorComponent.getPayloads();
-      const payload = JSON.parse(payloadJson);
       
+      // Get raw HTML from markdown-it
+      const htmlContent = await editorComponent.getContentHtml();
+      
+      // Generate CSS from our shared theme objects
+      // 1. Base Styles (Fonts, Colors, etc.)
+      // 2. Table Styles (Selected Grid or Academic)
+      const editorThemeCss = getEditorPreviewCss(markdownStore.tableStyle, ".markdown-body");
+      
+      const generatedCss = `
+        .markdown-body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #24292e; 
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+            background-color: white; /* Ensure background is white */
+        }
+        ${editorThemeCss}
+        
+        /* General Markdown-it output styling (can be adjusted to match CM) */
+        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 { font-weight: 600; line-height: 1.25; margin-top: 24px; margin-bottom: 16px; }
+        .markdown-body h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+        .markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+        .markdown-body p { margin-top: 0; margin-bottom: 16px; }
+        .markdown-body code { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; background-color: rgba(27,31,35,0.05); padding: 0.2em 0.4em; border-radius: 3px; font-size: 85%; }
+        .markdown-body pre { background-color: #f6f8fa; padding: 16px; overflow: auto; border-radius: 3px; }
+        .markdown-body pre code { background-color: transparent; padding: 0; }
+        .markdown-body blockquote { padding: 0 1em; color: #6a737d; border-left: 0.25em solid #dfe2e5; margin: 0 0 16px 0; }
+        .markdown-body img { max-width: 100%; box-sizing: content-box; background-color: #fff; }
+      `;
+
       // Update the reactive state, which will trigger Preview -> PagedRenderer
       markdownStore.currentPagedPayload = {
-          ...payload,
+          html: htmlContent,
+          styles: generatedCss,
           header: markdownStore.headerConfig,
           footer: markdownStore.footerConfig
       };
