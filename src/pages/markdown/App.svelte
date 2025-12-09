@@ -13,6 +13,7 @@
   import { slide } from 'svelte/transition';
   import { markdownStore } from '@/stores/markdownStore.svelte';
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
+  import { katexCss, highlightJsVsCss } from '@/lib/editor/markdown-renderer';
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
@@ -139,6 +140,10 @@
         .markdown-body pre code { background-color: transparent; padding: 0; }
         .markdown-body blockquote { padding: 0 1em; color: #6a737d; border-left: 0.25em solid #dfe2e5; margin: 0 0 16px 0; }
         .markdown-body img { max-width: 100%; box-sizing: content-box; background-color: #fff; }
+        
+        /* Injected Math and Code Highlighting Styles */
+        ${katexCss}
+        ${highlightJsVsCss}
       `;
 
       // Update the reactive state, which will trigger Preview -> PagedRenderer

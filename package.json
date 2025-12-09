@@ -42,8 +42,10 @@
     "@types/markdown-it": "^14.1.2",
     "@uiw/codemirror-theme-github": "^4.25.3",
     "codemirror": "^6.0.2",
+    "highlight.js": "^11.11.1",
     "katex": "^0.16.27",
     "markdown-it": "^14.1.0",
+    "markdown-it-texmath": "^1.0.0",
     "pagedjs": "^0.4.3",
     "tailwindcss": "^4.1.17",
     "vditor": "^3.11.2"

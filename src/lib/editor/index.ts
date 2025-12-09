@@ -9,13 +9,13 @@ import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/
 import { GFM } from '@lezer/markdown';
 import { bracketMatching } from '@codemirror/language';
 import { classHighlighter } from '@lezer/highlight';
-import MarkdownIt from 'markdown-it';
 
 import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting, gridTableTheme, academicTableTheme, vsCodeLightHighlightStyle } from './theme';
 import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState, previewModeState, setPreviewMode } from './extensions';
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
 import { linkHeadingCompletion } from './autocomplete';
+import { mdParser } from './markdown-renderer'; // Import the pre-configured mdParser
 
 export interface MarkdownEditorOptions {
     initialValue?: string;
@@ -36,7 +36,7 @@ export class MarkdownEditor {
     private paddingCompartment = new Compartment(); // New: Compartment for dynamic padding
     private editableCompartment = new Compartment(); // New: Compartment for editable state
     private currentMode: EditorMode;
-    private mdParser = new MarkdownIt();
+    private mdParser = mdParser; // Use the imported mdParser
 
     constructor(options: MarkdownEditorOptions) {
         this.currentMode = options.initialMode || 'live'; // Set initial mode
