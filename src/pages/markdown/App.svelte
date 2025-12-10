@@ -13,7 +13,8 @@
   import { slide } from 'svelte/transition';
   import { markdownStore } from '@/stores/markdownStore.svelte';
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
-  import { katexCss } from '@/lib/editor/markdown-renderer';
+  // katexCss is now globally imported via widgets.ts, no need to import/inject here
+  // import { katexCss } from '@/lib/editor/markdown-renderer';
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
 
   let editorComponent: MdEditor;
@@ -127,7 +128,7 @@
         ${editorThemeCss}
         
         /* Injected Math and Code Highlighting Styles */
-        /* ${katexCss} */
+        /* katexCss is now globally handled, no longer injected here */
       `;
 
       // Update the reactive state, which will trigger Preview -> PagedRenderer

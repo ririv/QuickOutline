@@ -11,8 +11,7 @@ import mdContainer from 'markdown-it-container';
 import mdAttrs from 'markdown-it-attrs';
 import mdBracketedSpans from 'markdown-it-bracketed-spans';
 
-// Import CSS content directly for offline usage (Vite feature)
-import katexCssContent from 'katex/dist/katex.min.css?inline';
+// No longer importing katexCssContent here as it's globally imported via widgets.ts
 
 // Custom task list plugin implementation
 function customTaskListPlugin(md: MarkdownIt) {
@@ -147,5 +146,5 @@ export function createMdParser(options: MarkdownParserOptions = {}): MarkdownIt 
         });
 }
 
-// Export CSS strings for injection into preview
-export const katexCss = katexCssContent;
+// No longer exporting katexCss as it's globally imported
+
