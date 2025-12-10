@@ -9,11 +9,10 @@ import mdSup from 'markdown-it-sup';
 import mdAbbr from 'markdown-it-abbr';
 import mdContainer from 'markdown-it-container';
 import mdAttrs from 'markdown-it-attrs';
-import mdBracketedSpans from 'markdown-it-bracketed-spans'; // Import new plugin
+import mdBracketedSpans from 'markdown-it-bracketed-spans';
 
 // Import CSS content directly for offline usage (Vite feature)
 import katexCssContent from 'katex/dist/katex.min.css?inline';
-// highlightJsVsCssContent will be derived from CodeMirror's theme
 
 // Custom task list plugin implementation
 function customTaskListPlugin(md: MarkdownIt) {
@@ -32,22 +31,17 @@ function customTaskListPlugin(md: MarkdownIt) {
             if (firstChild.type !== 'text') continue;
 
             const content = firstChild.content;
-            // Match [ ] or [x] or [X] at start
-            const match = content.match(/^\ \[([ xX])\] /);
+            const match = content.match(/^\[([ xX])\] /);
             if (match) {
                 const isChecked = match[1].toLowerCase() === 'x';
-                
-                // Add class to list item
+
                 tokens[i - 2].attrJoin('class', 'task-list-item');
 
-                // Remove the marker from the text
                 firstChild.content = content.slice(match[0].length);
 
-                // Create checkbox token
                 const checkboxToken = new state.Token('html_inline', '', 0);
                 checkboxToken.content = `<span class="custom-checkbox ${isChecked ? 'checked' : ''}"></span> `;
-                
-                // Insert checkbox at the start of inline children
+
                 children.unshift(checkboxToken);
             }
         }
@@ -55,102 +49,103 @@ function customTaskListPlugin(md: MarkdownIt) {
     });
 }
 
-// Function to create container plugin configuration
-function createContainerConfig(name: string, defaultTitle: string) {
+// Helper function to create container configurations with titles (e.g., Tip, Warning)
+function createContainerConfig(md: MarkdownIt, name: string, defaultTitle: string) {
     return {
-        validate: (params: string) => {
-            return params.trim().match(new RegExp(`^${name}\s*(.*)$`));
-        },
+        validate: (params: string) => params.trim().match(new RegExp(`^${name}\\s*(.*)$`)),
         render: (tokens: any[], idx: number) => {
-            const m = tokens[idx].info.trim().match(new RegExp(`^${name}\s*(.*)$`));
+            const m = tokens[idx].info.trim().match(new RegExp(`^${name}\\s*(.*)$`));
             if (tokens[idx].nesting === 1) {
-                // opening tag
-                const title = m && m[1] ? mdParser.utils.escapeHtml(m[1]) : defaultTitle;
-                return `<div class="custom-container ${name}">
-<p class="custom-container-title">${title}</p>
-`;
+                const title = m && m[1] ? md.utils.escapeHtml(m[1]) : defaultTitle;
+                return `<div class="custom-container ${name}">\n<p class="custom-container-title">${title}</p>\n`;
             } else {
-                // closing tag
                 return '</div>\n';
             }
         }
     };
 }
 
-// Function to create simple layout container (no title, just div with class)
-function createSimpleContainer(name: string, classes: string) {
+// Helper function to create simple layout containers (div with classes)
+// This is not strictly needed anymore since the generic 'div' container covers this
+/*
+function createSimpleContainer(md: MarkdownIt, name: string, classes: string) {
     return {
-        validate: (params: string) => {
-            return params.trim().match(new RegExp(`^${name}\\s*(.*)$`));
-        },
+        validate: (params: string) => params.trim().match(new RegExp(`^${name}\\s*(.*)$`)),
         render: (tokens: any[], idx: number) => {
             if (tokens[idx].nesting === 1) {
-                // opening tag
-                // Allow parsing extra classes from params if needed in future
                 return `<div class="${classes}">\n`;
             } else {
-                // closing tag
                 return '</div>\n';
             }
         }
     };
 }
+*/
 
-// Configure markdown-it instance
-export const mdParser: MarkdownIt = new MarkdownIt({
-    html: true, // Enable HTML tags in source
-    linkify: true, // Autoconvert URL-like text to links
-    typographer: true, // Enable some language-neutral replacement + quotes beautification
+export interface MarkdownParserOptions {
+    enableIndentedCodeBlocks?: boolean;
+}
 
-    highlight: function (str, lang) {
-        if (lang && hljs.getLanguage(lang)) {
-            try {
-                return '<pre class="hljs"><code>' +
-                       hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
-                       '</code></pre>';
-            } catch (__) {}
+export function createMdParser(options: MarkdownParserOptions = {}): MarkdownIt {
+    const md: MarkdownIt = new MarkdownIt({
+        html: true,
+        linkify: true,
+        typographer: true,
+        highlight: function (str, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                try {
+                    return '<pre class="hljs"><code>' +
+                        hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+                        '</code></pre>';
+                } catch (__) {}
+            }
+            // Use the current md instance's utils for escaping
+            return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
         }
-        // Fallback for languages not supported by highlight.js, or for non-highlighted code blocks
-        return '<pre class="hljs"><code>' + mdParser.utils.escapeHtml(str) + '</code></pre>';
+    });
+
+    if (!options.enableIndentedCodeBlocks) {
+        md.disable('code');
     }
-})
-.use(texmath, {
-    engine: katex,
-    delimiters: 'dollars', // Default: 'dollars'
-    katexOptions: { macros: { "\RR": "\mathbb{R}" } } // Example KaTeX options
-})
-.use(customTaskListPlugin)
-.use(mdMark)
-.use(mdFootnote)
-.use(mdSub)
-.use(mdSup)
-.use(mdAbbr)
-.use(mdBracketedSpans) // Use Bracketed Spans FIRST (conceptually handles [] syntax)
-.use(mdAttrs, {
-    leftDelimiters: '{',
-    rightDelimiters: '}',
-    allowedAttrs: ['class', 'style', /^data-.*$/] // Allow class, style, and data-* attributes
-})
-.use(mdContainer, 'tip', createContainerConfig('tip', 'TIP'))
-.use(mdContainer, 'warning', createContainerConfig('warning', 'WARNING'))
-.use(mdContainer, 'danger', createContainerConfig('danger', 'DANGER'))
-.use(mdContainer, 'info', createContainerConfig('info', 'INFO'))
-// Generic Div Container for arbitrary Tailwind classes
-// Usage: ::: div grid grid-cols-2 gap-4
-.use(mdContainer, 'div', {
-    validate: (params: string) => params.trim().match(/^div\s+(.*)$/),
-    render: (tokens: any[], idx: number) => {
-        const m = tokens[idx].info.trim().match(/^div\s+(.*)$/);
-        if (tokens[idx].nesting === 1) {
-            // Opening tag
-            const classes = (m && m[1]) ? mdParser.utils.escapeHtml(m[1]) : '';
-            return `<div class="${classes}">\n`;
-        } else {
-            // Closing tag
-            return '</div>\n';
-        }
-    }
-});
+
+    return md
+        .use(texmath, {
+            engine: katex,
+            delimiters: 'dollars',
+            katexOptions: { macros: { "\RR": "\\mathbb{R}" } }
+        })
+        .use(customTaskListPlugin)
+        .use(mdMark)
+        .use(mdFootnote)
+        .use(mdSub)
+        .use(mdSup)
+        .use(mdAbbr)
+        .use(mdBracketedSpans)
+        .use(mdAttrs, {
+            leftDelimiters: '{',
+            rightDelimiters: '}',
+            allowedAttrs: ['class', 'style', /^data-.*$/]
+        })
+        .use(mdContainer, 'tip', createContainerConfig(md, 'tip', 'TIP'))
+        .use(mdContainer, 'warning', createContainerConfig(md, 'warning', 'WARNING'))
+        .use(mdContainer, 'danger', createContainerConfig(md, 'danger', 'DANGER'))
+        .use(mdContainer, 'info', createContainerConfig(md, 'info', 'INFO'))
+        // Generic Div Container for arbitrary Tailwind classes
+        // Usage: ::: div grid grid-cols-2 gap-4
+        .use(mdContainer, 'div', {
+            validate: (params: string) => params.trim().match(/^div\s+(.*)$/),
+            render: (tokens: any[], idx: number) => {
+                const m = tokens[idx].info.trim().match(/^div\s+(.*)$/);
+                if (tokens[idx].nesting === 1) {
+                    // Use the current md instance's utils for escaping
+                    const classes = (m && m[1]) ? md.utils.escapeHtml(m[1]) : '';
+                    return `<div class="${classes}">\n`;
+                } else {
+                    return '</div>\n';
+                }
+            }
+        });
+}
 
 // Export CSS strings for injection into preview
 export const katexCss = katexCssContent;

@@ -24,6 +24,7 @@ export class MarkdownState {
     // UI State
     showHeader = $state(false);
     showFooter = $state(false);
+    enableIndentedCodeBlocks = $state(false); // New config option
     
     // Preview Cache
     currentPagedPayload = $state<any>(null);

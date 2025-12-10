@@ -111,8 +111,10 @@
   async function triggerPreview() {
       if (!editorComponent) return;
       
-      // Get raw HTML from markdown-it
-      const htmlContent = await editorComponent.getContentHtml();
+      // Get raw HTML from markdown-it, passing config from store
+      const htmlContent = await editorComponent.getContentHtml({
+          enableIndentedCodeBlocks: markdownStore.enableIndentedCodeBlocks
+      });
       
       // Generate CSS from our shared theme objects
       // 1. Base Styles (Fonts, Colors, etc.)

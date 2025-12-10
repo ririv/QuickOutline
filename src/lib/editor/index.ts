@@ -15,7 +15,7 @@ import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusSta
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
 import { linkHeadingCompletion } from './autocomplete';
-import { mdParser } from './markdown-renderer'; // Import the pre-configured mdParser
+import { createMdParser } from './markdown-renderer'; // Import the factory function
 
 export interface MarkdownEditorOptions {
     initialValue?: string;
@@ -42,11 +42,18 @@ export class MarkdownEditor {
     private paddingCompartment = new Compartment(); // New: Compartment for dynamic padding
     private editableCompartment = new Compartment(); // New: Compartment for editable state
     private currentMode: EditorMode;
-    private mdParser = mdParser; // Use the imported mdParser
+    
+    // Parser State
+    private mdParser: any; 
+    private currentParserConfig: Record<string, any> = { enableIndentedCodeBlocks: false }; // Generic config store
+
     private _stylesConfig: StylesConfig; // Store editor's current styles configuration
 
     constructor(options: MarkdownEditorOptions) {
         this.currentMode = options.initialMode || 'live'; // Set initial mode
+        
+        // Initialize parser with default config
+        this.mdParser = createMdParser(this.currentParserConfig);
         
         // Initialize config with defaults
         this._stylesConfig = { 
@@ -190,7 +197,24 @@ export class MarkdownEditor {
         return this.view.state.doc.toString();
     }
     
-    getHTML(): string {
+    private isConfigChanged(newConfig: Record<string, any>): boolean {
+        if (!newConfig) return false;
+        const keys = Object.keys(newConfig);
+        for (const key of keys) {
+            if (newConfig[key] !== this.currentParserConfig[key]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    getHTML(options?: Record<string, any>): string {
+        // Optimization: Recreate parser only if configuration changes
+        if (options && this.isConfigChanged(options)) {
+            // Merge new options into current config
+            this.currentParserConfig = { ...this.currentParserConfig, ...options };
+            this.mdParser = createMdParser(this.currentParserConfig);
+        }
         return this.mdParser.render(this.getValue());
     }
 
