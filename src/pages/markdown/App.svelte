@@ -14,6 +14,7 @@
   import { markdownStore } from '@/stores/markdownStore.svelte';
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
   import { katexCss } from '@/lib/editor/markdown-renderer';
+  import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
@@ -120,134 +121,11 @@
       const editorThemeCss = getEditorPreviewCss(tableStyle, ".markdown-body");
       
       const generatedCss = `
-        .markdown-body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; 
-            line-height: 1.6; 
-            color: #24292e; 
-            box-sizing: border-box;
-            min-width: 200px;
-            max-width: 980px;
-            margin: 0 auto;
-            padding: 45px;
-            background-color: white; /* Ensure background is white */
-        }
+        ${markdownPreviewCss}
         ${editorThemeCss}
-        
-        /* General Markdown-it output styling (can be adjusted to match CM) */
-        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 { font-weight: 600; line-height: 1.25; margin-top: 24px; margin-bottom: 16px; }
-        .markdown-body h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
-        .markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
-        .markdown-body p { margin-top: 0; margin-bottom: 16px; }
-        .markdown-body code { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; background-color: rgba(27,31,35,0.05); padding: 0.2em 0.4em; border-radius: 3px; font-size: 85%; }
-        .markdown-body pre { background-color: #f6f8fa; padding: 16px; overflow: auto; border-radius: 3px; }
-        .markdown-body pre code { background-color: transparent; padding: 0; }
-        .markdown-body blockquote { padding: 0 1em; color: #6a737d; border-left: 0.25em solid #dfe2e5; margin: 0 0 16px 0; }
-        .markdown-body img { max-width: 100%; box-sizing: content-box; background-color: #fff; }
-
-        /* --- List Styles --- */
-        .markdown-body ul, .markdown-body ol { margin-top: 0; margin-bottom: 16px; padding-left: 2em; }
-        .markdown-body li { margin-bottom: 4px; }
-        .markdown-body ul li { list-style-type: disc; }
-        .markdown-body ol li { list-style-type: decimal; }
-        .markdown-body ul ul, .markdown-body ol ul, .markdown-body ul ol, .markdown-body ol ol { margin-top: 0; margin-bottom: 0; }
-
-        /* Task List Specifics - Custom Checkbox */
-        .markdown-body .task-list-item { 
-            list-style-type: none; 
-            position: relative; 
-        }
-        
-        /* Custom Checkbox Container */
-        .markdown-body .custom-checkbox {
-            position: absolute;
-            left: -1.5em; 
-            top: 0.25em;  
-            width: 14px;
-            height: 14px;
-            border: 1.5px solid #d0d7de; 
-            border-radius: 3px;
-            background-color: #fff;
-            display: inline-block;
-            box-sizing: border-box;
-            line-height: 1;
-        }
-
-        /* Checked State */
-        .markdown-body .custom-checkbox.checked {
-            background-color: #0969da; 
-            border-color: #0969da;
-        }
-
-        /* Checkmark */
-        .markdown-body .custom-checkbox.checked::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 5L4.5 8L10.5 1' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 10px;
-        }
         
         /* Injected Math and Code Highlighting Styles */
         ${katexCss}
-
-        /* --- Plugins Styles --- */
-        
-        /* Mark (Highlight) */
-        .markdown-body mark {
-            background-color: #fff8c5;
-            color: #24292e;
-            padding: 0.1em 0.2em;
-            border-radius: 2px;
-        }
-
-        /* Footnotes */
-        .markdown-body .footnotes {
-            border-top: 1px solid #eaecef;
-            margin-top: 32px;
-            padding-top: 16px;
-            font-size: 0.85em;
-            color: #6a737d;
-        }
-        .markdown-body .footnotes ol {
-            padding-left: 1.5em;
-        }
-
-        /* Custom Containers (Callouts) */
-        .markdown-body .custom-container {
-            padding: 0.1rem 1.5rem;
-            border-left-width: 0.5rem;
-            border-left-style: solid;
-            margin: 1rem 0;
-            border-radius: 4px; /* Optional rounded corners on right */
-        }
-        
-        .markdown-body .custom-container-title {
-            font-weight: 600;
-            margin-bottom: -0.4rem;
-        }
-
-        .markdown-body .custom-container.tip, .markdown-body .custom-container.info {
-            background-color: #f3f5f7;
-            border-color: #42b983;
-        }
-        .markdown-body .custom-container.warning {
-            background-color: rgba(255,229,100,.3);
-            border-color: #e7c000;
-            color: #6b5900;
-        }
-        .markdown-body .custom-container.danger {
-            background-color: #ffe6e6;
-            border-color: #c00;
-            color: #4d0000;
-        }
-        .markdown-body .custom-container.danger .custom-container-title {
-            color: #900;
-        }
       `;
 
       // Update the reactive state, which will trigger Preview -> PagedRenderer
