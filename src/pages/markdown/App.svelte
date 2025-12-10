@@ -194,6 +194,60 @@
         
         /* Injected Math and Code Highlighting Styles */
         ${katexCss}
+
+        /* --- Plugins Styles --- */
+        
+        /* Mark (Highlight) */
+        .markdown-body mark {
+            background-color: #fff8c5;
+            color: #24292e;
+            padding: 0.1em 0.2em;
+            border-radius: 2px;
+        }
+
+        /* Footnotes */
+        .markdown-body .footnotes {
+            border-top: 1px solid #eaecef;
+            margin-top: 32px;
+            padding-top: 16px;
+            font-size: 0.85em;
+            color: #6a737d;
+        }
+        .markdown-body .footnotes ol {
+            padding-left: 1.5em;
+        }
+
+        /* Custom Containers (Callouts) */
+        .markdown-body .custom-container {
+            padding: 0.1rem 1.5rem;
+            border-left-width: 0.5rem;
+            border-left-style: solid;
+            margin: 1rem 0;
+            border-radius: 4px; /* Optional rounded corners on right */
+        }
+        
+        .markdown-body .custom-container-title {
+            font-weight: 600;
+            margin-bottom: -0.4rem;
+        }
+
+        .markdown-body .custom-container.tip, .markdown-body .custom-container.info {
+            background-color: #f3f5f7;
+            border-color: #42b983;
+        }
+        .markdown-body .custom-container.warning {
+            background-color: rgba(255,229,100,.3);
+            border-color: #e7c000;
+            color: #6b5900;
+        }
+        .markdown-body .custom-container.danger {
+            background-color: #ffe6e6;
+            border-color: #c00;
+            color: #4d0000;
+        }
+        .markdown-body .custom-container.danger .custom-container-title {
+            color: #900;
+        }
       `;
 
       // Update the reactive state, which will trigger Preview -> PagedRenderer
