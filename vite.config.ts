@@ -27,6 +27,7 @@ export default defineConfig({
     })
   ],
   root: 'src', // 源码根目录改为 src
+  publicDir: '../public', // 指定 public 目录位置，因为 root 改为了 src
   build: {
     outDir: '../build', // 输出到项目根目录下的 build，匹配 Tauri 配置
     emptyOutDir: true, // 构建前清空目录

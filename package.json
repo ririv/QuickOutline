@@ -10,6 +10,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
+    "build:unocss": "node scripts/build-unocss-runtime.mjs",
     "sign:sidecar": "node scripts/sign-sidecar.cjs",
     "update:sidecar": "node scripts/update-sidecar.cjs"
   },
@@ -66,11 +67,15 @@
     "@types/css-font-loading-module": "^0.0.14",
     "@types/markdown-it-container": "^2.0.10",
     "@types/node": "^24.10.1",
+    "@unocss/preset-wind": "^66.5.10",
+    "@unocss/runtime": "^66.5.10",
     "download": "^3.3.0",
+    "esbuild": "^0.27.1",
     "svelte": "^5.45.2",
     "svelte-check": "^4.0.0",
     "tslib": "^2.0.0",
     "typescript": "^5.0.0",
+    "unocss": "^66.5.10",
     "vite": "^7.2.4",
     "vite-plugin-static-copy": "^3.1.4"
   }
