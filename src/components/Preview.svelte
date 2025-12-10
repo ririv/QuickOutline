@@ -54,11 +54,12 @@
         scale = Math.max(0.5, Math.min(3.0, scale));
         currentScale = scale;
         if (container) {
-            // Apply zoom to container
-            container.style.transform = `scale(${currentScale})`;
-            // Ensure origin is top-left for consistent scaling
-            container.style.transformOrigin = "top left";
-            // Notify svg-engine if mode is svg
+            // Apply zoom to container using CSS zoom property
+            // This handles layout and scrollbars automatically in WebKit/Blink
+            container.style.zoom = `${currentScale}`;
+            
+            // Notify svg-engine if mode is svg (it might need to know for internal calculations, 
+            // though zoom usually handles it seamlessly)
             if (mode === "svg") onSvgViewChange(container, viewport);
         }
         updateSliderBackground(currentScale);
@@ -276,22 +277,21 @@
         flex: 1;
         overflow: auto;
         display: flex;
-        /* Left align pages */
-        justify-content: flex-start;
-        padding: 40px 40px 120px 40px; /* Increased bottom padding to prevent toolbar overlap */
+        /* Center pages horizontally */
+        justify-content: center; 
+        padding: 40px; /* Reduced padding since we are centered */
         /* Force left alignment to override any global center styles */
         text-align: left !important;
     }
 
     #pages-container {
-        /* Zoom from top-left to keep content aligned left */
-        transform-origin: top left;
-        transition: transform 0.1s ease-out;
+        /* Zoom property handles scaling without transform hacks */
         display: flex;
         flex-direction: column;
         gap: 20px;
         /* Ensure container width wraps content */
-        width: auto !important;
+        width: fit-content;
+        height: fit-content;
     }
 
     /* Toolbar Styles */
