@@ -77,6 +77,25 @@ function createContainerConfig(name: string, defaultTitle: string) {
     };
 }
 
+// Function to create simple layout container (no title, just div with class)
+function createSimpleContainer(name: string, classes: string) {
+    return {
+        validate: (params: string) => {
+            return params.trim().match(new RegExp(`^${name}\\s*(.*)$`));
+        },
+        render: (tokens: any[], idx: number) => {
+            if (tokens[idx].nesting === 1) {
+                // opening tag
+                // Allow parsing extra classes from params if needed in future
+                return `<div class="${classes}">\n`;
+            } else {
+                // closing tag
+                return '</div>\n';
+            }
+        }
+    };
+}
+
 // Configure markdown-it instance
 export const mdParser: MarkdownIt = new MarkdownIt({
     html: true, // Enable HTML tags in source
@@ -115,7 +134,23 @@ export const mdParser: MarkdownIt = new MarkdownIt({
 .use(mdContainer, 'tip', createContainerConfig('tip', 'TIP'))
 .use(mdContainer, 'warning', createContainerConfig('warning', 'WARNING'))
 .use(mdContainer, 'danger', createContainerConfig('danger', 'DANGER'))
-.use(mdContainer, 'info', createContainerConfig('info', 'INFO'));
+.use(mdContainer, 'info', createContainerConfig('info', 'INFO'))
+// Generic Div Container for arbitrary Tailwind classes
+// Usage: ::: div grid grid-cols-2 gap-4
+.use(mdContainer, 'div', {
+    validate: (params: string) => params.trim().match(/^div\s+(.*)$/),
+    render: (tokens: any[], idx: number) => {
+        const m = tokens[idx].info.trim().match(/^div\s+(.*)$/);
+        if (tokens[idx].nesting === 1) {
+            // Opening tag
+            const classes = (m && m[1]) ? mdParser.utils.escapeHtml(m[1]) : '';
+            return `<div class="${classes}">\n`;
+        } else {
+            // Closing tag
+            return '</div>\n';
+        }
+    }
+});
 
 // Export CSS strings for injection into preview
 export const katexCss = katexCssContent;
