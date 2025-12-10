@@ -9,6 +9,13 @@
     margin: 0 auto;
     padding: 45px;
     background-color: white; /* Ensure background is white */
+    
+    /* Override global user-select: none */
+    -webkit-user-select: text;
+    user-select: text;
+    
+    /* Ensure text alignment */
+    text-align: left;
 }
 
 /* General Markdown-it output styling (can be adjusted to match CM) */
