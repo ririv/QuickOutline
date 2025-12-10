@@ -63,6 +63,7 @@ async function renderToBuffer(payload: PagedPayload, container: HTMLElement) {
     // If active is A, we render to B.
     const targetBuffer = activeBuffer === 'A' ? bufferB : bufferA;
     const targetBufferName = activeBuffer === 'A' ? 'B' : 'A';
+    const oldActive = activeBuffer === 'A' ? bufferA : bufferB;
 
     // Clear target buffer
     targetBuffer!.innerHTML = '';
@@ -87,49 +88,55 @@ async function renderToBuffer(payload: PagedPayload, container: HTMLElement) {
     // Prepare Content
     const { html, styles, header, footer } = payload;
     const pageCss = generatePageCss(header, footer);
-    // Put pageCss FIRST to ensure @page rules are parsed correctly and not obscured by other styles
-    const fullCss = `${pageCss}\n${styles}`;
     
-    // Use Data URI instead of Blob URL to avoid "Invalid URL" errors or CSP issues
-    // We must encodeURIComponent to handle special characters correctly before btoa
-    const base64Css = btoa(unescape(encodeURIComponent(fullCss)));
-    const cssUrl = `data:text/css;base64,${base64Css}`;
+    // Direct Polisher Injection Strategy:
+    // Based on Paged.js source, polisher.add() accepts objects { url: content }.
+    // This allows us to pass CSS strings directly without Blob/Data URIs, avoiding async fetching and "Invalid URL" errors.
+    // This ensures @page rules are processed by Polisher (required for headers/footers) synchronously.
+    const pageCssObject = {
+        [window.location.href]: pageCss
+    };
 
+    // Embed main styles inline. UnoCSS styles are global or runtime-injected, so we might not need to pass them here explicitly 
+    // unless we want Paged.js to polyfill them (usually not needed for standard CSS).
     const contentWithStyle = `
+      <style>${styles}</style>
       <div class="markdown-body">
           ${html}
       </div>
     `;
 
     // Create new Previewer
-    // Paged.js hooks attach to the previewer instance.
     const previewer = new Previewer();
     
     console.log('[PagedEngine] Starting preview...');
     // Render
     try {
-        await previewer.preview(contentWithStyle, [cssUrl], targetBuffer);
+        // Pass the CSS object directly to stylesheets array
+        // 传递URL：URL = 异步 IO = 潜在的时序差 = 抖动风险
+        // 传递Object：Object = 内存读取 = 同步处理 = 稳定。
+        await previewer.preview(contentWithStyle, [pageCssObject], targetBuffer);
         console.log('[PagedEngine] Preview finished.');
+        
+        // No delay needed if CSS is processed synchronously!
+        
+        // Critical: Restore flow layout for the new buffer so it takes up space
+        targetBuffer!.style.position = 'static';
+        targetBuffer!.style.zIndex = 'auto';
+        targetBuffer!.style.opacity = '1';
+        
+        if (oldActive) {
+            oldActive.style.display = 'none';
+            oldActive.style.zIndex = ''; 
+        }
+        
     } catch (err) {
         console.error('[PagedEngine] Preview failed:', err);
         throw err;
     } 
-    // No cleanup needed for Data URI
 
     // SWAP BUFFERS
     console.log('[PagedEngine] Swapping buffers. Showing:', targetBufferName);
-    // 1. Hide old active
-    const oldActive = activeBuffer === 'A' ? bufferA : bufferB;
-    if (oldActive) {
-        oldActive!.style.display = 'none';
-    }
-
-    // 2. Show new target
-    targetBuffer!.style.opacity = '1';
-    targetBuffer!.style.position = 'static'; // Restore flow
-    targetBuffer!.style.zIndex = 'auto';
-    targetBuffer!.style.display = 'block';
-
     // Update state
     activeBuffer = targetBufferName;
     currentPreviewer = previewer;
