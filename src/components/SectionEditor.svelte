@@ -15,11 +15,13 @@
     interface Props {
         config?: SectionConfig;
         type?: 'header' | 'footer';
+        onchange?: () => void;
     }
 
     let {
         config = $bindable({left: '', center: '', right: '', inner: '', outer: '', drawLine: false}),
         type = 'header',
+        onchange
     }: Props = $props();
 
     let activePos: 'left' | 'center' | 'right' | 'inner' | 'outer' = $state('center');
@@ -31,6 +33,7 @@
     }
 
     function handleInput() {
+        if (onchange) onchange();
     }
 
     function handleInputDoubleClick(e: MouseEvent) {
@@ -56,6 +59,7 @@
     function toggleDrawLine() {
         config.drawLine = !config.drawLine;
         justToggled = true; // Set to true after any toggle
+        if (onchange) onchange();
     }
 
     // Helper to check if a position has content (for dot indicator)

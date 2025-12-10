@@ -87,10 +87,15 @@ async function renderToBuffer(payload: PagedPayload, container: HTMLElement) {
     // Prepare Content
     const { html, styles, header, footer } = payload;
     const pageCss = generatePageCss(header, footer);
-    const fullCss = `${styles}\n${pageCss}`;
+    // Put pageCss FIRST to ensure @page rules are parsed correctly and not obscured by other styles
+    const fullCss = `${pageCss}\n${styles}`;
     
+    // Use Data URI instead of Blob URL to avoid "Invalid URL" errors or CSP issues
+    // We must encodeURIComponent to handle special characters correctly before btoa
+    const base64Css = btoa(unescape(encodeURIComponent(fullCss)));
+    const cssUrl = `data:text/css;base64,${base64Css}`;
+
     const contentWithStyle = `
-      <style>${fullCss}</style>
       <div class="markdown-body">
           ${html}
       </div>
@@ -102,14 +107,14 @@ async function renderToBuffer(payload: PagedPayload, container: HTMLElement) {
     
     console.log('[PagedEngine] Starting preview...');
     // Render
-    // We pass flow: [] to use default flow
     try {
-        await previewer.preview(contentWithStyle, [], targetBuffer);
+        await previewer.preview(contentWithStyle, [cssUrl], targetBuffer);
         console.log('[PagedEngine] Preview finished.');
     } catch (err) {
         console.error('[PagedEngine] Preview failed:', err);
         throw err;
-    }
+    } 
+    // No cleanup needed for Data URI
 
     // SWAP BUFFERS
     console.log('[PagedEngine] Swapping buffers. Showing:', targetBufferName);
@@ -159,16 +164,48 @@ function generatePageCss(header: any, footer: any) {
        return cssContent || '""';
     };
 
+    // Border styles
+    // Note: We apply width 100% to ensure border spans the full box, though margin boxes align next to each other.
+    // Vertical align might be needed if content is empty but line is desired.
+    const headerBorder = header?.drawLine ? 'border-bottom: 1px solid black; padding-bottom: 5px;' : '';
+    const footerBorder = footer?.drawLine ? 'border-top: 1px solid black; padding-top: 5px;' : '';
+
     return `
       @page {
           size: A4;
           margin: 20mm;
-          @top-left { content: ${getContent(header?.left)}; }
-          @top-center { content: ${getContent(header?.center)}; }
-          @top-right { content: ${getContent(header?.right)}; }
-          @bottom-left { content: ${getContent(footer?.left)}; }
-          @bottom-center { content: ${getContent(footer?.center)}; }
-          @bottom-right { content: ${getContent(footer?.right)}; }
+          
+          @top-left { 
+              content: ${getContent(header?.left)}; 
+              vertical-align: bottom;
+              ${headerBorder} 
+          }
+          @top-center { 
+              content: ${getContent(header?.center)}; 
+              vertical-align: bottom;
+              ${headerBorder} 
+          }
+          @top-right { 
+              content: ${getContent(header?.right)}; 
+              vertical-align: bottom;
+              ${headerBorder} 
+          }
+          
+          @bottom-left { 
+              content: ${getContent(footer?.left)}; 
+              vertical-align: top;
+              ${footerBorder} 
+          }
+          @bottom-center { 
+              content: ${getContent(footer?.center)}; 
+              vertical-align: top;
+              ${footerBorder} 
+          }
+          @bottom-right { 
+              content: ${getContent(footer?.right)}; 
+              vertical-align: top;
+              ${footerBorder} 
+          }
       }
     `;
 }

@@ -127,7 +127,7 @@
         ${editorThemeCss}
         
         /* Injected Math and Code Highlighting Styles */
-        ${katexCss}
+        /* ${katexCss} */
       `;
 
       // Update the reactive state, which will trigger Preview -> PagedRenderer
@@ -175,6 +175,7 @@
               <SectionEditor 
                 type="header"
                 bind:config={markdownStore.headerConfig} 
+                onchange={triggerPreview}
               />
             </div>
           {/if}
@@ -189,6 +190,7 @@
               <SectionEditor 
                 type="footer"
                 bind:config={markdownStore.footerConfig} 
+                onchange={triggerPreview}
               />
             </div>
           {/if}
