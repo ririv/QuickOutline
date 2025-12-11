@@ -2,6 +2,7 @@ use tauri::{AppHandle, Manager, Runtime, WebviewWindow}; // Import WebviewWindow
 use std::path::PathBuf;
 use std::fs;
 
+
 #[tauri::command]
 pub async fn print_to_pdf<R: Runtime>(
     app: AppHandle<R>,
@@ -44,69 +45,126 @@ pub async fn print_to_pdf<R: Runtime>(
 
 // ================= MAC OS NATIVE =================
 #[cfg(target_os = "macos")]
-async fn print_native_mac<R: Runtime>(window: WebviewWindow<R>, _html: String, output_path: PathBuf) -> Result<String, String> {
+async fn print_native_mac<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
 
-    use objc2_foundation::{NSData, NSError};
-    use objc2_web_kit::{WKPDFConfiguration, WKWebView};
+    use objc2_foundation::{NSData, NSError, NSString, NSRect, NSPoint, NSSize};
+    use objc2_web_kit::{WKPDFConfiguration, WKWebView, WKWebViewConfiguration};
     use block2::RcBlock;
     use std::sync::mpsc;
+    use objc2::rc::Retained;
+    use objc2::{MainThreadMarker, msg_send};
+    use objc2::runtime::AnyObject;
+    use std::thread;
+    use std::time::Duration;
 
     let path_str = output_path.to_string_lossy().to_string();
-    let (tx, rx) = mpsc::channel();
-    let output_path_clone = output_path.clone();
-
-    // Use with_webview which is available on WebviewWindow
+    let (ptr_tx, ptr_rx) = mpsc::channel();
+    
+    // Step 1: Initialize, Attach, and Load
+    let html_clone = html.clone();
+    
     window.with_webview(move |webview| {
         unsafe {
-            // Tauri's webview.inner() returns the platform handle. On macOS it's the WKWebView pointer.
-            // We need to cast it to the correct type for objc2.
-            // The type `tauri::webview::Webview` has `inner()` method.
-            let wk_webview_ptr = webview.inner() as *mut WKWebView;
-            let wk_webview: &WKWebView = &*wk_webview_ptr;
+            let mtm = MainThreadMarker::new_unchecked();
+            
+            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(595.0, 842.0));
+            let config = WKWebViewConfiguration::new(mtm);
+            
+            // Fix: Use msg_send! for init
+            let alloc_view = mtm.alloc::<WKWebView>();
+            let new_view: Retained<WKWebView> = msg_send![alloc_view, initWithFrame: frame, configuration: &*config];
+            
+            // Attach (Hidden)
+            let current_wv_ptr = webview.inner() as *mut AnyObject;
+            let current_wv = &*current_wv_ptr;
+            let superview: Option<Retained<AnyObject>> = msg_send![current_wv, superview];
+            
+            if let Some(sv) = superview {
+                let _: () = msg_send![&sv, addSubview: &*new_view];
+                let _: () = msg_send![&*new_view, setAlphaValue: 0.0f64];
+            } else {
+                println!("Warning: Could not find superview to attach print webview.");
+            }
+            
+            // Load
+            let html_ns = NSString::from_str(&html_clone);
+            new_view.loadHTMLString_baseURL(&html_ns, None);
+            
+            // Pass pointer out
+            // Fix: into_raw returns *mut T
+            let raw: *mut WKWebView = Retained::into_raw(new_view);
+            let addr = raw as usize;
+            let _ = ptr_tx.send(addr);
+        }
+    }).map_err(|e| e.to_string())?;
 
-            // Create Configuration
-            // WKPDFConfiguration::new() should be available if objc2-web-kit maps it properly.
-            // If not, we use msg_send!. But the error log showed the struct exists.
-            let config = WKPDFConfiguration::new();
+    // Step 2: Wait for content to load
+    let addr = ptr_rx.recv().map_err(|_| "Failed to create webview".to_string())?;
+    // Sleep 1s to allow rendering
+    thread::sleep(Duration::from_millis(1000));
 
-            // Define Completion Block
+    // Step 3: Print
+    let (result_tx, result_rx) = mpsc::channel();
+    let output_path_clone = output_path.clone();
+    let path_str_clone = path_str.clone();
+
+    window.with_webview(move |_webview| {
+        unsafe {
+            let mtm = MainThreadMarker::new_unchecked();
+            
+            // Reconstruct Retained
+            // Fix: Pass raw ptr and explicit type
+            let ptr = addr as *mut WKWebView;
+            let target_webview: Retained<WKWebView> = Retained::from_raw(ptr).expect("Invalid webview pointer");
+
+            let pdf_config = WKPDFConfiguration::new(mtm);
+            let webview_for_block = target_webview.clone();
+
             let completion_handler = RcBlock::new(move |pdf_data: *mut NSData, error: *mut NSError| {
+                // Remove from superview
+                let _: () = msg_send![&*webview_for_block, removeFromSuperview];
+                // webview_for_block is kept alive by the closure capture and dropped when the block is released
+
                 if !error.is_null() {
-                    let _ = tx.send(Err("PDF creation failed: NSError occurred".to_string()));
+                    let error_obj: &NSError = unsafe { &*error };
+                    let desc = error_obj.localizedDescription();
+                    let domain = error_obj.domain();
+                    let code = error_obj.code();
+                    let err_msg = format!("PDF creation failed: {} (Domain: {}, Code: {})", desc, domain, code);
+                    let _ = result_tx.send(Err(err_msg));
                     return;
                 }
 
                 if pdf_data.is_null() {
-                    let _ = tx.send(Err("PDF creation failed: No data returned".to_string()));
+                    let _ = result_tx.send(Err("PDF creation failed: No data returned".to_string()));
                     return;
                 }
 
                 // NSData processing
                 let data: &NSData = &*pdf_data;
-                // .bytes() in objc2-foundation 0.2 likely returns &[u8] or similar safe wrapper?
-                // The error said "casting `&[u8]` as `*const u8` is invalid", which implies `data.bytes()` returned `&[u8]`.
-                // So we can just use it directly or get pointer.
-                // Wait, if it returns &[u8], we don't need `length`, we can just write it!
-                let data_slice = data.bytes();
+                // Fix: Use msg_send for bytes and length
+                let ptr: *const std::ffi::c_void = msg_send![data, bytes];
+                let len: usize = msg_send![data, length];
+                
+                let ptr = ptr as *const u8;
+                let data_slice = std::slice::from_raw_parts(ptr, len);
 
                 match std::fs::write(&output_path_clone, data_slice) {
                     Ok(_) => {
                         println!("Native PDF generated at: {:?}", output_path_clone);
-                        let _ = tx.send(Ok(path_str.clone()));
+                        let _ = result_tx.send(Ok(path_str_clone.clone()));
                     },
                     Err(e) => {
-                        let _ = tx.send(Err(e.to_string()));
+                        let _ = result_tx.send(Err(e.to_string()));
                     }
                 }
             });
 
-            // Call createPDFWithConfiguration
-            // Explicitly dereference RcBlock to Block. The method expects &Block, not Option<&Block>.
-            wk_webview.createPDFWithConfiguration_completionHandler(Some(&config), &*completion_handler);
+            target_webview.createPDFWithConfiguration_completionHandler(Some(&pdf_config), &*completion_handler);
         }
     }).map_err(|e| e.to_string())?;
 
-    rx.recv().map_err(|e| e.to_string())?
+    result_rx.recv().map_err(|e| e.to_string())?
 }
 
 #[cfg(not(target_os = "windows"))]
