@@ -4,11 +4,13 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.model.SectionConfig;
 import com.ririv.quickoutline.model.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
+import com.ririv.quickoutline.api.model.TocLinkDto;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.function.Consumer;
 
 @Singleton
@@ -22,8 +24,9 @@ public class PdfTocPageGeneratorService {
 
     public void createTocPage(String srcFilePath, String destFilePath, String title, int insertPos,
                               PageLabelNumberingStyle style, Bookmark rootBookmark, SectionConfig header, SectionConfig footer,
+                              List<TocLinkDto> links,
                               Consumer<String> onMessage, Consumer<String> onError) throws IOException {
-        tocPageGenerator.generateAndInsertToc(srcFilePath, destFilePath, title, insertPos, style, rootBookmark, header, footer, onMessage, onError);
+        tocPageGenerator.generateAndInsertToc(srcFilePath, destFilePath, title, insertPos, style, rootBookmark, header, footer, links, onMessage, onError);
     }
 
     public void createTocPagePreview(String title, PageLabelNumberingStyle style, Bookmark rootBookmark,

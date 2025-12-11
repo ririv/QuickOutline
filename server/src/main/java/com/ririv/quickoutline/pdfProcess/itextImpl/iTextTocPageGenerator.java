@@ -22,6 +22,7 @@ import com.ririv.quickoutline.model.SectionConfig;
 import com.ririv.quickoutline.model.PageLabel.PageLabelNumberingStyle;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.service.FontManager;
+import com.ririv.quickoutline.api.model.TocLinkDto;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +73,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
         }
 
         // 兜底：万一没取到，尝试加载 Helvetica (不支持中文) 或直接加载文件
-        // 为了保险，我们还是直接加载文件路径 (这是最稳的，因为 FontManager 保证了文件存在)
+        // 为了保险，我们还是直接加载文件路径 (这是最稳的，因为 FontManager 加载了 Source Han Sans，我们直接拿 FontSet 里的第一个
         // 假设 FontManager 下载的是 .otf/.ttf
         String fontPath = System.getProperty("user.home") + "/.quickoutline/fonts/SourceHanSansSC-Regular.otf";
         try {
@@ -87,6 +88,7 @@ public class iTextTocPageGenerator implements TocPageGenerator {
     @Override
     public void generateAndInsertToc(String srcFilePath, String destFilePath, String title, int insertPos,
                                      PageLabelNumberingStyle style, Bookmark rootBookmark, SectionConfig header, SectionConfig footer,
+                                     List<TocLinkDto> links,
                                      Consumer<String> onMessage, Consumer<String> onError) throws IOException {
         List<Bookmark> bookmarks = rootBookmark.flattenToList();
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFilePath), new PdfWriter(destFilePath));

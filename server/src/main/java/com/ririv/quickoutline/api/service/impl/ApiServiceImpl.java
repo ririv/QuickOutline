@@ -258,6 +258,7 @@ public class ApiServiceImpl implements ApiService {
                     root,
                     config.header(),
                     config.footer(),
+                    config.links(),
                     msg -> log.info("TOC Gen msg: {}", msg),
                     err -> {
                         throw new RuntimeException(err);
