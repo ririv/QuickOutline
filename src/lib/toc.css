@@ -1,0 +1,68 @@
+.toc-title {
+    text-align: center;
+    font-size: 20pt;
+    font-weight: normal;
+    margin-top: 0;
+    margin-bottom: 20pt;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+.toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 12pt;
+    line-height: 1.6;
+    /* Default indent step if not provided */
+    --toc-indent-step: 20pt;
+}
+
+.toc-item {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 4px;
+    break-inside: avoid;
+    /* Dynamic indentation based on level and step */
+    padding-left: calc(var(--toc-level, 0) * var(--toc-indent-step));
+}
+
+.toc-label {
+    flex: 0 0 auto;
+}
+
+.toc-leader {
+    flex: 1 1 auto;
+    min-height: 1em;
+    margin: 0; /* No margin to connect perfectly */
+    padding-bottom: 4px;
+    color: #aaa; /* Default dot color */
+    
+    /* Background settings are injected inline in JS due to dynamic SVG data URI */
+    background-repeat: repeat-x;
+    
+    /* ALIGNMENT LOGIC:
+       1. The .toc-item uses 'align-items: baseline', so the bottom edge of this empty 
+          .toc-leader element is aligned to the text baseline.
+       2. We position the background image (the dot) at the very bottom of this element (0px).
+       3. The SVG is generated such that the dot touches the bottom of the SVG canvas.
+       Result: The dot sits exactly on the text baseline.
+    */
+    background-position: left bottom 0px; 
+    
+    opacity: 1;
+}
+
+.toc-leader::before {
+    content: none;
+}
+
+.toc-page {
+    flex: 0 0 auto;
+    text-align: right;
+}
+
+/* Optional: Hide leader if no page */
+.toc-item:not(:has(.toc-page:not(:empty))) .toc-leader {
+    display: none;
+}
