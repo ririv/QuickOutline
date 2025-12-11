@@ -1,7 +1,6 @@
 /build/
 /.gradle/
 /bin/
-/target
 
 # IntelliJ IDEA
 .idea/workspace.xml
@@ -9,25 +8,11 @@
 .idea/shelf/
 .idea/vcs.xml
 .idea/misc.xml
+.idea/gradle.xml
+.idea/copilot.data.migration.*.xml
+.idea/jsLibraryMappings.xml
 
-
-
-/.env
 
 /.vscode/
-/.idea/copilot.data.migration.*.xml
-
-
-
-#自动生成
-/src/main/resources/web/
-
-
-/.idea/jsLibraryMappings.xml
-/.settings/org.eclipse.buildship.core.prefs
-
-dist/
-
-TODO.md
 
 
