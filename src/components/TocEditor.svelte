@@ -5,6 +5,7 @@
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { indentOnInput, indentUnit } from '@codemirror/language';
   import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
+  import { generateDotLeaderData } from '@/lib/toc-gen/toc-generator';
 
   // --- Props ---
   interface Props {
@@ -38,7 +39,7 @@
       
       const dots = document.createElement("span");
       dots.className = "toc-leader-dots";
-      dots.innerHTML = "&nbsp;"; // Add a non-breaking space to ensure content
+      // Empty content ensures baseline aligns with bottom edge
       span.appendChild(dots);
 
       const pageNum = document.createElement("span");
@@ -87,10 +88,13 @@
     ".toc-leader-dots": {
         flexGrow: "1",
         margin: "0 1px", /* 左右间距调整为1px */
-        backgroundImage: "radial-gradient(circle, #aaa 1px, transparent 1px)",
-        backgroundSize: "4px 4px",
-        backgroundRepeat: "repeat-x",
-        backgroundPosition: "left bottom 4px",
+        ...generateDotLeaderData({ 
+            color: '#a0a0a0',
+            width: 4, 
+            height: 4, 
+            radius: 0.6,
+            position: 'left bottom 0px' 
+        }),
         minHeight: "1em", 
         display: "block",
         opacity: "0.6"

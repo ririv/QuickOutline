@@ -9,10 +9,10 @@ interface DotConfig {
 }
 
 /**
- * Generates a complete CSS block for a dot leader background using a dynamic SVG.
- * Returns a string containing background-image, size, repeat, and position rules.
+ * Generates the raw properties for a dot leader background.
+ * Returns an object suitable for programmatic use (e.g. CSS-in-JS).
  */
-export function generateDotLeaderCss(config: DotConfig = {}): string {
+export function generateDotLeaderData(config: DotConfig = {}) {
     const {
         width = 4,
         height = 4,
@@ -25,13 +25,30 @@ export function generateDotLeaderCss(config: DotConfig = {}): string {
     // Position dot at the bottom of the SVG canvas
     const cy = height - radius;
 
-    const svgContent = `%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'%3E%3Ccircle cx='${cx}' cy='${cy}' r='${radius}' fill='${color}' /%3E%3C/svg%3E`;
+    // Encode color to be safe in Data URI (e.g. #aaa -> %23aaa)
+    const encodedColor = color.startsWith('#') ? color.replace('#', '%23') : color;
+
+    const svgContent = `%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'%3E%3Ccircle cx='${cx}' cy='${cy}' r='${radius}' fill='${encodedColor}' /%3E%3C/svg%3E`;
     
+    return {
+        backgroundImage: `url("data:image/svg+xml,${svgContent}")`,
+        backgroundSize: `${width}px ${height}px`,
+        backgroundRepeat: 'repeat-x',
+        backgroundPosition: position
+    };
+}
+
+/**
+ * Generates a complete CSS block for a dot leader background using a dynamic SVG.
+ * Returns a string containing background-image, size, repeat, and position rules.
+ */
+export function generateDotLeaderCss(config: DotConfig = {}): string {
+    const data = generateDotLeaderData(config);
     return `
-        background-image: url("data:image/svg+xml,${svgContent}");
-        background-size: ${width}px ${height}px;
-        background-repeat: repeat-x;
-        background-position: ${position};
+        background-image: ${data.backgroundImage};
+        background-size: ${data.backgroundSize};
+        background-repeat: ${data.backgroundRepeat};
+        background-position: ${data.backgroundPosition};
     `;
 }
 
