@@ -16,6 +16,7 @@
   // katexCss is now globally imported via widgets.ts, no need to import/inject here
   // import { katexCss } from '@/lib/editor/markdown-renderer';
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
+  import { getRenderedTocData } from '@/lib/preview-engine/paged-engine';
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
@@ -168,9 +169,20 @@
      const ok = await confirm('Are you sure you want to print this document?', 'Print Confirmation', { type: 'info' });
      if (!ok) return;
 
+     // Extract TOC data from the current preview
+     const tocData = getRenderedTocData();
+     console.log('[App] Extracted TOC Data:', tocData);
+
      // Trigger browser print via Java Bridge
      // JavaFX will handle this via WebEngine.print()
-     if (window.javaBridge && window.javaBridge.print) {
+     if (window.javaBridge && window.javaBridge.renderPdf) {
+        // Prefer renderPdf if available, as it can handle TOC/Bookmarks
+        const payload = {
+            ...markdownStore.currentPagedPayload,
+            toc: tocData
+        };
+        window.javaBridge.renderPdf(JSON.stringify(payload));
+     } else if (window.javaBridge && window.javaBridge.print) {
         window.javaBridge.print();
      } else {
         window.print(); // Fallback

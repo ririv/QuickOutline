@@ -10,6 +10,7 @@ interface PagedPayload {
 let currentPreviewer: Previewer | null = null;
 let isRendering = false;
 let pendingPayload: PagedPayload | null = null;
+let currentContainer: HTMLElement | null = null; // Store reference to current container for TOC extraction
 
 // Double Buffering State
 let bufferA: HTMLDivElement | null = null;
@@ -19,8 +20,10 @@ let activeBuffer: 'A' | 'B' = 'B'; // Start assuming B is hidden, so first rende
 export async function handlePagedUpdate(
     payload: PagedPayload,
     container: HTMLElement,
+    enableDoubleBuffering: boolean, // New parameter
     onRenderComplete?: (duration: number) => void
 ) {
+    currentContainer = container;
     // 1. Queue handling (Simple Debounce/Lock)
     if (isRendering) {
         pendingPayload = payload;
@@ -225,4 +228,51 @@ function generatePageCss(header: any, footer: any) {
           }
       }
     `;
+}
+
+// Exported function to retrieve TOC data from the rendered pages
+// This is used for generating PDF Named Destinations (Bookmarks)
+export function getRenderedTocData() {
+    // Determine which buffer is currently holding the rendered content
+    // Based on our double buffering logic:
+    // If double buffering is OFF: bufferA is always used.
+    // If double buffering is ON: activeBuffer variable holds the name of the *currently visible* buffer.
+    // However, `activeBuffer` is updated at the END of renderToBuffer.
+    // So `activeBuffer` should correctly point to the buffer the user sees.
+    
+    const targetEl = activeBuffer === 'A' ? bufferA : bufferB;
+    
+    if (!targetEl) return [];
+
+    const tocEntries: Array<{ title: string; level: number; pageIndex: number; y: number }> = [];
+
+    const pages = targetEl.querySelectorAll('.pagedjs_page');
+    
+    pages.forEach((pageEl, pageIndex) => {
+        // Find all headings
+        const headings = pageEl.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        
+        // Get page bounding rect for relative calculation
+        const pageRect = pageEl.getBoundingClientRect();
+        
+        headings.forEach((heading) => {
+            const headingRect = heading.getBoundingClientRect();
+            // Calculate relative Y position from the top of the page VISUAL box
+            // Note: In PDF generation backend (PDFBox), the coordinate system is usually Bottom-Left based.
+            // But we provide Top-Down relative offset here (pixels from top of page).
+            // Java backend will need to convert this: pdfY = pageHeight - y.
+            // Also need to consider scaling if the preview is zoomed, but getBoundingClientRect handles relative diffs correctly regardless of zoom 
+            // AS LONG AS both elements are scaled same way.
+            const y = headingRect.top - pageRect.top;
+            
+            tocEntries.push({
+                title: (heading as HTMLElement).innerText || '',
+                level: parseInt(heading.tagName.substring(1)),
+                pageIndex: pageIndex,
+                y: Math.max(0, Math.round(y))
+            });
+        });
+    });
+
+    return tocEntries;
 }
