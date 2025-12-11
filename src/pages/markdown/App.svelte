@@ -20,7 +20,30 @@
   let editorComponent: MdEditor;
   let previewComponent: Preview;
   
-  let debounceTimer: number; // For live preview debounce
+  let debounceTimer: ReturnType<typeof setTimeout>;
+  let currentDebounceTime = 10; // Start with almost instant preview for small docs
+
+  // Debounced wrapper for triggerPreview to prevent excessive rendering during typing
+  function debouncedPreview() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+          triggerPreview();
+      }, currentDebounceTime);
+  }
+
+  function handleRenderStats(stats: { duration: number }) {
+      // Dynamic Debounce Strategy:
+      // If render takes < 100ms, keep it snappy (10ms delay).
+      // If render takes longer, increase debounce to avoid blocking typing.
+      // We cap it at 1000ms.
+      if (stats.duration < 100) {
+          currentDebounceTime = 10;
+      } else {
+          // If slow, wait longer to let user finish typing
+          currentDebounceTime = Math.min(1000, stats.duration + 300);
+      }
+      console.log(`[Preview] Render took ${Math.round(stats.duration)}ms. Next debounce: ${currentDebounceTime}ms`);
+  }
 
   onMount(() => {
     // Initialize Bridge to route Java calls to components
@@ -182,7 +205,7 @@
           {/if}
 
           <div class="editor-wrapper">
-            <MdEditor bind:this={editorComponent} onchange={triggerPreview} />
+            <MdEditor bind:this={editorComponent} onchange={debouncedPreview} />
           </div>
 
           <!-- Footer Trigger & Editor -->
@@ -213,6 +236,7 @@
             mode="paged" 
             pagedPayload={markdownStore.currentPagedPayload}
             onrefresh={triggerPreview} 
+            onRenderStats={handleRenderStats}
           />
         </div>
         {/snippet}

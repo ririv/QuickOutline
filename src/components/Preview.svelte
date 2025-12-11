@@ -10,6 +10,7 @@
     export let mode: "svg" | "image" | "paged" = "paged"; // Default to paged
     export let onrefresh: (() => void | Promise<void>) | undefined = undefined; // onrefresh might be async
     export let onScroll: ((top: number) => void) | undefined = undefined;
+    export let onRenderStats: ((stats: { duration: number }) => void) | undefined = undefined;
 
     // Payload for PagedRenderer
     export let pagedPayload: {
@@ -26,6 +27,7 @@
     let isScrolling = false;
     let sliderPercent = "20%";
     let isRefreshing = false; // Refresh state for animation
+    let isDoublePage = false; // Restore Double Page mode state
 
     // Expose methods for parent to call (SVG/Image Engine)
     export const renderSvg = (json: string) => {
@@ -132,8 +134,9 @@
                 {#if pagedPayload}
                     <PagedRenderer
                         payload={pagedPayload}
-                        onRenderComplete={() => {
-                            /* Optional: Restore scroll etc */
+                        layout={isDoublePage ? 'double' : 'single'}
+                        onRenderComplete={(duration) => {
+                            if (onRenderStats) onRenderStats({ duration });
                         }}
                     />
                 {/if}

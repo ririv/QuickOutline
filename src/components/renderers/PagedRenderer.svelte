@@ -3,8 +3,9 @@
     import { handlePagedUpdate } from '../../lib/preview-engine/paged-engine';
   
     export let payload: { html: string, styles: string, header: any, footer: any };
+    export let layout: 'single' | 'double' = 'single';
     // 父组件通知渲染完成（例如用于恢复滚动条）
-    export let onRenderComplete: (() => void) | undefined = undefined;
+    export let onRenderComplete: ((duration: number) => void) | undefined = undefined;
   
     let container: HTMLDivElement;
   

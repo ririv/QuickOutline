@@ -19,7 +19,7 @@ let activeBuffer: 'A' | 'B' = 'B'; // Start assuming B is hidden, so first rende
 export async function handlePagedUpdate(
     payload: PagedPayload,
     container: HTMLElement,
-    onRenderComplete?: () => void
+    onRenderComplete?: (duration: number) => void
 ) {
     // 1. Queue handling (Simple Debounce/Lock)
     if (isRendering) {
@@ -28,17 +28,21 @@ export async function handlePagedUpdate(
     }
 
     isRendering = true;
+    const startTime = performance.now();
     
     try {
         await renderToBuffer(payload, container);
-        onRenderComplete?.();
+        const endTime = performance.now();
+        onRenderComplete?.(endTime - startTime);
 
         // Process queue
         while (pendingPayload) {
             const next = pendingPayload;
             pendingPayload = null;
+            const queueStart = performance.now();
             await renderToBuffer(next, container);
-            onRenderComplete?.();
+            const queueEnd = performance.now();
+            onRenderComplete?.(queueEnd - queueStart);
         }
     } catch (e) {
         console.error("Paged Engine Render Error:", e);
@@ -107,7 +111,13 @@ async function renderToBuffer(payload: PagedPayload, container: HTMLElement) {
     `;
 
     // Create new Previewer
-    const previewer = new Previewer();
+    // Paged.js hooks attach to the previewer instance.
+    // Configure maxChars to yield control to main thread more often, preventing UI freeze on large docs
+    const previewer = new Previewer({
+        settings: {
+            maxChars: 1500, // Default is usually higher. Lowering this breaks work into smaller chunks.
+        }
+    });
     
     console.log('[PagedEngine] Starting preview...');
     // Render
