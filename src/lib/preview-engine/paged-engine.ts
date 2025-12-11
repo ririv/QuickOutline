@@ -20,7 +20,6 @@ let activeBuffer: 'A' | 'B' = 'B'; // Start assuming B is hidden, so first rende
 export async function handlePagedUpdate(
     payload: PagedPayload,
     container: HTMLElement,
-    enableDoubleBuffering: boolean, // New parameter
     onRenderComplete?: (duration: number) => void
 ) {
     currentContainer = container;
