@@ -15,6 +15,7 @@
   import { tocStore } from '@/stores/tocStore.svelte';
   import { generateTocHtml } from '@/lib/toc-gen/toc-generator';
   import { getTocLinkData } from '@/lib/preview-engine/paged-engine';
+  import { invoke } from '@tauri-apps/api/core';
 
   let previewComponent: Preview;
   
@@ -131,25 +132,59 @@
           return;
       }
 
-      const links = getTocLinkData();
-
-      const config = {
-        tocContent: tocStore.content,
-        title: tocStore.title,
-        offset: tocStore.offset,
-        insertPos: tocStore.insertPos,
-        numberingStyle: tocStore.numberingStyle,
-        header: tocStore.headerConfig,
-        footer: tocStore.footerConfig,
-        links: links
-      };
-      
       try {
+          // 1. Calculate Links
+          const links = getTocLinkData();
+
+          // 2. Generate HTML
+          const { html, styles } = generateTocHtml(
+            tocStore.content,
+            tocStore.title,
+            tocStore.offset,
+            tocStore.numberingStyle
+          );
+          
+          const fullHtml = `<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>${styles}</style>
+            </head>
+            <body class="markdown-body">
+                ${html}
+            </body>
+            </html>`;
+
+          // 3. Generate PDF via Rust (Headless Chrome/Edge)
+          messageStore.add("Generating PDF...", "INFO");
+          const filename = `toc_${Date.now()}.pdf`;
+          
+          const pdfPath = await invoke('print_to_pdf', { 
+              html: fullHtml, 
+              filename: filename 
+          });
+          
+          console.log("PDF Generated at:", pdfPath); // Added console.log
+
+          // 4. Send to Backend for stitching
+          const config = {
+            tocContent: tocStore.content,
+            tocPdfPath: pdfPath as string, // Path to the generated PDF
+            title: tocStore.title,
+            offset: tocStore.offset,
+            insertPos: tocStore.insertPos,
+            numberingStyle: tocStore.numberingStyle,
+            header: tocStore.headerConfig,
+            footer: tocStore.footerConfig,
+            links: links
+          };
+
           await rpc.generateTocPage(config, null); 
           messageStore.add("Table of Contents generated successfully!", "SUCCESS");
+
       } catch (e: any) {
           console.error("Generate failed", e);
-          messageStore.add("Failed to generate TOC: " + e.message, "ERROR");
+          messageStore.add("Failed: " + e.message || e, "ERROR");
       }
   }
 
