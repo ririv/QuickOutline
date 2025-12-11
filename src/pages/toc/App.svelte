@@ -13,7 +13,7 @@
   import { messageStore } from '@/stores/messageStore';
   import { docStore } from '@/stores/docStore';
   import { tocStore } from '@/stores/tocStore.svelte';
-  import {PageLabelNumberingStyle} from "@/lib/styleMaps";
+  import { generateTocHtml } from '@/lib/toc-generator';
 
   let previewComponent: Preview;
   
@@ -101,25 +101,25 @@
           return; 
       }
       
-      const config = {
-        tocContent: tocStore.content,
-        title: tocStore.title,
-        offset: tocStore.offset,
-        insertPos: tocStore.insertPos,
-        numberingStyle: tocStore.numberingStyle,
-        header: tocStore.headerConfig,
-        footer: tocStore.footerConfig
-      };
-
       try {
-        const resultJson = await rpc.generateTocPreview(config);
-        // Only update if we got valid images back
-        if (resultJson && resultJson !== "[]") {
-            tocStore.previewData = resultJson; // Cache result
-            previewComponent?.renderSvg(resultJson);
-        }
+        // Generate HTML locally instead of calling RPC
+        const { html, styles } = generateTocHtml(
+            tocStore.content, 
+            tocStore.title, 
+            tocStore.offset, 
+            tocStore.numberingStyle
+        );
+        
+        // Update payload in store, which is passed to Preview component
+        tocStore.previewData = {
+            html,
+            styles,
+            header: tocStore.headerConfig,
+            footer: tocStore.footerConfig
+        };
+        
       } catch (e: any) {
-        console.error("Preview failed", e);
+        console.error("Preview generation failed", e);
       }
     }, 500);
   }
@@ -208,7 +208,8 @@
         <div class="h-full">
           <Preview 
             bind:this={previewComponent} 
-            mode="svg" 
+            mode="paged"
+            pagedPayload={tocStore.previewData}
             onrefresh={triggerPreview} 
             onScroll={(top) => tocStore.scrollTop = top}
           />

@@ -26,7 +26,7 @@ export class TocState {
     footerConfig = $state<SectionConfig>({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
 
     // Cache
-    previewData = $state<string | null>(null);
+    previewData = $state<any>(null);
     scrollTop = $state(0);
 
     // Helpers for content update
