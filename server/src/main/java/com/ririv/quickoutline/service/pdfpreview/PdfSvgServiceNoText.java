@@ -137,7 +137,7 @@ public class PdfSvgServiceNoText {
 
             // 3. 导出为字符串
             try (StringWriter writer = new StringWriter()) {
-                // useCss=true: 让 Batik 尽量使用 CSS 样式而不是 style 属性，减小体积
+                // useCss=true: 让 Batik 尽量使用 CSS 样式而不是 numberingStyle 属性，减小体积
                 svgGenerator.stream(writer, true);
                 return writer.toString();
             }

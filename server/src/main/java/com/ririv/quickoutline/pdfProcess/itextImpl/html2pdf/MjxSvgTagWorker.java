@@ -71,7 +71,7 @@ public class MjxSvgTagWorker implements ITagWorker {
             }
 
             // --- 2. 处理垂直偏移 (新增逻辑) ---
-            // MathJax 通常把 vertical-align 写在 style 里，而不是 attribute
+            // MathJax 通常把 vertical-align 写在 numberingStyle 里，而不是 attribute
             String vAlignStr = null;
             if (element.getStyles() != null) {
                 vAlignStr = element.getStyles().get(CssConstants.VERTICAL_ALIGN);

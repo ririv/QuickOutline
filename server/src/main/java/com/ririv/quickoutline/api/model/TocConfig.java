@@ -7,7 +7,7 @@ public record TocConfig(
     String tocContent,
     String title,
     int insertPos,
-    PageLabel.PageLabelNumberingStyle style,
+    PageLabel.PageLabelNumberingStyle numberingStyle,
     SectionConfig header,
     SectionConfig footer
 ) {}

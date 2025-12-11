@@ -251,7 +251,7 @@ public class ApiServiceImpl implements ApiService {
                     actualDest,
                     config.title(),
                     config.insertPos(),
-                    config.style(),
+                    config.numberingStyle(),
                     root,
                     config.header(),
                     config.footer(),
@@ -279,7 +279,7 @@ public class ApiServiceImpl implements ApiService {
             log.debug("Creating in-memory preview PDF...");
             pdfTocPageGeneratorService.createTocPagePreview(
                     config.title(),
-                    config.style(),
+                    config.numberingStyle(),
                     root,
                     baos,
                     config.header(),

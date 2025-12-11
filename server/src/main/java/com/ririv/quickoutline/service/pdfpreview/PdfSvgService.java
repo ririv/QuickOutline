@@ -131,7 +131,7 @@ public class PdfSvgService {
 
             String styleBlock = "";
 //            if (fontCss != null && !fontCss.isEmpty()) {
-//                styleBlock = "<style>" + fontCss + "</style>";
+//                styleBlock = "<numberingStyle>" + fontCss + "</numberingStyle>";
 //            }
 
             // 高性能 Header

@@ -106,7 +106,7 @@
         title: tocStore.title,
         offset: tocStore.offset,
         insertPos: tocStore.insertPos,
-        style: tocStore.numberingStyle,
+        numberingStyle: tocStore.numberingStyle,
         header: tocStore.headerConfig,
         footer: tocStore.footerConfig
       };
@@ -135,7 +135,7 @@
         title: tocStore.title,
         offset: tocStore.offset,
         insertPos: tocStore.insertPos,
-        style: tocStore.numberingStyle,
+        numberingStyle: tocStore.numberingStyle,
         header: tocStore.headerConfig,
         footer: tocStore.footerConfig
       };
