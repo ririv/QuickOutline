@@ -275,3 +275,42 @@ export function getRenderedTocData() {
 
     return tocEntries;
 }
+
+export function getTocLinkData() {
+    const targetEl = activeBuffer === 'A' ? bufferA : bufferB;
+    if (!targetEl) return [];
+
+    const links: Array<{ tocPageIndex: number, x: number, y: number, width: number, height: number, targetPage: string }> = [];
+    
+    const pages = targetEl.querySelectorAll('.pagedjs_page');
+    
+    pages.forEach((pageEl, pageIndex) => {
+        const pageRect = pageEl.getBoundingClientRect();
+        
+        // Find toc-items within this page
+        const items = pageEl.querySelectorAll('.toc-item');
+        
+        items.forEach(item => {
+            const itemRect = item.getBoundingClientRect();
+            // Calculate relative coordinates
+            const x = itemRect.left - pageRect.left;
+            const y = itemRect.top - pageRect.top;
+            
+            // Get target page
+            const targetPage = item.getAttribute('data-target-page');
+            
+            if (targetPage) {
+                links.push({
+                    tocPageIndex: pageIndex,
+                    x,
+                    y,
+                    width: itemRect.width,
+                    height: itemRect.height,
+                    targetPage
+                });
+            }
+        });
+    });
+    
+    return links;
+}

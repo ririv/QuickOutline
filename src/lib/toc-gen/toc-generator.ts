@@ -95,7 +95,7 @@ export function generateTocHtml(
 
         // Inject level variable for dynamic padding calculation in CSS
         html += `
-            <li class="toc-item" style="--toc-level: ${level};">
+            <li class="toc-item" style="--toc-level: ${level};" data-target-page="${escapeHtml(page)}">
                 <span class="toc-label">${escapeHtml(label)}</span>
                 <span class="toc-leader"></span>
                 <span class="toc-page">${escapeHtml(page)}</span>

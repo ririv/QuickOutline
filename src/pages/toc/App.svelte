@@ -14,6 +14,7 @@
   import { docStore } from '@/stores/docStore';
   import { tocStore } from '@/stores/tocStore.svelte';
   import { generateTocHtml } from '@/lib/toc-gen/toc-generator';
+  import { getTocLinkData } from '@/lib/preview-engine/paged-engine';
 
   let previewComponent: Preview;
   
@@ -130,6 +131,8 @@
           return;
       }
 
+      const links = getTocLinkData();
+
       const config = {
         tocContent: tocStore.content,
         title: tocStore.title,
@@ -137,7 +140,8 @@
         insertPos: tocStore.insertPos,
         numberingStyle: tocStore.numberingStyle,
         header: tocStore.headerConfig,
-        footer: tocStore.footerConfig
+        footer: tocStore.footerConfig,
+        links: links
       };
       
       try {
