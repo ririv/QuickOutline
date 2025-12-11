@@ -51,7 +51,7 @@ public class PdfSvgService {
         }
     }
 
-    public List<SvgPageUpdate> diffPdfToSvg(FastByteArrayOutputStream pdfStream) {
+    public List<SvgPageUpdate> updatePreview(FastByteArrayOutputStream pdfStream) {
         List<SvgPageUpdate> updates = new ArrayList<>();
         if (pdfStream == null || pdfStream.size() == 0) return updates;
 

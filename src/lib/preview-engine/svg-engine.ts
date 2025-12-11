@@ -44,6 +44,8 @@ export function handleSvgUpdate(jsonString: string, container: HTMLElement, view
         return;
     }
 
+
+
     if (!updates || updates.length === 0) return;
 
     const totalPages = updates[0].totalPages || updates.length;
@@ -58,6 +60,20 @@ export function handleSvgUpdate(jsonString: string, container: HTMLElement, view
             // 更新尺寸
             pageDiv.style.width = u.widthPt + 'px';
             pageDiv.style.height = u.heightPt + 'px';
+        }
+
+        // Strategy: Use pushed content first, then cache, then fetch
+        
+        // 1. Direct Content (Push)
+        if (u.svgContent) {
+            pageCache[u.pageIndex] = {
+                content: u.svgContent,
+                width: u.widthPt,
+                height: u.heightPt,
+                version: u.version
+            };
+            renderIfVisible(u.pageIndex, container, viewport);
+            return;
         }
 
         // 检查缓存是否匹配当前版本

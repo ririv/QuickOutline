@@ -295,6 +295,8 @@
         /* Ensure container width wraps content */
         width: fit-content;
         height: fit-content;
+        -webkit-user-select: text;
+        user-select: text;
     }
 
     /* Toolbar Styles */

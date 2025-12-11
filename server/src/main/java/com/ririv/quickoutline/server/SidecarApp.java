@@ -11,6 +11,7 @@ import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
 import com.ririv.quickoutline.service.*;
 import com.ririv.quickoutline.service.pdfpreview.FileImageService;
+import com.ririv.quickoutline.service.pdfpreview.PdfSvgService;
 import com.ririv.quickoutline.service.pdfpreview.PreviewImageService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import io.vertx.core.Vertx;
@@ -49,6 +50,7 @@ public class SidecarApp {
         ApiBookmarkState apiBookmarkState = new ApiBookmarkState();
         CurrentFileState currentFileState = new CurrentFileState();
         WebSocketSessionManager sessionManager = new WebSocketSessionManager();
+        PdfSvgService pdfSvgService = new PdfSvgService();
 
         // 3. 初始化 API 实现
         ApiService apiService = new ApiServiceImpl(
@@ -58,6 +60,7 @@ public class SidecarApp {
                 pdfPageLabelService,
                 fileImageService, // Inject new service
                 previewImageService, // Inject new service
+                pdfSvgService,
                 apiBookmarkState,
                 currentFileState,
                 syncWithExternalEditorService,

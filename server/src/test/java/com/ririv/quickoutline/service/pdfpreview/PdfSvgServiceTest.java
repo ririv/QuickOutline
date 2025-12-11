@@ -66,7 +66,7 @@ public class PdfSvgServiceTest {
         System.out.print("预热中...");
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             pdfSvgService.clearCache(); // 务必清除缓存，否则就是测 Map.get 的速度了
-            pdfSvgService.diffPdfToSvg(complexPdfData);
+            pdfSvgService.updatePreview(complexPdfData);
             System.out.print(".");
         }
         System.out.println(" 完成.");
@@ -82,7 +82,7 @@ public class PdfSvgServiceTest {
             pdfSvgService.clearCache(); // 清除缓存
 
             long start = System.currentTimeMillis();
-            List<?> result = pdfSvgService.diffPdfToSvg(complexPdfData);
+            List<?> result = pdfSvgService.updatePreview(complexPdfData);
             long end = System.currentTimeMillis();
 
             totalTime += (end - start);

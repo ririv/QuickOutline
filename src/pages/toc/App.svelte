@@ -84,7 +84,7 @@
 
       if (tocStore.previewData) {
           // Restore cached preview immediately without RPC call
-          previewComponent?.renderImage(tocStore.previewData);
+          previewComponent?.renderSvg(tocStore.previewData);
           // Restore scroll position after render (timeout to ensure DOM updated)
           setTimeout(() => {
               previewComponent?.restoreScroll(tocStore.scrollTop);
@@ -116,7 +116,7 @@
         // Only update if we got valid images back
         if (resultJson && resultJson !== "[]") {
             tocStore.previewData = resultJson; // Cache result
-            previewComponent?.renderImage(resultJson);
+            previewComponent?.renderSvg(resultJson);
         }
       } catch (e: any) {
         console.error("Preview failed", e);
@@ -208,7 +208,7 @@
         <div class="h-full">
           <Preview 
             bind:this={previewComponent} 
-            mode="image" 
+            mode="svg" 
             onrefresh={triggerPreview} 
             onScroll={(top) => tocStore.scrollTop = top}
           />

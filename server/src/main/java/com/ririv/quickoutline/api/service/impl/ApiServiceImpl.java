@@ -11,7 +11,7 @@ import com.ririv.quickoutline.model.PageLabel;
 import com.ririv.quickoutline.model.ViewScaleType;
 import com.ririv.quickoutline.service.*;
 import com.ririv.quickoutline.service.pdfpreview.FileImageService;
-import com.ririv.quickoutline.service.pdfpreview.ImagePageUpdate;
+import com.ririv.quickoutline.service.pdfpreview.PdfSvgService;
 import com.ririv.quickoutline.service.pdfpreview.PreviewImageService;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
@@ -40,6 +40,7 @@ public class ApiServiceImpl implements ApiService {
     private final PdfPageLabelService pdfPageLabelService;
     private final FileImageService fileImageService;
     private final PreviewImageService previewImageService;
+    private final PdfSvgService pdfSvgService; // New injection
     private final ApiBookmarkState apiBookmarkState;
     private final CurrentFileState currentFileState;
     private final SyncWithExternalEditorService syncService;
@@ -52,6 +53,7 @@ public class ApiServiceImpl implements ApiService {
                           PdfPageLabelService pdfPageLabelService,
                           FileImageService fileImageService,
                           PreviewImageService previewImageService,
+                          PdfSvgService pdfSvgService, // New injection
                           ApiBookmarkState apiBookmarkState,
                           CurrentFileState currentFileState,
                           SyncWithExternalEditorService syncService,
@@ -62,6 +64,7 @@ public class ApiServiceImpl implements ApiService {
         this.pdfPageLabelService = pdfPageLabelService;
         this.fileImageService = fileImageService;
         this.previewImageService = previewImageService;
+        this.pdfSvgService = pdfSvgService; // New injection
         this.apiBookmarkState = apiBookmarkState;
         this.currentFileState = currentFileState;
         this.syncService = syncService;
@@ -302,9 +305,9 @@ public class ApiServiceImpl implements ApiService {
                 return new Gson().toJson(Collections.emptyList());
             }
 
-            // Delegate to PreviewImageService
-            List<ImagePageUpdate> updates = previewImageService.updatePreview(finalStream);
-            log.info("Found {} updated image(s) for preview.", updates.size());
+            // Delegate to PdfSvgService for SVG generation
+            List<PdfSvgService.SvgPageUpdate> updates = pdfSvgService.updatePreview(finalStream);
+            log.info("Found {} updated page(s) for preview.", updates.size());
 
             return new Gson().toJson(updates);
 
