@@ -56,8 +56,7 @@
     "markdown-it-sup": "^2.0.0",
     "markdown-it-texmath": "^1.0.0",
     "pagedjs": "^0.4.3",
-    "tailwindcss": "^4.1.17",
-    "vditor": "^3.11.2"
+    "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",

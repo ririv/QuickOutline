@@ -7,7 +7,6 @@
   import CollapseTrigger from '../../components/CollapseTrigger.svelte';
   import ConfirmDialog from '../../components/ConfirmDialog.svelte'; // Import ConfirmDialog
   import { confirm } from '@/stores/confirm.svelte'; // Import confirm helper
-  import { initBridge } from '@/lib/bridge';
   import '../../assets/global.css';
   import { onMount, onDestroy } from 'svelte';
   import { slide } from 'svelte/transition';
@@ -47,31 +46,6 @@
   }
 
   onMount(() => {
-    // Initialize Bridge to route Java calls to components
-    initBridge({
-      // Preview actions - Kept for compatibility but routed to safe checks
-      onUpdateSvg: (json) => (previewComponent as any)?.renderSvg && (previewComponent as any).renderSvg(json),
-      onUpdateImage: (json) => (previewComponent as any)?.renderImage && (previewComponent as any).renderImage(json),
-      onSetSvgDoubleBuffering: (enable) => (previewComponent as any)?.setDoubleBuffer && (previewComponent as any).setDoubleBuffer(enable),
-
-      // Editor actions
-      onInitVditor: (md) => {
-          // Pass a default editorConfig, or load from markdownStore if available/desired
-          editorComponent?.init(md, 'live', { tableStyle: 'grid' });
-          // Also update store if init comes from outside
-          markdownStore.updateContent(md);
-      },
-      onInsertContent: (text) => editorComponent?.insertValue(text),
-      onGetContent: () => editorComponent?.getValue(),
-      onSetContent: (md) => {
-          editorComponent?.setValue(md);
-          markdownStore.updateContent(md);
-      },
-      onInsertImageMarkdown: (path) => editorComponent?.insertImageMarkdown(path),
-      onGetContentHtml: () => editorComponent?.getContentHtml(),
-      onGetPayloads: () => editorComponent?.getPayloads(),
-    });
-
     // Restore content from store if available
     if (markdownStore.content) {
         // Use setTimeout to ensure editor is mounted and init called (MdEditor init is in onMount)
@@ -88,50 +62,6 @@
           markdownStore.updateContent(editorComponent.getValue());
       }
   });
-
-
-  async function triggerPreview2() {
-    if (!editorComponent) return;
-    const payloadJson = await editorComponent.getPayloads();
-    const payload = JSON.parse(payloadJson);
-
-    const request = {
-      ...payload,
-      header: markdownStore.headerConfig,
-      footer: markdownStore.footerConfig
-    };
-
-    // Assuming Java bridge has updatePreview method that accepts json string
-    if (window.javaBridge && window.javaBridge.updatePreview) {
-      window.javaBridge.updatePreview(JSON.stringify(request));
-    } else {
-      console.warn('Java Bridge updatePreview not available', request);
-    }
-  }
-
-  async function handleGenerate2() {
-    if (!editorComponent) return;
-
-    // Get editor content
-    const payloadJson = await editorComponent.getPayloads();
-    const payload = JSON.parse(payloadJson);
-
-    // Merge with status bar params
-    // Note: style is not used in Markdown PDF generation currently, but we pass it anyway
-    const request = {
-      ...payload, // html, styles
-      insertPos: markdownStore.insertPos,
-      style: markdownStore.numberingStyle,
-      header: markdownStore.headerConfig,
-      footer: markdownStore.footerConfig
-    };
-
-    if (window.javaBridge && window.javaBridge.renderPdf) {
-      window.javaBridge.renderPdf(JSON.stringify(request));
-    } else {
-      console.warn('Java Bridge renderPdf not available', request);
-    }
-  }
 
   async function triggerPreview() {
       if (!editorComponent) return;
