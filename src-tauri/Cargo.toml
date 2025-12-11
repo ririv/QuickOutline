@@ -26,6 +26,11 @@ tauri-plugin-devtools = "2.0.0"
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-cli = "2"
+reqwest = { version = "0.11", features = ["blocking", "stream"] } # Use blocking for simplicity in thread or async stream
+zip = "0.6"
+tar = "0.4"
+flate2 = "1.0"
+
 
 [target.'cfg(windows)'.dependencies]
 webview2-com = "0.27"
@@ -33,4 +38,15 @@ windows = { version = "0.52", features = [
     "Win32_Foundation",
     "Win32_System_Com",
     "Win32_UI_WindowsAndMessaging",
+    "Win32_System_WinRT",
 ] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = { version = "0.5" }
+objc2-foundation = { version = "0.2", features = ["all"] }
+objc2-web-kit = { version = "0.2", features = ["all"] }
+block2 = "0.5"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+webkit2gtk = "2.0"

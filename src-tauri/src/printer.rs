@@ -1,202 +1,121 @@
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Manager, Runtime, WebviewWindow}; // Import WebviewWindow
 use std::path::PathBuf;
-use std::process::Command;
 use std::fs;
 
 #[tauri::command]
 pub async fn print_to_pdf<R: Runtime>(
     app: AppHandle<R>,
-    _window: tauri::Window<R>, // Rename window to _window to suppress unused warning if not used
+    window: WebviewWindow<R>, // Use WebviewWindow
     html: String,
-    filename: String
+    filename: String,
 ) -> Result<String, String> {
-    let app_data_dir = app.path().app_data_dir()
-        .map_err(|e| e.to_string())?;
-    
-    let output_path = app_data_dir.join(&filename);
-    
-    // Ensure directory exists
+    let output_path = app.path().app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join(&filename);
+
     if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
 
+    // Platform specific implementations
     #[cfg(target_os = "windows")]
     {
-        return print_windows(html, output_path).await;
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        return print_mac(html, output_path).await;
+        // TODO: Implement Windows Native PrintToPdf using WebView2 API
+        Err("Windows Native PrintToPdf not implemented yet.".to_string())
     }
 
     #[cfg(target_os = "linux")]
     {
-        return print_linux(html, output_path).await;
-    }
-}
-
-#[cfg(target_os = "windows")]
-async fn print_windows(html: String, output_path: PathBuf) -> Result<String, String> {
-    let temp_dir = std::env::temp_dir();
-    let temp_html = temp_dir.join("toc_print.html");
-    fs::write(&temp_html, html).map_err(|e| e.to_string())?;
-
-    let output_str = output_path.to_string_lossy().to_string();
-    
-    // Find Edge
-    let edge_paths = vec![
-        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-        "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-        "msedge"
-    ];
-
-    let mut browser_path = None;
-    for path in edge_paths {
-        if path_exists(path) {
-            browser_path = Some(path);
-            break;
-        }
+        // TODO: Implement Linux Native PrintToPdf using WebKitGTK PrintOperation API
+        Err("Linux Native PrintToPdf not implemented yet.".to_string())
     }
 
-    // Fallback to Chrome if Edge not found
-    if browser_path.is_none() {
-        let chrome_paths = vec![
-            "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-            "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-            "chrome"
-        ];
-        for path in chrome_paths {
-            if path_exists(path) {
-                browser_path = Some(path);
-                break;
+    #[cfg(target_os = "macos")]
+    {
+        match print_native_mac(window.clone(), html.clone(), output_path.clone()).await {
+            Ok(path) => Ok(path),
+            Err(e) => {
+                println!("Native print failed: {}", e);
+                Err(e)
             }
         }
     }
-
-    if let Some(browser) = browser_path {
-        // msedge --headless --disable-gpu --print-to-pdf="C:\path\to\out.pdf" --no-pdf-header-footer "C:\path\to\in.html"
-        let output = Command::new(browser)
-            .arg("--headless")
-            .arg("--disable-gpu")
-            .arg(format!("--print-to-pdf={}", output_str))
-            .arg("--no-pdf-header-footer")
-            .arg(&temp_html)
-            .output()
-            .map_err(|e| e.to_string())?;
-
-        if output.status.success() {
-            Ok(output_str)
-        } else {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            // Check if file exists anyway (sometimes Chrome logs warnings to stderr but succeeds)
-            if output_path.exists() {
-                Ok(output_str)
-            } else {
-                Err(format!("Windows print failed: {}", stderr))
-            }
-        }
-    } else {
-        Err("Microsoft Edge or Google Chrome not found.".to_string())
-    }
 }
 
-async fn execute_headless_print(browser: &str, html: String, output_path: &PathBuf) -> Result<String, String> {
-    let temp_dir = std::env::temp_dir();
-    let temp_html = temp_dir.join("toc_print.html");
-    fs::write(&temp_html, html).map_err(|e| e.to_string())?;
-
-    let output_str = output_path.to_string_lossy().to_string();
-    
-    let mut cmd = Command::new(browser);
-    cmd.arg("--headless");
-    
-    if browser.to_lowercase().contains("firefox") {
-        // Firefox experimental PDF printing
-        cmd.arg("--print-to-file")
-           .arg(&output_str)
-           .arg(&temp_html);
-    } else {
-        // Chromium (Chrome/Edge/Chromium)
-        cmd.arg("--disable-gpu")
-           .arg(format!("--print-to-pdf={}", output_str))
-           .arg("--no-pdf-header-footer")
-           .arg(&temp_html);
-    }
-
-    let output = cmd.output().map_err(|e| e.to_string())?;
-
-    if output.status.success() {
-        println!("PDF generated successfully at: {}", output_str); // Added println!
-        Ok(output_str)
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        if std::path::Path::new(&output_str).exists() {
-             Ok(output_str)
-        } else {
-             Err(format!("Browser print failed (exit code {}): {}", output.status, stderr))
-        }
-    }
-}
-
+// ================= MAC OS NATIVE =================
 #[cfg(target_os = "macos")]
-async fn print_mac(html: String, output_path: PathBuf) -> Result<String, String> {
-    let browsers = vec![
-        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-        "/Applications/Firefox.app/Contents/MacOS/firefox",
-        "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
-        "/Applications/Chromium.app/Contents/MacOS/Chromium"
-    ];
+async fn print_native_mac<R: Runtime>(window: WebviewWindow<R>, _html: String, output_path: PathBuf) -> Result<String, String> {
 
-    for browser in browsers {
-        if std::path::Path::new(browser).exists() {
-            return execute_headless_print(browser, html, &output_path).await;
+    use objc2_foundation::{NSData, NSError};
+    use objc2_web_kit::{WKPDFConfiguration, WKWebView};
+    use block2::RcBlock;
+    use std::sync::mpsc;
+
+    let path_str = output_path.to_string_lossy().to_string();
+    let (tx, rx) = mpsc::channel();
+    let output_path_clone = output_path.clone();
+
+    // Use with_webview which is available on WebviewWindow
+    window.with_webview(move |webview| {
+        unsafe {
+            // Tauri's webview.inner() returns the platform handle. On macOS it's the WKWebView pointer.
+            // We need to cast it to the correct type for objc2.
+            // The type `tauri::webview::Webview` has `inner()` method.
+            let wk_webview_ptr = webview.inner() as *mut WKWebView;
+            let wk_webview: &WKWebView = &*wk_webview_ptr;
+
+            // Create Configuration
+            // WKPDFConfiguration::new() should be available if objc2-web-kit maps it properly.
+            // If not, we use msg_send!. But the error log showed the struct exists.
+            let config = WKPDFConfiguration::new();
+
+            // Define Completion Block
+            let completion_handler = RcBlock::new(move |pdf_data: *mut NSData, error: *mut NSError| {
+                if !error.is_null() {
+                    let _ = tx.send(Err("PDF creation failed: NSError occurred".to_string()));
+                    return;
+                }
+
+                if pdf_data.is_null() {
+                    let _ = tx.send(Err("PDF creation failed: No data returned".to_string()));
+                    return;
+                }
+
+                // NSData processing
+                let data: &NSData = &*pdf_data;
+                // .bytes() in objc2-foundation 0.2 likely returns &[u8] or similar safe wrapper?
+                // The error said "casting `&[u8]` as `*const u8` is invalid", which implies `data.bytes()` returned `&[u8]`.
+                // So we can just use it directly or get pointer.
+                // Wait, if it returns &[u8], we don't need `length`, we can just write it!
+                let data_slice = data.bytes();
+
+                match std::fs::write(&output_path_clone, data_slice) {
+                    Ok(_) => {
+                        println!("Native PDF generated at: {:?}", output_path_clone);
+                        let _ = tx.send(Ok(path_str.clone()));
+                    },
+                    Err(e) => {
+                        let _ = tx.send(Err(e.to_string()));
+                    }
+                }
+            });
+
+            // Call createPDFWithConfiguration
+            // Explicitly dereference RcBlock to Block. The method expects &Block, not Option<&Block>.
+            wk_webview.createPDFWithConfiguration_completionHandler(Some(&config), &*completion_handler);
         }
-    }
-    
-    Err("No supported browser (Chrome, Edge, Firefox) found in standard macOS locations.".to_string())
+    }).map_err(|e| e.to_string())?;
+
+    rx.recv().map_err(|e| e.to_string())?
 }
 
-#[cfg(target_os = "linux")]
-async fn print_linux(html: String, output_path: PathBuf) -> Result<String, String> {
-    let browsers = vec![
-        "google-chrome",
-        "microsoft-edge",
-        "firefox",
-        "chromium",
-        "chromium-browser"
-    ];
-
-    for browser in browsers {
-        if is_command_available(browser) {
-            return execute_headless_print(browser, html, &output_path).await;
-        }
-    }
-
-    Err("No supported browser (Chrome, Edge, Firefox) found in PATH.".to_string())
+#[cfg(not(target_os = "windows"))]
+async fn print_windows(_html: String, _output_path: PathBuf) -> Result<String, String> {
+    unimplemented!("Windows native print is not implemented yet.");
 }
 
-fn is_command_available(cmd: &str) -> bool {
-    Command::new("which")
-        .arg(cmd)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
-}
-
-fn path_exists(path: &str) -> bool {
-    if std::path::Path::new(path).exists() {
-        return true;
-    }
-    // Check PATH on Windows?
-    // "where" command on Windows is roughly equivalent to "which"
-    #[cfg(target_os = "windows")]
-    {
-        return Command::new("where").arg(path).output().map(|o| o.status.success()).unwrap_or(false);
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        return false;
-    }
+// ================= LINUX (Placeholder) =================
+#[cfg(not(target_os = "linux"))]
+async fn print_linux(_html: String, _output_path: PathBuf) -> Result<String, String> {
+    unimplemented!("Linux native print is not implemented yet.");
 }

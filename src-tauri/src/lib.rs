@@ -1,5 +1,6 @@
 mod java_sidecar;
 mod printer;
+mod printer_headless;
 
 use std::sync::Mutex;
 use tauri::Manager;
