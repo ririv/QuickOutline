@@ -45,10 +45,8 @@ public class FileImageService {
             for (int i = 0; i < CONCURRENCY_LEVEL; i++) {
                 sessions.add(new PdfRenderSession(file));
             }
-            
-            if (!sessions.isEmpty()) {
-                totalPages = sessions.get(0).getPageCount();
-            }
+
+            totalPages = sessions.getFirst().getPageCount();
         } catch (Exception e) {
             log.error("Failed to open PDF session for file: {}", file, e);
             close(); // Ensure partial failures are cleaned up
@@ -132,8 +130,6 @@ public class FileImageService {
      * Synchronous get (helper for diff logic if needed, though PreviewService shouldn't depend on it ideally)
      */
     public byte[] getImageSync(int pageIndex) {
-        byte[] cached = cache.get(pageIndex);
-        if (cached != null) return cached;
-        return null;
+        return cache.get(pageIndex);
     }
 }
