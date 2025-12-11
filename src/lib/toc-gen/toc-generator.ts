@@ -1,5 +1,40 @@
 import tocStyles from './toc.css?inline';
 
+interface DotConfig {
+    width?: number;
+    height?: number;
+    radius?: number;
+    color?: string;
+    position?: string; // e.g., 'left bottom 0px', 'center'
+}
+
+/**
+ * Generates a complete CSS block for a dot leader background using a dynamic SVG.
+ * Returns a string containing background-image, size, repeat, and position rules.
+ */
+export function generateDotLeaderCss(config: DotConfig = {}): string {
+    const {
+        width = 4,
+        height = 4,
+        radius = 0.6,
+        color = 'currentColor',
+        position = 'left bottom 0px'
+    } = config;
+
+    const cx = width / 2;
+    // Position dot at the bottom of the SVG canvas
+    const cy = height - radius;
+
+    const svgContent = `%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'%3E%3Ccircle cx='${cx}' cy='${cy}' r='${radius}' fill='${color}' /%3E%3C/svg%3E`;
+    
+    return `
+        background-image: url("data:image/svg+xml,${svgContent}");
+        background-size: ${width}px ${height}px;
+        background-repeat: repeat-x;
+        background-position: ${position};
+    `;
+}
+
 export function generateTocHtml(
     content: string,
     title: string,
@@ -9,23 +44,6 @@ export function generateTocHtml(
     indentStep: number = 20 // Default indentation step in pt
 ): { html: string, styles: string } {
     
-    // Dot configuration
-    const dotWidth = 4;       
-    const dotHeight = 4;
-    const dotRadius = 0.6;    
-    // Use currentColor so it inherits from the CSS 'color' property
-    const dotColor = 'currentColor'; 
-
-    // Derived values
-    const cx = dotWidth / 2;
-    // Position dot at the bottom of the SVG canvas
-    // cy = height - radius (so the bottom of the circle touches the bottom of the canvas)
-    const cy = dotHeight - dotRadius; 
-
-    // Generate SVG Data URI
-    const svgContent = `%3Csvg xmlns='http://www.w3.org/2000/svg' width='${dotWidth}' height='${dotHeight}' viewBox='0 0 ${dotWidth} ${dotHeight}'%3E%3Ccircle cx='${cx}' cy='${cy}' r='${dotRadius}' fill='${dotColor}' /%3E%3C/svg%3E`;
-    const bgImage = `url("data:image/svg+xml,${svgContent}")`;
-
     const lines = content.split('\n');
     let html = `<h1 class="toc-title">${escapeHtml(title)}</h1>`;
     // Inject indent step as CSS variable
@@ -73,8 +91,7 @@ export function generateTocHtml(
     const styles = `
         ${tocStyles}
         .toc-leader {
-            background-image: ${bgImage};
-            background-size: ${dotWidth}px ${dotHeight}px; 
+            ${generateDotLeaderCss()}
         }
     `;
     return { html, styles };

@@ -13,7 +13,7 @@
   import { messageStore } from '@/stores/messageStore';
   import { docStore } from '@/stores/docStore';
   import { tocStore } from '@/stores/tocStore.svelte';
-  import { generateTocHtml } from '@/lib/toc-generator';
+  import { generateTocHtml } from '@/lib/toc-gen/toc-generator';
 
   let previewComponent: Preview;
   
