@@ -100,7 +100,7 @@
         return;
      }
 
-     const printUrl = `${window.location.origin}/src/pages/print/index.html`;
+     const printUrl = `${window.location.origin}/pages/print/index.html`;
      const filename = `markdown_${Date.now()}.pdf`;
      
      try {

@@ -68,11 +68,46 @@ pub async fn print_with_html_windows(html: String, output_path: PathBuf) -> Resu
     }
 }
 
-async fn execute_headless_print_with_html(browser: &str, html: String, output_path: &PathBuf) -> Result<String, String> {
-    let temp_dir = std::env::temp_dir();
-    let temp_html = temp_dir.join("temp_print.html");
-    fs::write(&temp_html, html).map_err(|e| e.to_string())?;
+#[cfg(target_os = "windows")]
+pub async fn print_with_url_windows(url: String, output_path: PathBuf) -> Result<String, String> {
+    // Find Edge
+    let edge_paths = vec![
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+        "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+        "msedge" // Try PATH
+    ];
 
+    let mut browser_path = None;
+    for path in edge_paths {
+        if path_exists(path) {
+            browser_path = Some(path.to_string());
+            break;
+        }
+    }
+
+    // Fallback to Chrome if Edge not found
+    if browser_path.is_none() {
+        let chrome_paths = vec![
+            "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+            "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+            "chrome"
+        ];
+        for path in chrome_paths {
+            if path_exists(path) {
+                browser_path = Some(path.to_string());
+                break;
+            }
+        }
+    }
+
+    if let Some(browser) = browser_path {
+        execute_headless_print_target(&browser, &url, &output_path).await
+    } else {
+        Err("Microsoft Edge or Google Chrome not found.".to_string())
+    }
+}
+
+async fn execute_headless_print_target(browser: &str, target: &str, output_path: &PathBuf) -> Result<String, String> {
     let output_str = output_path.to_string_lossy().to_string();
     
     let mut cmd = Command::new(browser);
@@ -81,13 +116,13 @@ async fn execute_headless_print_with_html(browser: &str, html: String, output_pa
     if browser.to_lowercase().contains("firefox") {
         cmd.arg("--print-to-file")
            .arg(&output_str)
-           .arg(&temp_html);
+           .arg(target);
     } else {
         cmd.arg("--disable-gpu")
            .arg("--force-device-scale-factor=2") // Simulate HiDPI for better raster quality
            .arg(format!("--print-to-pdf={}", output_str))
            .arg("--no-pdf-header-footer")
-           .arg(&temp_html);
+           .arg(target);
     }
 
     let output = cmd.output().map_err(|e| e.to_string())?;
@@ -103,6 +138,14 @@ async fn execute_headless_print_with_html(browser: &str, html: String, output_pa
              Err(format!("Browser print failed (exit code {}): {}", output.status, stderr))
         }
     }
+}
+
+async fn execute_headless_print_with_html(browser: &str, html: String, output_path: &PathBuf) -> Result<String, String> {
+    let temp_dir = std::env::temp_dir();
+    let temp_html = temp_dir.join("temp_print.html");
+    fs::write(&temp_html, html).map_err(|e| e.to_string())?;
+    
+    execute_headless_print_target(browser, temp_html.to_str().unwrap(), output_path).await
 }
 
 #[cfg(target_os = "macos")]
@@ -157,6 +200,58 @@ pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, o
     }
 }
 
+#[cfg(target_os = "macos")]
+pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, output_path: PathBuf, browser_path: Option<String>, force_download: bool) -> Result<String, String> {
+    // 1. Use explicitly provided path
+    if let Some(path) = browser_path {
+        if path_exists(&path) {
+             println!("Using custom browser: {}", path);
+             return execute_headless_print_target(&path, &url, &output_path).await;
+        } else {
+             return Err(format!("Custom browser path not found: {}", path));
+        }
+    }
+
+    // 2. Use locally downloaded Chromium (if exists and we are not forcing a new download)
+    if !force_download {
+        if let Ok(local_browser) = get_local_chromium_path(app) {
+            if local_browser.exists() {
+                let exec_path = local_browser.join("Contents/MacOS/Chromium");
+                if exec_path.exists() {
+                     println!("Using local Chromium: {:?}", exec_path);
+                     return execute_headless_print_target(exec_path.to_str().unwrap(), &url, &output_path).await;
+                }
+            }
+        }
+
+        // 3. Use system browsers
+        let browsers = vec![
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+            "/Applications/Firefox.app/Contents/MacOS/firefox",
+            "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+            "/Applications/Chromium.app/Contents/MacOS/Chromium"
+        ];
+
+        for browser in browsers {
+            if std::path::Path::new(browser).exists() {
+                println!("Using system browser: {}", browser);
+                return execute_headless_print_target(browser, &url, &output_path).await;
+            }
+        }
+    }
+    
+    // 4. Download Chromium if forced or nothing else found
+    println!("No suitable browser found. Downloading Chromium...");
+    match download_chromium(app).await {
+        Ok(path) => {
+             let exec_path = path.join("Contents/MacOS/Chromium");
+             return execute_headless_print_target(exec_path.to_str().unwrap(), &url, &output_path).await;
+        }
+        Err(e) => return Err(format!("Failed to download Chromium: {}", e))
+    }
+}
+
 #[cfg(target_os = "linux")]
 pub async fn print_with_html_linux(html: String, output_path: PathBuf) -> Result<String, String> {
     let browsers = vec![
@@ -170,6 +265,25 @@ pub async fn print_with_html_linux(html: String, output_path: PathBuf) -> Result
     for browser in browsers {
         if is_command_available(browser) {
             return execute_headless_print_with_html(browser, html, &output_path).await;
+        }
+    }
+
+    Err("No supported browser (Chrome, Edge, Firefox) found in PATH.".to_string())
+}
+
+#[cfg(target_os = "linux")]
+pub async fn print_with_url_linux(url: String, output_path: PathBuf) -> Result<String, String> {
+    let browsers = vec![
+        "google-chrome",
+        "microsoft-edge",
+        "firefox",
+        "chromium",
+        "chromium-browser"
+    ];
+
+    for browser in browsers {
+        if is_command_available(browser) {
+            return execute_headless_print_target(browser, &url, &output_path).await;
         }
     }
 

@@ -75,7 +75,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer::print_to_pdf_with_html_string])
+        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer::print_to_pdf])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
