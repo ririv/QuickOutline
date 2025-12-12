@@ -42,7 +42,6 @@
     min-height: 1em;
     margin: 0; /* No margin to connect perfectly */
     padding-bottom: 4px;
-    color: #aaa; /* Default dot color */
     
     /* Background settings are injected by generateDotLeaderCss in JS */
     opacity: 1;

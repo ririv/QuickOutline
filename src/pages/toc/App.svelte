@@ -13,6 +13,7 @@
   import { messageStore } from '@/stores/messageStore';
   import { docStore } from '@/stores/docStore';
   import { tocStore } from '@/stores/tocStore.svelte';
+  import { printStore } from '@/stores/printStore.svelte'; // Import global print store
   import { generateTocHtml } from '@/lib/toc-gen/toc-generator';
   import { getTocLinkData } from '@/lib/preview-engine/paged-engine';
   import { invoke } from '@tauri-apps/api/core';
@@ -155,13 +156,21 @@
             </body>
             </html>`;
 
-          // 3. Generate PDF via Rust (Headless Chrome/Edge)
+          // 3. Generate PDF via Rust
           messageStore.add("Generating PDF...", "INFO");
           const filename = `toc_${Date.now()}.pdf`;
           
+          // Use global print mode
+          let modeParam = printStore.mode.toLowerCase();
+          if (printStore.mode === 'HeadlessChrome') {
+              modeParam = 'headless_chrome';
+          }
+
           const pdfPath = await invoke('print_to_pdf', { 
               html: fullHtml, 
-              filename: filename 
+              filename: filename,
+              mode: modeParam
+              // browserPath 和 forceDownload 参数可根据需要添加 UI 控件来设置
           });
           
           console.log("PDF Generated at:", pdfPath); // Added console.log
@@ -223,6 +232,8 @@
                 placeholder="Enter TOC here..."
             />
           </div>
+
+          <!-- Print Mode Selector removed (moved to Settings) -->
 
           <!-- Footer Trigger & Editor -->
           {#if showFooter}

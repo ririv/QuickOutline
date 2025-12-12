@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { appStore, type ConnectionStatus } from '@/stores/appStore'; // Import ConnectionStatus
+    import { appStore, type ConnectionStatus } from '@/stores/appStore'; 
     import { rpc } from '@/lib/api/rpc';
+    import { printStore } from '@/stores/printStore.svelte';
+    import StyledSelect from '@/components/controls/StyledSelect.svelte';
 
     let port = $state(0);
     let currentPort = $state(0);
-    // Removed local status and message as it will come from appStore and RpcProvider
-    // let status = $state<'idle' | 'connecting' | 'connected' | 'error'>('idle');
-    // let message = $state('');
 
     // Sync with store
     appStore.subscribe(state => {
@@ -40,13 +39,13 @@
     async function handleConnect() {
         if (port <= 0 || port > 65535) {
             // Update appStore status to error if invalid port
-            appStore.setConnectionStatus('error'); 
+            appStore.setConnectionStatus('error');
             // Note: RpcProvider will pick up this error and start auto-reconnect if needed.
             return;
         }
 
         // Set status to connecting via appStore
-        appStore.setConnectionStatus('connecting'); 
+        appStore.setConnectionStatus('connecting');
 
         try {
             // Attempt to connect
@@ -63,11 +62,36 @@
             // RpcProvider's auto-reconnect logic will take over if enabled
         }
     }
+
+    const printModeOptions = [
+        { label: 'Native (iOS Compatible)', value: 'Native' },
+        { label: 'Headless', value: 'Headless' },
+        { label: 'Headless Chrome', value: 'HeadlessChrome' }
+    ];
 </script>
 
 <div class="p-6 max-w-2xl mx-auto">
     <h2 class="text-2xl font-semibold mb-8 text-gray-800">Settings</h2>
     
+    <!-- PDF Generation Settings -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm mb-6">
+        <h3 class="text-lg font-semibold mb-4 text-gray-700">PDF Generation</h3>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Print Mode</label>
+            <div class="max-w-xs">
+                <StyledSelect 
+                    options={printModeOptions} 
+                    bind:value={printStore.mode} 
+                    placeholder="Select print mode..."
+                />
+            </div>
+             <p class="text-xs text-gray-500 mt-2">
+                "Native" uses the OS print service (best for Safari/iOS compatibility). "Headless Chrome" uses an embedded browser instance.
+            </p>
+        </div>
+    </div>
+
+    <!-- Connection Settings -->
     <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
         <h3 class="text-lg font-semibold mb-4 text-gray-700">Connection</h3>
         <div class="mb-4">
@@ -96,10 +120,6 @@
                             {getConnectionStatusText($appStore.connectionStatus)}
                         </span>
             </p>
-            
-            <!-- Removed local message display -->
-            <!-- {#if message} ... {/if} -->
         </div>
     </div>
 </div>
-
