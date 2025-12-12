@@ -46,6 +46,7 @@ pub async fn print_windows(html: String, output_path: PathBuf) -> Result<String,
         let output = Command::new(browser)
             .arg("--headless")
             .arg("--disable-gpu")
+            .arg("--force-device-scale-factor=2") // Simulate HiDPI for better raster quality
             .arg(format!("--print-to-pdf={}", output_str))
             .arg("--no-pdf-header-footer")
             .arg(&temp_html)
@@ -83,6 +84,7 @@ async fn execute_headless_print(browser: &str, html: String, output_path: &PathB
            .arg(&temp_html);
     } else {
         cmd.arg("--disable-gpu")
+           .arg("--force-device-scale-factor=2") // Simulate HiDPI for better raster quality
            .arg(format!("--print-to-pdf={}", output_str))
            .arg("--no-pdf-header-footer")
            .arg(&temp_html);
