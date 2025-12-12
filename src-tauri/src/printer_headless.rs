@@ -5,9 +5,9 @@ use std::fs;
 use std::io::Cursor;
 
 #[cfg(target_os = "windows")]
-pub async fn print_windows(html: String, output_path: PathBuf) -> Result<String, String> {
+pub async fn print_with_html_windows(html: String, output_path: PathBuf) -> Result<String, String> {
     let temp_dir = std::env::temp_dir();
-    let temp_html = temp_dir.join("toc_print.html");
+    let temp_html = temp_dir.join("temp_print.html");
     fs::write(&temp_html, html).map_err(|e| e.to_string())?;
 
     let output_str = output_path.to_string_lossy().to_string();
@@ -68,9 +68,9 @@ pub async fn print_windows(html: String, output_path: PathBuf) -> Result<String,
     }
 }
 
-async fn execute_headless_print(browser: &str, html: String, output_path: &PathBuf) -> Result<String, String> {
+async fn execute_headless_print_with_html(browser: &str, html: String, output_path: &PathBuf) -> Result<String, String> {
     let temp_dir = std::env::temp_dir();
-    let temp_html = temp_dir.join("toc_print.html");
+    let temp_html = temp_dir.join("temp_print.html");
     fs::write(&temp_html, html).map_err(|e| e.to_string())?;
 
     let output_str = output_path.to_string_lossy().to_string();
@@ -106,12 +106,12 @@ async fn execute_headless_print(browser: &str, html: String, output_path: &PathB
 }
 
 #[cfg(target_os = "macos")]
-pub async fn print_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path: PathBuf, browser_path: Option<String>, force_download: bool) -> Result<String, String> {
+pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path: PathBuf, browser_path: Option<String>, force_download: bool) -> Result<String, String> {
     // 1. Use explicitly provided path
     if let Some(path) = browser_path {
         if path_exists(&path) {
              println!("Using custom browser: {}", path);
-             return execute_headless_print(&path, html, &output_path).await;
+             return execute_headless_print_with_html(&path, html, &output_path).await;
         } else {
              return Err(format!("Custom browser path not found: {}", path));
         }
@@ -124,7 +124,7 @@ pub async fn print_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path
                 let exec_path = local_browser.join("Contents/MacOS/Chromium");
                 if exec_path.exists() {
                      println!("Using local Chromium: {:?}", exec_path);
-                     return execute_headless_print(exec_path.to_str().unwrap(), html, &output_path).await;
+                     return execute_headless_print_with_html(exec_path.to_str().unwrap(), html, &output_path).await;
                 }
             }
         }
@@ -141,7 +141,7 @@ pub async fn print_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path
         for browser in browsers {
             if std::path::Path::new(browser).exists() {
                 println!("Using system browser: {}", browser);
-                return execute_headless_print(browser, html, &output_path).await;
+                return execute_headless_print_with_html(browser, html, &output_path).await;
             }
         }
     }
@@ -151,14 +151,14 @@ pub async fn print_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path
     match download_chromium(app).await {
         Ok(path) => {
              let exec_path = path.join("Contents/MacOS/Chromium");
-             return execute_headless_print(exec_path.to_str().unwrap(), html, &output_path).await;
+             return execute_headless_print_with_html(exec_path.to_str().unwrap(), html, &output_path).await;
         }
         Err(e) => return Err(format!("Failed to download Chromium: {}", e))
     }
 }
 
 #[cfg(target_os = "linux")]
-pub async fn print_linux(html: String, output_path: PathBuf) -> Result<String, String> {
+pub async fn print_with_html_linux(html: String, output_path: PathBuf) -> Result<String, String> {
     let browsers = vec![
         "google-chrome",
         "microsoft-edge",
@@ -169,7 +169,7 @@ pub async fn print_linux(html: String, output_path: PathBuf) -> Result<String, S
 
     for browser in browsers {
         if is_command_available(browser) {
-            return execute_headless_print(browser, html, &output_path).await;
+            return execute_headless_print_with_html(browser, html, &output_path).await;
         }
     }
 

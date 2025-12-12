@@ -16,7 +16,7 @@ pub enum PrintMode {
 }
 
 #[tauri::command]
-pub async fn print_to_pdf<R: Runtime>(
+pub async fn print_to_pdf_with_html_string<R: Runtime>(
     app: AppHandle<R>,
     window: WebviewWindow<R>,
     html: String,
@@ -42,25 +42,25 @@ pub async fn print_to_pdf<R: Runtime>(
     match print_mode {
         PrintMode::HeadlessChrome => {
             // New Rust-native Headless Chrome implementation
-            return printer_headless_chrome::print_to_pdf(html, output_path)
+            return printer_headless_chrome::print_to_pdf_with_html_string(html, output_path)
                 .await
                 .map_err(|e| e.to_string());
         },
         PrintMode::Headless => {
             // Legacy/Custom Command-based Headless implementation
             #[cfg(target_os = "macos")]
-            return printer_headless::print_mac(&app, html, output_path, browser_path, force_dl).await;
+            return printer_headless::print_with_html_mac(&app, html, output_path, browser_path, force_dl).await;
             
             #[cfg(target_os = "windows")]
-            return printer_headless::print_windows(html, output_path).await;
+            return printer_headless::print_with_html_windows(html, output_path).await;
 
             #[cfg(target_os = "linux")]
-            return printer_headless::print_linux(html, output_path).await;
+            return printer_headless::print_with_html_linux(html, output_path).await;
         },
         PrintMode::Native => {
             // Native Webview Printing (WKWebView on Mac)
             #[cfg(target_os = "macos")]
-            return printer_native::print_native_mac_wkpdf(window, html, output_path).await;
+            return printer_native::print_native_with_html_mac_wkpdf(window, html, output_path).await;
 
             #[cfg(target_os = "windows")]
             return printer_native::print_native_windows(html, output_path).await;

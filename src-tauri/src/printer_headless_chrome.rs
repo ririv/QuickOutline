@@ -4,7 +4,7 @@ use std::fs;
 use std::sync::Arc;
 use anyhow::Result;
 
-pub async fn print_to_pdf(html: String, output_path: PathBuf) -> Result<String> {
+pub async fn print_to_pdf_with_html_string(html: String, output_path: PathBuf) -> Result<String> {
     // 1. Configure Launch Options
     let launch_options = LaunchOptions {
         headless: true,

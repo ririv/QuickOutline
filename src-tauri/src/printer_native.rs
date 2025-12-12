@@ -4,7 +4,7 @@ use std::fs;
 
 
 #[tauri::command]
-pub async fn print_to_pdf_native<R: Runtime>(
+pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
     app: AppHandle<R>,
     window: WebviewWindow<R>, // Use WebviewWindow
     html: String,
@@ -35,7 +35,7 @@ pub async fn print_to_pdf_native<R: Runtime>(
     {
         // Switch to NSPrintOperation based printing for better consistency
         // No fallback as requested
-        match print_native_mac_op(window.clone(), html.clone(), output_path.clone()).await {
+        match print_native_with_html_mac_op(window.clone(), html.clone(), output_path.clone()).await {
             Ok(path) => Ok(path),
             Err(e) => {
                 println!("Native print (OP) failed: {}", e);
@@ -46,7 +46,7 @@ pub async fn print_to_pdf_native<R: Runtime>(
 }
 // ================= MAC OS NATIVE (NSPrintOperation) =================
 #[cfg(target_os = "macos")]
-pub async fn print_native_mac_op<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
+pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
     use objc2_foundation::{NSString, NSRect, NSPoint, NSSize, NSURL};
     use objc2_web_kit::{WKWebView, WKWebViewConfiguration};
     use objc2_app_kit::{NSPrintInfo, NSPrintOperation};
@@ -227,7 +227,7 @@ pub async fn print_native_mac_op<R: Runtime>(window: WebviewWindow<R>, html: Str
 
 // ================= MAC OS NATIVE (WKPDFConfiguration - LEGACY) =================
 #[cfg(target_os = "macos")]
-pub async fn print_native_mac_wkpdf<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
+pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
 
     use objc2_foundation::{NSData, NSError, NSString, NSRect, NSPoint, NSSize};
     use objc2_web_kit::{WKPDFConfiguration, WKWebView, WKWebViewConfiguration};
