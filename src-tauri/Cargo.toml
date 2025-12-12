@@ -30,6 +30,9 @@ reqwest = { version = "0.11", features = ["blocking", "stream"] } # Use blocking
 zip = "0.6"
 tar = "0.4"
 flate2 = "1.0"
+headless_chrome = "1.0.18"
+uuid = { version = "1.0", features = ["v4"] }
+anyhow = "1.0"
 
 
 [target.'cfg(windows)'.dependencies]

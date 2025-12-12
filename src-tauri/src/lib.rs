@@ -1,6 +1,7 @@
 mod java_sidecar;
 mod printer_native;
 mod printer_headless;
+mod printer_headless_chrome;
 mod printer;
 
 use std::sync::Mutex;
