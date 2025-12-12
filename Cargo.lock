@@ -3564,6 +3564,7 @@ dependencies = [
  "flate2",
  "gtk",
  "objc2 0.6.3",
+ "objc2-app-kit",
  "objc2-foundation 0.3.2",
  "objc2-web-kit",
  "reqwest 0.11.27",

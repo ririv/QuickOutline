@@ -33,19 +33,201 @@ pub async fn print_to_pdf<R: Runtime>(
 
     #[cfg(target_os = "macos")]
     {
-        match print_native_mac(window.clone(), html.clone(), output_path.clone()).await {
+        // Switch to NSPrintOperation based printing for better consistency
+        // No fallback as requested
+        match print_native_mac_op(window.clone(), html.clone(), output_path.clone()).await {
             Ok(path) => Ok(path),
             Err(e) => {
-                println!("Native print failed: {}", e);
+                println!("Native print (OP) failed: {}", e);
                 Err(e)
             }
         }
     }
 }
-
-// ================= MAC OS NATIVE =================
+// ================= MAC OS NATIVE (NSPrintOperation) =================
 #[cfg(target_os = "macos")]
-async fn print_native_mac<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
+async fn print_native_mac_op<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
+    use objc2_foundation::{NSString, NSRect, NSPoint, NSSize, NSURL};
+    use objc2_web_kit::{WKWebView, WKWebViewConfiguration};
+    use objc2_app_kit::{NSPrintInfo, NSPrintOperation};
+    use objc2::rc::Retained;
+    use objc2::{MainThreadMarker, msg_send};
+    use objc2::runtime::AnyObject;
+    use std::sync::mpsc;
+    use std::thread;
+    use std::time::Duration;
+    use std::ffi::c_void;
+
+    let path_str = output_path.to_string_lossy().to_string();
+    let (ptr_tx, ptr_rx) = mpsc::channel();
+
+    // Step 1: Initialize, Attach, and Load
+    let html_clone = html.clone();
+
+    window.with_webview(move |webview| {
+        unsafe {
+            let mtm = MainThreadMarker::new_unchecked();
+
+            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(595.0, 842.0));
+            let config = WKWebViewConfiguration::new(mtm);
+
+            let alloc_view = mtm.alloc::<WKWebView>();
+            let new_view: Retained<WKWebView> = msg_send![alloc_view, initWithFrame: frame, configuration: &*config];
+
+            // Attach (Hidden)
+            let current_wv_ptr = webview.inner() as *mut AnyObject;
+            let current_wv = &*current_wv_ptr;
+            let superview: Option<Retained<AnyObject>> = msg_send![current_wv, superview];
+
+            if let Some(sv) = superview {
+                let _: () = msg_send![&sv, addSubview: &*new_view];
+                let _: () = msg_send![&*new_view, setAlphaValue: 0.0f64];
+            }
+
+            // Load
+            let html_ns = NSString::from_str(&html_clone);
+            new_view.loadHTMLString_baseURL(&html_ns, None);
+
+            // Pass pointer out
+            let raw: *mut WKWebView = Retained::into_raw(new_view);
+            let addr = raw as usize;
+            let _ = ptr_tx.send(addr);
+        }
+    }).map_err(|e| e.to_string())?;
+
+    // Step 2: Wait for content to load
+    let addr = ptr_rx.recv().map_err(|_| "Failed to create webview".to_string())?;
+    thread::sleep(Duration::from_millis(1000));
+
+    // Step 3: Print
+    let (result_tx, result_rx) = mpsc::channel();
+    let output_path_clone = output_path.clone();
+    let path_str_clone = path_str.clone();
+
+    window.with_webview(move |_webview| {
+        unsafe {
+            let mtm = MainThreadMarker::new_unchecked();
+
+            let ptr = addr as *mut WKWebView;
+            let target_webview: Retained<WKWebView> = Retained::from_raw(ptr).expect("Invalid webview pointer");
+
+            // ========== 关键修改开始：创建并配置独立的 NSPrintInfo ==========
+            // 创建全新的 NSPrintInfo 实例，而不是使用共享实例
+            let alloc_print_info = mtm.alloc::<NSPrintInfo>();
+            let print_info: Retained<NSPrintInfo> = msg_send![alloc_print_info, init];
+
+            // 获取其字典并进行配置
+            let dict = print_info.dictionary();
+
+            // 设置作业处置方式为"保存"
+            let k_disposition = NSString::from_str("NSPrintJobDisposition");
+            let v_save = NSString::from_str("NSPrintSaveJob");
+            let _: () = msg_send![&dict, setObject: &*v_save, forKey: &*k_disposition];
+
+            // 设置保存路径 - 确保路径是完整的文件路径
+            let k_url = NSString::from_str("NSPrintJobSavingURL");
+            let output_path_str = output_path_clone.to_string_lossy();
+            let v_url = NSURL::fileURLWithPath(&NSString::from_str(&output_path_str));
+            let _: () = msg_send![&dict, setObject: &*v_url, forKey: &*k_url];
+
+            // 尝试绕过无默认打印机错误：指定一个通用的虚拟打印机名称
+            let k_printer_name = NSString::from_str("Generic");
+            
+            // 引入 NSPrinter 和 AnyClass
+            use objc2_app_kit::NSPrinter;
+            use objc2::runtime::AnyClass;
+            use std::ffi::CStr;
+            
+            // 获取 NSPrinter 类
+            let cls_name = CStr::from_bytes_with_nul(b"NSPrinter\0").unwrap();
+            let printer_class = AnyClass::get(cls_name).expect("NSPrinter class not found");
+            
+            // 尝试创建 NSPrinter 对象
+            // 注意：printerWithName 返回 Option<Retained<NSPrinter>>
+            let printer: Option<Retained<NSPrinter>> = msg_send![printer_class, printerWithName: &*k_printer_name];
+            
+            if let Some(p) = printer {
+                 let _: () = msg_send![&print_info, setPrinter: &*p];
+            } else {
+                 // 如果找不到 "Generic"，尝试其他名称或者忽略
+                 println!("Warning: Could not create 'Generic' printer.");
+            }
+
+            // 显式设置缩放比例，防止查询默认缩放
+            print_info.setScalingFactor(1.0);
+
+            // 关键修复：手动填充缺失的默认值，防止系统查询默认打印机
+            // Set A4 Paper Size (595 x 842 points)
+            let paper_size = NSSize::new(595.0, 842.0); 
+            print_info.setPaperSize(paper_size);
+            
+            // Set Margins to 0
+            print_info.setLeftMargin(0.0);
+            print_info.setRightMargin(0.0);
+            print_info.setTopMargin(0.0);
+            print_info.setBottomMargin(0.0);
+            
+            // Set Orientation (Portrait)
+            // NSPrintingOrientation: 0 = Portrait, 1 = Landscape
+            let _: () = msg_send![&print_info, setOrientation: 0isize]; // Use 0 for Portrait
+
+            // 可选：设置其他打印参数
+            print_info.setVerticallyCentered(false);
+            print_info.setHorizontallyCentered(false);
+            // ========== 关键修改结束 ==========
+
+            // 使用配置好的独立 print_info 创建打印操作
+            let print_op: Retained<NSPrintOperation> = target_webview.printOperationWithPrintInfo(&print_info);
+
+            // 配置为静默打印（无对话框）
+            print_op.setShowsPrintPanel(false);
+            print_op.setShowsProgressPanel(false);
+
+            // 获取窗口（WebView应已附加到窗口）
+            let ns_window: Option<Retained<AnyObject>> = msg_send![&*target_webview, window];
+
+            let result = if let Some(win) = ns_window {
+                // 使用 runOperationModalForWindow 方法（更可靠）
+                let null_ptr: *mut c_void = std::ptr::null_mut();
+                let _: () = msg_send![
+                    &print_op,
+                    runOperationModalForWindow: &*win,
+                    delegate: null_ptr,
+                    didRunSelector: null_ptr,
+                    contextInfo: null_ptr
+                ];
+
+                // 检查文件是否已创建
+                if output_path_clone.exists() {
+                    Ok(path_str_clone.clone())
+                } else {
+                    Err("打印操作完成但未创建PDF文件".to_string())
+                }
+            } else {
+                // 备选方案：直接运行操作（可能不够可靠）
+                let success: bool = print_op.runOperation();
+                if success && output_path_clone.exists() {
+                    Ok(path_str_clone.clone())
+                } else {
+                    Err("NSPrintOperation 运行失败或无窗口".to_string())
+                }
+            };
+
+            // 清理：从父视图中移除并释放WebView
+            let _: () = msg_send![&target_webview, removeFromSuperview];
+            // Retained 对象在作用域结束时自动释放
+
+            let _ = result_tx.send(result);
+        }
+    }).map_err(|e| e.to_string())?;
+
+    result_rx.recv().map_err(|e| e.to_string())?
+}
+
+
+// ================= MAC OS NATIVE (WKPDFConfiguration - LEGACY) =================
+#[cfg(target_os = "macos")]
+async fn print_native_mac_wkpdf<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
 
     use objc2_foundation::{NSData, NSError, NSString, NSRect, NSPoint, NSSize};
     use objc2_web_kit::{WKPDFConfiguration, WKWebView, WKWebViewConfiguration};
