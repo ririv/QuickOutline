@@ -104,17 +104,30 @@ async fn execute_headless_print(browser: &str, html: String, output_path: &PathB
 }
 
 #[cfg(target_os = "macos")]
-pub async fn print_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path: PathBuf, force_download: bool) -> Result<String, String> {
-    let local_browser = get_local_chromium_path(app)?;
-    if local_browser.exists() {
-        let exec_path = local_browser.join("Contents/MacOS/Chromium");
-        if exec_path.exists() {
-             println!("Using local Chromium: {:?}", exec_path);
-             return execute_headless_print(exec_path.to_str().unwrap(), html, &output_path).await;
+pub async fn print_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path: PathBuf, browser_path: Option<String>, force_download: bool) -> Result<String, String> {
+    // 1. Use explicitly provided path
+    if let Some(path) = browser_path {
+        if path_exists(&path) {
+             println!("Using custom browser: {}", path);
+             return execute_headless_print(&path, html, &output_path).await;
+        } else {
+             return Err(format!("Custom browser path not found: {}", path));
         }
     }
 
+    // 2. Use locally downloaded Chromium (if exists and we are not forcing a new download)
     if !force_download {
+        if let Ok(local_browser) = get_local_chromium_path(app) {
+            if local_browser.exists() {
+                let exec_path = local_browser.join("Contents/MacOS/Chromium");
+                if exec_path.exists() {
+                     println!("Using local Chromium: {:?}", exec_path);
+                     return execute_headless_print(exec_path.to_str().unwrap(), html, &output_path).await;
+                }
+            }
+        }
+
+        // 3. Use system browsers
         let browsers = vec![
             "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
             "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
@@ -131,7 +144,8 @@ pub async fn print_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path
         }
     }
     
-    println!("Downloading Chromium...");
+    // 4. Download Chromium if forced or nothing else found
+    println!("No suitable browser found. Downloading Chromium...");
     match download_chromium(app).await {
         Ok(path) => {
              let exec_path = path.join("Contents/MacOS/Chromium");
