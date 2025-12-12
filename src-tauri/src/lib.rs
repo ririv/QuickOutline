@@ -1,5 +1,5 @@
 mod java_sidecar;
-mod printer;
+mod printer_native;
 mod printer_headless;
 
 use std::sync::Mutex;
@@ -73,7 +73,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer::print_to_pdf])
+        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer_native::print_to_pdf])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
