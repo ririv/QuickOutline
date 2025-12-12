@@ -11,11 +11,16 @@
   import { onMount, onDestroy } from 'svelte';
   import { slide } from 'svelte/transition';
   import { markdownStore } from '@/stores/markdownStore.svelte';
+  import { messageStore } from '@/stores/messageStore'; // Import messageStore
+  import { printStore } from '@/stores/printStore.svelte'; // Import printStore
+  import { invoke } from '@tauri-apps/api/core'; // Import invoke
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
-  // katexCss is now globally imported via widgets.ts, no need to import/inject here
-  // import { katexCss } from '@/lib/editor/markdown-renderer';
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
-  import { getRenderedTocData } from '@/lib/preview-engine/paged-engine';
+  // Import KaTeX CSS explicitly for PDF generation ensure it's included in the payload
+  import katexCss from 'katex/dist/katex.min.css?inline';
+  
+  // getRenderedTocData was used for JavaBridge, currently unused in simple print_to_pdf
+  // import { getRenderedTocData } from '@/lib/preview-engine/paged-engine';
 
   let editorComponent: MdEditor;
   let previewComponent: Preview;
@@ -32,32 +37,23 @@
   }
 
   function handleRenderStats(stats: { duration: number }) {
-      // Dynamic Debounce Strategy:
-      // If render takes < 100ms, keep it snappy (10ms delay).
-      // If render takes longer, increase debounce to avoid blocking typing.
-      // We cap it at 1000ms.
       if (stats.duration < 100) {
           currentDebounceTime = 10;
       } else {
-          // If slow, wait longer to let user finish typing
           currentDebounceTime = Math.min(1000, stats.duration + 300);
       }
       console.log(`[Preview] Render took ${Math.round(stats.duration)}ms. Next debounce: ${currentDebounceTime}ms`);
   }
 
   onMount(() => {
-    // Restore content from store if available
     if (markdownStore.content) {
-        // Use setTimeout to ensure editor is mounted and init called (MdEditor init is in onMount)
         setTimeout(() => {
-            // Re-initialize editor with restored content and default config
             editorComponent?.init(markdownStore.content, 'live',  { tableStyle: 'grid' });
         }, 0);
     }
   });
 
   onDestroy(() => {
-      // Save content to store on unmount
       if (editorComponent) {
           markdownStore.updateContent(editorComponent.getValue());
       }
@@ -66,26 +62,18 @@
   async function triggerPreview() {
       if (!editorComponent) return;
       
-      // Get raw HTML from markdown-it, passing config from store
       const htmlContent = await editorComponent.getContentHtml({
           enableIndentedCodeBlocks: markdownStore.enableIndentedCodeBlocks
       });
       
-      // Generate CSS from our shared theme objects
-      // 1. Base Styles (Fonts, Colors, etc.)
-      // 2. Table Styles (Selected Grid or Academic)
-      const { tableStyle } = editorComponent.getStylesConfig(); // Get styles config from editor
+      const { tableStyle } = editorComponent.getStylesConfig(); 
       const editorThemeCss = getEditorPreviewCss(tableStyle, ".markdown-body");
       
       const generatedCss = `
         ${markdownPreviewCss}
         ${editorThemeCss}
-        
-        /* Injected Math and Code Highlighting Styles */
-        /* katexCss is now globally handled, no longer injected here */
       `;
 
-      // Update the reactive state, which will trigger Preview -> PagedRenderer
       markdownStore.currentPagedPayload = {
           html: htmlContent,
           styles: generatedCss,
@@ -95,27 +83,66 @@
   }
 
   async function handleGenerate() {
-     // Example usage of the new Confirm Dialog
-     const ok = await confirm('Are you sure you want to print this document?', 'Print Confirmation', { type: 'info' });
-     if (!ok) return;
+     const payload = markdownStore.currentPagedPayload;
+     if (!payload || !payload.html) {
+         messageStore.add("No content to generate.", "WARNING");
+         return;
+     }
 
-     // Extract TOC data from the current preview
-     const tocData = getRenderedTocData();
-     console.log('[App] Extracted TOC Data:', tocData);
+     // Fetch UnoCSS Runtime to inject into the HTML
+     // This ensures utility classes in the content are styled correctly in the PDF
+     let runtimeScript = '';
+     try {
+         const res = await fetch('/libs/unocss-runtime.bundle.js');
+         if (res.ok) {
+             runtimeScript = await res.text();
+         } else {
+             console.warn("Failed to fetch UnoCSS runtime for PDF generation");
+         }
+     } catch (e) {
+         console.warn("Error fetching UnoCSS runtime:", e);
+     }
 
-     // Trigger browser print via Java Bridge
-     // JavaFX will handle this via WebEngine.print()
-     if (window.javaBridge && window.javaBridge.renderPdf) {
-        // Prefer renderPdf if available, as it can handle TOC/Bookmarks
-        const payload = {
-            ...markdownStore.currentPagedPayload,
-            toc: tocData
-        };
-        window.javaBridge.renderPdf(JSON.stringify(payload));
-     } else if (window.javaBridge && window.javaBridge.print) {
-        window.javaBridge.print();
-     } else {
-        window.print(); // Fallback
+     // Construct full HTML for printing
+     const fullHtml = `<!DOCTYPE html>
+        <html>
+        <head>
+            <base href="${window.location.origin}/">
+            <meta charset="UTF-8">
+            <style>${payload.styles}</style>
+            <style>${katexCss}</style>
+            <script>
+                ${runtimeScript}
+            <\/script>
+        </head>
+        <body class="markdown-body">
+            ${payload.html}
+        </body>
+        </html>`;
+
+     messageStore.add("Generating PDF...", "INFO");
+     const filename = `markdown_${Date.now()}.pdf`;
+     
+     try {
+         // Determine mode from global store
+         let modeParam = printStore.mode.toLowerCase();
+         if (printStore.mode === 'HeadlessChrome') {
+             modeParam = 'headless_chrome';
+         }
+
+         // Invoke Tauri command
+         const pdfPath = await invoke('print_to_pdf', { 
+             html: fullHtml, 
+             filename: filename,
+             mode: modeParam
+         });
+         
+         console.log("PDF Generated at:", pdfPath);
+         messageStore.add(`PDF Generated successfully!`, "SUCCESS");
+
+     } catch (e: any) {
+         console.error("Generate failed", e);
+         messageStore.add("Failed: " + (e.message || e), "ERROR");
      }
   }
 </script>
