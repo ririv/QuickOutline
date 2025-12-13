@@ -37,9 +37,10 @@
     "externalBin": [
       "binaries/app-sidecar"
     ],
-    "resources": [
-      "resources/java-runtime/"
-    ]
+    "resources": {
+      "resources/java-runtime/": "resources/java-runtime/",
+      "../build/fonts/": "resources/fonts/"
+    }
   },
   "plugins": {
     "cli": {

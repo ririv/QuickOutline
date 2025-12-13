@@ -3,14 +3,89 @@ mod printer_native;
 mod printer_headless;
 mod printer_headless_chrome;
 mod printer;
+mod static_server;
 
 use std::sync::Mutex;
-use tauri::Manager;
-use tauri_plugin_cli::CliExt; // Import CliExt trait
+use tauri::{AppHandle, Manager, Runtime};
+use std::fs;
+use std::path::{Path, PathBuf};
+use tauri_plugin_cli::CliExt;
+
+// Helper function to recursively copy a directory
+fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result<()> {
+    fs::create_dir_all(&dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let src_path = entry.path();
+        let dst_path = dst.as_ref().join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir_all(src_path, dst_path)?;
+        } else {
+            fs::copy(src_path, dst_path)?;
+        }
+    }
+    Ok(())
+}
+
+// Helper function to set up print workspace, including copying fonts
+fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBuf, String> {
+    let app_data_dir = app_handle.path().app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    let workspace = app_data_dir.join("print_workspace");
+    let fonts_dst = workspace.join("fonts");
+
+    // Only copy if fonts haven't been copied yet
+    if !fonts_dst.exists() {
+        if let Ok(resource_dir) = app_handle.path().resource_dir() {
+            let fonts_src = resource_dir.join("resources").join("fonts"); // Assumes 'fonts/' in resources
+            if fonts_src.exists() {
+                copy_dir_all(&fonts_src, &fonts_dst)
+                    .map_err(|e| format!("Rust Setup: Failed to copy fonts: {}", e))?;
+                println!("Rust Setup: Copied fonts to {:?}", fonts_dst);
+            } else {
+                println!("Rust Setup: Font resources not found at {:?}", fonts_src);
+            }
+        } else {
+            println!("Rust Setup: Failed to get resource dir.");
+        }
+    } else {
+        println!("Rust Setup: Fonts already exist in print workspace.");
+    }
+
+    // Clean up old temporary print files
+    if let Ok(entries) = fs::read_dir(&workspace) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(filename) = path.file_name().and_then(|s| s.to_str()) {
+                    if (filename.starts_with("print_job_") || filename.starts_with("print_fallback_")) 
+                       && filename.ends_with(".html") { // Corrected to Rust's ends_with
+                        if let Err(e) = fs::remove_file(&path) {
+                            eprintln!("Rust Setup: Failed to delete old print job {:?}: {}", path, e);
+                        } else {
+                            println!("Rust Setup: Cleaned up old print job: {:?}", filename);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(workspace)
+}
 
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+async fn get_print_workspace_path<R: Runtime>(app: AppHandle<R>) -> Result<String, String> {
+    let app_data_dir = app.path().app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    let workspace_path = app_data_dir.join("print_workspace");
+    Ok(workspace_path.to_string_lossy().to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -19,11 +94,18 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_cli::init()) // Initialize CLI plugin
+        .plugin(tauri_plugin_cli::init())
         .manage(java_sidecar::JavaState {
             port: Mutex::new(None),
         })
+        .manage(static_server::LocalServerState::new())
         .setup(move |app| {
+            // Setup print workspace on app startup
+            let workspace_path = setup_print_workspace(app.handle()).expect("Failed to setup print workspace.");
+
+            // Start local static server
+            static_server::start_server(app.handle().clone(), workspace_path);
+
             let mut custom_port: Option<u16> = None;
             let mut use_external_sidecar = false;
 

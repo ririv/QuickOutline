@@ -1,11 +1,12 @@
 use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
-use std::path::PathBuf;
 use std::fs;
+use std::path::PathBuf;
 use serde::Deserialize;
 
 use crate::printer_native;
 use crate::printer_headless;
 use crate::printer_headless_chrome;
+use crate::static_server::LocalServerState; // Import LocalServerState
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -41,54 +42,139 @@ pub async fn print_to_pdf<R: Runtime>(
     println!("Print Request: Mode={:?}, Output={:?}, URL={:?}, HTML len={:?}", 
              print_mode, output_path, url, html.as_ref().map(|s| s.len()));
 
-    if let Some(url_str) = url {
-        // URL-based printing
-        match print_mode {
-            PrintMode::Headless => {
-                #[cfg(target_os = "macos")]
-                return printer_headless::print_with_url_mac(&app, url_str, output_path, browser_path, force_dl).await;
-                
-                #[cfg(target_os = "windows")]
-                return printer_headless::print_with_url_windows(url_str, output_path).await;
-
-                #[cfg(target_os = "linux")]
-                return printer_headless::print_with_url_linux(url_str, output_path).await;
-            },
-            _ => return Err(format!("Printing with URL is currently only supported in 'Headless' mode. Selected: {:?}", print_mode))
+    // Try to get local server port and workspace path
+    let mut local_url: Option<String> = None;
+    let mut temp_file_to_clean: Option<PathBuf> = None; // Track temp file for cleanup
+    
+    if let Some(html_content) = &html {
+        let state = app.state::<LocalServerState>();
+        let port_guard = state.port.lock().unwrap();
+        let workspace_guard = state.workspace.lock().unwrap();
+        
+        if let Some(port) = *port_guard {
+             // Save HTML to workspace
+             let temp_filename = format!("print_job_{}.html", uuid::Uuid::new_v4());
+             let temp_file_path = workspace_guard.join(&temp_filename);
+             
+             if let Ok(_) = fs::write(&temp_file_path, html_content) {
+                 local_url = Some(format!("http://127.0.0.1:{}/{}", port, temp_filename));
+                 temp_file_to_clean = Some(temp_file_path); // Store path for cleanup
+                 println!("Saved HTML to workspace: {:?} -> URL: {:?}", temp_file_to_clean, local_url);
+             }
         }
-    } else if let Some(html_str) = html {
-        // HTML String-based printing
+    }
+
+    // Determine target URL: Provided URL > Local Server URL
+    let target_url = url.or(local_url);
+
+    let result = if let Some(url_str) = target_url {
+        // URL-based printing (Remote or Localhost)
         match print_mode {
             PrintMode::HeadlessChrome => {
-                // New Rust-native Headless Chrome implementation
-                return printer_headless_chrome::print_to_pdf_with_html_string(html_str, output_path)
+                printer_headless_chrome::print_to_pdf_with_url(url_str, output_path)
                     .await
-                    .map_err(|e| e.to_string());
+                    .map_err(|e| e.to_string())
             },
             PrintMode::Headless => {
-                // Legacy/Custom Command-based Headless implementation
-                #[cfg(target_os = "macos")]
-                return printer_headless::print_with_html_mac(&app, html_str, output_path, browser_path, force_dl).await;
-                
-                #[cfg(target_os = "windows")]
-                return printer_headless::print_with_html_windows(html_str, output_path).await;
-
-                #[cfg(target_os = "linux")]
-                return printer_headless::print_with_html_linux(html_str, output_path).await;
+                let res = {
+                    #[cfg(target_os = "macos")]
+                    {
+                        printer_headless::print_with_url_mac(&app, url_str, output_path, browser_path, force_dl).await
+                    }
+                    #[cfg(target_os = "windows")]
+                    {
+                        printer_headless::print_with_url_windows(url_str, output_path).await
+                    }
+                    #[cfg(target_os = "linux")]
+                    {
+                        printer_headless::print_with_url_linux(url_str, output_path).await
+                    }
+                    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+                    {
+                        Err("Headless printing not implemented for this OS.".to_string())
+                    }
+                };
+                res
             },
-            PrintMode::Native => {
-                // Native Webview Printing (WKWebView on Mac)
-                #[cfg(target_os = "macos")]
-                return printer_native::print_native_with_html_mac_wkpdf(window, html_str, output_path).await;
-
-                #[cfg(target_os = "windows")]
-                return printer_native::print_native_windows(html_str, output_path).await;
-
-                #[cfg(target_os = "linux")]
-                return printer_native::print_native_linux(html_str, output_path).await;
+            _ => { // Native Mode
+                let res = {
+                     #[cfg(target_os = "macos")]
+                     {
+                        printer_native::print_to_pdf_with_url_native(app, window, url_str, filename).await
+                     }
+                     #[cfg(not(target_os = "macos"))]
+                     {
+                        Err("Native URL printing is only implemented for macOS currently.".to_string())
+                     }
+                };
+                res
             }
         }
+    } else if let Some(html_str) = html {
+        // Fallback: If server URL generation failed, use a temporary file with file:// protocol
+        // This restores the legacy behavior (which may have permission issues) as a last resort.
+        let temp_dir = std::env::temp_dir();
+        let temp_filename = format!("print_fallback_{}.html", uuid::Uuid::new_v4());
+        let temp_path = temp_dir.join(&temp_filename);
+        
+        let res = if let Ok(_) = fs::write(&temp_path, &html_str) {
+             let file_url = format!("file://{}", temp_path.to_string_lossy());
+             
+             match print_mode {
+                PrintMode::HeadlessChrome => {
+                    printer_headless_chrome::print_to_pdf_with_url(file_url, output_path)
+                        .await
+                        .map_err(|e| e.to_string())
+                },
+                PrintMode::Headless => {
+                    let res_inner = {
+                        #[cfg(target_os = "macos")]
+                        {
+                            printer_headless::print_with_url_mac(&app, file_url, output_path, browser_path, force_dl).await
+                        }
+                        #[cfg(target_os = "windows")]
+                        {
+                            printer_headless::print_with_url_windows(file_url, output_path).await
+                        }
+                        #[cfg(target_os = "linux")]
+                        {
+                            printer_headless::print_with_url_linux(file_url, output_path).await
+                        }
+                        #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+                        {
+                            Err("Headless printing not implemented for this OS.".to_string())
+                        }
+                    };
+                    res_inner
+                },
+                PrintMode::Native => {
+                    let res_inner = {
+                         #[cfg(target_os = "macos")]
+                         {
+                            printer_native::print_native_with_html_mac_wkpdf(window, html_str, output_path).await
+                         }
+                         #[cfg(target_os = "windows")]
+                         {
+                            printer_native::print_native_windows(html_str, output_path).await
+                         }
+                         #[cfg(target_os = "linux")]
+                         {
+                            printer_native::print_native_linux(html_str, output_path).await
+                         }
+                         #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+                         {
+                            Err("Native printing not implemented for this OS.".to_string())
+                         }
+                    };
+                    res_inner
+                }
+             }
+        } else {
+            Err("Failed to save temporary HTML file for fallback printing.".to_string())
+        };
+        res // Return the result of the print operation
     } else {
         Err("Neither 'html' nor 'url' parameters were provided.".to_string())
-    }
+    };
+    result // Return the final result
 }

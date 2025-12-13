@@ -14,14 +14,12 @@
   import { messageStore } from '@/stores/messageStore'; // Import messageStore
   import { printStore } from '@/stores/printStore.svelte'; // Import printStore
   import { invoke } from '@tauri-apps/api/core'; // Import invoke
+  import { appDataDir, join } from '@tauri-apps/api/path'; // Import path utils
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
-  // Import KaTeX CSS explicitly for PDF generation ensure it's included in the payload
-  import katexCss from 'katex/dist/katex.min.css?inline';
+  // Import KaTeX CSS as raw text to preserve original 'fonts/...' paths without Vite rewriting them
+  import katexCss from 'katex/dist/katex.min.css?raw';
   
-  // getRenderedTocData was used for JavaBridge, currently unused in simple print_to_pdf
-  // import { getRenderedTocData } from '@/lib/preview-engine/paged-engine';
-
   let editorComponent: MdEditor;
   let previewComponent: Preview;
   
@@ -89,18 +87,39 @@
          return;
      }
 
-     messageStore.add("Preparing PDF...", "INFO");
+     messageStore.add("Preparing PDF resources...", "INFO");
 
-     // Store payload for the print page to pick up
+     // Fetch UnoCSS Runtime
+     let runtimeScript = '';
      try {
-        localStorage.setItem('print-payload', JSON.stringify(payload));
-     } catch (e) {
-        console.error("Failed to save print payload to localStorage", e);
-        messageStore.add("Failed to prepare data: " + e, "ERROR");
-        return;
-     }
+         const res = await fetch('/libs/unocss-runtime.bundle.js');
+         if (res.ok) runtimeScript = await res.text();
+     } catch (e) { console.warn("Error fetching UnoCSS runtime:", e); }
 
-     const printUrl = `${window.location.origin}/pages/print/index.html`;
+     // Determine Base URL for resource loading (fonts, images)
+     // Since the backend now serves this HTML via a local HTTP server rooted at 'print_workspace',
+     // relative paths (e.g. "fonts/...") will resolve correctly against the server root.
+     // We set base to '.' to ensure relative resolution works.
+     const baseUrl = '.';
+
+     // Construct full HTML for printing
+     const fullHtml = `<!DOCTYPE html>
+        <html>
+        <head>
+            <base href="${baseUrl}">
+            <meta charset="UTF-8">
+            <style>${payload.styles}</style>
+            <style>${katexCss}</style>
+            <script>
+                ${runtimeScript}
+            <\/script>
+        </head>
+        <body class="markdown-body">
+            ${payload.html}
+        </body>
+        </html>`;
+
+     messageStore.add("Generating PDF...", "INFO");
      const filename = `markdown_${Date.now()}.pdf`;
      
      try {
@@ -109,10 +128,8 @@
              modeParam = 'headless_chrome';
          }
 
-         // Invoke Tauri command with URL
-         // Note: The backend must support 'url' parameter.
          const pdfPath = await invoke('print_to_pdf', { 
-             url: printUrl,
+             html: fullHtml,
              filename: filename,
              mode: modeParam
          });
@@ -125,105 +142,6 @@
          messageStore.add("Failed: " + (e.message || e), "ERROR");
      }
   }
-
-  /**
-   * BACKUP: Generates PDF by directly sending a full HTML string with inlined resources.
-   * This function includes logic for inlining UnoCSS runtime and KaTeX fonts.
-   * Use this as a fallback if the URL-based printing (Plan B) causes issues.
-   */
-  async function _generatePdfFromHtmlString(payload: { html: string; styles: string }) {
-     messageStore.add("Preparing PDF resources (direct HTML method)...", "INFO");
-
-     // Fetch UnoCSS Runtime
-     let runtimeScript = '';
-     try {
-         const res = await fetch('/libs/unocss-runtime.bundle.js');
-         if (res.ok) runtimeScript = await res.text();
-     } catch (e) { console.warn("Error fetching UnoCSS runtime (backup method):", e); }
-
-     // Inline KaTeX fonts
-     let inlinedKatexCss = katexCss;
-     try {
-        inlinedKatexCss = await inlineFonts(katexCss);
-     } catch (e) { console.warn("Error inlining fonts (backup method):", e); }
-
-     // Construct full HTML for printing
-     const fullHtml = `<!DOCTYPE html>
-        <html>
-        <head>
-            <base href="${window.location.origin}/">
-            <meta charset="UTF-8">
-            <style>${payload.styles}</style>
-            <style>${inlinedKatexCss}</style>
-            <script>
-                ${runtimeScript}
-            <\/script>
-        </head>
-        <body class="markdown-body">
-            ${payload.html}
-        </body>
-        </html>`;
-
-     messageStore.add("Generating PDF (direct HTML method)...", "INFO");
-     const filename = `markdown_${Date.now()}.pdf`;
-
-     try {
-         let modeParam = printStore.mode.toLowerCase();
-         if (printStore.mode === 'HeadlessChrome') {
-             modeParam = 'headless_chrome';
-         }
-
-         const pdfPath = await invoke('print_to_pdf', { 
-             html: fullHtml, // Send HTML string directly
-             filename: filename,
-             mode: modeParam
-         });
-         
-         console.log("PDF Generated at:", pdfPath);
-         messageStore.add(`PDF Generated successfully (direct HTML method)!`, "SUCCESS");
-     } catch (e: any) {
-         console.error("Generate failed (direct HTML method):", e);
-         messageStore.add("Failed (direct HTML method): " + (e.message || e), "ERROR");
-     }
-  }
-
-  // Helper to inline fonts as base64 to ensure they work in headless chrome (which might not access local assets)
-  async function inlineFonts(css: string): Promise<string> {
-      const urlRegex = /url\(['"]?([^'"\)]+)['"]?\)/g;
-      let newCss = css;
-      const matches = [...css.matchAll(urlRegex)];
-      const fontCache = new Map<string, string>();
-
-      for (const match of matches) {
-          const originalUrl = match[0];
-          const relativePath = match[1];
-          if (relativePath.startsWith('data:') || relativePath.startsWith('http')) continue;
-
-          // Map 'fonts/filename' to '/fonts/katex/filename'
-          const filename = relativePath.split('/').pop();
-          const fetchUrl = `/fonts/katex/${filename}`; 
-
-          if (!fontCache.has(fetchUrl)) {
-              try {
-                  const res = await fetch(fetchUrl);
-                  if (!res.ok) throw new Error(`Status ${res.status}`);
-                  const blob = await res.blob();
-                  const reader = new FileReader();
-                  const base64 = await new Promise<string>((resolve) => {
-                      reader.onloadend = () => resolve(reader.result as string);
-                      reader.readAsDataURL(blob);
-                  });
-                  fontCache.set(fetchUrl, base64);
-              } catch (e) {
-                  console.warn(`Failed to inline font: ${fetchUrl} (backup method)`, e);
-                  continue;
-              }
-          }
-          newCss = newCss.split(originalUrl).join(`url('${fontCache.get(fetchUrl)}')`);
-      }
-      return newCss;
-  }
-
 </script>
 
 <!-- Mount the Global Confirm Dialog -->

@@ -44,6 +44,309 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
         }
     }
 }
+
+pub async fn print_to_pdf_with_url_native<R: Runtime>(
+    app: AppHandle<R>,
+    window: WebviewWindow<R>,
+    url: String,
+    filename: String,
+) -> Result<String, String> {
+    let output_path = app.path().app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join(&filename);
+
+    if let Some(parent) = output_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        // Use WKPDFConfiguration (modern) as default for URL printing
+        match print_native_with_url_mac_wkpdf(window, url, output_path).await {
+             Ok(path) => Ok(path),
+             Err(e) => {
+                 println!("Native print (WKPDF) failed: {}. No fallback configured.", e);
+                 Err(e)
+             }
+        }
+    }
+    
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("Native URL printing not implemented for this platform.".to_string())
+    }
+}
+
+// ================= MAC OS NATIVE (WKPDFConfiguration - URL) =================
+#[cfg(target_os = "macos")]
+pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R>, url: String, output_path: PathBuf) -> Result<String, String> {
+
+    use objc2_foundation::{NSData, NSError, NSString, NSRect, NSPoint, NSSize, NSURL, NSURLRequest};
+    use objc2_web_kit::{WKPDFConfiguration, WKWebView, WKWebViewConfiguration};
+    use block2::RcBlock;
+    use std::sync::mpsc;
+    use objc2::rc::Retained;
+    use objc2::{MainThreadMarker, msg_send};
+    use objc2::runtime::AnyObject;
+    use std::thread;
+    use std::time::Duration;
+
+    let path_str = output_path.to_string_lossy().to_string();
+    let (ptr_tx, ptr_rx) = mpsc::channel();
+    
+    // Step 1: Initialize, Attach, and Load
+    let url_clone = url.clone();
+    
+    window.with_webview(move |webview| {
+        unsafe {
+            let mtm = MainThreadMarker::new_unchecked();
+            
+            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(595.0, 842.0));
+            let config = WKWebViewConfiguration::new(mtm);
+            
+            let alloc_view = mtm.alloc::<WKWebView>();
+            let new_view: Retained<WKWebView> = msg_send![alloc_view, initWithFrame: frame, configuration: &*config];
+            
+            // Attach (Hidden)
+            let current_wv_ptr = webview.inner() as *mut AnyObject;
+            let current_wv = &*current_wv_ptr;
+            let superview: Option<Retained<AnyObject>> = msg_send![current_wv, superview];
+            
+            if let Some(sv) = superview {
+                let _: () = msg_send![&sv, addSubview: &*new_view];
+                let _: () = msg_send![&*new_view, setAlphaValue: 0.0f64];
+            } else {
+                println!("Warning: Could not find superview to attach print webview.");
+            }
+            
+            // Load Request
+            let url_ns = NSString::from_str(&url_clone);
+            let ns_url = NSURL::URLWithString(&url_ns).expect("Invalid URL");
+            let request = NSURLRequest::requestWithURL(&ns_url);
+            
+            new_view.loadRequest(&request);
+            
+            // Pass pointer out
+            let raw: *mut WKWebView = Retained::into_raw(new_view);
+            let addr = raw as usize;
+            let _ = ptr_tx.send(addr);
+        }
+    }).map_err(|e| e.to_string())?;
+
+    // Step 2: Wait for content to load
+    let addr = ptr_rx.recv().map_err(|_| "Failed to create webview".to_string())?;
+    // Sleep to allow rendering (TODO: implement navigation delegate for robustness)
+    thread::sleep(Duration::from_millis(2000));
+
+    // Step 3: Print
+    let (result_tx, result_rx) = mpsc::channel();
+    let output_path_clone = output_path.clone();
+    let path_str_clone = path_str.clone();
+
+    window.with_webview(move |_webview| {
+        unsafe {
+            let mtm = MainThreadMarker::new_unchecked();
+            
+            // Reconstruct Retained
+            let ptr = addr as *mut WKWebView;
+            let target_webview: Retained<WKWebView> = Retained::from_raw(ptr).expect("Invalid webview pointer");
+
+            let pdf_config = WKPDFConfiguration::new(mtm);
+            let webview_for_block = target_webview.clone();
+
+            let completion_handler = RcBlock::new(move |pdf_data: *mut NSData, error: *mut NSError| {
+                // Remove from superview
+                let _: () = msg_send![&*webview_for_block, removeFromSuperview];
+
+                if !error.is_null() {
+                    let error_obj: &NSError = &*error;
+                    let desc = error_obj.localizedDescription();
+                    let err_msg = format!("PDF creation failed: {}", desc);
+                    let _ = result_tx.send(Err(err_msg));
+                    return;
+                }
+
+                if pdf_data.is_null() {
+                    let _ = result_tx.send(Err("PDF creation failed: No data returned".to_string()));
+                    return;
+                }
+
+                // NSData processing
+                let data: &NSData = &*pdf_data;
+                let ptr: *const std::ffi::c_void = msg_send![data, bytes];
+                let len: usize = msg_send![data, length];
+                
+                let ptr = ptr as *const u8;
+                let data_slice = std::slice::from_raw_parts(ptr, len);
+
+                match std::fs::write(&output_path_clone, data_slice) {
+                    Ok(_) => {
+                        println!("Native PDF generated at: {:?}", output_path_clone);
+                        let _ = result_tx.send(Ok(path_str_clone.clone()));
+                    },
+                    Err(e) => {
+                        let _ = result_tx.send(Err(e.to_string()));
+                    }
+                }
+            });
+
+            target_webview.createPDFWithConfiguration_completionHandler(Some(&pdf_config), &*completion_handler);
+        }
+    }).map_err(|e| e.to_string())?;
+
+    result_rx.recv().map_err(|e| e.to_string())?
+}
+
+// ================= MAC OS NATIVE (NSPrintOperation - URL) =================
+#[cfg(target_os = "macos")]
+pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, url: String, output_path: PathBuf) -> Result<String, String> {
+    use objc2_foundation::{NSString, NSRect, NSPoint, NSSize, NSURL, NSURLRequest};
+    use objc2_web_kit::{WKWebView, WKWebViewConfiguration};
+    use objc2_app_kit::{NSPrintInfo, NSPrintOperation, NSPrinter};
+    use objc2::rc::Retained;
+    use objc2::{MainThreadMarker, msg_send};
+    use objc2::runtime::{AnyObject, AnyClass};
+    use std::sync::mpsc;
+    use std::thread;
+    use std::time::Duration;
+    use std::ffi::{c_void, CStr};
+
+    let path_str = output_path.to_string_lossy().to_string();
+    let (ptr_tx, ptr_rx) = mpsc::channel();
+
+    // Step 1: Initialize, Attach, and Load
+    let url_clone = url.clone();
+
+    window.with_webview(move |webview| {
+        unsafe {
+            let mtm = MainThreadMarker::new_unchecked();
+
+            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(595.0, 842.0));
+            let config = WKWebViewConfiguration::new(mtm);
+
+            let alloc_view = mtm.alloc::<WKWebView>();
+            let new_view: Retained<WKWebView> = msg_send![alloc_view, initWithFrame: frame, configuration: &*config];
+
+            // Attach (Hidden)
+            let current_wv_ptr = webview.inner() as *mut AnyObject;
+            let current_wv = &*current_wv_ptr;
+            let superview: Option<Retained<AnyObject>> = msg_send![current_wv, superview];
+
+            if let Some(sv) = superview {
+                let _: () = msg_send![&sv, addSubview: &*new_view];
+                let _: () = msg_send![&*new_view, setAlphaValue: 0.0f64];
+            }
+
+            // Load Request
+            let url_ns = NSString::from_str(&url_clone);
+            // Create NSURL
+            let ns_url = NSURL::URLWithString(&url_ns).expect("Invalid URL");
+            // Create NSURLRequest
+            let request = NSURLRequest::requestWithURL(&ns_url);
+            
+            new_view.loadRequest(&request);
+
+            // Pass pointer out
+            let raw: *mut WKWebView = Retained::into_raw(new_view);
+            let addr = raw as usize;
+            let _ = ptr_tx.send(addr);
+        }
+    }).map_err(|e| e.to_string())?;
+
+    // Step 2: Wait for content to load
+    let addr = ptr_rx.recv().map_err(|_| "Failed to create webview".to_string())?;
+    // Increase wait time slightly for network request (even local)
+    thread::sleep(Duration::from_millis(2000));
+
+    // Step 3: Print
+    let (result_tx, result_rx) = mpsc::channel();
+    let output_path_clone = output_path.clone();
+    let path_str_clone = path_str.clone();
+
+    window.with_webview(move |_webview| {
+        unsafe {
+            let mtm = MainThreadMarker::new_unchecked();
+
+            let ptr = addr as *mut WKWebView;
+            let target_webview: Retained<WKWebView> = Retained::from_raw(ptr).expect("Invalid webview pointer");
+
+            // ========== Create Independent NSPrintInfo ==========
+            let alloc_print_info = mtm.alloc::<NSPrintInfo>();
+            let print_info: Retained<NSPrintInfo> = msg_send![alloc_print_info, init];
+
+            let dict = print_info.dictionary();
+
+            // Set Disposition: Save
+            let k_disposition = NSString::from_str("NSPrintJobDisposition");
+            let v_save = NSString::from_str("NSPrintSaveJob");
+            let _: () = msg_send![&dict, setObject: &*v_save, forKey: &*k_disposition];
+
+            // Set Save Path
+            let k_url = NSString::from_str("NSPrintJobSavingURL");
+            let output_path_str = output_path_clone.to_string_lossy();
+            let v_url = NSURL::fileURLWithPath(&NSString::from_str(&output_path_str));
+            let _: () = msg_send![&dict, setObject: &*v_url, forKey: &*k_url];
+
+            // Set Generic Printer
+            let k_printer_name = NSString::from_str("Generic");
+            let cls_name = CStr::from_bytes_with_nul(b"NSPrinter\0").unwrap();
+            let printer_class = AnyClass::get(cls_name).expect("NSPrinter class not found");
+            let printer: Option<Retained<NSPrinter>> = msg_send![printer_class, printerWithName: &*k_printer_name];
+            
+            if let Some(p) = printer {
+                 let _: () = msg_send![&print_info, setPrinter: &*p];
+            }
+
+            print_info.setScalingFactor(1.0);
+            let paper_size = NSSize::new(595.0, 842.0); 
+            print_info.setPaperSize(paper_size);
+            print_info.setLeftMargin(0.0);
+            print_info.setRightMargin(0.0);
+            print_info.setTopMargin(0.0);
+            print_info.setBottomMargin(0.0);
+            let _: () = msg_send![&print_info, setOrientation: 0isize];
+            print_info.setVerticallyCentered(false);
+            print_info.setHorizontallyCentered(false);
+            // ========== End NSPrintInfo ==========
+
+            let print_op: Retained<NSPrintOperation> = target_webview.printOperationWithPrintInfo(&print_info);
+            print_op.setShowsPrintPanel(false);
+            print_op.setShowsProgressPanel(false);
+
+            let ns_window: Option<Retained<AnyObject>> = msg_send![&*target_webview, window];
+
+            let result = if let Some(win) = ns_window {
+                let null_ptr: *mut c_void = std::ptr::null_mut();
+                let _: () = msg_send![
+                    &print_op,
+                    runOperationModalForWindow: &*win,
+                    delegate: null_ptr,
+                    didRunSelector: null_ptr,
+                    contextInfo: null_ptr
+                ];
+
+                if output_path_clone.exists() {
+                    Ok(path_str_clone.clone())
+                } else {
+                    Err("Native print operation finished but file not found.".to_string())
+                }
+            } else {
+                let success: bool = print_op.runOperation();
+                if success && output_path_clone.exists() {
+                    Ok(path_str_clone.clone())
+                } else {
+                    Err("NSPrintOperation failed or no window context.".to_string())
+                }
+            };
+
+            let _: () = msg_send![&target_webview, removeFromSuperview];
+            let _ = result_tx.send(result);
+        }
+    }).map_err(|e| e.to_string())?;
+
+    result_rx.recv().map_err(|e| e.to_string())?
+}
+
 // ================= MAC OS NATIVE (NSPrintOperation) =================
 #[cfg(target_os = "macos")]
 pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
@@ -308,7 +611,7 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<
                 // webview_for_block is kept alive by the closure capture and dropped when the block is released
 
                 if !error.is_null() {
-                    let error_obj: &NSError = unsafe { &*error };
+                    let error_obj: &NSError = &*error;
                     let desc = error_obj.localizedDescription();
                     let domain = error_obj.domain();
                     let code = error_obj.code();

@@ -1,8 +1,44 @@
-use headless_chrome::{Browser, LaunchOptions, Tab};
+use headless_chrome::{Browser, LaunchOptions};
 use std::path::PathBuf;
 use std::fs;
-use std::sync::Arc;
 use anyhow::Result;
+
+pub async fn print_to_pdf_with_url(url: String, output_path: PathBuf) -> Result<String> {
+     // 1. Configure Launch Options
+    let launch_options = LaunchOptions {
+        headless: true,
+        sandbox: false, // Often necessary in certain environments
+        enable_gpu: false,
+        ..Default::default()
+    };
+
+    // 2. Launch Browser
+    let browser = Browser::new(launch_options)?;
+
+    // 3. Create a new tab
+    let tab = browser.new_tab()?;
+
+    // 4. Navigate to URL
+    tab.navigate_to(&url)?;
+    tab.wait_until_navigated()?;
+
+    // 5. Print to PDF
+    let pdf_options = headless_chrome::types::PrintToPdfOptions {
+        print_background: Some(true), 
+        margin_top: Some(0.0),
+        margin_bottom: Some(0.0),
+        margin_left: Some(0.0),
+        margin_right: Some(0.0),
+        ..Default::default()
+    };
+
+    let pdf_data = tab.print_to_pdf(Some(pdf_options))?;
+
+    // 6. Save to File
+    fs::write(&output_path, pdf_data)?;
+
+    Ok(output_path.to_string_lossy().to_string())
+}
 
 pub async fn print_to_pdf_with_html_string(html: String, output_path: PathBuf) -> Result<String> {
     // 1. Configure Launch Options

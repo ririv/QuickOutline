@@ -11,6 +11,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
+    "copy-katex-fonts": "node scripts/copy-katex-fonts.mjs",
     "build:unocss": "node scripts/build-unocss-runtime.mjs",
     "sign:sidecar": "node scripts/sign-sidecar.cjs",
     "update:sidecar": "node scripts/update-sidecar.cjs"
