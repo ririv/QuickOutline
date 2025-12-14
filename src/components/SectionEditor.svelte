@@ -118,7 +118,7 @@
           </svg>
           {#if hasContent('left')}<span class="dot"></span>{/if}
         </button>
-        <ArrowPopup className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
+        <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
                     triggerEl={leftBtnEl}>
           <PositionDiagram pos="left" type={type}/>
         </ArrowPopup>
@@ -140,7 +140,7 @@
           </svg>
           {#if hasContent('center')}<span class="dot"></span>{/if}
         </button>
-        <ArrowPopup className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
+        <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
                     triggerEl={centerBtnEl}>
           <PositionDiagram pos="center" type={type}/>
         </ArrowPopup>
@@ -162,7 +162,7 @@
           </svg>
           {#if hasContent('right')}<span class="dot"></span>{/if}
         </button>
-        <ArrowPopup className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
+        <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
                     triggerEl={rightBtnEl}>
           <PositionDiagram pos="right" type={type}/>
         </ArrowPopup>
@@ -192,7 +192,7 @@
           </svg>
           {#if hasContent('inner')}<span class="dot"></span>{/if}
         </button>
-        <ArrowPopup className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
+        <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
                     triggerEl={innerBtnEl}>
           <PositionDiagram pos="inner" type={type}/>
         </ArrowPopup>
@@ -217,7 +217,7 @@
           </svg>
           {#if hasContent('outer')}<span class="dot"></span>{/if}
         </button>
-        <ArrowPopup className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
+        <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
                     triggerEl={outerBtnEl}>
           <PositionDiagram pos="outer" type={type}/>
         </ArrowPopup>

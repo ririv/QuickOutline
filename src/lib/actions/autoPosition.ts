@@ -1,38 +1,27 @@
 // web/src/lib/actions/autoPosition.ts
-export function autoPosition(node: HTMLElement, { triggerEl }: { triggerEl: HTMLElement | undefined }) {
-  
-  // Calculate where the parent is.
-  // The popup is inside `div.arrow-popup` which usually has a parent like `.btn-wrapper`.
-  // Note: offsetParent might be null if hidden, so we check inside robustAdjust.
+export function autoPosition(node: HTMLElement, { triggerEl, fixed = false }: { triggerEl: HTMLElement | undefined, fixed?: boolean }) {
   
   function robustAdjust() {
       // Check if elements still exist
-      if (!triggerEl || !(triggerEl instanceof Element)) { // <-- 增加这个检查
-          console.error(
-              `[autoPosition] 'triggerEl' must be a DOM Element. ` +
-              `Received:`, triggerEl,
-              `\nHint: If you are using bind:this on a Svelte component, wrap it in a <div> and bind to the div instead.`
-          );
+      if (!triggerEl || !(triggerEl instanceof Element)) {
+          // If triggerEl is missing, we can't position.
           return;
       }
 
-      const offsetParent = node.offsetParent as HTMLElement;
-      if (!offsetParent) {
-          // If hidden or detached, we can't calculate offset relative to parent.
-          // For hover popups, they start hidden. We need to calculate when they become visible.
-          // The ResizeObserver on 'node' should trigger this when display changes from none -> block.
-          // But visibility:hidden elements DO have offsetParent? No, usually not if display is none.
-          // If visibility:hidden, they DO have layout.
-          return;
+      // If not fixed (absolute), we need offsetParent
+      let offsetParent: HTMLElement | null = null;
+      if (!fixed) {
+          offsetParent = node.offsetParent as HTMLElement;
+          if (!offsetParent) return; // Hidden or detached
       }
       
-      // We need measurements relative to the VIEWPORT to constrain against viewport.
       const triggerRect = triggerEl.getBoundingClientRect();
       const popupRect = node.getBoundingClientRect();
-      const parentRect = offsetParent.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
       const margin = 10;
 
+      // --- Horizontal Positioning (Shared) ---
+      
       // Ideal Left (Viewport coords)
       const triggerCenter = triggerRect.left + triggerRect.width / 2;
       let targetViewportLeft = triggerCenter - popupRect.width / 2;
@@ -43,24 +32,53 @@ export function autoPosition(node: HTMLElement, { triggerEl }: { triggerEl: HTML
           targetViewportLeft = viewportWidth - margin - popupRect.width;
       }
 
-      // Convert Viewport Left -> Local Left (relative to offsetParent)
-      // localLeft = targetViewportLeft - parentRect.left
-      const finalLocalLeft = targetViewportLeft - parentRect.left;
-
-      // Arrow Logic (same as before)
+      // Arrow Logic
       let arrowX = triggerCenter - targetViewportLeft; // relative to popup left edge
       const safeZone = 12; // border-radius + arrow width margin
       if (arrowX < safeZone) arrowX = safeZone;
       if (arrowX > popupRect.width - safeZone) arrowX = popupRect.width - safeZone;
-
-      // Apply
-      node.style.left = `${finalLocalLeft}px`;
-      node.style.transform = 'none'; // Remove any centering transforms
+      
       node.style.setProperty('--arrow-x', `${arrowX}px`);
+      node.style.transform = 'none'; // Remove any centering transforms
+
+      // --- Apply Coordinates ---
+
+      if (fixed) {
+          // Fixed Positioning (Portal Mode)
+          node.style.position = 'fixed';
+          node.style.left = `${targetViewportLeft}px`;
+          
+          // Vertical Position
+          // Check placement class (top/bottom) to decide
+          // Note: Styles like 'bottom: 100%' in CSS won't work nicely with fixed top/left.
+          // We override top/bottom here.
+          
+          if (node.classList.contains('top')) {
+              // Popup ABOVE trigger
+              // bottom of popup = top of trigger - margin
+              const top = triggerRect.top - popupRect.height - 10; 
+              node.style.top = `${top}px`;
+              node.style.bottom = 'auto';
+          } else {
+              // Popup BELOW trigger (default)
+              // top of popup = bottom of trigger + margin
+              const top = triggerRect.bottom + 10;
+              node.style.top = `${top}px`;
+              node.style.bottom = 'auto';
+          }
+
+      } else {
+          // Absolute Positioning (Original Logic)
+          if (!offsetParent) return;
+          const parentRect = offsetParent.getBoundingClientRect();
+          const finalLocalLeft = targetViewportLeft - parentRect.left;
+
+          node.style.left = `${finalLocalLeft}px`;
+          // Vertical is handled by CSS (.top { bottom: 100% })
+      }
   }
 
   // Run
-  // We need to wait for layout. requestAnimationFrame is usually enough.
   requestAnimationFrame(robustAdjust);
 
   const resizeObserver = new ResizeObserver(robustAdjust);
@@ -72,7 +90,8 @@ export function autoPosition(node: HTMLElement, { triggerEl }: { triggerEl: HTML
   window.addEventListener('scroll', robustAdjust, true); // Capture scroll for position updates
 
   return {
-    update(newParams: { triggerEl: HTMLElement }) {
+    update(newParams: { triggerEl: HTMLElement, fixed?: boolean }) {
+      fixed = newParams.fixed ?? false;
       if (newParams.triggerEl !== triggerEl) {
         if (triggerEl) {
             resizeObserver.unobserve(triggerEl);

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { type Snippet } from 'svelte';
   import { autoPosition } from '@/lib/actions/autoPosition';
+  import { portal } from '@/lib/actions/portal';
 
   interface Props {
     placement?: 'top' | 'bottom'; // top: popup is above trigger (arrow points down); bottom: popup is below trigger (arrow points up)
@@ -9,6 +10,7 @@
     className?: string;
     children?: Snippet;
     triggerEl?: HTMLElement; // The element that triggers the popup, for positioning
+    usePortal?: boolean;
   }
 
   let { 
@@ -17,8 +19,15 @@
     padding = '8px',
     className = '',
     children,
-    triggerEl // Destructure the new prop
+    triggerEl,
+    usePortal = true
   }: Props = $props();
+
+  function portalAction(node: HTMLElement, enabled: boolean) {
+      if (enabled) {
+          return portal(node);
+      }
+  }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -28,23 +37,22 @@
   style:--min-width={minWidth}
   style:--padding={padding}
   onclick={(e) => e.stopPropagation()}
-  use:autoPosition={{ triggerEl }}
+  use:portalAction={usePortal}
+  use:autoPosition={{ triggerEl, fixed: usePortal }}
 >
   {@render children?.()}
 </div>
 
 <style>
-  .arrow-popup {
-    position: absolute;
-    background: #fff;
-    border: 1px solid #e1e4e8;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    border-radius: 6px;
-    z-index: 100;
-    min-width: var(--min-width);
-    padding: var(--padding);
-    
-    /* Initial state: managed by autoPosition */
+      .arrow-popup {
+      position: absolute;
+      background: #fff;
+          border: 1px solid #e1e4e8;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+          border-radius: 6px;
+          z-index: 5000; /* Increased to stay above LeftPane/SplitPane */
+          min-width: var(--min-width);
+          padding: var(--padding);    /* Initial state: managed by autoPosition */
     left: 0; 
     /* No default transform/centering */
     
