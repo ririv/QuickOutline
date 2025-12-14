@@ -44,11 +44,10 @@
   }
 
   onMount(() => {
-    if (markdownStore.content) {
-        setTimeout(() => {
-            editorComponent?.init(markdownStore.content, 'live',  { tableStyle: 'grid' });
-        }, 0);
-    }
+    // Always init, use empty string if no content
+    setTimeout(() => {
+        editorComponent?.init(markdownStore.content || '', 'live',  { tableStyle: 'grid' });
+    }, 0);
   });
 
   onDestroy(() => {

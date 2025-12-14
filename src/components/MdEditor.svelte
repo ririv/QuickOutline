@@ -33,9 +33,6 @@
     };
 
     onMount(() => {
-        // Ensure init() is called here with default values
-        init('# Hello CodeMirror 6\n\nTry typing **bold text** or *italic* here.\n\nMove cursor inside and outside the styled text to see the magic!');
-
         return () => {
              // Clean up any other manual listeners here if added later.
         };

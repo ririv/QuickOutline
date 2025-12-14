@@ -11,7 +11,7 @@ interface SectionConfig {
 
 export class MarkdownState {
     // Content
-    content = $state('');
+    content = $state('# Hello CodeMirror 6\n\nTry typing **bold text** or *italic* here.\n\nMove cursor inside and outside the styled text to see the magic!\n\n$$\\int^2_1xdx$$');
 
     // Status Bar State
     insertPos = $state(1);
