@@ -431,7 +431,7 @@
         right: 2px;
         width: 4px;
         height: 4px;
-        background-color: #ff4d4f;
+        background-color: #ccc; /* Matches CollapseTrigger center-dot */
         border-radius: 50%;
     }
 
