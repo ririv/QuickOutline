@@ -40,7 +40,7 @@
     }
 </script>
 
-<div class="w-[50px] bg-white border-r border-[#dcdfe6] flex flex-col justify-between py-[10px] h-full box-border">
+<div class="w-[50px] bg-white border-r border-[#dcdfe6] flex flex-col justify-between py-[10px] h-full box-border shrink-0">
     <div class="flex flex-col items-center gap-2">
         <button 
             class={getNavBtnClass(activeTab === FnTab.bookmark)} 
