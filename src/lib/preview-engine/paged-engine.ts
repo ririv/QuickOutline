@@ -250,8 +250,8 @@ function generatePageCss(header: any, footer: any) {
        return cssContent || '""';
     };
 
-    const headerBorder = header?.drawLine ? 'border-bottom: 1px solid black; padding-bottom: 5px;' : '';
-    const footerBorder = footer?.drawLine ? 'border-top: 1px solid black; padding-top: 5px;' : '';
+    const headerBorder = `border-bottom: 1px solid ${header?.drawLine ? 'black' : 'transparent'}; padding-bottom: 5px;`;
+    const footerBorder = `border-top: 1px solid ${footer?.drawLine ? 'black' : 'transparent'}; padding-top: 5px;`;
 
     return `
       @page {
