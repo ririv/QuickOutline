@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { handlePagedUpdate } from '../../lib/preview-engine/paged-engine';
+    import { PagedEngine } from '../../lib/preview-engine/paged-engine';
   
     export let payload: { html: string, styles: string, header: any, footer: any };
     export let layout: 'single' | 'double' = 'single';
@@ -8,15 +8,20 @@
     export let onRenderComplete: ((duration: number) => void) | undefined = undefined;
   
     let container: HTMLDivElement;
+    let engine: PagedEngine;
+
+    onMount(() => {
+        engine = new PagedEngine();
+    });
   
     // 监听 payload 变化并触发渲染
     // 使用 $effect 或 reactive statement
-    $: if (container && payload) {
-        handlePagedUpdate(payload, container, onRenderComplete);
+    $: if (container && payload && engine) {
+        engine.update(payload, container, onRenderComplete);
     }
   
     onDestroy(() => {
-        // 清理逻辑如果需要
+        engine?.destroy();
     });
   </script>
   
