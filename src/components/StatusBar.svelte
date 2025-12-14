@@ -81,8 +81,8 @@
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div 
             bind:this={offsetBtnEl}
-            class="status-item {activePopup === 'offset' ? 'active' : ''}" 
-            onclick={() => togglePopup('offset')} 
+            class="status-item {activePopup === 'offset' ? 'active' : ''}"
+            onclick={() => togglePopup('offset')}
             title="Set Page Offset"
           >
               <span class="icon">
@@ -102,8 +102,8 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         bind:this={posBtnEl}
-        class="status-item {activePopup === 'pos' ? 'active' : ''}" 
-        onclick={() => togglePopup('pos')} 
+        class="status-item {activePopup === 'pos' ? 'active' : ''}"
+        onclick={() => togglePopup('pos')}
         title="Set Insert Position"
       >
           <span class="icon">
@@ -121,8 +121,8 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div 
         bind:this={styleBtnEl}
-        class="status-item {activePopup === 'style' ? 'active' : ''}" 
-        onclick={() => togglePopup('style')} 
+        class="status-item {activePopup === 'style' ? 'active' : ''}"
+        onclick={() => togglePopup('style')}
         title="Set Numbering Style"
       >
           <span class="icon">
@@ -140,12 +140,12 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div 
         bind:this={setupBtnEl}
-        class="status-item {activePopup === 'setup' ? 'active' : ''}" 
-        onclick={() => togglePopup('setup')} 
+        class="status-item {activePopup === 'setup' ? 'active' : ''}"
+        onclick={() => togglePopup('setup')}
         title="Page Setup: {pageLayout.size}, {pageLayout.orientation}, Margins..."
       >
           <span class="icon" class:rotated={pageLayout.orientation === 'landscape'}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                   <polyline points="14 2 14 8 20 8"></polyline>
                   <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -209,21 +209,26 @@
       background-color: #e1e4e8;
       color: #333;
   }
-  
-      .icon { 
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 16px; 
-          height: 16px;
-          opacity: 0.8;
-          transition: transform 0.2s ease; /* Add transition for smooth rotation */
-      }
-      .icon.rotated {
-          transform: rotate(90deg);
-      }  
+
+  .icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      opacity: 0.8;
+      transition: transform 0.2s ease; /* Add transition for smooth rotation */
+      transform-origin: center center;
+      flex-shrink: 0; /* Prevent shrinking */
+      will-change: transform; /* Optimize for animation */
+  }
+
+  .icon.rotated {
+      transform: rotate(90deg);
+  }
+
   .spacer { flex: 1; }
-  
+
   .icon-btn {
       background: transparent;
       border: none;
