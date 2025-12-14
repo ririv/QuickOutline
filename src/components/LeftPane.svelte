@@ -84,6 +84,16 @@
     </div>
 
     <div class="flex flex-col items-center gap-2">
+        {#if import.meta.env.DEV}
+        <button
+            class={getNavBtnClass(activeTab === FnTab.experimental)}
+            onclick={() => switchTab(FnTab.experimental)}
+            title="Experimental Features"
+        >
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.1.5-3z"/></svg>
+        </button>
+        {/if}
+
         <button
             class={getNavBtnClass(activeTab === FnTab.settings)}
             onclick={() => switchTab(FnTab.settings)}

@@ -6,6 +6,7 @@
     import PageLabelTab from './pages/pagelabel/App.svelte';
     import TocGeneratorTab from './pages/toc/App.svelte';
     import MarkdownTab from './pages/markdown/App.svelte';
+    import ExperimentalTab from './pages/experimental/App.svelte';
     import RpcProvider from './components/RpcProvider.svelte';
     import MessageContainer from './components/common/MessageContainer.svelte';
     import FileHeader from './components/FileHeader.svelte';
@@ -132,6 +133,17 @@
                 </div>
                 <div style="display: {activeTab === FnTab.settings ? 'block' : 'none'}; height: 100%;">
                     <Settings />
+                </div>
+                <!-- Experimental Tab - Only show in DEV mode, otherwise show a default welcome -->
+                <div style="display: {activeTab === FnTab.experimental ? 'block' : 'none'}; height: 100%;">
+                    {#if import.meta.env.DEV}
+                        <ExperimentalTab />
+                    {:else}
+                        <div class="placeholder">
+                            <h1>Experimental Features Disabled</h1>
+                            <p>This feature is only available in development mode.</p>
+                        </div>
+                    {/if}
                 </div>
             </RpcProvider>
         </div>

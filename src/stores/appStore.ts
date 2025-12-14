@@ -7,7 +7,8 @@ export enum FnTab {
     label = 'label',
     preview = 'preview',
     markdown = 'markdown',
-    settings = 'settings'
+    settings = 'settings',
+    experimental = 'experimental'
 }
 
 // 定义连接状态类型
