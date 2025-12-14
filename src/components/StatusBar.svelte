@@ -1,12 +1,15 @@
 <script lang="ts">
   import SettingsPopup from './SettingsPopup.svelte';
+  import PageSetupPopup from './PageSetupPopup.svelte';
   import { onMount } from 'svelte';
   import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/styleMaps";
+  import { type PageLayout, defaultPageLayout } from "@/lib/types/page";
 
   interface Props {
     offset?: number;
     insertPos?: number;
     numberingStyle?: PageLabelNumberingStyle; // 改为枚举名
+    pageLayout?: PageLayout;
     showOffset?: boolean;
     showNumberingStyle?: boolean;
     onGenerate?: () => void;
@@ -17,27 +20,30 @@
     offset = $bindable(0),
     insertPos = $bindable(1),
     numberingStyle = $bindable(PageLabelNumberingStyle.NONE),
+    pageLayout = $bindable(defaultPageLayout),
     showOffset = true,
     showNumberingStyle = true,
     onGenerate,
     onParamChange
   }: Props = $props();
 
-  let activePopup: 'offset' | 'pos' | 'style' | null = $state(null);
+  let activePopup: 'offset' | 'pos' | 'style' | 'setup' | null = $state(null);
   let barElement: HTMLElement;
   
   // Trigger elements for popups
   let offsetBtnEl = $state<HTMLElement | undefined>();
   let posBtnEl = $state<HTMLElement | undefined>();
   let styleBtnEl = $state<HTMLElement | undefined>();
+  let setupBtnEl = $state<HTMLElement | undefined>();
 
-  function togglePopup(type: 'offset' | 'pos' | 'style') {
+  function togglePopup(type: 'offset' | 'pos' | 'style' | 'setup') {
       if (activePopup === type) activePopup = null;
       else activePopup = type;
   }
 
   function onPopupChange() {
       if (activePopup === 'style') activePopup = null;
+      // Setup popup doesn't auto-close on change usually, as multiple fields exist
       onParamChange?.();
   }
 
@@ -113,6 +119,24 @@
       {/if}
   </div>
   {/if}
+
+  <div class="status-item-wrapper">
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div 
+        bind:this={setupBtnEl}
+        class="status-item {activePopup === 'setup' ? 'active' : ''}" 
+        onclick={() => togglePopup('setup')} 
+        title="Page Setup"
+      >
+          <span class="icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </span> {pageLayout.size}
+      </div>
+      {#if activePopup === 'setup'}
+          <PageSetupPopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={setupBtnEl} />
+      {/if}
+  </div>
   
   <div class="spacer"></div>
   

@@ -63,6 +63,7 @@
     const _ = { 
         h: JSON.stringify(tocStore.headerConfig), 
         f: JSON.stringify(tocStore.footerConfig),
+        pl: JSON.stringify(tocStore.pageLayout),
         t: tocStore.title,
         o: tocStore.offset,
         i: tocStore.insertPos,
@@ -118,7 +119,8 @@
             html,
             styles,
             header: tocStore.headerConfig,
-            footer: tocStore.footerConfig
+            footer: tocStore.footerConfig,
+            pageLayout: tocStore.pageLayout
         };
         
       } catch (e: any) {
@@ -185,6 +187,7 @@
             numberingStyle: tocStore.numberingStyle,
             header: tocStore.headerConfig,
             footer: tocStore.footerConfig,
+            pageLayout: tocStore.pageLayout,
             links: links
           };
 
@@ -272,6 +275,7 @@
       bind:offset={tocStore.offset} 
       bind:insertPos={tocStore.insertPos} 
       bind:numberingStyle={tocStore.numberingStyle}
+      bind:pageLayout={tocStore.pageLayout}
       onGenerate={handleGenerate} 
       onParamChange={triggerPreview} 
   />

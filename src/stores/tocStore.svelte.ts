@@ -1,4 +1,5 @@
 import { PageLabelNumberingStyle } from "@/lib/styleMaps";
+import { defaultPageLayout, type PageLayout } from "@/lib/types/page";
 
 interface SectionConfig {
     left: string;
@@ -21,6 +22,7 @@ export class TocState {
     offset = $state(0);
     insertPos = $state(1);
     numberingStyle = $state(PageLabelNumberingStyle.NONE);
+    pageLayout = $state<PageLayout>({ ...defaultPageLayout });
     
     headerConfig = $state<SectionConfig>({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
     footerConfig = $state<SectionConfig>({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
@@ -51,6 +53,7 @@ export class TocState {
         this.offset = 0;
         this.insertPos = 1;
         this.numberingStyle = PageLabelNumberingStyle.NONE;
+        this.pageLayout = { ...defaultPageLayout };
         this.headerConfig = { left: '', center: '', right: '', inner: '', outer: '', drawLine: false };
         this.footerConfig = { left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false };
     }

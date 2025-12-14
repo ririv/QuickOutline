@@ -1,10 +1,12 @@
 import { Previewer } from 'pagedjs';
+import type { PageLayout } from '@/lib/types/page';
 
 interface PagedPayload {
     html: string;
     styles: string;
     header: any;
     footer: any;
+    pageLayout?: PageLayout;
 }
 
 // Global reference for compatibility with external components (e.g. TOC Generator)
@@ -115,8 +117,8 @@ export class PagedEngine {
         targetBuffer!.style.display = 'block'; 
 
         // Prepare Content
-        const { html, styles, header, footer } = payload;
-        const pageCss = generatePageCss(header, footer);
+        const { html, styles, header, footer, pageLayout } = payload;
+        const pageCss = generatePageCss(header, footer, pageLayout);
         
         const pageCssObject = {
             [window.location.href]: pageCss
@@ -229,7 +231,7 @@ export class PagedEngine {
 }
 
 // Helper function for CSS generation (pure function, no state)
-function generatePageCss(header: any, footer: any) {
+function generatePageCss(header: any, footer: any, layout?: PageLayout) {
     const getContent = (val: string) => {
        if (!val) return '""';
        const parts = val.split('{p}');
@@ -253,10 +255,21 @@ function generatePageCss(header: any, footer: any) {
     const headerBorder = `border-bottom: 1px solid ${header?.drawLine ? 'black' : 'transparent'}; padding-bottom: 5px;`;
     const footerBorder = `border-top: 1px solid ${footer?.drawLine ? 'black' : 'transparent'}; padding-top: 5px;`;
 
+    // Layout values
+    const size = layout?.size || 'A4';
+    const orientation = layout?.orientation || 'portrait';
+    const mt = layout?.marginTop ?? 20;
+    const mb = layout?.marginBottom ?? 20;
+    const ml = layout?.marginLeft ?? 20;
+    const mr = layout?.marginRight ?? 20;
+
     return `
       @page {
-          size: A4;
-          margin: 20mm;
+          size: ${size} ${orientation};
+          margin-top: ${mt}mm;
+          margin-bottom: ${mb}mm;
+          margin-left: ${ml}mm;
+          margin-right: ${mr}mm;
           
           @top-left { 
               content: ${getContent(header?.left)};
@@ -264,7 +277,7 @@ function generatePageCss(header: any, footer: any) {
               ${headerBorder} 
           }
           @top-center { 
-              content: ${getContent(header?.center)}; 
+              content: ${getContent(header?.center)};
               vertical-align: bottom;
               ${headerBorder} 
           }

@@ -75,7 +75,8 @@
           html: htmlContent,
           styles: generatedCss,
           header: markdownStore.headerConfig,
-          footer: markdownStore.footerConfig
+          footer: markdownStore.footerConfig,
+          pageLayout: markdownStore.pageLayout
       };
   }
 
@@ -211,10 +212,11 @@
   <StatusBar 
       bind:insertPos={markdownStore.insertPos} 
       bind:numberingStyle={markdownStore.numberingStyle}
+      bind:pageLayout={markdownStore.pageLayout}
       showOffset={false} 
       showNumberingStyle={false}
       onGenerate={handleGenerate} 
-      onParamChange={() => { /* No specific action for param changes in Markdown tab */ }}
+      onParamChange={debouncedPreview}
   />
 </main>
 
