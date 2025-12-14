@@ -83,6 +83,8 @@
                     options={printModeOptions} 
                     bind:value={printStore.mode} 
                     placeholder="Select print mode..."
+                    displayKey="label"
+                    optionKey="label"
                 />
             </div>
              <p class="text-xs text-gray-500 mt-2">
