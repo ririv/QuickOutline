@@ -119,7 +119,8 @@
                     <div class="w-full">
                         <StyledSelect 
                             options={styles} 
-                            labelKey="displayText"
+                            displayKey="displayText"
+                            optionKey="displayText"
                             valueKey="enumName"
                             bind:value={$pageLabelStore.numberingStyle} 
                         />

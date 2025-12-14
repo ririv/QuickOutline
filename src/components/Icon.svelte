@@ -3,20 +3,24 @@
     import deleteSvg from '@/assets/icons/delete-item.svg?raw';
     import plusSvg from '@/assets/icons/plus.svg?raw';
     import successSvg from '@/assets/icons/success.svg?raw';
+    import pageOrientationSvg from '@/assets/icons/page-orientation.svg?raw'; // Import new SVG
 
     interface Props {
         name?: string;
         data?: string; // Support direct raw SVG string
         class?: string;
+        width?: string | number;
+        height?: string | number;
     }
 
-    let { name, data, class: className = "" }: Props = $props();
+    let { name, data, class: className = "", width, height }: Props = $props();
 
     const icons: Record<string, string> = {
         'trash': trashSvg,
         'delete': deleteSvg,
         'add': plusSvg,
-        'check': successSvg
+        'check': successSvg,
+        'page-orientation': pageOrientationSvg // Add new SVG to map
     };
 
     const svgContent = $derived.by(() => {
@@ -38,7 +42,11 @@
                     svg.setAttribute('class', existingClass ? `${existingClass} ${className}` : className);
                 }
 
-                // 2. Handle Color (fill="currentColor")
+                // 2. Handle Width/Height
+                if (width) svg.setAttribute('width', String(width));
+                if (height) svg.setAttribute('height', String(height));
+
+                // 3. Handle Color (fill="currentColor")
                 const rootFill = svg.getAttribute('fill');
                 if (!rootFill || (rootFill !== 'none' && rootFill !== 'currentColor')) {
                     svg.setAttribute('fill', 'currentColor');

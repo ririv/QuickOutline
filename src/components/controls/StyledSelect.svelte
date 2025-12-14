@@ -7,8 +7,10 @@
     placeholder?: string;
     disabled?: boolean;
     onchange?: (val: any) => void;
-    labelKey?: string;
     valueKey?: string;
+    displayKey?: string; // Key for the label shown in the closed state
+    optionKey?: string;  // Key for the label shown in the dropdown options
+    item?: import('svelte').Snippet<[T]>; // Custom item renderer
   }
 
   let { 
@@ -17,15 +19,17 @@
     placeholder = 'Select...',
     disabled = false,
     onchange,
-    labelKey = 'label',
-    valueKey = 'value'
+    valueKey = 'value',
+    displayKey = 'display', // New default, assumes options have a 'display' prop
+    optionKey = 'display',   // New default
+    item
   }: Props<T> = $props();
 
   let isOpen = $state(false);
 
-  function getLabel(opt: T): string {
-    if (typeof opt === 'object' && opt !== null && labelKey in opt) {
-      return String((opt as any)[labelKey]);
+  function getLabel(opt: T, key: string = 'label'): string { // key is now explicitly passed
+    if (typeof opt === 'object' && opt !== null && key in opt) {
+      return String((opt as any)[key]);
     }
     return String(opt);
   }
@@ -37,11 +41,11 @@
     return opt;
   }
 
-  // Find the label for the current value
+  // Find the label for the current value (uses displayKey)
   let currentLabel = $derived.by(() => {
     if (value === undefined || value === null) return '';
     const selectedOpt = options.find(opt => getValue(opt) === value);
-    return selectedOpt ? getLabel(selectedOpt) : '';
+    return selectedOpt ? getLabel(selectedOpt, displayKey) : ''; // Use displayKey here
   });
 
   function toggle() {
@@ -88,7 +92,11 @@
                   aria-selected={value === optVal}
                   onkeydown={(e) => { if(e.key === 'Enter') select(opt); }}
               >
-                  {getLabel(opt)}
+                  {#if item}
+                      {@render item(opt)}
+                  {:else}
+                      {getLabel(opt, optionKey)}
+                  {/if}
                   {#if value === optVal}
                       <span class="check">
                           <svg viewBox="0 0 1024 1024" width="12" height="12"><path d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 0 0-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1 0.4-12.8-6.3-12.8z" fill="#1677ff"></path></svg>
