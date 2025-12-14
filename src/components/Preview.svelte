@@ -218,10 +218,12 @@
         overflow: hidden;
     }
 
-    /* Paged.js specific sizing (A4 default) */
+    /* Paged.js specific sizing (A4 default) - REMOVED to allow dynamic sizing */
     :global(.pagedjs_page) {
-        width: 595pt;
-        min-height: 842pt;
+        /* width: 595pt; */
+        /* min-height: 842pt; */
+        background-color: white; /* Ensure background matches */
+        margin-bottom: 20px;
     }
 
     :global(.page-wrapper) {

@@ -19,7 +19,7 @@ export class PagedEngine {
     private pendingPayload: PagedPayload | null = null;
     private bufferA: HTMLDivElement | null = null;
     private bufferB: HTMLDivElement | null = null;
-    private activeBuffer: 'A' | 'B' = 'B'; 
+    private activeBuffer: 'A' | 'B' = 'B';
 
     constructor() {
         // Register self as active when created (simplified logic for now)
@@ -39,7 +39,7 @@ export class PagedEngine {
             this.bufferB.remove();
             this.bufferB = null;
         }
-        
+
         if (activeEngineInstance === this) {
             activeEngineInstance = null;
         }
@@ -61,7 +61,7 @@ export class PagedEngine {
 
         this.isRendering = true;
         const startTime = performance.now();
-        
+
         try {
             await this.renderToBuffer(payload, container);
             const endTime = performance.now();
@@ -95,10 +95,10 @@ export class PagedEngine {
             container.appendChild(this.bufferA);
             container.appendChild(this.bufferB);
         } else {
-             // Ensure buffers are still attached to the current container
-             // This handles cases where container might have changed (though usually Engine is recreated)
-             if (!container.contains(this.bufferA)) container.appendChild(this.bufferA);
-             if (!container.contains(this.bufferB)) container.appendChild(this.bufferB);
+            // Ensure buffers are still attached to the current container
+            // This handles cases where container might have changed (though usually Engine is recreated)
+            if (!container.contains(this.bufferA)) container.appendChild(this.bufferA);
+            if (!container.contains(this.bufferB)) container.appendChild(this.bufferB);
         }
 
         // Determine target buffer (Render to the HIDDEN one)
@@ -108,18 +108,18 @@ export class PagedEngine {
 
         // Clear target buffer
         targetBuffer!.innerHTML = '';
-        
+
         targetBuffer!.style.opacity = '0';
         targetBuffer!.style.position = 'absolute';
         targetBuffer!.style.top = '0';
         targetBuffer!.style.left = '0';
-        targetBuffer!.style.zIndex = '-1'; 
-        targetBuffer!.style.display = 'block'; 
+        targetBuffer!.style.zIndex = '-1';
+        targetBuffer!.style.display = 'block';
 
         // Prepare Content
         const { html, styles, header, footer, pageLayout } = payload;
         const pageCss = generatePageCss(header, footer, pageLayout);
-        
+
         const pageCssObject = {
             [window.location.href]: pageCss
         };
@@ -136,25 +136,25 @@ export class PagedEngine {
                 maxChars: 1500,
             }
         });
-        
+
         console.log('[PagedEngine] Starting preview...');
         try {
             await previewer.preview(contentWithStyle, [pageCssObject], targetBuffer);
             console.log('[PagedEngine] Preview finished.');
-            
+
             targetBuffer!.style.position = 'static';
             targetBuffer!.style.zIndex = 'auto';
             targetBuffer!.style.opacity = '1';
-            
+
             if (oldActive) {
                 oldActive.style.display = 'none';
-                oldActive.style.zIndex = ''; 
+                oldActive.style.zIndex = '';
             }
-            
+
         } catch (err) {
             console.error('[PagedEngine] Preview failed:', err);
             throw err;
-        } 
+        }
 
         // SWAP BUFFERS
         console.log('[PagedEngine] Swapping buffers. Showing:', targetBufferName);
@@ -175,15 +175,15 @@ export class PagedEngine {
 
         const tocEntries: Array<{ title: string; level: number; pageIndex: number; y: number }> = [];
         const pages = targetEl.querySelectorAll('.pagedjs_page');
-        
+
         pages.forEach((pageEl, pageIndex) => {
             const headings = pageEl.querySelectorAll('h1, h2, h3, h4, h5, h6');
             const pageRect = pageEl.getBoundingClientRect();
-            
+
             headings.forEach((heading) => {
                 const headingRect = heading.getBoundingClientRect();
                 const y = headingRect.top - pageRect.top;
-                
+
                 tocEntries.push({
                     title: (heading as HTMLElement).innerText || '',
                     level: parseInt(heading.tagName.substring(1)),
@@ -202,17 +202,17 @@ export class PagedEngine {
 
         const links: Array<{ tocPageIndex: number, x: number, y: number, width: number, height: number, targetPage: string }> = [];
         const pages = targetEl.querySelectorAll('.pagedjs_page');
-        
+
         pages.forEach((pageEl, pageIndex) => {
             const pageRect = pageEl.getBoundingClientRect();
             const items = pageEl.querySelectorAll('.toc-item');
-            
+
             items.forEach(item => {
                 const itemRect = item.getBoundingClientRect();
                 const x = itemRect.left - pageRect.left;
                 const y = itemRect.top - pageRect.top;
                 const targetPage = item.getAttribute('data-target-page');
-                
+
                 if (targetPage) {
                     links.push({
                         tocPageIndex: pageIndex,
@@ -225,7 +225,7 @@ export class PagedEngine {
                 }
             });
         });
-        
+
         return links;
     }
 }
@@ -233,39 +233,60 @@ export class PagedEngine {
 // Helper function for CSS generation (pure function, no state)
 function generatePageCss(header: any, footer: any, layout?: PageLayout) {
     const getContent = (val: string) => {
-       if (!val) return '""';
-       const parts = val.split('{p}');
-       const escapedParts = parts.map(part => {
-           if (part === '') return null;
-           const escaped = part.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-           return `"${escaped}"`;
-       });
-       let cssContent = '';
-       for (let i = 0; i < escapedParts.length; i++) {
-           if (escapedParts[i]) cssContent += escapedParts[i];
-           if (i < escapedParts.length - 1) {
-               if (cssContent.length > 0) cssContent += ' ';
-               cssContent += 'counter(page)';
-               if (i < escapedParts.length - 1) cssContent += ' ';
-           }
-       }
-       return cssContent || '""';
+        if (!val) return '""';
+        const parts = val.split('{p}');
+        const escapedParts = parts.map(part => {
+            if (part === '') return null;
+            const escaped = part.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            return `"${escaped}"`;
+        });
+        let cssContent = '';
+        for (let i = 0; i < escapedParts.length; i++) {
+            if (escapedParts[i]) cssContent += escapedParts[i];
+            if (i < escapedParts.length - 1) {
+                if (cssContent.length > 0) cssContent += ' ';
+                cssContent += 'counter(page)';
+                if (i < escapedParts.length - 1) cssContent += ' ';
+            }
+        }
+        return cssContent || '""';
     };
 
     const headerBorder = `border-bottom: 1px solid ${header?.drawLine ? 'black' : 'transparent'}; padding-bottom: 5px;`;
     const footerBorder = `border-top: 1px solid ${footer?.drawLine ? 'black' : 'transparent'}; padding-top: 5px;`;
 
     // Layout values
-    const size = layout?.size || 'A4';
+    const sizeName = layout?.size || 'A4';
     const orientation = layout?.orientation || 'portrait';
     const mt = layout?.marginTop ?? 20;
     const mb = layout?.marginBottom ?? 20;
     const ml = layout?.marginLeft ?? 20;
     const mr = layout?.marginRight ?? 20;
 
+    // Define standard sizes in mm (Portrait W x H)
+    const sizes: Record<string, [string, string]> = {
+        'A4': ['210mm', '297mm'],
+        'A3': ['297mm', '420mm'],
+        'Letter': ['215.9mm', '279.4mm'],
+        'Legal': ['215.9mm', '355.6mm']
+    };
+
+    let width = sizes['A4'][0];
+    let height = sizes['A4'][1];
+
+    if (sizes[sizeName]) {
+        if (orientation === 'landscape') {
+            width = sizes[sizeName][1];
+            height = sizes[sizeName][0];
+        } else {
+            width = sizes[sizeName][0];
+            height = sizes[sizeName][1];
+        }
+    }
+
     return `
       @page {
-          size: ${size} ${orientation};
+          size: ${width} ${height};
           margin-top: ${mt}mm;
           margin-bottom: ${mb}mm;
           margin-left: ${ml}mm;
