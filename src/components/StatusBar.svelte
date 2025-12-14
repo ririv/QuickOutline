@@ -47,6 +47,21 @@
       onParamChange?.();
   }
 
+  let layoutSummary = $derived.by(() => {
+      const { size, marginTop, marginBottom, marginLeft, marginRight } = pageLayout;
+      let marginText = '';
+      
+      if (marginTop === marginBottom && marginLeft === marginRight && marginTop === marginLeft) {
+          marginText = `${marginTop}mm`;
+      } else if (marginTop === marginBottom && marginLeft === marginRight) {
+          marginText = `${marginTop}x${marginLeft}mm`;
+      } else {
+          marginText = '*';
+      }
+      
+      return `${size} ${marginText}`;
+  });
+
   onMount(() => {
       const closePopup = (e: MouseEvent) => {
           const target = e.target as HTMLElement;
@@ -127,11 +142,18 @@
         bind:this={setupBtnEl}
         class="status-item {activePopup === 'setup' ? 'active' : ''}" 
         onclick={() => togglePopup('setup')} 
-        title="Page Setup"
+        title="Page Setup: {pageLayout.size}, {pageLayout.orientation}, Margins..."
       >
-          <span class="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-          </span> {pageLayout.size}
+          <span class="icon" class:rotated={pageLayout.orientation === 'landscape'}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+          </span>
+          {layoutSummary}
       </div>
       {#if activePopup === 'setup'}
           <PageSetupPopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={setupBtnEl} />
@@ -188,15 +210,18 @@
       color: #333;
   }
   
-  .icon { 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px; 
-      height: 16px;
-      opacity: 0.8; 
-  }
-  
+      .icon { 
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 16px; 
+          height: 16px;
+          opacity: 0.8;
+          transition: transform 0.2s ease; /* Add transition for smooth rotation */
+      }
+      .icon.rotated {
+          transform: rotate(90deg);
+      }  
   .spacer { flex: 1; }
   
   .icon-btn {
