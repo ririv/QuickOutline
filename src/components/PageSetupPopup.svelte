@@ -109,7 +109,12 @@
         <div class="margin-container">
             <div class="margin-row">
                 <div class="field">
-                    <span>Top</span>
+                    <span class="icon-label" title="Top Margin">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="4" width="16" height="16" rx="2" stroke-opacity="0.3"></rect>
+                            <path d="M5 4h14" stroke-width="2.5"></path>
+                        </svg>
+                    </span>
                     <input type="number" bind:value={layout.marginTop} min="0" oninput={() => handleMarginChange('top')} />
                 </div>
                 <button class="link-btn" class:active={linkTB} onclick={toggleLinkTB} title={linkTB ? "Unlink" : "Link Top & Bottom"}>
@@ -122,14 +127,24 @@
                     </svg>
                 </button>
                 <div class="field">
-                    <span>Bottom</span>
+                    <span class="icon-label" title="Bottom Margin">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="4" width="16" height="16" rx="2" stroke-opacity="0.3"></rect>
+                            <path d="M5 20h14" stroke-width="2.5"></path>
+                        </svg>
+                    </span>
                     <input type="number" bind:value={layout.marginBottom} min="0" oninput={() => handleMarginChange('bottom')} />
                 </div>
             </div>
             
             <div class="margin-row">
                 <div class="field">
-                    <span>Left</span>
+                    <span class="icon-label" title="Left Margin">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="4" width="16" height="16" rx="2" stroke-opacity="0.3"></rect>
+                            <path d="M4 5v14" stroke-width="2.5"></path>
+                        </svg>
+                    </span>
                     <input type="number" bind:value={layout.marginLeft} min="0" oninput={() => handleMarginChange('left')} />
                 </div>
                 <button class="link-btn" class:active={linkLR} onclick={toggleLinkLR} title={linkLR ? "Unlink" : "Link Left & Right"}>
@@ -142,7 +157,12 @@
                     </svg>
                 </button>
                 <div class="field">
-                    <span>Right</span>
+                    <span class="icon-label" title="Right Margin">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="4" width="16" height="16" rx="2" stroke-opacity="0.3"></rect>
+                            <path d="M20 5v14" stroke-width="2.5"></path>
+                        </svg>
+                    </span>
                     <input type="number" bind:value={layout.marginRight} min="0" oninput={() => handleMarginChange('right')} />
                 </div>
             </div>
