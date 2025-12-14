@@ -204,7 +204,8 @@
     :global(.pagedjs_page),
     :global(.page-wrapper) {
         background: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); /* Elevation shadow */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); /* Slightly darker for better contrast */
+        border-radius: 2px; /* Slight radius */
         margin-bottom: 20px; /* Spacing between pages */
         flex: none; /* Prevent shrinking */
         display: flex; /* Removes bottom gap for images */
@@ -271,7 +272,7 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: #e3e4ea;
+        background-color: #f5f7fa; /* Reverted to previous background */
         display: flex;
         flex-direction: column;
     }

@@ -160,7 +160,7 @@
         width: 500px; /* Simulated A4 width scaled */
         height: 800px; /* Simulated A4 height scaled */
         background: white;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* 和app的主样式有一点区别，微调尝试效果 */
         padding: 40px; /* Margin */
         box-sizing: border-box;
         display: flex;
