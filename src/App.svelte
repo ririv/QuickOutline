@@ -112,27 +112,27 @@
         <LeftPane />
         <div class="content-area">
             <RpcProvider>
-                {#if activeTab === FnTab.bookmark}
+                <div style="display: {activeTab === FnTab.bookmark ? 'block' : 'none'}; height: 100%;">
                     <BookmarkTab />
-                {:else if activeTab === FnTab.label}
+                </div>
+                <div style="display: {activeTab === FnTab.label ? 'block' : 'none'}; height: 100%;">
                     <PageLabelTab />
-                {:else if activeTab === FnTab.tocGenerator}
+                </div>
+                <div style="display: {activeTab === FnTab.tocGenerator ? 'block' : 'none'}; height: 100%;">
                     <TocGeneratorTab />
-                {:else if activeTab === FnTab.markdown}
+                </div>
+                <div style="display: {activeTab === FnTab.markdown ? 'block' : 'none'}; height: 100%;">
                     <MarkdownTab />
-                {:else if activeTab === FnTab.preview}
+                </div>
+                <div style="display: {activeTab === FnTab.preview ? 'block' : 'none'}; height: 100%;">
                     <div class="placeholder">
                         <h1>Preview Content</h1>
                         <p>This is the content for the Preview tab.</p>
                     </div>
-                {:else if activeTab === FnTab.settings}
+                </div>
+                <div style="display: {activeTab === FnTab.settings ? 'block' : 'none'}; height: 100%;">
                     <Settings />
-                {:else}
-                    <div class="placeholder">
-                        <h1>Welcome</h1>
-                        <p>Select a tab from the left.</p>
-                    </div>
-                {/if}
+                </div>
             </RpcProvider>
         </div>
     </div>
