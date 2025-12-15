@@ -66,6 +66,22 @@
       return `${size} ${marginText}`;
   });
 
+  let hfLayoutSummary = $derived.by(() => {
+      const { headerDist, footerDist } = hfLayout;
+      if (headerDist !== undefined && footerDist !== undefined) {
+           return {
+               type: headerDist === footerDist ? 'both-equal' : 'both-diff',
+               header: headerDist,
+               footer: footerDist
+           };
+      } else if (headerDist !== undefined) {
+          return { type: 'header-only', header: headerDist };
+      } else if (footerDist !== undefined) {
+          return { type: 'footer-only', footer: footerDist };
+      }
+      return null;
+  });
+
   onMount(() => {
       const closePopup = (e: MouseEvent) => {
           const target = e.target as HTMLElement;
@@ -78,6 +94,10 @@
   });
 
   const removeSuffix = (str:string, suffix:string) => str.endsWith(suffix) ? str.slice(0, -suffix.length) : str;
+  
+  const iconUp = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
+  const iconDown = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`;
+  const iconUpDown = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><polyline points="8 6 12 1 16 6"></polyline><polyline points="8 18 12 23 16 18"></polyline></svg>`;
 </script>
 
 <div class="status-bar" bind:this={barElement}>
@@ -163,6 +183,19 @@
                   <line x1="7" y1="6" x2="17" y2="6"></line>
                   <line x1="7" y1="18" x2="17" y2="18"></line>
               </svg>
+          </span>
+          <span class="hf-summary-content">
+            {#if hfLayoutSummary}
+                {#if hfLayoutSummary.type === 'both-equal'}
+                    {@html iconUpDown}{hfLayoutSummary.header}mm
+                {:else if hfLayoutSummary.type === 'both-diff'}
+                    {@html iconUp}{hfLayoutSummary.header} {@html iconDown}{hfLayoutSummary.footer}mm
+                {:else if hfLayoutSummary.type === 'header-only'}
+                    {@html iconUp}{hfLayoutSummary.header}mm
+                {:else if hfLayoutSummary.type === 'footer-only'}
+                    {@html iconDown}{hfLayoutSummary.footer}mm
+                {/if}
+            {/if}
           </span>
       </div>
       {#if activePopup === 'header-footer'}
@@ -287,5 +320,15 @@
   .generate-btn:hover {
       background-color: rgba(40, 167, 69, 0.1);
       color: #218838;
+  }
+
+  .hf-summary-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px; /* Adjust this value for desired spacing */
+  }
+
+  .hf-summary-content :global(svg) {
+      transform: translateY(-1px); /* 向上移动 1px */
   }
 </style>
