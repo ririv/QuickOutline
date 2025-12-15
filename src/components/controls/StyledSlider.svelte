@@ -55,6 +55,7 @@
   /* --- Ant Design Style Slider --- */
   input[type=range] {
       -webkit-appearance: none; /* Clear default styles */
+      appearance: none;
       height: 4px; /* Track height */
       background: transparent;
       cursor: pointer;

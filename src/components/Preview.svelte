@@ -136,7 +136,6 @@
                     <PagedRenderer
                         payload={pagedPayload}
                         isActive={isActive}
-                        layout={isDoublePage ? 'double' : 'single'}
                         onRenderComplete={(duration) => {
                             if (onRenderStats) onRenderStats({ duration });
                         }}

@@ -77,7 +77,7 @@
     <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm mb-6">
         <h3 class="text-lg font-semibold mb-4 text-gray-700">PDF Generation</h3>
         <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Print Mode</label>
+            <div class="block text-sm font-medium text-gray-700 mb-2">Print Mode</div>
             <div class="max-w-xs">
                 <StyledSelect 
                     options={printModeOptions} 

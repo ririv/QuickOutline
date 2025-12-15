@@ -3,7 +3,6 @@
     import { PagedEngine } from '../../lib/preview-engine/paged-engine';
   
     export let payload: { html: string, styles: string, header: any, footer: any };
-    export let layout: 'single' | 'double' = 'single';
     // 父组件通知渲染完成（例如用于恢复滚动条）
     export let onRenderComplete: ((duration: number) => void) | undefined = undefined;
     export let isActive: boolean = true; // Control style visibility based on tab activation

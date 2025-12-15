@@ -26,6 +26,14 @@
     <div 
         class="relative flex p-0.5 bg-gray-100 rounded-full gap-2 select-none border border-gray-200 cursor-pointer"
         onclick={() => value = options[(selectedIndex + 1) % options.length].value}
+        onkeydown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                value = options[(selectedIndex + 1) % options.length].value;
+            }
+        }}
+        role="button"
+        tabindex="0"
     >
         <!-- Sliding Indicator -->
         <div 

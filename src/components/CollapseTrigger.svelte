@@ -92,16 +92,6 @@
     z-index: 10;
   }
 
-  /* Top Trigger Styles */
-  .collapse-trigger.top {
-      /* Border removed */
-  }
-  
-  /* Bottom Trigger Styles */
-  .collapse-trigger.bottom {
-      /* Border removed */
-  }
-
   /* Hover State (Managed by JS) */
   .collapse-trigger.hover {
       height: 24px;

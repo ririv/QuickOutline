@@ -59,9 +59,4 @@
     .main-content > :global(*) {
         flex: 1; /* Ensure subviews fill the space */
     }
-    .divider {
-        height: 1px;
-        background-color: #dfdfdf; /* -my-color-divding-line */
-        flex-shrink: 0;
-    }
 </style>
