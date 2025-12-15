@@ -22,17 +22,24 @@ export class PagedEngine {
     private pendingPayload: PagedPayload | null = null;
     private bufferA: HTMLDivElement | null = null;
     private bufferB: HTMLDivElement | null = null;
-    private activeBuffer: 'A' | 'B' = 'B';
+    private activeBuffer: 'A' | 'B' = 'B'; 
+    private generatedStyles: HTMLStyleElement[] = [];
 
     constructor() {
         // Register self as active when created (simplified logic for now)
         activeEngineInstance = this;
     }
 
+    public setVisible(visible: boolean) {
+        this.generatedStyles.forEach(s => s.disabled = !visible);
+    }
+
     public destroy() {
         this.isRendering = false;
         this.pendingPayload = null;
         this.currentPreviewer = null;
+        this.generatedStyles.forEach(s => s.remove());
+        this.generatedStyles = [];
 
         if (this.bufferA) {
             this.bufferA.remove();
@@ -42,7 +49,7 @@ export class PagedEngine {
             this.bufferB.remove();
             this.bufferB = null;
         }
-
+        
         if (activeEngineInstance === this) {
             activeEngineInstance = null;
         }
@@ -64,7 +71,7 @@ export class PagedEngine {
 
         this.isRendering = true;
         const startTime = performance.now();
-
+        
         try {
             await this.renderToBuffer(payload, container);
             const endTime = performance.now();
@@ -98,10 +105,10 @@ export class PagedEngine {
             container.appendChild(this.bufferA);
             container.appendChild(this.bufferB);
         } else {
-            // Ensure buffers are still attached to the current container
-            // This handles cases where container might have changed (though usually Engine is recreated)
-            if (!container.contains(this.bufferA)) container.appendChild(this.bufferA);
-            if (!container.contains(this.bufferB)) container.appendChild(this.bufferB);
+             // Ensure buffers are still attached to the current container
+             // This handles cases where container might have changed (though usually Engine is recreated)
+             if (!container.contains(this.bufferA)) container.appendChild(this.bufferA);
+             if (!container.contains(this.bufferB)) container.appendChild(this.bufferB);
         }
 
         // Determine target buffer (Render to the HIDDEN one)
@@ -111,20 +118,20 @@ export class PagedEngine {
 
         // Clear target buffer
         targetBuffer!.innerHTML = '';
-
+        
         targetBuffer!.style.opacity = '0';
         targetBuffer!.style.position = 'absolute';
         targetBuffer!.style.top = '0';
         targetBuffer!.style.left = '0';
-        targetBuffer!.style.zIndex = '-1';
-        targetBuffer!.style.display = 'block';
+        targetBuffer!.style.zIndex = '-1'; 
+        targetBuffer!.style.display = 'block'; 
 
         // Prepare Content
         const { html, styles, header, footer, pageLayout, hfLayout } = payload;
         const pageCss = generatePageCss(header, footer, pageLayout, hfLayout);
-
+        
         const pageCssObject = {
-            [`${window.location.href}?t=${Date.now()}`]: pageCss
+            [window.location.href]: pageCss
         };
 
         const headerHtml = generateSectionHtml(header);
@@ -144,25 +151,38 @@ export class PagedEngine {
                 maxChars: 1500,
             }
         });
-
+        
         console.log('[PagedEngine] Starting preview...');
+        
+        // Capture styles before
+        const head = document.head;
+        const stylesBefore = Array.from(head.querySelectorAll('style'));
+
         try {
             await previewer.preview(contentWithStyle, [pageCssObject], targetBuffer);
             console.log('[PagedEngine] Preview finished.');
-
+            
+            // Capture styles after
+            const stylesAfter = Array.from(head.querySelectorAll('style'));
+            const newStyles = stylesAfter.filter(s => !stylesBefore.includes(s));
+            
+            // Clean up old styles from previous render of THIS engine instance
+            this.generatedStyles.forEach(s => s.remove());
+            this.generatedStyles = newStyles;
+            
             targetBuffer!.style.position = 'static';
             targetBuffer!.style.zIndex = 'auto';
             targetBuffer!.style.opacity = '1';
-
+            
             if (oldActive) {
                 oldActive.style.display = 'none';
-                oldActive.style.zIndex = '';
+                oldActive.style.zIndex = ''; 
             }
-
+            
         } catch (err) {
             console.error('[PagedEngine] Preview failed:', err);
             throw err;
-        }
+        } 
 
         // SWAP BUFFERS
         console.log('[PagedEngine] Swapping buffers. Showing:', targetBufferName);

@@ -14,6 +14,7 @@
   import { docStore } from '@/stores/docStore';
   import { tocStore } from '@/stores/tocStore.svelte';
   import { printStore } from '@/stores/printStore.svelte'; // Import global print store
+  import { appStore, FnTab } from '@/stores/appStore';
   import { generateTocHtml } from '@/lib/toc-gen/toc-generator';
   import { generateSectionHtml } from '@/lib/utils/html-generator';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
@@ -26,6 +27,21 @@
   let showFooter = $state(false);
   
   let debounceTimer: number;
+
+  let activeTab = $state($appStore.activeTab); // Local state for activeTab
+  // Subscribe to appStore updates
+  $effect(() => {
+    return appStore.subscribe(val => {
+      activeTab = val.activeTab;
+    });
+  });
+
+  // Refresh preview when tab becomes active to restore CSS
+  $effect(() => {
+      if (activeTab === FnTab.tocGenerator) {
+          setTimeout(() => triggerPreview(), 0);
+      }
+  });
 
   // Auto-load TOC when file changes
   $effect(() => {
@@ -275,6 +291,7 @@
             bind:this={previewComponent} 
             mode="paged"
             pagedPayload={tocStore.previewData}
+            isActive={activeTab === FnTab.tocGenerator}
             onrefresh={triggerPreview} 
             onScroll={(top) => tocStore.scrollTop = top}
           />

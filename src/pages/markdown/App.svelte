@@ -13,6 +13,7 @@
   import { markdownStore } from '@/stores/markdownStore.svelte';
   import { messageStore } from '@/stores/messageStore'; // Import messageStore
   import { printStore } from '@/stores/printStore.svelte'; // Import printStore
+  import { appStore, FnTab } from '@/stores/appStore';
   import { invoke } from '@tauri-apps/api/core'; // Import invoke
   import { appDataDir, join } from '@tauri-apps/api/path'; // Import path utils
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
@@ -28,6 +29,14 @@
   let debounceTimer: ReturnType<typeof setTimeout>;
   let currentDebounceTime = 10; // Start with almost instant preview for small docs
 
+  let activeTab = $state($appStore.activeTab); // Local state for activeTab
+  // Subscribe to appStore updates
+  $effect(() => {
+    return appStore.subscribe(val => {
+      activeTab = val.activeTab;
+    });
+  });
+
   // Debounced wrapper for triggerPreview to prevent excessive rendering during typing
   function debouncedPreview() {
       clearTimeout(debounceTimer);
@@ -35,6 +44,14 @@
           triggerPreview();
       }, currentDebounceTime);
   }
+
+  // Refresh preview when tab becomes active to restore CSS
+  $effect(() => {
+      if (activeTab === FnTab.markdown) {
+          // Use a small timeout to ensure DOM is visible if needed, though not strictly required for CSS injection
+          setTimeout(() => triggerPreview(), 0);
+      }
+  });
 
   function handleRenderStats(stats: { duration: number }) {
       if (stats.duration < 100) {
@@ -209,14 +226,14 @@
         {#snippet right()}
         <div class="h-full right-panel">
           <!-- Pass payload via prop -->
-          <Preview 
-            bind:this={previewComponent} 
-            mode="paged" 
-            pagedPayload={markdownStore.currentPagedPayload}
-            onrefresh={triggerPreview} 
-            onRenderStats={handleRenderStats}
-          />
-        </div>
+                      <Preview 
+                      bind:this={previewComponent} 
+                      mode="paged" 
+                      pagedPayload={markdownStore.currentPagedPayload}
+                      isActive={activeTab === FnTab.markdown}
+                      onrefresh={triggerPreview} 
+                      onRenderStats={handleRenderStats}
+                    />        </div>
         {/snippet}
       </SplitPane>
   </div>

@@ -6,18 +6,26 @@
     export let layout: 'single' | 'double' = 'single';
     // 父组件通知渲染完成（例如用于恢复滚动条）
     export let onRenderComplete: ((duration: number) => void) | undefined = undefined;
+    export let isActive: boolean = true; // Control style visibility based on tab activation
   
     let container: HTMLDivElement;
     let engine: PagedEngine;
 
     onMount(() => {
         engine = new PagedEngine();
+        // Initial visibility
+        engine.setVisible(isActive);
     });
   
     // 监听 payload 变化并触发渲染
     // 使用 $effect 或 reactive statement
     $: if (container && payload && engine) {
         engine.update(payload, container, onRenderComplete);
+    }
+
+    // Reactively update visibility when isActive changes
+    $: if (engine) {
+        engine.setVisible(isActive);
     }
   
     onDestroy(() => {

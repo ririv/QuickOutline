@@ -11,6 +11,7 @@
     export let onrefresh: (() => void | Promise<void>) | undefined = undefined; // onrefresh might be async
     export let onScroll: ((top: number) => void) | undefined = undefined;
     export let onRenderStats: ((stats: { duration: number }) => void) | undefined = undefined;
+    export let isActive: boolean = true; // Added prop
 
     // Payload for PagedRenderer
     export let pagedPayload: {
@@ -134,6 +135,7 @@
                 {#if pagedPayload}
                     <PagedRenderer
                         payload={pagedPayload}
+                        isActive={isActive}
                         layout={isDoublePage ? 'double' : 'single'}
                         onRenderComplete={(duration) => {
                             if (onRenderStats) onRenderStats({ duration });
