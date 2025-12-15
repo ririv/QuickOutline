@@ -13,7 +13,6 @@
     pageLayout?: PageLayout;
     hfLayout?: HeaderFooterLayout;
     showOffset?: boolean;
-    showNumberingStyle?: boolean;
     onGenerate?: () => void;
     onParamChange?: () => void;
   }
@@ -25,7 +24,6 @@
     pageLayout = $bindable(defaultPageLayout),
     hfLayout = $bindable(defaultHeaderFooterLayout),
     showOffset = true,
-    showNumberingStyle = true,
     onGenerate,
     onParamChange
   }: Props = $props();
@@ -76,6 +74,8 @@
       window.addEventListener('click', closePopup);
       return () => window.removeEventListener('click', closePopup);
   });
+
+  const removeSuffix = (str:string, suffix:string) => str.endsWith(suffix) ? str.slice(0, -suffix.length) : str;
 </script>
 
 <div class="status-bar" bind:this={barElement}>
@@ -119,25 +119,7 @@
       {/if}
   </div>
 
-  {#if showNumberingStyle}
-  <div class="status-item-wrapper">
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div 
-        bind:this={styleBtnEl}
-        class="status-item {activePopup === 'style' ? 'active' : ''}"
-        onclick={() => togglePopup('style')}
-        title="Set Numbering Style"
-      >
-          <span class="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
-          </span> Page Num: {pageLabelStyleMap.getDisplayText(numberingStyle)}
-      </div>
-      {#if activePopup === 'style'}
-          <SettingsPopup type="style" bind:offset bind:insertPos bind:numberingStyle onchange={onPopupChange} triggerEl={styleBtnEl} />
-      {/if}
-  </div>
-  {/if}
+
 
   <div class="status-item-wrapper">
       <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -185,6 +167,24 @@
           <HeaderFooterPopup bind:layout={hfLayout} onchange={onParamChange} triggerEl={hfBtnEl} />
       {/if}
   </div>
+
+    <div class="status-item-wrapper">
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+                bind:this={styleBtnEl}
+                class="status-item {activePopup === 'style' ? 'active' : ''}"
+                onclick={() => togglePopup('style')}
+                title="Set Numbering Style"
+        >
+      <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+      </span>{removeSuffix(pageLabelStyleMap.getDisplayText(numberingStyle), ", ...")}
+        </div>
+        {#if activePopup === 'style'}
+            <SettingsPopup type="style" bind:offset bind:insertPos bind:numberingStyle onchange={onPopupChange} triggerEl={styleBtnEl} />
+        {/if}
+    </div>
   
   <div class="spacer"></div>
   

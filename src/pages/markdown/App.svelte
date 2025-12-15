@@ -244,8 +244,7 @@
       bind:numberingStyle={markdownStore.numberingStyle}
       bind:pageLayout={markdownStore.pageLayout}
       bind:hfLayout={markdownStore.hfLayout}
-      showOffset={false} 
-      showNumberingStyle={false}
+      showOffset={false}
       onGenerate={handleGenerate} 
       onParamChange={debouncedPreview}
   />
