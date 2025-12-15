@@ -76,6 +76,33 @@ fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBu
     Ok(workspace)
 }
 
+// Helper function to clean up pdf workspace (remove toc_*.pdf files)
+fn cleanup_pdf_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<(), String> {
+    let app_data_dir = app_handle.path().app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    let pdf_workspace = app_data_dir.join("pdf_workspace");
+
+    if pdf_workspace.exists() {
+        if let Ok(entries) = fs::read_dir(&pdf_workspace) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(filename) = path.file_name().and_then(|s| s.to_str()) {
+                        if filename.starts_with("toc_") && filename.ends_with(".pdf") {
+                            if let Err(e) = fs::remove_file(&path) {
+                                eprintln!("Rust Setup: Failed to delete PDF temp file {:?}: {}", path, e);
+                            } else {
+                                println!("Rust Setup: Cleaned up PDF temp file: {:?}", filename);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -103,6 +130,11 @@ pub fn run() {
         .setup(move |app| {
             // Setup print workspace on app startup
             let workspace_path = setup_print_workspace(app.handle()).expect("Failed to setup print workspace.");
+
+            // Clean up PDF workspace
+            if let Err(e) = cleanup_pdf_workspace(app.handle()) {
+                eprintln!("Rust Setup: Failed to cleanup PDF workspace: {}", e);
+            }
 
             // Start local static server
             static_server::start_server(app.handle().clone(), workspace_path);

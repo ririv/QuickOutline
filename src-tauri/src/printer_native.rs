@@ -49,12 +49,8 @@ pub async fn print_to_pdf_with_url_native<R: Runtime>(
     app: AppHandle<R>,
     window: WebviewWindow<R>,
     url: String,
-    filename: String,
+    output_path: PathBuf,
 ) -> Result<String, String> {
-    let output_path = app.path().app_data_dir()
-        .map_err(|e| e.to_string())?
-        .join(&filename);
-
     if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }

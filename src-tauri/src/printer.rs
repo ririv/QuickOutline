@@ -28,13 +28,15 @@ pub async fn print_to_pdf<R: Runtime>(
     browser_path: Option<String>,
     force_download: Option<bool>,
 ) -> Result<String, String> {
-    let output_path = app.path().app_data_dir()
-        .map_err(|e| e.to_string())?
-        .join(&filename);
+    // Use app_data_dir / pdf_workspace
+    let app_data_dir = app.path().app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let pdf_workspace = app_data_dir.join("pdf_workspace");
+    
+    // Ensure the directory exists
+    fs::create_dir_all(&pdf_workspace).map_err(|e| e.to_string())?;
 
-    if let Some(parent) = output_path.parent() {
-        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
+    let output_path = pdf_workspace.join(&filename);
 
     let print_mode = mode.unwrap_or(PrintMode::Native);
     let force_dl = force_download.unwrap_or(false);
@@ -100,7 +102,7 @@ pub async fn print_to_pdf<R: Runtime>(
                 let res = {
                      #[cfg(target_os = "macos")]
                      {
-                        printer_native::print_to_pdf_with_url_native(app, window, url_str, filename).await
+                        printer_native::print_to_pdf_with_url_native(app, window, url_str, output_path.clone()).await
                      }
                      #[cfg(not(target_os = "macos"))]
                      {
