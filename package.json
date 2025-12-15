@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "dev:allnet" : "vite dev --host",
+    "dev:allnet": "vite dev --host",
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -58,6 +58,7 @@
     "markdown-it-sup": "^2.0.0",
     "markdown-it-texmath": "^1.0.0",
     "pagedjs": "^0.4.3",
+    "pdf-lib": "^1.17.1",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
