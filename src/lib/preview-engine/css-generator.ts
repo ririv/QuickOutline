@@ -1,29 +1,6 @@
-import type { PageLayout } from '@/lib/types/page';
+import type { PageLayout, HeaderFooterLayout } from '@/lib/types/page';
 
-export function generatePageCss(header: any, footer: any, layout?: PageLayout) {
-    const getContent = (val: string) => {
-        if (!val) return '""';
-        const parts = val.split('{p}');
-        const escapedParts = parts.map(part => {
-            if (part === '') return null;
-            const escaped = part.replace(/\\/g, '\\').replace(/"/g, '\"');
-            return `"${escaped}"`;
-        });
-        let cssContent = '';
-        for (let i = 0; i < escapedParts.length; i++) {
-            if (escapedParts[i]) cssContent += escapedParts[i];
-            if (i < escapedParts.length - 1) {
-                if (cssContent.length > 0) cssContent += ' ';
-                cssContent += 'counter(page)';
-                if (i < escapedParts.length - 1) cssContent += ' ';
-            }
-        }
-        return cssContent || '""';
-    };
-
-    const headerBorder = `border-bottom: 1px solid ${header?.drawLine ? 'black' : 'transparent'}; padding-bottom: 5px;`;
-    const footerBorder = `border-top: 1px solid ${footer?.drawLine ? 'black' : 'transparent'}; padding-top: 5px;`;
-
+export function generatePageCss(header: any, footer: any, layout?: PageLayout, hfLayout?: HeaderFooterLayout) {
     // Layout values
     const sizeName = layout?.size || 'A4';
     const orientation = layout?.orientation || 'portrait';
@@ -31,6 +8,10 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout) {
     const mb = layout?.marginBottom ?? 20;
     const ml = layout?.marginLeft ?? 20;
     const mr = layout?.marginRight ?? 20;
+    const headerDist = hfLayout?.headerDist ?? 10;
+    const footerDist = hfLayout?.footerDist ?? 10;
+    const headerPadding = hfLayout?.headerPadding ?? 1;
+    const footerPadding = hfLayout?.footerPadding ?? 1;
 
     // Define standard sizes in mm (Portrait W x H)
     const sizes: Record<string, [string, string]> = {
@@ -53,7 +34,39 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout) {
         }
     }
 
+    const headerBorder = header?.drawLine ? `border-bottom: 1px solid black; padding-bottom: ${headerPadding}pt;` : 'border-bottom: none; padding-bottom: 0;';
+    const footerBorder = footer?.drawLine ? `border-top: 1px solid black; padding-top: ${footerPadding}pt;` : 'border-top: none; padding-top: 0;';
+
     return `
+      /* Running Elements Styles */
+      .print-header {
+          position: running(headerRunning);
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          width: 100%;
+          font-size: 10pt;
+          font-family: serif; 
+          ${headerBorder}
+      }
+      .print-footer {
+          position: running(footerRunning);
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          width: 100%;
+          font-size: 10pt;
+          font-family: serif;
+          ${footerBorder}
+      }
+      
+      .section-left { text-align: left; flex: 1; }
+      .section-center { text-align: center; flex: 1; }
+      .section-right { text-align: right; flex: 1; }
+      
+      /* Page Number Injection */
+      .page-num::after { content: counter(page); }
+
       @page {
           size: ${width} ${height};
           margin-top: ${mt}mm;
@@ -61,37 +74,24 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout) {
           margin-left: ${ml}mm;
           margin-right: ${mr}mm;
           
-          @top-left { 
-              content: ${getContent(header?.left)};
-              vertical-align: bottom;
-              ${headerBorder} 
-          }
           @top-center { 
-              content: ${getContent(header?.center)}; 
-              vertical-align: bottom;
-              ${headerBorder} 
-          }
-          @top-right { 
-              content: ${getContent(header?.right)}; 
-              vertical-align: bottom;
-              ${headerBorder} 
+              content: element(headerRunning); 
+              vertical-align: top;
+              padding-top: ${headerDist}mm;
+              width: 100%;
           }
           
-          @bottom-left { 
-              content: ${getContent(footer?.left)}; 
-              vertical-align: top;
-              ${footerBorder} 
-          }
           @bottom-center { 
-              content: ${getContent(footer?.center)}; 
-              vertical-align: top;
-              ${footerBorder} 
+              content: element(footerRunning); 
+              vertical-align: bottom;
+              padding-bottom: ${footerDist}mm;
+              width: 100%;
           }
-          @bottom-right { 
-              content: ${getContent(footer?.right)}; 
-              vertical-align: top;
-              ${footerBorder} 
-          }
+          
+          @top-left { content: none; }
+          @top-right { content: none; }
+          @bottom-left { content: none; }
+          @bottom-right { content: none; }
       }
     `;
 }

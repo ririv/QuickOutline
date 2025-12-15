@@ -15,3 +15,17 @@ export const defaultPageLayout: PageLayout = {
     marginLeft: 20,
     marginRight: 20
 };
+
+export interface HeaderFooterLayout {
+    headerDist?: number;
+    footerDist?: number;
+    headerPadding?: number; // pt
+    footerPadding?: number; // pt
+}
+
+export const defaultHeaderFooterLayout: HeaderFooterLayout = {
+    headerDist: 10,
+    footerDist: 10,
+    headerPadding: 1,
+    footerPadding: 1
+};

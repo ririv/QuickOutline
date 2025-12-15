@@ -1,6 +1,7 @@
 import { Previewer } from 'pagedjs';
-import type { PageLayout } from '@/lib/types/page';
+import type { PageLayout, HeaderFooterLayout } from '@/lib/types/page';
 import { generatePageCss } from './css-generator';
+import { generateSectionHtml } from '@/lib/utils/html-generator';
 
 interface PagedPayload {
     html: string;
@@ -8,6 +9,7 @@ interface PagedPayload {
     header: any;
     footer: any;
     pageLayout?: PageLayout;
+    hfLayout?: HeaderFooterLayout;
 }
 
 // Global reference for compatibility with external components (e.g. TOC Generator)
@@ -118,15 +120,20 @@ export class PagedEngine {
         targetBuffer!.style.display = 'block';
 
         // Prepare Content
-        const { html, styles, header, footer, pageLayout } = payload;
-        const pageCss = generatePageCss(header, footer, pageLayout);
+        const { html, styles, header, footer, pageLayout, hfLayout } = payload;
+        const pageCss = generatePageCss(header, footer, pageLayout, hfLayout);
 
         const pageCssObject = {
-            [window.location.href]: pageCss
+            [`${window.location.href}?t=${Date.now()}`]: pageCss
         };
+
+        const headerHtml = generateSectionHtml(header);
+        const footerHtml = generateSectionHtml(footer);
 
         const contentWithStyle = `
         <style>${styles}</style>
+        <div class="print-header">${headerHtml}</div>
+        <div class="print-footer">${footerHtml}</div>
         <div class="markdown-body">
             ${html}
         </div>

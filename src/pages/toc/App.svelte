@@ -15,6 +15,8 @@
   import { tocStore } from '@/stores/tocStore.svelte';
   import { printStore } from '@/stores/printStore.svelte'; // Import global print store
   import { generateTocHtml } from '@/lib/toc-gen/toc-generator';
+  import { generateSectionHtml } from '@/lib/utils/html-generator';
+  import { generatePageCss } from '@/lib/preview-engine/css-generator';
   import { getTocLinkData } from '@/lib/preview-engine/paged-engine';
   import { invoke } from '@tauri-apps/api/core';
 
@@ -64,6 +66,7 @@
         h: JSON.stringify(tocStore.headerConfig), 
         f: JSON.stringify(tocStore.footerConfig),
         pl: JSON.stringify(tocStore.pageLayout),
+        hfl: JSON.stringify(tocStore.hfLayout),
         t: tocStore.title,
         o: tocStore.offset,
         i: tocStore.insertPos,
@@ -120,7 +123,8 @@
             styles,
             header: tocStore.headerConfig,
             footer: tocStore.footerConfig,
-            pageLayout: tocStore.pageLayout
+            pageLayout: tocStore.pageLayout,
+            hfLayout: tocStore.hfLayout
         };
         
       } catch (e: any) {
@@ -147,13 +151,20 @@
             tocStore.numberingStyle
           );
           
+          const headerHtml = generateSectionHtml(tocStore.headerConfig);
+          const footerHtml = generateSectionHtml(tocStore.footerConfig);
+          const pageCss = generatePageCss(tocStore.headerConfig, tocStore.footerConfig, tocStore.pageLayout, tocStore.hfLayout);
+
           const fullHtml = `<!DOCTYPE html>
             <html>
             <head>
                 <meta charset="UTF-8">
                 <style>${styles}</style>
+                <style>${pageCss}</style>
             </head>
             <body class="markdown-body">
+                <div class="print-header">${headerHtml}</div>
+                <div class="print-footer">${footerHtml}</div>
                 ${html}
             </body>
             </html>`;
@@ -188,6 +199,7 @@
             header: tocStore.headerConfig,
             footer: tocStore.footerConfig,
             pageLayout: tocStore.pageLayout,
+            hfLayout: tocStore.hfLayout,
             links: links
           };
 
@@ -276,6 +288,7 @@
       bind:insertPos={tocStore.insertPos} 
       bind:numberingStyle={tocStore.numberingStyle}
       bind:pageLayout={tocStore.pageLayout}
+      bind:hfLayout={tocStore.hfLayout}
       onGenerate={handleGenerate} 
       onParamChange={triggerPreview} 
   />

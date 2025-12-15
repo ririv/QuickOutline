@@ -1,5 +1,5 @@
 import {PageLabelNumberingStyle} from "@/lib/styleMaps";
-import { defaultPageLayout, type PageLayout } from "@/lib/types/page";
+import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout } from "@/lib/types/page";
 
 interface SectionConfig {
     left: string;
@@ -18,6 +18,7 @@ export class MarkdownState {
     insertPos = $state(1);
     numberingStyle = $state(PageLabelNumberingStyle.NONE);
     pageLayout = $state<PageLayout>({ ...defaultPageLayout });
+    hfLayout = $state<HeaderFooterLayout>({ ...defaultHeaderFooterLayout });
 
     // Section Configs
     headerConfig = $state<SectionConfig>({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });

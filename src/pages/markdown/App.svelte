@@ -17,6 +17,8 @@
   import { appDataDir, join } from '@tauri-apps/api/path'; // Import path utils
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
+  import { generateSectionHtml } from '@/lib/utils/html-generator';
+  import { generatePageCss } from '@/lib/preview-engine/css-generator';
   // Import KaTeX CSS as raw text to preserve original 'fonts/...' paths without Vite rewriting them
   import katexCss from 'katex/dist/katex.min.css?raw';
   
@@ -102,6 +104,13 @@
      // We set base to '.' to ensure relative resolution works.
      const baseUrl = '.';
 
+     // Generate Header/Footer HTML
+     const headerHtml = generateSectionHtml(payload.header);
+     const footerHtml = generateSectionHtml(payload.footer);
+
+     // Generate Page CSS
+     const pageCss = generatePageCss(payload.header, payload.footer, payload.pageLayout, payload.hfLayout);
+
      // Construct full HTML for printing
      const fullHtml = `<!DOCTYPE html>
         <html>
@@ -109,12 +118,15 @@
             <base href="${baseUrl}">
             <meta charset="UTF-8">
             <style>${payload.styles}</style>
+            <style>${pageCss}</style>
             <style>${katexCss}</style>
             <script>
                 ${runtimeScript}
             <\/script>
         </head>
         <body class="markdown-body">
+            <div class="print-header">${headerHtml}</div>
+            <div class="print-footer">${footerHtml}</div>
             ${payload.html}
         </body>
         </html>`;
@@ -213,6 +225,7 @@
       bind:insertPos={markdownStore.insertPos} 
       bind:numberingStyle={markdownStore.numberingStyle}
       bind:pageLayout={markdownStore.pageLayout}
+      bind:hfLayout={markdownStore.hfLayout}
       showOffset={false} 
       showNumberingStyle={false}
       onGenerate={handleGenerate} 

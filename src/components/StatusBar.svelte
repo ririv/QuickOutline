@@ -1,15 +1,17 @@
 <script lang="ts">
   import SettingsPopup from './SettingsPopup.svelte';
   import PageSetupPopup from './PageSetupPopup.svelte';
+  import HeaderFooterPopup from './HeaderFooterPopup.svelte';
   import { onMount } from 'svelte';
   import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/styleMaps";
-  import { type PageLayout, defaultPageLayout } from "@/lib/types/page";
+  import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
 
   interface Props {
     offset?: number;
     insertPos?: number;
     numberingStyle?: PageLabelNumberingStyle; // 改为枚举名
     pageLayout?: PageLayout;
+    hfLayout?: HeaderFooterLayout;
     showOffset?: boolean;
     showNumberingStyle?: boolean;
     onGenerate?: () => void;
@@ -21,13 +23,14 @@
     insertPos = $bindable(1),
     numberingStyle = $bindable(PageLabelNumberingStyle.NONE),
     pageLayout = $bindable(defaultPageLayout),
+    hfLayout = $bindable(defaultHeaderFooterLayout),
     showOffset = true,
     showNumberingStyle = true,
     onGenerate,
     onParamChange
   }: Props = $props();
 
-  let activePopup: 'offset' | 'pos' | 'style' | 'setup' | null = $state(null);
+  let activePopup: 'offset' | 'pos' | 'style' | 'setup' | 'hf' | null = $state(null);
   let barElement: HTMLElement;
   
   // Trigger elements for popups
@@ -35,8 +38,9 @@
   let posBtnEl = $state<HTMLElement | undefined>();
   let styleBtnEl = $state<HTMLElement | undefined>();
   let setupBtnEl = $state<HTMLElement | undefined>();
+  let hfBtnEl = $state<HTMLElement | undefined>();
 
-  function togglePopup(type: 'offset' | 'pos' | 'style' | 'setup') {
+  function togglePopup(type: 'offset' | 'pos' | 'style' | 'setup' | 'hf') {
       if (activePopup === type) activePopup = null;
       else activePopup = type;
   }
@@ -157,6 +161,28 @@
       </div>
       {#if activePopup === 'setup'}
           <PageSetupPopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={setupBtnEl} />
+      {/if}
+  </div>
+
+  <div class="status-item-wrapper">
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div 
+        bind:this={hfBtnEl}
+        class="status-item {activePopup === 'hf' ? 'active' : ''}" 
+        onclick={() => togglePopup('hf')} 
+        title="Header & Footer Position"
+      >
+          <span class="icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="2" width="16" height="20" rx="2" stroke-opacity="0.5"></rect>
+                  <line x1="7" y1="6" x2="17" y2="6"></line>
+                  <line x1="7" y1="18" x2="17" y2="18"></line>
+              </svg>
+          </span>
+      </div>
+      {#if activePopup === 'hf'}
+          <HeaderFooterPopup bind:layout={hfLayout} onchange={onParamChange} triggerEl={hfBtnEl} />
       {/if}
   </div>
   
