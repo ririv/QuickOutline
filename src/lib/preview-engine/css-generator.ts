@@ -39,7 +39,12 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout, h
 
     return `
       /* Running Elements Styles */
-      .print-header {
+      /*
+       * Use high-specificity selector (0,3,1) to reliably override Paged.js's default styles
+       * for running elements (which often have specificity 0,3,0, e.g., .pagedjs_page ... > *).
+       * This avoids using !important while ensuring 'display: flex' is applied.
+       */
+      div.print-header.print-header.print-header {
           position: running(headerRunning);
           display: flex;
           justify-content: space-between;
@@ -49,7 +54,12 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout, h
           font-family: serif; 
           ${headerBorder}
       }
-      .print-footer {
+      /*
+       * Use high-specificity selector (0,3,1) to reliably override Paged.js's default styles
+       * for running elements (which often have specificity 0,3,0, e.g., .pagedjs_page ... > *).
+       * This avoids using !important while ensuring 'display: flex' is applied.
+       */
+      div.print-footer.print-footer.print-footer {
           position: running(footerRunning);
           display: flex;
           justify-content: space-between;
@@ -60,9 +70,9 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout, h
           ${footerBorder}
       }
       
-      .section-left { text-align: left; flex: 1; }
-      .section-center { text-align: center; flex: 1; }
-      .section-right { text-align: right; flex: 1; }
+      .section-left { text-align: left; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .section-center { text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .section-right { text-align: right; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       
       /* Page Number Injection */
       .page-num::after { content: counter(page); }
