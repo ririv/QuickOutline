@@ -30,7 +30,7 @@
     onParamChange
   }: Props = $props();
 
-  let activePopup: 'offset' | 'pos' | 'style' | 'setup' | 'hf' | null = $state(null);
+  let activePopup: 'pagenum-offset' | 'insert-pos' | 'numbering-style' | 'page-setup' | 'header-footer' | null = $state(null);
   let barElement: HTMLElement;
   
   // Trigger elements for popups
@@ -40,13 +40,13 @@
   let setupBtnEl = $state<HTMLElement | undefined>();
   let hfBtnEl = $state<HTMLElement | undefined>();
 
-  function togglePopup(type: 'offset' | 'pos' | 'style' | 'setup' | 'hf') {
+  function togglePopup(type: 'pagenum-offset' | 'insert-pos' | 'numbering-style' | 'page-setup' | 'header-footer') {
       if (activePopup === type) activePopup = null;
       else activePopup = type;
   }
 
   function onPopupChange() {
-      if (activePopup === 'style') activePopup = null;
+      if (activePopup === 'numbering-style') activePopup = null;
       // Setup popup doesn't auto-close on change usually, as multiple fields exist
       onParamChange?.();
   }
@@ -87,8 +87,8 @@
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div 
             bind:this={offsetBtnEl}
-            class="status-item {activePopup === 'offset' ? 'active' : ''}"
-            onclick={() => togglePopup('offset')}
+            class="status-item {activePopup === 'pagenum-offset' ? 'active' : ''}"
+            onclick={() => togglePopup('pagenum-offset')}
             title="Set Page Offset"
           >
               <span class="icon">
@@ -97,7 +97,7 @@
                   ></path></svg>
               </span> Offset: {offset}
           </div>
-          {#if activePopup === 'offset'}
+          {#if activePopup === 'pagenum-offset'}
               <OffsetPopup bind:offset onchange={onParamChange} triggerEl={offsetBtnEl} />
           {/if}
       </div>
@@ -108,15 +108,15 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         bind:this={posBtnEl}
-        class="status-item {activePopup === 'pos' ? 'active' : ''}"
-        onclick={() => togglePopup('pos')}
+        class="status-item {activePopup === 'insert-pos' ? 'active' : ''}"
+        onclick={() => togglePopup('insert-pos')}
         title="Set Insert Position"
       >
           <span class="icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
           </span> Pos: {insertPos}
       </div>
-      {#if activePopup === 'pos'}
+      {#if activePopup === 'insert-pos'}
           <InsertPositionPopup bind:insertPos triggerEl={posBtnEl} />
       {/if}
   </div>
@@ -128,8 +128,8 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div 
         bind:this={setupBtnEl}
-        class="status-item {activePopup === 'setup' ? 'active' : ''}"
-        onclick={() => togglePopup('setup')}
+        class="status-item {activePopup === 'page-setup' ? 'active' : ''}"
+        onclick={() => togglePopup('page-setup')}
         title="Page Setup: {pageLayout.size}, {pageLayout.orientation}, Margins..."
       >
           <span class="icon" class:rotated={pageLayout.orientation === 'landscape'}>
@@ -143,7 +143,7 @@
           </span>
           {layoutSummary}
       </div>
-      {#if activePopup === 'setup'}
+      {#if activePopup === 'page-setup'}
           <PageSetupPopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={setupBtnEl} />
       {/if}
   </div>
@@ -153,8 +153,8 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div 
         bind:this={hfBtnEl}
-        class="status-item {activePopup === 'hf' ? 'active' : ''}" 
-        onclick={() => togglePopup('hf')} 
+        class="status-item {activePopup === 'header-footer' ? 'active' : ''}" 
+        onclick={() => togglePopup('header-footer')} 
         title="Header & Footer Position"
       >
           <span class="icon">
@@ -165,7 +165,7 @@
               </svg>
           </span>
       </div>
-      {#if activePopup === 'hf'}
+      {#if activePopup === 'header-footer'}
           <HeaderFooterPopup bind:layout={hfLayout} onchange={onParamChange} triggerEl={hfBtnEl} />
       {/if}
   </div>
@@ -175,15 +175,15 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
                 bind:this={numberingStyleBtnEl}
-                class="status-item {activePopup === 'style' ? 'active' : ''}"
-                onclick={() => togglePopup('style')}
+                class="status-item {activePopup === 'numbering-style' ? 'active' : ''}"
+                onclick={() => togglePopup('numbering-style')}
                 title="Set Numbering Style"
         >
       <span class="icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
       </span>{removeSuffix(pageLabelStyleMap.getDisplayText(numberingStyle), ", ...")}
         </div>
-        {#if activePopup === 'style'}
+        {#if activePopup === 'numbering-style'}
             <NumberingStylePopup bind:numberingStyle onchange={onPopupChange} triggerEl={numberingStyleBtnEl} />
         {/if}
     </div>
