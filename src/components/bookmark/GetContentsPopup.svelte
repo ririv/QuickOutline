@@ -30,7 +30,7 @@
 
 </script>
 
-<ArrowPopup placement="top" {triggerEl} padding="15px" minWidth="200px">
+<ArrowPopup placement="top" {triggerEl} padding="15px" minWidth="200px" usePortal={false}>
     <div class="flex flex-col items-center gap-2.5">
         <span class="title">Get Contents From</span>
         <SegmentedControl 

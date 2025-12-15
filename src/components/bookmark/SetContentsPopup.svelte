@@ -44,7 +44,7 @@
 
 </script>
 
-<ArrowPopup placement="top" {triggerEl} padding="12px">
+<ArrowPopup placement="top" {triggerEl} padding="12px" usePortal={false}>
     <div class="flex flex-col items-center gap-2.5">
         <span class="text-xs font-semibold text-el-default-text">Set Page View Mode</span>
         
