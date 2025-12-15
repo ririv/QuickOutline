@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { PageLayout } from '@/lib/types/page';
-    import ArrowPopup from './controls/ArrowPopup.svelte';
-    import StyledSelect from './controls/StyledSelect.svelte';
-    import Icon from './Icon.svelte';
+    import ArrowPopup from '../controls/ArrowPopup.svelte';
+    import StyledSelect from '../controls/StyledSelect.svelte';
+    import Icon from '../Icon.svelte';
 
     interface Props {
         layout: PageLayout;

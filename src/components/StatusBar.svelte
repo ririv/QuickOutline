@@ -1,7 +1,9 @@
 <script lang="ts">
-  import SettingsPopup from './SettingsPopup.svelte';
-  import PageSetupPopup from './PageSetupPopup.svelte';
-  import HeaderFooterPopup from './HeaderFooterPopup.svelte';
+  import OffsetPopup from './statusbar-popup/OffsetPopup.svelte';
+  import InsertPositionPopup from './statusbar-popup/InsertPositionPopup.svelte';
+  import NumberingStylePopup from './statusbar-popup/NumberingStylePopup.svelte';
+  import PageSetupPopup from './statusbar-popup/PageSetupPopup.svelte';
+  import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
   import { onMount } from 'svelte';
   import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/styleMaps";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
@@ -34,7 +36,7 @@
   // Trigger elements for popups
   let offsetBtnEl = $state<HTMLElement | undefined>();
   let posBtnEl = $state<HTMLElement | undefined>();
-  let styleBtnEl = $state<HTMLElement | undefined>();
+  let numberingStyleBtnEl = $state<HTMLElement | undefined>();
   let setupBtnEl = $state<HTMLElement | undefined>();
   let hfBtnEl = $state<HTMLElement | undefined>();
 
@@ -96,7 +98,7 @@
               </span> Offset: {offset}
           </div>
           {#if activePopup === 'offset'}
-              <SettingsPopup type="offset" bind:offset bind:insertPos bind:numberingStyle onchange={onParamChange} triggerEl={offsetBtnEl} />
+              <OffsetPopup bind:offset onchange={onParamChange} triggerEl={offsetBtnEl} />
           {/if}
       </div>
   {/if}
@@ -115,7 +117,7 @@
           </span> Pos: {insertPos}
       </div>
       {#if activePopup === 'pos'}
-          <SettingsPopup type="pos" bind:offset bind:insertPos bind:numberingStyle onchange={onParamChange} triggerEl={posBtnEl} />
+          <InsertPositionPopup bind:insertPos triggerEl={posBtnEl} />
       {/if}
   </div>
 
@@ -172,7 +174,7 @@
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
-                bind:this={styleBtnEl}
+                bind:this={numberingStyleBtnEl}
                 class="status-item {activePopup === 'style' ? 'active' : ''}"
                 onclick={() => togglePopup('style')}
                 title="Set Numbering Style"
@@ -182,7 +184,7 @@
       </span>{removeSuffix(pageLabelStyleMap.getDisplayText(numberingStyle), ", ...")}
         </div>
         {#if activePopup === 'style'}
-            <SettingsPopup type="style" bind:offset bind:insertPos bind:numberingStyle onchange={onPopupChange} triggerEl={styleBtnEl} />
+            <NumberingStylePopup bind:numberingStyle onchange={onPopupChange} triggerEl={numberingStyleBtnEl} />
         {/if}
     </div>
   
