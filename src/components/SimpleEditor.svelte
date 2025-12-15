@@ -23,11 +23,9 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if (window.debugBridge) window.debugBridge.log(`[SimpleEditor] Keydown: key='${e.key}', code='${e.code}', keyCode=${e.keyCode}`);
     
     if (e.key === 'Tab' || e.code === 'Tab' || e.keyCode === 9) {
       e.preventDefault();
-      if (window.debugBridge) window.debugBridge.log("[SimpleEditor] Processing Tab");
       
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;

@@ -19,7 +19,7 @@
     ];
 
     // Proxy state to handle binding with type casting
-    let groupValue = $state<string | null>(selected);
+    let groupValue = $state<string>(selected);
 
     // Sync Prop -> Local
     $effect(() => {

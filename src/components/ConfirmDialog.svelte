@@ -12,7 +12,7 @@
     }
 
     // Close on backdrop click
-    function handleBackdropClick(e: MouseEvent) {
+    function handleBackdropClick(e: MouseEvent | KeyboardEvent) {
         if (e.target === e.currentTarget) {
             handleCancel();
         }

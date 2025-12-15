@@ -57,7 +57,9 @@
     </div>
 
     <!-- Label on the right -->
-    <span class="text-xs font-medium text-gray-600 min-w-[60px] transition-all" key={selectedOption.value}>
-        {selectedOption.label}
-    </span>
+    {#key selectedOption.value}
+        <span class="text-xs font-medium text-gray-600 min-w-[60px] transition-all">
+            {selectedOption.label}
+        </span>
+    {/key}
 </div>
