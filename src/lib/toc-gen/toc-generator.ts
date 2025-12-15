@@ -1,4 +1,5 @@
 import tocStyles from './toc.css?inline';
+import {css} from "@/lib/utils/tags";
 
 interface DotConfig {
     width?: number;
@@ -145,7 +146,7 @@ export function generateTocHtml(
     html += `</ul>`;
 
     // Combine external styles
-    const styles = `
+    const styles = css`
         ${tocStyles}
         /* Ensure the leader container aligns properly */
         .toc-leader {
@@ -247,7 +248,7 @@ export function _generateTocHtmlCanvas(
     html += `</ul>`;
     html += canvasScript;
 
-    const styles = `
+    const styles = css`
         ${tocStyles}
         .toc-leader {
             display: flex;

@@ -1,4 +1,5 @@
 import type { PageLayout, HeaderFooterLayout } from '@/lib/types/page';
+import { css } from '@/lib/utils/tags';
 
 export function generatePageCss(header: any, footer: any, layout?: PageLayout, hfLayout?: HeaderFooterLayout) {
     // Layout values
@@ -37,7 +38,7 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout, h
     const headerBorder = header?.drawLine ? `border-bottom: 1px solid black; padding-bottom: ${headerPadding}pt;` : 'border-bottom: none; padding-bottom: 0;';
     const footerBorder = footer?.drawLine ? `border-top: 1px solid black; padding-top: ${footerPadding}pt;` : 'border-top: none; padding-top: 0;';
 
-    return `
+    return css`
       /* Running Elements Styles */
       /*
        * Use high-specificity selector (0,3,1) to reliably override Paged.js's default styles
