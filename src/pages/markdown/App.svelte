@@ -95,7 +95,8 @@
           styles: generatedCss,
           header: markdownStore.headerConfig,
           footer: markdownStore.footerConfig,
-          pageLayout: markdownStore.pageLayout
+          pageLayout: markdownStore.pageLayout,
+          hfLayout: markdownStore.hfLayout
       };
   }
 
