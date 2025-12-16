@@ -18,32 +18,58 @@ export function fixDots(gap = 6, rootElement = document.body) {
             }
         });
 
-        // 2. Write phase: Update DOM
+        // 2. Write phase: Update DOM using a SINGLE <path> element
         jobs.forEach(({ svg, rect }) => {
-            // Find start and end indices for dots that fully fit inside the rect
-            // Condition: dotCenter - radius >= rectLeft  => dotCenter >= rectLeft + radius
-            // Condition: dotCenter + radius <= rectRight => dotCenter <= rectRight - radius
-            // dotCenter(k) = k * gap + gridOffset
+            // Logic: We only draw dots that are FULLY inside the container.
+            // Dot K center = k * gap + gridOffset
+            // Left edge of dot = center - radius
+            // Right edge of dot = center + radius
             
-            const startK = Math.ceil((rect.left + radius - gridOffset) / gap);
-            const endK = Math.floor((rect.right - radius - gridOffset) / gap);
+            // Condition 1: Left edge >= rect.left
+            // k * gap + gridOffset - radius >= rect.left
+            // Since gridOffset == radius, simplifies to: k * gap >= rect.left
+            const startK = Math.ceil(rect.left / gap);
+
+            // Condition 2: Right edge <= rect.right
+            // k * gap + gridOffset + radius <= rect.right
+            // k * gap + 2*radius <= rect.right
+            const endK = Math.floor((rect.right - 2 * radius) / gap);
+
+            let d = '';
+            // Optimization: Pre-calculate constants for the arc command
+            // Arc command: a rx ry x-axis-rotation large-arc-flag sweep-flag dx dy
+            // To draw a full circle of radius R:
+            // Move to (cx - R, cy)
+            // Arc 1 (top half): a R,R 0 1,0 2R,0
+            // Arc 2 (bottom half): a R,R 0 1,0 -2R,0
+            const arcStr = `a ${radius},${radius} 0 1,0 ${radius * 2},0 a ${radius},${radius} 0 1,0 -${radius * 2},0`;
+
+            // Align vertical position to bottom
+            const cy = rect.height - radius;
             
-            let circles = '';
             for (let k = startK; k <= endK; k++) {
                 const globalX = k * gap + gridOffset;
                 const localX = globalX - rect.left;
-                // Align to bottom like original: cy = height - radius
-                // Use a fixed small margin from bottom if needed, e.g. -1px
-                const localY = rect.height - radius; 
                 
-                circles += `<circle cx="${localX}" cy="${localY}" r="${radius}" />`;
+                // Move to the left edge of the circle to start drawing
+                const startX = (localX - radius).toFixed(2);
+                const startY = cy.toFixed(2);
+                
+                d += `M ${startX},${startY} ${arcStr} `;
             }
             
-            svg.innerHTML = circles;
-            // Ensure width fills container (though flex usually handles this, we reset any previous fixed width)
-            svg.style.width = '100%';
+            // Only update if we have dots to show
+            if (d) {
+                // Check if we already have a path to avoid full destroy/recreate if not needed (optional optimization)
+                // But innerHTML is fast enough for this specific case and cleaner to reset.
+                svg.innerHTML = `<path d="${d}" fill="currentColor" />`;
+            } else {
+                svg.innerHTML = '';
+            }
             
-            // Trigger opacity transition
+            // Ensure width fills container and clean up styles
+            svg.style.width = '100%';
+            svg.style.clipPath = ''; // Remove any clip-path from previous attempts
             svg.classList.add('dots-ready');
         });
     };
