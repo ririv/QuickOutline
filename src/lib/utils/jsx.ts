@@ -64,15 +64,10 @@ export function createElement(tag: any, props: any, ...children: any[]): string 
     return `<${tag}${attrs}>${childStr}</${tag}>`;
 }
 
-// 4. Fragment 占位符
-export const Fragment = Symbol('Fragment');
-
-// 5. TypeScript 类型定义 (让 TS 识别 JSX)
-declare global {
-    namespace JSX {
-        type Element = string;
-        interface IntrinsicElements {
-            [elemName: string]: any;
-        }
-    }
+// 4. Fragment 占位符 - 把它变成一个函数，直接返回子元素
+export function Fragment(props: { children?: any }) {
+    // 确保 children 扁平化并转为字符串
+    return Array.isArray(props.children) 
+        ? props.children.flat(Infinity).map(child => (child == null || child === false ? '' : String(child))).join('')
+        : (props.children == null || props.children === false ? '' : String(props.children));
 }

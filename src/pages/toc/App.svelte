@@ -15,7 +15,7 @@
   import { tocStore } from '@/stores/tocStore.svelte';
   import { printStore } from '@/stores/printStore.svelte'; // Import global print store
   import { appStore, FnTab } from '@/stores/appStore';
-  import { generateTocHtml } from '@/lib/toc-gen/toc-generator';
+  import { generateTocHtml } from '@/lib/toc-gen/toc-generator.tsx';
   import { generateSectionHtml } from '@/lib/utils/html-generator';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
   import { PrintTemplate } from '@/lib/preview-engine/PrintTemplate';

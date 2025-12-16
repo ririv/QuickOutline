@@ -22,7 +22,8 @@
     "types": ["vite/client"],
     "jsx": "react",
     "jsxFactory": "createElement",
-    "jsxFragmentFactory": "Fragment"
+    "jsxFragmentFactory": "Fragment",
+    "allowImportingTsExtensions": true
   },
   "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "src/**/*.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
