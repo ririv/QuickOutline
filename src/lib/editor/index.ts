@@ -44,7 +44,7 @@ export class MarkdownEditor {
     private currentMode: EditorMode;
     
     // Parser State
-    private mdParser: any; 
+    private mdParser;
     private currentParserConfig: Record<string, any> = { enableIndentedCodeBlocks: false }; // Generic config store
 
     private _stylesConfig: StylesConfig; // Store editor's current styles configuration
@@ -208,7 +208,7 @@ export class MarkdownEditor {
         return false;
     }
 
-    getHTML(options?: Record<string, any>): string {
+    getRenderedHtml(options?: Record<string, any>): string {
         // Optimization: Recreate parser only if configuration changes
         if (options && this.isConfigChanged(options)) {
             // Merge new options into current config

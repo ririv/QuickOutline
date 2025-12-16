@@ -43,4 +43,5 @@ TODO.md
 
 
 /.svelte-kit/
-/public/fonts/
+
+/public/libs/fonts/

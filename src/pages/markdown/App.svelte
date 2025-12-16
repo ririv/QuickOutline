@@ -20,8 +20,7 @@
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
   import { generateSectionHtml } from '@/lib/utils/html-generator';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
-  // Import KaTeX CSS as raw text to preserve original 'fonts/...' paths without Vite rewriting them
-  import katexCss from 'katex/dist/katex.min.css?raw';
+  import { MarkdownPrintTemplate } from '@/lib/preview-engine/MarkdownPrintTemplate'; // Import the new template
   
   let editorComponent: MdEditor;
   let previewComponent: Preview;
@@ -78,7 +77,7 @@
   async function triggerPreview() {
       if (!editorComponent) return;
       
-      const htmlContent = await editorComponent.getContentHtml({
+      const htmlContent = await editorComponent.getRenderedHtml({
           enableIndentedCodeBlocks: markdownStore.enableIndentedCodeBlocks
       });
       
@@ -90,7 +89,7 @@
         ${editorThemeCss}
       `;
 
-      markdownStore.currentPagedPayload = {
+      markdownStore.currentPagedContent = {
           html: htmlContent,
           styles: generatedCss,
           header: markdownStore.headerConfig,
@@ -101,55 +100,40 @@
   }
 
   async function handleGenerate() {
-     const payload = markdownStore.currentPagedPayload;
-     if (!payload || !payload.html) {
+     const pagedContent = markdownStore.currentPagedContent;
+     if (!pagedContent || !pagedContent.html) {
          messageStore.add("No content to generate.", "WARNING");
          return;
      }
 
-     messageStore.add("Preparing PDF resources...", "INFO");
+    messageStore.add("Preparing PDF resources...", "INFO");
 
-     // Fetch UnoCSS Runtime
-     let runtimeScript = '';
-     try {
-         const res = await fetch('/libs/unocss-runtime.bundle.js');
-         if (res.ok) runtimeScript = await res.text();
-     } catch (e) { console.warn("Error fetching UnoCSS runtime:", e); }
 
-     // Determine Base URL for resource loading (fonts, images)
-     // Since the backend now serves this HTML via a local HTTP server rooted at 'print_workspace',
-     // relative paths (e.g. "fonts/...") will resolve correctly against the server root.
-     // We set base to '.' to ensure relative resolution works.
-     const baseUrl = '.';
+    // Determine Base URL for resource loading (fonts, images)
+    // Since the backend now serves this HTML via a local HTTP server rooted at 'print_workspace',
+    // relative paths (e.g. "fonts/...") will resolve correctly against the server root.
 
-     // Generate Header/Footer HTML
-     const headerHtml = generateSectionHtml(payload.header);
-     const footerHtml = generateSectionHtml(payload.footer);
+    // We set base to '.' to ensure relative resolution works.
+    const baseUrl = '.';
 
-     // Generate Page CSS
-     const pageCss = generatePageCss(payload.header, payload.footer, payload.pageLayout, payload.hfLayout);
+    // Generate Header/Footer HTML
+    const headerHtml = generateSectionHtml(pagedContent.header);
+    const footerHtml = generateSectionHtml(pagedContent.footer);
 
-     // Construct full HTML for printing
-     const fullHtml = `<!DOCTYPE html>
-        <html>
-        <head>
-            <base href="${baseUrl}">
-            <meta charset="UTF-8">
-            <style>${payload.styles}</style>
-            <style>${pageCss}</style>
-            <style>${katexCss}</style>
-            <script>
-                ${runtimeScript}
-            <\/script>
-        </head>
-        <body class="markdown-body">
-            <div class="print-header">${headerHtml}</div>
-            <div class="print-footer">${footerHtml}</div>
-            ${payload.html}
-        </body>
-        </html>`;
+    // Generate Page CSS
+    const pageCss = generatePageCss(pagedContent.header, pagedContent.footer, pagedContent.pageLayout, pagedContent.hfLayout);
 
-     messageStore.add("Generating PDF...", "INFO");
+    // Construct full HTML for printing
+
+    const fullHtml = MarkdownPrintTemplate({
+       styles: pagedContent.styles,
+       pageCss: pageCss,
+       headerHtml: headerHtml,
+       footerHtml: footerHtml,
+       contentHtml: pagedContent.html,
+       baseUrl: baseUrl
+    });
+    messageStore.add("Generating PDF...", "INFO");
      const filename = `markdown_${Date.now()}.pdf`;
      
      try {
@@ -230,7 +214,7 @@
                       <Preview 
                       bind:this={previewComponent} 
                       mode="paged" 
-                      pagedPayload={markdownStore.currentPagedPayload}
+                      pagedPayload={markdownStore.currentPagedContent}
                       isActive={activeTab === FnTab.markdown}
                       onrefresh={triggerPreview} 
                       onRenderStats={handleRenderStats}

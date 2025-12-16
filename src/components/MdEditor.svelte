@@ -12,8 +12,7 @@
     export const setValue = (val: string) => editor?.setValue(val);
     export const insertValue = (val: string) => editor?.insertValue(val);
     export const insertImageMarkdown = (path: string) => editor?.insertImageMarkdown(path);
-    export const getContentHtml = async (options?: { enableIndentedCodeBlocks?: boolean }) => editor?.getHTML(options) || '';
-    export const getPayloads = async () => JSON.stringify({ html: editor?.getHTML() || "", styles: "" });
+    export const getRenderedHtml = async (options?: { enableIndentedCodeBlocks?: boolean }) => editor?.getRenderedHtml(options) || '';
     export const setMode = (mode: EditorMode) => editor?.setMode(mode); // Expose setMode
     export const getStylesConfig = () => editor?.getStylesConfig(); // Expose getStylesConfig
 

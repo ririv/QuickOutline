@@ -39,7 +39,6 @@
     ],
     "resources": {
       "resources/java-runtime/": "resources/java-runtime/",
-      "../build/fonts/": "resources/fonts/",
       "../build/libs/": "resources/libs/",
       "libpdfium.dylib": "libpdfium.dylib"
     }

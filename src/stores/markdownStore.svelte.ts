@@ -30,7 +30,7 @@ export class MarkdownState {
     enableIndentedCodeBlocks = $state(false); // New config option
     
     // Preview Cache
-    currentPagedPayload = $state<any>(null);
+    currentPagedContent = $state<any>(null);
 
     // Actions
     updateContent(newContent: string) {
