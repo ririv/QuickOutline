@@ -1,6 +1,8 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { PagedEngine } from '../../lib/preview-engine/paged-engine';
+    import { fixDots } from '@/lib/templates/scripts/fix-dots.js'; // Updated path
+    import { DOT_GAP } from '@/lib/toc-gen/toc-generator.tsx'; // Import DOT_GAP constant
   
     export let payload: { html: string, styles: string, header: any, footer: any };
     // 父组件通知渲染完成（例如用于恢复滚动条）
@@ -19,7 +21,18 @@
     // 监听 payload 变化并触发渲染
     // 使用 $effect 或 reactive statement
     $: if (container && payload && engine) {
-        engine.update(payload, container, onRenderComplete);
+        engine.update(payload, container, onRenderComplete, async (buffer) => {
+            // Fix dots on the hidden buffer BEFORE it becomes visible
+            fixDots(DOT_GAP, buffer);
+            
+            // Wait for fixDots's internal requestAnimationFrame to execute
+            // We use a double RAF to ensure the DOM update has been scheduled and processed
+            return new Promise<void>(resolve => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => resolve());
+                });
+            });
+        });
     }
 
     // Reactively update visibility when isActive changes

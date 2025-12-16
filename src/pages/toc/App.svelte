@@ -15,10 +15,10 @@
   import { tocStore } from '@/stores/tocStore.svelte';
   import { printStore } from '@/stores/printStore.svelte'; // Import global print store
   import { appStore, FnTab } from '@/stores/appStore';
-  import { generateTocHtml } from '@/lib/toc-gen/toc-generator.tsx';
+  import { generateTocHtml, DOT_GAP } from '@/lib/toc-gen/toc-generator.tsx';
   import { generateSectionHtml } from '@/lib/utils/html-generator';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
-  import { PrintTemplate } from '@/lib/preview-engine/PrintTemplate';
+  import { TocPrintTemplate } from '@/lib/templates/TocPrintTemplate.tsx';
   import { getTocLinkData } from '@/lib/preview-engine/paged-engine';
   import { invoke } from '@tauri-apps/api/core';
 
@@ -176,12 +176,13 @@
           const footerHtml = generateSectionHtml(tocStore.footerConfig);
           const pageCss = generatePageCss(tocStore.headerConfig, tocStore.footerConfig, tocStore.pageLayout, tocStore.hfLayout);
 
-          const fullHtml = PrintTemplate({
+          const fullHtml = TocPrintTemplate({
             styles,
             pageCss,
             headerHtml,
             footerHtml,
-            tocHtml: html
+            tocHtml: html,
+            dotGap: DOT_GAP // Pass the dynamic dotGap
           });
 
           // 3. Generate PDF via Rust

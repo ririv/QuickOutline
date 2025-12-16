@@ -1,4 +1,4 @@
-import { createElement, Fragment } from '@/lib/utils/jsx';
+import { createElement, Fragment } from '@/lib/utils/jsx.ts';
 
 interface MarkdownPrintTemplateProps {
     styles: string;

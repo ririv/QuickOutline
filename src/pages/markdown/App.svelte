@@ -20,7 +20,7 @@
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
   import { generateSectionHtml } from '@/lib/utils/html-generator';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
-  import { MarkdownPrintTemplate } from '@/lib/preview-engine/MarkdownPrintTemplate'; // Import the new template
+  import { MarkdownPrintTemplate } from '@/lib/templates/MarkdownPrintTemplate.tsx'; // Import the new template
   
   let editorComponent: MdEditor;
   let previewComponent: Preview;

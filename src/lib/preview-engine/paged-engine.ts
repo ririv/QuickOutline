@@ -58,7 +58,8 @@ export class PagedEngine {
     public async update(
         payload: PagedPayload,
         container: HTMLElement,
-        onRenderComplete?: (duration: number) => void
+        onRenderComplete?: (duration: number) => void,
+        postProcess?: (buffer: HTMLElement) => Promise<void>
     ) {
         // Mark as active on update
         activeEngineInstance = this;
@@ -73,7 +74,7 @@ export class PagedEngine {
         const startTime = performance.now();
         
         try {
-            await this.renderToBuffer(payload, container);
+            await this.renderToBuffer(payload, container, postProcess);
             const endTime = performance.now();
             onRenderComplete?.(endTime - startTime);
 
@@ -82,7 +83,7 @@ export class PagedEngine {
                 const next = this.pendingPayload;
                 this.pendingPayload = null;
                 const queueStart = performance.now();
-                await this.renderToBuffer(next, container);
+                await this.renderToBuffer(next, container, postProcess);
                 const queueEnd = performance.now();
                 onRenderComplete?.(queueEnd - queueStart);
             }
@@ -93,7 +94,11 @@ export class PagedEngine {
         }
     }
 
-    private async renderToBuffer(payload: PagedPayload, container: HTMLElement) {
+    private async renderToBuffer(
+        payload: PagedPayload, 
+        container: HTMLElement,
+        postProcess?: (buffer: HTMLElement) => Promise<void>
+    ) {
         // Initialize buffers if needed
         if (!this.bufferA || !this.bufferB) {
             this.bufferA = this.createBuffer();
@@ -162,6 +167,12 @@ export class PagedEngine {
             await previewer.preview(contentWithStyle, [pageCssObject], targetBuffer);
             console.log('[PagedEngine] Preview finished.');
             
+            // Execute Post Process (e.g. fix dots) BEFORE swapping buffers
+            // This ensures user sees the finalized content without flickering
+            if (postProcess) {
+                await postProcess(targetBuffer!);
+            }
+
             // Capture styles after
             const stylesAfter = Array.from(head.querySelectorAll('style'));
             const newStyles = stylesAfter.filter(s => !stylesBefore.includes(s));

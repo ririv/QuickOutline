@@ -34,8 +34,11 @@ export function generateDotLeaderData(config: DotConfig = {}) {
 }
 
 export function generateDotLeaderCss(config: DotConfig = {}): string {
-    return ''; 
+    return '';
 }
+
+export const DOT_DIAMETER = 2; // px
+export const DOT_GAP = 6;      // px (Center-to-Center distance)
 
 export function generateTocHtml(
     content: string,
@@ -48,8 +51,8 @@ export function generateTocHtml(
     
     const lines = content.split('\n');
     
-    const dotDiameter = 2; 
-    const dotGap = 6;      
+    const dotDiameter = DOT_DIAMETER; 
+    const dotGap = DOT_GAP;      
     const dotColor = "currentColor";
     
     let pageWidthMm = PAGE_SIZES_MM['A4'][0];
@@ -60,26 +63,11 @@ export function generateTocHtml(
     const maxWidth = Math.ceil(pageWidthMm * 3.8); 
     const dotCount = Math.ceil(maxWidth / dotGap);
 
-    let dotsHtml = [];
-    const safetyMargin = 0; 
-
-    for (let i = 0; i < dotCount; i++) {
-        const cx = i * dotGap + dotDiameter / 2;
-        // Keep JSX here for consistency
-        dotsHtml.push(<circle cx={cx} cy={-(dotDiameter / 2 + safetyMargin)} r={dotDiameter / 2} />);
-    }
+    // Initial dot generation logic is moved to fixDots.js for dynamic rendering
     
-    // Back to JSX!
     const htmlOutput = (
         <>
             <h1 class="toc-title">{escapeHtml(title)}</h1>
-            <svg width="0" height="0" style={{position: "absolute", overflow: "hidden"}}>
-                <defs>
-                    <g id="toc-dots-row" fill={dotColor}>
-                        {dotsHtml}
-                    </g>
-                </defs>
-            </svg>
             <ul class="toc-list" style={{ '--toc-indent-step': `${indentStep}pt` }}>
                 {lines.map(line => {
                     if (!line.trim()) return null;
@@ -104,16 +92,15 @@ export function generateTocHtml(
                     
                     label = label.replace(/[.\s]+$/, '');
 
-                    const leaderSvg = (
-                        <svg class="dotted-line" width="100%" height="1em" style={{display: "block", overflow: "hidden"}}>
-                            <use href="#toc-dots-row" y="100%" />
-                        </svg>
+                    // The leader SVG for each item will also be populated by fixDots.js
+                    const itemLeaderSvg = (
+                        <svg class="dotted-line" width="100%" height="1em" style={{display: "block", overflow: "hidden"}} />
                     );
 
                     return (
                         <li class="toc-item" style={{ '--toc-level': level }} data-target-page={escapeHtml(page)}>
                             <span class="toc-label">{escapeHtml(label)}</span>
-                            <span class="toc-leader">{leaderSvg}</span>
+                            <span class="toc-leader">{itemLeaderSvg}</span>
                             <span class="toc-page">{escapeHtml(page)}</span>
                         </li>
                     );
