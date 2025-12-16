@@ -70,9 +70,6 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.13.2'
 
     implementation 'jakarta.inject:jakarta.inject-api:2.0.1'
-//    implementation("com.openai:openai-java:3.1.2")
-
-    implementation "com.itextpdf:html2pdf:6.2.1"
 
     // Apache Batik for SVG rendering
 //    implementation 'de.rototor.pdfbox:graphics2d:3.0.1'

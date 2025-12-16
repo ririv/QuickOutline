@@ -14,10 +14,7 @@ module quickoutline {
     requires layout;
     requires io;
     requires font.asian;
-    requires html2pdf;
     requires commons;
-    requires svg;
-    requires styled.xml.parser;
 
 //    requires bouncy.castle.adapter;
 //    requires bouncy.castle.connector;
@@ -62,5 +59,4 @@ module quickoutline {
     exports com.ririv.quickoutline.service.pdfpreview.strategy;
     exports com.ririv.quickoutline.pdfProcess.numbering;
     opens com.ririv.quickoutline.api.model to com.google.gson;
-    exports com.ririv.quickoutline.pdfProcess.itextImpl.html2pdf;
 }
