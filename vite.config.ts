@@ -10,6 +10,10 @@ export default defineConfig({
     svelte(),
     tailwindcss(),
   ],
+  esbuild: {
+    jsxFactory: 'createElement',
+    jsxFragment: 'Fragment',
+  },
   root: 'src', // 源码根目录改为 src
   publicDir: '../public', // 指定 public 目录位置，因为 root 改为了 src
   build: {

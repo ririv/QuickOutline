@@ -18,6 +18,7 @@
   import { generateTocHtml } from '@/lib/toc-gen/toc-generator';
   import { generateSectionHtml } from '@/lib/utils/html-generator';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
+  import { PrintTemplate } from '@/lib/preview-engine/PrintTemplate';
   import { getTocLinkData } from '@/lib/preview-engine/paged-engine';
   import { invoke } from '@tauri-apps/api/core';
 
@@ -175,19 +176,13 @@
           const footerHtml = generateSectionHtml(tocStore.footerConfig);
           const pageCss = generatePageCss(tocStore.headerConfig, tocStore.footerConfig, tocStore.pageLayout, tocStore.hfLayout);
 
-          const fullHtml = `<!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>${styles}</style>
-                <style>${pageCss}</style>
-            </head>
-            <body class="markdown-body">
-                <div class="print-header">${headerHtml}</div>
-                <div class="print-footer">${footerHtml}</div>
-                ${html}
-            </body>
-            </html>`;
+          const fullHtml = PrintTemplate({
+            styles,
+            pageCss,
+            headerHtml,
+            footerHtml,
+            tocHtml: html
+          });
 
           // 3. Generate PDF via Rust
           messageStore.add("Generating PDF...", "INFO");

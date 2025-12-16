@@ -5,13 +5,15 @@
   "scripts": {
     "dev": "vite dev",
     "dev:allnet": "vite dev --host",
-    "build": "vite build",
+    "build": "npm run copy:assets && vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "copy-katex-fonts": "node scripts/copy-katex-fonts.mjs",
+    "copy:katex-fonts": "node scripts/copy-katex-fonts.mjs",
+    "copy:pagedjs": "node scripts/copy-pagedjs.mjs",
+    "copy:assets": "npm run copy-katex-fonts && npm run copy-pagedjs",
     "build:unocss": "node scripts/build-unocss-runtime.mjs",
     "sign:sidecar": "node scripts/sign-sidecar.cjs",
     "update:sidecar": "node scripts/update-sidecar.cjs"

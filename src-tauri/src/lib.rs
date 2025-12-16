@@ -12,47 +12,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tauri_plugin_cli::CliExt;
 
-// Helper function to recursively copy a directory
-fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result<()> {
-    fs::create_dir_all(&dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        let src_path = entry.path();
-        let dst_path = dst.as_ref().join(entry.file_name());
-        if ty.is_dir() {
-            copy_dir_all(src_path, dst_path)?;
-        } else {
-            fs::copy(src_path, dst_path)?;
-        }
-    }
-    Ok(())
-}
-
-// Helper function to set up print workspace, including copying fonts
+// Helper function to set up print workspace (now only creates directory and cleans old files)
 fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBuf, String> {
     let app_data_dir = app_handle.path().app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
     let workspace = app_data_dir.join("print_workspace");
-    let fonts_dst = workspace.join("fonts");
-
-    // Only copy if fonts haven't been copied yet
-    if !fonts_dst.exists() {
-        if let Ok(resource_dir) = app_handle.path().resource_dir() {
-            let fonts_src = resource_dir.join("resources").join("fonts"); // Assumes 'fonts/' in resources
-            if fonts_src.exists() {
-                copy_dir_all(&fonts_src, &fonts_dst)
-                    .map_err(|e| format!("Rust Setup: Failed to copy fonts: {}", e))?;
-                println!("Rust Setup: Copied fonts to {:?}", fonts_dst);
-            } else {
-                println!("Rust Setup: Font resources not found at {:?}", fonts_src);
-            }
-        } else {
-            println!("Rust Setup: Failed to get resource dir.");
-        }
-    } else {
-        println!("Rust Setup: Fonts already exist in print workspace.");
-    }
+    
+    // Create workspace directory if not exists
+    fs::create_dir_all(&workspace).map_err(|e| format!("Failed to create workspace: {}", e))?;
 
     // Clean up old temporary print files
     if let Ok(entries) = fs::read_dir(&workspace) {
@@ -61,7 +28,7 @@ fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBu
             if path.is_file() {
                 if let Some(filename) = path.file_name().and_then(|s| s.to_str()) {
                     if (filename.starts_with("print_job_") || filename.starts_with("print_fallback_")) 
-                       && filename.ends_with(".html") { // Corrected to Rust's ends_with
+                       && filename.ends_with(".html") {
                         if let Err(e) = fs::remove_file(&path) {
                             eprintln!("Rust Setup: Failed to delete old print job {:?}: {}", path, e);
                         } else {
@@ -137,7 +104,9 @@ pub fn run() {
             }
 
             // Start local static server
-            static_server::start_server(app.handle().clone(), workspace_path);
+            // Pass the resources path ("resources" subfolder inside the resource dir)
+            let resources_path = app.handle().path().resource_dir().ok().map(|p| p.join("resources"));
+            static_server::start_server(app.handle().clone(), workspace_path, resources_path);
 
             let mut custom_port: Option<u16> = None;
             let mut use_external_sidecar = false;

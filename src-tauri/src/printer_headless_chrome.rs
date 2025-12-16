@@ -22,6 +22,10 @@ pub async fn print_to_pdf_with_url(url: String, output_path: PathBuf) -> Result<
     tab.navigate_to(&url)?;
     tab.wait_until_navigated()?;
 
+    // // Wait for Paged.js to finish rendering (if present)
+    // // We ignore the error (timeout) to support pages without Paged.js
+    // let _ = tab.wait_for_element_with_custom_timeout(".pagedjs_ready", std::time::Duration::from_secs(10));
+
     // 5. Print to PDF
     let pdf_options = headless_chrome::types::PrintToPdfOptions {
         print_background: Some(true), 

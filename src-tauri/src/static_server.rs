@@ -9,6 +9,7 @@ use tauri::{AppHandle, Manager, Runtime}; // Import Manager and Runtime trait
 pub struct LocalServerState {
     pub port: Mutex<Option<u16>>,
     pub workspace: Mutex<PathBuf>,
+    pub resources: Mutex<Option<PathBuf>>,
 }
 
 impl LocalServerState {
@@ -16,15 +17,17 @@ impl LocalServerState {
         Self {
             port: Mutex::new(None),
             workspace: Mutex::new(PathBuf::new()),
+            resources: Mutex::new(None),
         }
     }
 }
 
-pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBuf) {
+pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBuf, resources_path: Option<PathBuf>) {
     let state = app_handle.state::<LocalServerState>();
     
-    // Store workspace path
+    // Store workspace and resources path
     *state.workspace.lock().unwrap() = workspace_path.clone();
+    *state.resources.lock().unwrap() = resources_path.clone();
 
     // Spawn server in a separate thread
     thread::spawn(move || {
@@ -79,7 +82,27 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
             // Use URL decoding if needed (basic substitution here, expand if necessary)
             let clean_path = clean_path.replace("%20", " ");
 
-            let file_path = workspace_path.join(&clean_path);
+            let mut file_path = workspace_path.join(&clean_path);
+            let mut served_from_resources = false;
+
+            // Strategy: Check workspace first, then resources fallback
+            if !file_path.exists() {
+                if let Some(res_dir) = &resources_path {
+                    // Only fallback for specific asset directories to avoid serving unintended files
+                    // Assuming structure: resources/libs/..., resources/fonts/...
+                    // Match "libs", "libs/", "fonts", "fonts/"
+                    if clean_path == "libs" || clean_path.starts_with("libs/") || 
+                       clean_path == "fonts" || clean_path.starts_with("fonts/") {
+                        
+                        let potential_path = res_dir.join(&clean_path);
+                        if potential_path.exists() {
+                            file_path = potential_path;
+                            served_from_resources = true;
+                            println!("Serving from resources: {}", file_path.display()); // Log this
+                        }
+                    }
+                }
+            }
 
             if file_path.exists() {
                 if file_path.is_file() {
@@ -112,41 +135,75 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                     } else {
                         let _ = request.respond(Response::from_string("Internal Server Error").with_status_code(500));
                     }
-                } else if file_path.is_dir() {
-                    // Generate directory listing
-                    let mut html = String::from("<html><head><title>Directory Listing</title></head><body>");
-                    html.push_str(&format!("<h1>Index of /{}</h1><ul>", clean_path));
+                } else if file_path.is_dir() { // Removed !served_from_resources check to allow listing virtual dirs
+                    // Generate directory listing with merged view
+                    let mut html = String::from("<html><head><title>Directory Listing</title><style>body{font-family:sans-serif;} table{border-collapse:collapse;width:100%;} td,th{padding:8px;text-align:left;border-bottom:1px solid #ddd;} .src{color:#888;font-size:0.8em;}</style></head><body>");
+                    html.push_str(&format!("<h1>Index of /{}</h1><table><tr><th>Name</th><th>Source</th></tr>", clean_path));
                     
-                    // Add parent directory link if not root
                     if !clean_path.is_empty() {
-                         html.push_str("<li><a href=\"..\">.. (Parent Directory)</a></li>");
+                         html.push_str("<tr><td><a href=\"..\">.. (Parent Directory)</a></td><td></td></tr>");
                     }
 
-                    if let Ok(entries) = std::fs::read_dir(&file_path) {
-                        for entry in entries.flatten() {
+                    // Use a Set to track seen filenames to avoid duplicates
+                    let mut seen_files = std::collections::HashSet::new();
+                    let mut entries = Vec::new();
+
+                    // 1. Scan Workspace (High Priority)
+                    if let Ok(ws_entries) = std::fs::read_dir(&file_path) {
+                        for entry in ws_entries.flatten() {
                             let filename = entry.file_name().to_string_lossy().to_string();
                             let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-                            let display_name = if is_dir { format!("{}/", filename) } else { filename.clone() };
-                            
-                            // Construct relative link
-                            // If current path is empty, link is just filename
-                            // If clean_path ends with /, append filename
-                            // Otherwise append /filename
-                            // Ideally, tiny_http handles relative links in browser. 
-                            // Simple href="filename" works if we are at the directory URL (ending in /).
-                            // But if we are at "/fonts" (no slash), browser treats "arial.ttf" as sibling of "fonts".
-                            // To be safe, we should ensure we redirect to trailing slash if missing, or use robust relative logic.
-                            // For simplicity: href="./filename" works if URL ends in slash.
-                            
-                            html.push_str(&format!("<li><a href=\"{}\">{}</a></li>", filename, display_name));
+                            entries.push((filename.clone(), is_dir, "Workspace"));
+                            seen_files.insert(filename);
                         }
                     }
-                    html.push_str("</ul></body></html>");
+
+                    // 2. Scan Resources (Fallback)
+                    if let Some(res_dir) = &resources_path {
+                        let res_target = res_dir.join(&clean_path);
+                        if res_target.exists() && res_target.is_dir() {
+                             if let Ok(res_entries) = std::fs::read_dir(&res_target) {
+                                for entry in res_entries.flatten() {
+                                    let filename = entry.file_name().to_string_lossy().to_string();
+                                    if !seen_files.contains(&filename) {
+                                        let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
+                                        entries.push((filename, is_dir, "Resources (Virtual)"));
+                                    }
+                                }
+                             }
+                        }
+                    }
+
+                    // Sort entries: Directories first, then alphabetical
+                    entries.sort_by(|a, b| {
+                        if a.1 != b.1 {
+                            b.1.cmp(&a.1) // Directories first
+                        } else {
+                            a.0.cmp(&b.0)
+                        }
+                    });
+
+                    for (filename, is_dir, source) in entries {
+                        let display_name = if is_dir { format!("{}/", filename) } else { filename.clone() };
+                        let link = if clean_path.is_empty() { filename.clone() } else { format!("{}/{}", clean_path, filename) }; 
+                        // Note: link construction might need adjustment based on how browser handles relative links. 
+                        // If we are at /libs/, href="paged.js" works. 
+                        // If we are at /libs (no slash), href="paged.js" replaces "libs".
+                        // Assuming tiny_http or browser handles the current URL context.
+                        // Safest is relative just filename if we assume standard behavior.
+                        
+                        html.push_str(&format!("<tr><td><a href=\"{}\">{}</a></td><td class=\"src\">{}</td></tr>", filename, display_name, source));
+                    }
+
+                    html.push_str("</table></body></html>");
                     
                     let mut response = Response::from_string(html);
                     let header = Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]).unwrap();
                     response.add_header(header);
                     let _ = request.respond(response);
+                } else {
+                     // Directory listing disabled for resources or failed
+                     let _ = request.respond(Response::from_string("Forbidden").with_status_code(403));
                 }
             } else {
                 let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
