@@ -130,7 +130,9 @@
             tocStore.content, 
             tocStore.title, 
             tocStore.offset, 
-            tocStore.numberingStyle
+            tocStore.numberingStyle,
+            undefined, // Use default indentStep
+            tocStore.pageLayout
         );
         
         // Update payload in store, which is passed to Preview component
@@ -164,7 +166,9 @@
             tocStore.content,
             tocStore.title,
             tocStore.offset,
-            tocStore.numberingStyle
+            tocStore.numberingStyle,
+            undefined, // Use default indentStep
+            tocStore.pageLayout
           );
           
           const headerHtml = generateSectionHtml(tocStore.headerConfig);

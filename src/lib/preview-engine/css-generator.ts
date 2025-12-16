@@ -1,4 +1,5 @@
 import type { PageLayout, HeaderFooterLayout } from '@/lib/types/page';
+import { PAGE_SIZES_MM } from '@/lib/types/page';
 import { css } from '@/lib/utils/tags';
 
 export function generatePageCss(header: any, footer: any, layout?: PageLayout, hfLayout?: HeaderFooterLayout) {
@@ -14,26 +15,21 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout, h
     const headerPadding = hfLayout?.headerPadding ?? 1;
     const footerPadding = hfLayout?.footerPadding ?? 1;
 
-    // Define standard sizes in mm (Portrait W x H)
-    const sizes: Record<string, [string, string]> = {
-        'A4': ['210mm', '297mm'],
-        'A3': ['297mm', '420mm'],
-        'Letter': ['215.9mm', '279.4mm'],
-        'Legal': ['215.9mm', '355.6mm']
-    };
+    let widthNum = PAGE_SIZES_MM['A4'][0];
+    let heightNum = PAGE_SIZES_MM['A4'][1];
 
-    let width = sizes['A4'][0];
-    let height = sizes['A4'][1];
-
-    if (sizes[sizeName]) {
+    if (PAGE_SIZES_MM[sizeName]) {
         if (orientation === 'landscape') {
-            width = sizes[sizeName][1];
-            height = sizes[sizeName][0];
+            widthNum = PAGE_SIZES_MM[sizeName][1];
+            heightNum = PAGE_SIZES_MM[sizeName][0];
         } else {
-            width = sizes[sizeName][0];
-            height = sizes[sizeName][1];
+            widthNum = PAGE_SIZES_MM[sizeName][0];
+            heightNum = PAGE_SIZES_MM[sizeName][1];
         }
     }
+
+    const width = `${widthNum}mm`;
+    const height = `${heightNum}mm`;
 
     const headerBorder = header?.drawLine ? `border-bottom: 1px solid black; padding-bottom: ${headerPadding}pt;` : 'border-bottom: none; padding-bottom: 0;';
     const footerBorder = footer?.drawLine ? `border-top: 1px solid black; padding-top: ${footerPadding}pt;` : 'border-top: none; padding-top: 0;';

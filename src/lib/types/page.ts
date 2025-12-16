@@ -29,3 +29,11 @@ export const defaultHeaderFooterLayout: HeaderFooterLayout = {
     headerPadding: 1,
     footerPadding: 1
 };
+
+// Standard page sizes in millimeters [width, height]
+export const PAGE_SIZES_MM: Record<string, [number, number]> = {
+    'A4': [210, 297],
+    'A3': [297, 420],
+    'Letter': [215.9, 279.4],
+    'Legal': [215.9, 355.6]
+};

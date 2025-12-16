@@ -1,5 +1,6 @@
 import tocStyles from './toc.css?inline';
 import {css} from "@/lib/utils/tags";
+import { type PageLayout, PAGE_SIZES_MM } from '@/lib/types/page';
 
 interface DotConfig {
     width?: number;
@@ -55,7 +56,8 @@ export function generateTocHtml(
     // These might be used for advanced logic later, but for now we render text as-is
     offset: number, 
     numberingStyle: any,
-    indentStep: number = 20 // Default indentation step in pt
+    indentStep: number = 20, // Default indentation step in pt
+    pageLayout?: PageLayout
 ): { html: string, styles: string } {
     
     const lines = content.split('\n');
@@ -65,7 +67,17 @@ export function generateTocHtml(
     const dotDiameter = 2; // px
     const dotGap = 6;      // px
     const dotColor = "currentColor";
-    const maxWidth = 2000; // px, sufficient for most page widths
+    
+    // Calculate maxWidth based on page layout
+    let pageWidthMm = PAGE_SIZES_MM['A4'][0]; // Default to A4 width
+    if (pageLayout) {
+        const size = PAGE_SIZES_MM[pageLayout.size] || PAGE_SIZES_MM['A4'];
+        // Use width based on orientation
+        pageWidthMm = pageLayout.orientation === 'landscape' ? size[1] : size[0];
+    }
+    // Convert mm to px (1mm ≈ 3.78px at 96 DPI), adding a small buffer
+    const maxWidth = Math.ceil(pageWidthMm * 3.8); 
+    
     const dotCount = Math.ceil(maxWidth / dotGap);
 
     // --- SVG IMPLEMENTATION (Active) ---
