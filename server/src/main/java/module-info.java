@@ -1,8 +1,5 @@
 module quickoutline {
     requires java.desktop;
-    requires jdk.xml.dom;
-//    requires java.validation;
-    requires jdk.httpserver;
     requires jakarta.inject;
 
     requires org.slf4j;
@@ -41,7 +38,6 @@ module quickoutline {
     exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions;
     exports com.ririv.quickoutline.pdfProcess.itextImpl;
     exports com.ririv.quickoutline.pdfProcess.itextImpl.model;
-    exports com.ririv.quickoutline.service.webserver;
     exports com.ririv.quickoutline.pdfProcess.numbering;
     opens com.ririv.quickoutline.api.model to com.google.gson;
 }

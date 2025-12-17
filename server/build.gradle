@@ -56,7 +56,6 @@ dependencies {
     implementation "com.itextpdf:layout:${itextVersion}"
     implementation "com.itextpdf:font-asian:${itextVersion}"
 
-    implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
 
     implementation 'org.slf4j:slf4j-api:2.0.16' // Use the latest stable version
     implementation 'org.slf4j:slf4j-simple:2.0.16' // Or another implementation
