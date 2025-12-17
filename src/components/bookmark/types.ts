@@ -1,8 +1,12 @@
-export interface Bookmark {
+export interface BookmarkData {
     id: string;
     title: string;
-    page: string | null; // Changed to string to match backend model (flexibility) and frontend input
+    pageNum: string | null; 
     level: number;
-    children: Bookmark[];
+    children: BookmarkData[];
+}
+
+export interface BookmarkUI extends Omit<BookmarkData, 'children'> {
     expanded?: boolean;
+    children: BookmarkUI[];
 }

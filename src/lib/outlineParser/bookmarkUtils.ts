@@ -1,7 +1,7 @@
-import type { Bookmark } from "../../components/bookmark/types";
+import type { BookmarkUI } from "../../components/bookmark/types";
 import { INDENT_UNIT, FOUR_NORM_SPACE } from "./constants";
 
-export type LinkedBookmark = Bookmark & {
+export type LinkedBookmark = BookmarkUI & {
     parent?: LinkedBookmark;
 };
 
@@ -9,7 +9,7 @@ export function createBookmark(title: string, page: string | null, level: number
     return {
         id: crypto.randomUUID(),
         title,
-        page,
+        pageNum: page,
         level,
         children: [],
         expanded: true
@@ -20,14 +20,14 @@ export function createRoot(): LinkedBookmark {
     return {
         id: "root",
         title: "Outlines",
-        page: null,
+        pageNum: null,
         level: 0,
         children: [],
         expanded: true
     };
 }
 
-export function convertListToBookmarkTree(linearList: Bookmark[]): Bookmark {
+export function convertListToBookmarkTree(linearList: BookmarkUI[]): BookmarkUI {
     const rootBookmark = createRoot();
     let last: LinkedBookmark = rootBookmark;
 
@@ -94,12 +94,12 @@ function cleanupParentReferences(node: LinkedBookmark) {
     }
 }
 
-export function serializeBookmarkTree(root: Bookmark): string {
+export function serializeBookmarkTree(root: BookmarkUI): string {
     let result = "";
     
-    function traverse(node: Bookmark) {
+    function traverse(node: BookmarkUI) {
         if (node.level > 0) {
-            const pageNumStr = node.page ? node.page : "";
+            const pageNumStr = node.pageNum ? node.pageNum : "";
             result += buildLine(node.level, node.title, pageNumStr);
         }
         

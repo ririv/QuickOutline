@@ -18,7 +18,7 @@
     import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { messageStore } from '@/stores/messageStore';
-    import type { Bookmark } from '@/components/bookmark/types';
+    import type { BookmarkUI } from '@/components/bookmark/types';
     import { untrack } from 'svelte';
 
     interface Props {
@@ -110,7 +110,7 @@
             // For now, we use standard getOutlineAsBookmark for 'bookmark' mode
             
             // 2. Get Bookmark DTO from backend
-            const bookmarkDto: Bookmark = await rpc.getOutlineAsBookmark(offset);
+            const bookmarkDto: BookmarkUI = await rpc.getOutlineAsBookmark(offset);
             
             // 3. Sync text locally
             const text = serializeBookmarkTree(bookmarkDto); 

@@ -1,4 +1,4 @@
-import type { Bookmark } from "../../../components/bookmark/types";
+import type { BookmarkUI } from "../../../components/bookmark/types";
 import { BaseParser } from "../Parser";
 import { createBookmark } from "../bookmarkUtils";
 
@@ -13,7 +13,7 @@ export class IndentParser extends BaseParser {
     // Note: [\s.]* handles dots/spaces between title and page number
     private readonly indentPattern = /^(\s*)?(.*?)[\s.]*(-?[0-9]+)?\s*$/;
 
-    parseLine(line: string, linearBookmarkList: Bookmark[]): Bookmark {
+    parseLine(line: string, linearBookmarkList: BookmarkUI[]): BookmarkUI {
         const match = line.match(this.indentPattern);
         
         if (match) {

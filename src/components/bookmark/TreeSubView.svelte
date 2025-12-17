@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Bookmark } from "./types";
+    import type { BookmarkUI } from "./types";
     import BookmarkNode from "./BookmarkNode.svelte";
     import { onMount, onDestroy, setContext, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
@@ -9,7 +9,7 @@
     import { appStore } from '@/stores/appStore';
     import PreviewTooltip from '../PreviewTooltip.svelte';
 
-    let bookmarks = $state<Bookmark[]>([]);
+    let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
     
     // Preview State
@@ -33,7 +33,7 @@
 
     function toggleAll() {
         isAllExpanded = !isAllExpanded;
-        function traverse(nodes: Bookmark[]) {
+        function traverse(nodes: BookmarkUI[]) {
             for (const node of nodes) {
                 node.expanded = isAllExpanded;
                 if (node.children && node.children.length > 0) {
@@ -53,13 +53,13 @@
     }
 
     // Debounced function to sync tree changes with backend and update text
-    const debouncedSyncTreeWithBackend = debounce(async (tree: Bookmark[]) => {
+    const debouncedSyncTreeWithBackend = debounce(async (tree: BookmarkUI[]) => {
         try {
             // Construct a virtual root BookmarkDto for sending to backend
-            const rootDto: Bookmark = {
+            const rootDto: BookmarkUI = {
                 id: 'virtual-root', // Use a consistent ID for the virtual root
                 title: 'Virtual Root',
-                page: null,
+                pageNum: null,
                 level: 0,
                 children: tree
             };

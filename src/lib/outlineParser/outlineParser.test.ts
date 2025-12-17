@@ -1,6 +1,6 @@
 import { processText, Method, containsChinese } from "./index";
 import { CnSeqParser } from "./methods/seq/CnSeqParser";
-import type { Bookmark } from "../../components/bookmark/types";
+import type { BookmarkUI } from "../../components/bookmark/types";
 
 // Simple test runner helper
 function test(name: string, fn: () => void) {
@@ -21,7 +21,7 @@ function assert(condition: boolean, message: string) {
     }
 }
 
-function printTree(node: Bookmark, depth = 0) {
+function printTree(node: BookmarkUI, depth = 0) {
     console.log("  ".repeat(depth) + `- ${node.title} (L${node.level})
 `);
     if (node.children) {

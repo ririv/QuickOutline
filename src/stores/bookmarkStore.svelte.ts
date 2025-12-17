@@ -1,15 +1,15 @@
-import type { Bookmark } from '@/components/bookmark/types';
+import type { BookmarkUI } from '@/components/bookmark/types';
 
 class BookmarkStore {
 	text = $state('');
-	tree = $state<Bookmark[]>([]);
+	tree = $state<BookmarkUI[]>([]);
 	offset = $state(0);
 
 	setText(text: string) {
 		this.text = text;
 	}
 
-	setTree(tree: Bookmark[]) {
+	setTree(tree: BookmarkUI[]) {
 		this.tree = tree;
 	}
 

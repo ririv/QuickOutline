@@ -1,4 +1,4 @@
-import type { Bookmark } from "../../../../components/bookmark/types";
+import type { BookmarkUI } from "../../../../components/bookmark/types";
 import { BaseParser } from "../../Parser";
 import { createBookmark } from "../../bookmarkUtils";
 import { getLevelByStandardSeq } from "./Seq";
@@ -13,7 +13,7 @@ export class StdSeqParser extends BaseParser {
     // Group 5: pageNum
     private readonly stdPattern = /^(\s*)?(\d+(?:\.\d+)*\.?)?\s*(.*?)["\s.]*(-?[0-9]+)?\s*$/;
 
-    parseLine(line: string, linearBookmarkList: Bookmark[]): Bookmark {
+    parseLine(line: string, linearBookmarkList: BookmarkUI[]): BookmarkUI {
         const match = line.match(this.stdPattern);
         
         if (match) {

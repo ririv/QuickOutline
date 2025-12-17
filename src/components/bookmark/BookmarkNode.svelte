@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Bookmark } from "./types";
+    import type { BookmarkUI } from "./types";
     import BookmarkNode from "./BookmarkNode.svelte"; // Self-import for recursion
     import { tick, getContext } from "svelte";
     import { appStore } from '@/stores/appStore';
@@ -8,7 +8,7 @@
     import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
 
     interface Props {
-        bookmark: Bookmark;
+        bookmark: BookmarkUI;
     }
     let { bookmark }: Props = $props();
 
@@ -45,9 +45,9 @@
 
     function handlePageMouseEnter(e: MouseEvent) {
         // console.log('Hover page:', bookmark.page);
-        if (isEditingPage || !bookmark.page) return;
+        if (isEditingPage || !bookmark.pageNum) return;
         
-        const pageNum = parseInt(bookmark.page, 10);
+        const pageNum = parseInt(bookmark.pageNum, 10);
         if (isNaN(pageNum)) {
             // console.warn('Page is not a number:', bookmark.page);
             return;
@@ -91,16 +91,16 @@
 
     // Computed page to display
     let displayedPage = $derived.by(() => {
-        if (!bookmark.page) return '';
-        const pageNum = parseInt(bookmark.page, 10);
-        if (isNaN(pageNum)) return bookmark.page;
+        if (!bookmark.pageNum) return '';
+        const pageNum = parseInt(bookmark.pageNum, 10);
+        if (isNaN(pageNum)) return bookmark.pageNum;
         const offset = bookmarkStore.offset || 0;
-        return offsetContext.show ? String(pageNum + offset) : bookmark.page;
+        return offsetContext.show ? String(pageNum + offset) : bookmark.pageNum;
     });
 
     let isOutOfRange = $derived.by(() => {
-        if (!bookmark.page) return false;
-        const pageNum = parseInt(bookmark.page, 10);
+        if (!bookmark.pageNum) return false;
+        const pageNum = parseInt(bookmark.pageNum, 10);
         if (isNaN(pageNum)) return false;
         
         const offset = bookmarkStore.offset || 0;
@@ -163,7 +163,7 @@
                     <input 
                         type="text" 
                         class="w-full outline-none px-1.5 py-0.5 text-sm leading-tight bg-transparent text-center rounded font-normal text-gray-900 font-sans"
-                        bind:value={bookmark.page} 
+                        bind:value={bookmark.pageNum}
                         bind:this={pageInput}
                         onblur={() => isEditingPage = false}
                     />

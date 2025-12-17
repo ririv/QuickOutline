@@ -4,7 +4,7 @@
     import { rpc } from '@/lib/api/rpc';
     import { processText, autoFormat } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore';
-    import type { Bookmark } from './types';
+    import type { BookmarkUI } from './types';
     import formatIcon from '@/assets/icons/format.svg'; // Using text-edit for format
     import sequentialIcon from '@/assets/icons/mode-sequential.svg';
     import indentIcon from '@/assets/icons/mode-indent.svg';
@@ -32,7 +32,7 @@
     // Debounced function to sync text changes with backend and update tree
     const debouncedSyncWithBackend = debounce(async (newText: string) => {
         try {
-            const bookmarkDto: Bookmark = processText(newText);
+            const bookmarkDto: BookmarkUI = processText(newText);
             bookmarkStore.setTree(bookmarkDto.children || []);
             // No need to setText here, as it's already done instantly by handleInput
         } catch (e: any) {
@@ -116,7 +116,7 @@
             const formatted = autoFormat(textValue);
             
             // Sync formatted text to backend and get updated tree
-            const bookmarkDto: Bookmark = processText(formatted);
+            const bookmarkDto: BookmarkUI = processText(formatted);
 
             textValue = formatted;
             bookmarkStore.setText(formatted);

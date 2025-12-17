@@ -1,5 +1,5 @@
 // Ported from parser.java
-import type { Bookmark } from "../../components/bookmark/types";
+import type { BookmarkUI } from "../../components/bookmark/types";
 
 export interface Parser {
     /**
@@ -7,23 +7,23 @@ export interface Parser {
      * @param line The text line to parse.
      * @param linearBookmarkList The list of bookmarks parsed so far (for context).
      */
-    parseLine(line: string, linearBookmarkList: Bookmark[]): Bookmark;
+    parseLine(line: string, linearBookmarkList: BookmarkUI[]): BookmarkUI;
 
     /**
      * Parses a list of text lines into a list of Bookmark objects.
      * @param text The list of text lines.
      */
-    parse(text: string[]): Bookmark[];
+    parse(text: string[]): BookmarkUI[];
 }
 
 /**
  * Abstract base class to provide the default `parse` implementation.
  */
 export abstract class BaseParser implements Parser {
-    abstract parseLine(line: string, linearBookmarkList: Bookmark[]): Bookmark;
+    abstract parseLine(line: string, linearBookmarkList: BookmarkUI[]): BookmarkUI;
 
-    parse(text: string[]): Bookmark[] {
-        const linearBookmarkList: Bookmark[] = [];
+    parse(text: string[]): BookmarkUI[] {
+        const linearBookmarkList: BookmarkUI[] = [];
         for (const line of text) {
             try {
                 const current = this.parseLine(line, linearBookmarkList);
