@@ -44,7 +44,7 @@ export function TocPrintTemplate({ styles, pageCss, headerHtml, footerHtml, tocH
                 <script src="libs/paged.polyfill.min.js"></script>
                 <script>{fixDotsScript}</script>
             </head>
-            <body class="markdown-body">
+            <body>
                 <div class="print-header">{headerHtml}</div>
                 <div class="print-footer">{footerHtml}</div>
                 {tocHtml}

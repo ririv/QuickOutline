@@ -146,9 +146,7 @@ export class PagedEngine {
         <style>${styles}</style>
         <div class="print-header">${headerHtml}</div>
         <div class="print-footer">${footerHtml}</div>
-        <div class="markdown-body">
-            ${html}
-        </div>
+        ${html}
         `;
 
         const previewer = new Previewer({
@@ -269,19 +267,6 @@ export class PagedEngine {
     }
 }
 
-// Exported proxy functions to maintain compatibility and access the active engine
-export function handlePagedUpdate(
-    payload: PagedPayload,
-    container: HTMLElement,
-    onRenderComplete?: (duration: number) => void
-) {
-    // This is the Legacy Entry Point. 
-    // Ideally, PagedRenderer should instantiate the class directly.
-    // But if we want to support the old way, we'd need a singleton instance here.
-    // However, the Goal is to let PagedRenderer manage the instance.
-    // So this function is DEPRECATED in favor of new PagedEngine().update().
-    console.warn("Deprecated handlePagedUpdate called. Use PagedEngine class instead.");
-}
 
 export function getRenderedTocData() {
     return activeEngineInstance?.getRenderedTocData() || [];

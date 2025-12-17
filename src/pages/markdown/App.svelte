@@ -90,7 +90,7 @@
       `;
 
       markdownStore.currentPagedContent = {
-          html: htmlContent,
+          html: `<div class="markdown-body">${htmlContent}</div>`,
           styles: generatedCss,
           header: markdownStore.headerConfig,
           footer: markdownStore.footerConfig,

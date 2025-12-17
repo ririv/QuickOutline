@@ -30,7 +30,7 @@ export function MarkdownPrintTemplate({
                 {/* Inject UnoCSS Runtime */}
                 <script src="libs/unocss-runtime.bundle.js"></script>
             </head>
-            <body class="markdown-body">
+            <body>
                 <div class="print-header">{headerHtml}</div>
                 <div class="print-footer">{footerHtml}</div>
                 {contentHtml}
