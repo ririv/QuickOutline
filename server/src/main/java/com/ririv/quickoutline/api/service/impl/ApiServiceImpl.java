@@ -10,11 +10,7 @@ import com.ririv.quickoutline.model.Bookmark;
 import com.ririv.quickoutline.model.PageLabel;
 import com.ririv.quickoutline.model.ViewScaleType;
 import com.ririv.quickoutline.service.*;
-import com.ririv.quickoutline.service.pdfpreview.FileImageService;
-import com.ririv.quickoutline.service.pdfpreview.PdfSvgService;
-import com.ririv.quickoutline.service.pdfpreview.PreviewImageService;
 import com.ririv.quickoutline.textProcess.methods.Method;
-import com.ririv.quickoutline.utils.FastByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +20,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import com.ririv.quickoutline.api.WebSocketSessionManager;
@@ -38,9 +33,6 @@ public class ApiServiceImpl implements ApiService {
     private final PdfCheckService pdfCheckService;
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
     private final PdfPageLabelService pdfPageLabelService;
-    private final FileImageService fileImageService;
-    private final PreviewImageService previewImageService;
-    private final PdfSvgService pdfSvgService; // New injection
     private final ApiBookmarkState apiBookmarkState;
     private final CurrentFileState currentFileState;
     private final SyncWithExternalEditorService syncService;
@@ -51,9 +43,6 @@ public class ApiServiceImpl implements ApiService {
                           PdfOutlineService pdfOutlineService,
                           PdfTocPageGeneratorService pdfTocPageGeneratorService,
                           PdfPageLabelService pdfPageLabelService,
-                          FileImageService fileImageService,
-                          PreviewImageService previewImageService,
-                          PdfSvgService pdfSvgService, // New injection
                           ApiBookmarkState apiBookmarkState,
                           CurrentFileState currentFileState,
                           SyncWithExternalEditorService syncService,
@@ -62,9 +51,6 @@ public class ApiServiceImpl implements ApiService {
         this.pdfOutlineService = pdfOutlineService;
         this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
         this.pdfPageLabelService = pdfPageLabelService;
-        this.fileImageService = fileImageService;
-        this.previewImageService = previewImageService;
-        this.pdfSvgService = pdfSvgService; // New injection
         this.apiBookmarkState = apiBookmarkState;
         this.currentFileState = currentFileState;
         this.syncService = syncService;
@@ -80,10 +66,7 @@ public class ApiServiceImpl implements ApiService {
         try {
             pdfCheckService.checkOpenFile(filePath);
             currentFileState.open(filePath);
-            
-            // Delegate to FileImageService and clear preview
-            previewImageService.clear();
-            this.fileImageService.openFile(new File(filePath));
+
             this.apiBookmarkState.clear(); // Clear state on new file
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -269,90 +252,6 @@ public class ApiServiceImpl implements ApiService {
         }
     }
 
-    @Override
-    public String generateTocPreview(TocConfig config) {
-        log.info("Generating TOC preview for title: {}", config.title());
-        Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(config.tocContent(), Method.INDENT);
-
-        if (root == null || root.getChildren().isEmpty()) {
-            log.warn("TOC preview generation skipped: content is empty after parsing.");
-            return new Gson().toJson(Collections.emptyList());
-        }
-
-        try (FastByteArrayOutputStream baos = new FastByteArrayOutputStream()) {
-            log.debug("Creating in-memory preview PDF...");
-            pdfTocPageGeneratorService.createTocPagePreview(
-                    config.title(),
-                    config.numberingStyle(),
-                    root,
-                    baos,
-                    config.header(),
-                    config.footer(),
-                    msg -> log.info("TOC Preview msg: {}", msg),
-                    err -> {
-                        throw new RuntimeException(err);
-                    }
-            );
-
-            byte[] pdfBytes = baos.getBuffer();
-            int size = baos.size();
-            FastByteArrayOutputStream finalStream = new FastByteArrayOutputStream();
-            finalStream.write(pdfBytes, 0, size);
-
-            log.debug("Preview PDF generated, size: {} bytes. Diffing images...", size);
-
-            if (size == 0) {
-                log.warn("Preview PDF is empty, cannot render images.");
-                return new Gson().toJson(Collections.emptyList());
-            }
-
-            // Delegate to PdfSvgService for SVG generation
-            List<PdfSvgService.SvgPageUpdate> updates = pdfSvgService.updatePreview(finalStream);
-            log.info("Found {} updated page(s) for preview.", updates.size());
-
-            return new Gson().toJson(updates);
-
-        } catch (Exception e) {
-            log.error("Failed to generate TOC preview.", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public CompletableFuture<byte[]> getFileImageAsync(int pageIndex) {
-        return fileImageService.getImage(pageIndex);
-    }
-
-    @Override
-    public CompletableFuture<byte[]> getFileThumbnailAsync(int pageIndex) {
-        return fileImageService.getThumbnail(pageIndex);
-    }
-
-    @Override
-    public CompletableFuture<byte[]> getPreviewImageAsync(int pageIndex) {
-        return previewImageService.getImage(pageIndex);
-    }
-
-    @Override
-    public String getThumbnail(int pageIndex) {
-        // Thumbnails (Base64) are typically for the file itself
-        byte[] data = getFileImageAsync(pageIndex).join();
-        if (data == null || data.length == 0) return null;
-        return java.util.Base64.getEncoder().encodeToString(data);
-    }
-
-    @Override
-    public Map<Integer, String> getThumbnails(List<Integer> pageIndices) {
-        checkFileOpen();
-        Map<Integer, String> result = new HashMap<>();
-        for (Integer index : pageIndices) {
-            String base64 = getThumbnail(index);
-            if (base64 != null) {
-                result.put(index, base64);
-            }
-        }
-        return result;
-    }
 
     @Override
     public String[] getPageLabels(String srcFilePath) {
@@ -390,14 +289,6 @@ public class ApiServiceImpl implements ApiService {
         }
     }
 
-    @Override
-    public int getPageCount() {
-        // Delegate to the appropriate service
-        if (previewImageService.isActive()) {
-            return previewImageService.getTotalPages();
-        }
-        return fileImageService.getTotalPages();
-    }
 
     @Override
     public BookmarkDto parseTextToTree(String text) {
@@ -455,9 +346,5 @@ public class ApiServiceImpl implements ApiService {
             }
         );
     }
-    
-    @Override
-    public void clearPreview() {
-        previewImageService.clear();
-    }
+
 }

@@ -10,9 +10,6 @@ import com.ririv.quickoutline.api.state.CurrentFileState;
 import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
 import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
 import com.ririv.quickoutline.service.*;
-import com.ririv.quickoutline.service.pdfpreview.FileImageService;
-import com.ririv.quickoutline.service.pdfpreview.PdfSvgService;
-import com.ririv.quickoutline.service.pdfpreview.PreviewImageService;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
@@ -37,8 +34,6 @@ public class SidecarApp {
 
         // 1. 初始化服务
         PdfCheckService pdfCheckService = new PdfCheckService();
-        FileImageService fileImageService = new FileImageService(); // New
-        PreviewImageService previewImageService = new PreviewImageService(); // New
         PdfOutlineService pdfOutlineService = new PdfOutlineService();
         FontManager fontManager = new FontManager();
         TocPageGenerator tocPageGenerator = new iTextTocPageGenerator(fontManager);
@@ -50,7 +45,6 @@ public class SidecarApp {
         ApiBookmarkState apiBookmarkState = new ApiBookmarkState();
         CurrentFileState currentFileState = new CurrentFileState();
         WebSocketSessionManager sessionManager = new WebSocketSessionManager();
-        PdfSvgService pdfSvgService = new PdfSvgService();
 
         // 3. 初始化 API 实现
         ApiService apiService = new ApiServiceImpl(
@@ -58,9 +52,6 @@ public class SidecarApp {
                 pdfOutlineService,
                 pdfTocPageGeneratorService,
                 pdfPageLabelService,
-                fileImageService, // Inject new service
-                previewImageService, // Inject new service
-                pdfSvgService,
                 apiBookmarkState,
                 currentFileState,
                 syncWithExternalEditorService,
@@ -88,25 +79,9 @@ public class SidecarApp {
         // 7. 配置 HTTP 请求处理器
         server.requestHandler(req -> {
             String path = req.path();
-            
-            // 1. File Images (No Cache)
-            if (path.startsWith("/file_images/")) {
-                // Check query params for type=thumb
-                String query = req.query();
-                boolean isThumb = query != null && query.contains("type=thumb");
-                
-                if (isThumb) {
-                    handleImageRequest(req, path, "/file_images/", false, apiService::getFileThumbnailAsync);
-                } else {
-                    handleImageRequest(req, path, "/file_images/", false, apiService::getFileImageAsync);
-                }
-            }
-            // 2. Preview Images (Cached, assumes ?v=... is used)
-            else if (path.startsWith("/preview_images/")) {
-                handleImageRequest(req, path, "/preview_images/", true, apiService::getPreviewImageAsync);
-            }
-            // 3. Default Handler
-            else if (req.headers().get("Upgrade") == null || !req.headers().get("Upgrade").equalsIgnoreCase("websocket")) {
+
+            // Default Handler
+            if (req.headers().get("Upgrade") == null || !req.headers().get("Upgrade").equalsIgnoreCase("websocket")) {
                 req.response()
                    .putHeader("content-type", "text/plain; charset=utf-8")
                    .end("QuickOutline Sidecar is running.");

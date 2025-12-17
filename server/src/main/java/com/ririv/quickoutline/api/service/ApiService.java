@@ -45,32 +45,11 @@ public interface ApiService {
 
     // --- TOC ---
     void generateTocPage(TocConfig config, String destFilePath);
-    String generateTocPreview(TocConfig config);
 
     // --- Page Labels ---
     String[] getPageLabels(String srcFilePath);
     void setPageLabels(List<PageLabelRule> rules, String destFilePath);
     List<String> simulatePageLabels(List<PageLabelRule> rules);
-    
-    // --- Thumbnails / Metadata ---
-    int getPageCount();
-    String getThumbnail(int pageIndex);
-    java.util.Map<Integer, String> getThumbnails(List<Integer> pageIndices);
-    
-    /**
-     * Gets image data from the currently opened file.
-     */
-    CompletableFuture<byte[]> getFileImageAsync(int pageIndex);
-
-    /**
-     * Gets thumbnail image data from the currently opened file.
-     */
-    CompletableFuture<byte[]> getFileThumbnailAsync(int pageIndex);
-
-    /**
-     * Gets image data from the current preview stream (TOC generation).
-     */
-    CompletableFuture<byte[]> getPreviewImageAsync(int pageIndex);
 
     // --- Utils ---
     BookmarkDto parseTextToTree(String text);
@@ -85,5 +64,4 @@ public interface ApiService {
     /**
      * Clears any active preview mode, reverting the image service to file-based images.
      */
-    void clearPreview();
 }

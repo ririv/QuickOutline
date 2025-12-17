@@ -98,11 +98,6 @@ public class RpcProcessor {
                     apiService.generateTocPage(tocConfig, tocDest);
                     result = "OK";
                     break;
-                case "generateTocPreview":
-                    // params: [TocConfig]
-                    TocConfig previewConfig = gson.fromJson(gson.toJsonTree(request.params.get(0)), TocConfig.class);
-                    result = apiService.generateTocPreview(previewConfig);
-                    break;
 
                 // --- Page Labels ---
                 case "getPageLabels":
@@ -123,10 +118,6 @@ public class RpcProcessor {
                     Type simRuleListType = new TypeToken<List<PageLabelRule>>(){}.getType();
                     List<PageLabelRule> simRules = gson.fromJson(gson.toJsonTree(request.params.get(0)), simRuleListType);
                     result = apiService.simulatePageLabels(simRules);
-                    break;
-
-                case "getPageCount":
-                    result = apiService.getPageCount();
                     break;
 
                 // --- Sync Utils ---
