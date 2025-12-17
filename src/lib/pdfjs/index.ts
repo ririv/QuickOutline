@@ -12,7 +12,20 @@ export { renderPageToUrl, renderPageToDataUrl, getBookmarks };
 // Main PDF document loading function
 // src can be URL string, ArrayBuffer, or PDFDataRangeTransport
 export async function loadPdfDocument(src: any): Promise<pdfjsLib.PDFDocumentProxy> {
-    const loadingTask = pdfjsLib.getDocument(src);
+    let config: any = {};
+    if (typeof src === 'string') {
+        config = { url: src };
+    } else if (src instanceof ArrayBuffer || src instanceof Uint8Array) {
+        config = { data: src };
+    } else {
+        config = { ...src }; // Clone existing config
+    }
+
+    // Configure CMaps for CJK support
+    config.cMapUrl = '/libs/bcmaps/';
+    config.cMapPacked = true;
+
+    const loadingTask = pdfjsLib.getDocument(config);
     return loadingTask.promise;
 }
 

@@ -1,4 +1,4 @@
-import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
+import { pdfRenderService } from '@/lib/services/PdfRenderService';
 
 // --- 类型定义 ---
 interface ImagePageUpdateData {
@@ -83,7 +83,7 @@ export function handleImageUpdate(jsonString: string, container: HTMLElement, pd
                             oldObjectUrls.push(currentImg.src);
                         }
         
-                        renderPdfPageAsUrl(pdfFilePath, u.pageIndex, currentScale)
+                        pdfRenderService.renderPage(pdfFilePath, u.pageIndex, currentScale)
                             .then(blobUrl => {
                                 console.log(`[Image Engine] Setting src for page ${u.pageIndex} to: ${blobUrl}`);
                                 newImg.src = blobUrl;

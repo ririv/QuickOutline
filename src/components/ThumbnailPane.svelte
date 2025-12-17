@@ -6,7 +6,7 @@
     import PreviewTooltip from './PreviewTooltip.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore';
     import Tooltip from './Tooltip.svelte';
-    import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
+    import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
 
     interface Props {
@@ -24,6 +24,7 @@
     // Clean up Blob URLs on destroy
     onDestroy(() => {
         Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
+        pdfRenderService.clearCache();
     });
     onDestroy(() => {
         console.log('[ThumbnailPane] Destroying component, cleaning up URLs');
@@ -63,12 +64,14 @@
                 loadedState[index] = true;
                 observer.disconnect();
                 
-                // Fetch thumbnail via Rust
+                // Fetch thumbnail
                 if ($docStore.currentFilePath && !thumbnailUrls[index]) {
-                    console.log(`[ThumbnailPane] Lazy loading thumbnail for page ${index}. PDF: ${$docStore.currentFilePath}`);
-                    renderPdfPageAsUrl($docStore.currentFilePath, index, 0.2) // 0.2 scale for thumbnail
+                    const path = $docStore.currentFilePath;
+                    const pageIndex = index; // 0-based
+                    
+                    pdfRenderService.renderPage(path, pageIndex, 'thumbnail')
                         .then(url => {
-                            console.log(`[ThumbnailPane] Thumbnail URL for page ${index}: ${url}`);
+                            // console.log(`[ThumbnailPane] Thumbnail URL for page ${index}: ${url}`);
                             thumbnailUrls[index] = url;
                         })
                         .catch(err => console.error(`[ThumbnailPane] Failed to load thumbnail for page ${index}`, err));
@@ -96,9 +99,10 @@
         
         // For now, we'll try to load the full image (scale 1.0 or similar)
         if ($docStore.currentFilePath) {
-            renderPdfPageAsUrl($docStore.currentFilePath, index, 0.8) // 0.8 scale for preview tooltip
+            const path = $docStore.currentFilePath;
+            
+            pdfRenderService.renderPage(path, index, 'preview')
                 .then(url => {
-                    // Only set if still hovering the same element (simple check could be added)
                     hoveredImage = {
                         src: url,
                         y: rect.top + rect.height / 2,

@@ -5,7 +5,7 @@
     import { appStore } from '@/stores/appStore';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore';
-    import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
+    import { pdfRenderService } from '@/lib/services/PdfRenderService';
 
     interface Props {
         bookmark: BookmarkUI;
@@ -65,7 +65,7 @@
             // Clean up any previous URL just in case
             if (currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl);
             
-            renderPdfPageAsUrl($docStore.currentFilePath, pageIndex, 0.8) // 0.8 scale
+            pdfRenderService.renderPage($docStore.currentFilePath, pageIndex, 'preview')
                 .then(url => {
                     currentPreviewUrl = url;
                     // Only show if still hovering (simple check: logic in mouseleave handles the nulling)
@@ -77,7 +77,6 @@
                          URL.revokeObjectURL(url);
                     }
                 })
-                .catch(err => console.error("Failed to render preview for bookmark", err));
         }
     }
 
