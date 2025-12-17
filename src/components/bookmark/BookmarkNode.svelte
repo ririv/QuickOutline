@@ -5,6 +5,7 @@
     import { appStore } from '@/stores/appStore';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore';
+    import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
 
     interface Props {
         bookmark: Bookmark;
@@ -13,6 +14,9 @@
 
     let isEditingTitle = $state(false);
     let isEditingPage = $state(false);
+    
+    // Local state for preview tooltip
+    let currentPreviewUrl: string | null = null; // Track current blob URL for cleanup
 
     let titleInput: HTMLInputElement | undefined = $state();
     let pageInput: HTMLInputElement | undefined = $state();
@@ -32,7 +36,8 @@
     }
 
     async function editPage() {
-        previewContext.hide(); // Hide preview when editing starts
+        // Hide preview when editing starts
+        handlePageMouseLeave();
         isEditingPage = true;
         await tick();
         pageInput?.focus();
@@ -54,17 +59,34 @@
         const effectivePageNum = showOffset ? (pageNum + offset) : pageNum;
         const pageIndex = effectivePageNum - 1;
         
-        if ($appStore.serverPort && $appStore.serverPort > 0) {
-            const src = `http://127.0.0.1:${$appStore.serverPort}/file_images/${pageIndex}.png?v=${$docStore.version}`;
+        if ($docStore.currentFilePath) {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-            previewContext.show(src, rect.top + rect.height / 2, rect.left);
-        } else {
-            // console.warn('Server port not ready');
+            
+            // Clean up any previous URL just in case
+            if (currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl);
+            
+            renderPdfPageAsUrl($docStore.currentFilePath, pageIndex, 0.8) // 0.8 scale
+                .then(url => {
+                    currentPreviewUrl = url;
+                    // Only show if still hovering (simple check: logic in mouseleave handles the nulling)
+                    // We check if currentPreviewUrl is still valid (not nulled by leave)
+                    if (currentPreviewUrl === url) {
+                         previewContext.show(url, rect.top + rect.height / 2, rect.left);
+                    } else {
+                         // Mouse left before render finished
+                         URL.revokeObjectURL(url);
+                    }
+                })
+                .catch(err => console.error("Failed to render preview for bookmark", err));
         }
     }
 
     function handlePageMouseLeave() {
         previewContext.hide();
+        if (currentPreviewUrl) {
+            URL.revokeObjectURL(currentPreviewUrl);
+            currentPreviewUrl = null;
+        }
     }
 
     // Computed page to display
