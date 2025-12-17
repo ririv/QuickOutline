@@ -74,18 +74,6 @@ public class RpcProcessor {
                     apiService.saveOutline(root, dest, offset, viewMode);
                     result = "OK";
                     break;
-                case "saveOutlineFromText":
-                    // params: [text, destPath, offset, viewMode]
-                    String text = (String) request.params.get(0);
-                    String txtDest = request.params.size() > 1 ? (String) request.params.get(1) : null;
-                    int txtOffset = request.params.size() > 2 ? RpcUtils.getInt(request.params.get(2)) : 0;
-                    ViewScaleType txtViewMode = request.params.size() > 3 ? parseViewMode(request.params.get(3)) : ViewScaleType.NONE;
-                    apiService.saveOutlineFromText(text, txtDest, txtOffset, txtViewMode);
-                    result = "OK";
-                    break;
-                case "autoFormat":
-                    result = apiService.autoFormat((String) request.params.get(0));
-                    break;
                 case "getCurrentFilePath":
                     result = apiService.getCurrentFilePath();
                     break;
@@ -124,16 +112,6 @@ public class RpcProcessor {
                 case "parseTextToTree":
                     // params: [text]
                     result = apiService.parseTextToTree((String) request.params.get(0));
-                    break;
-                case "syncFromText":
-                    // params: [text]
-                    result = apiService.syncFromText((String) request.params.get(0));
-                    break;
-                case "syncFromTree":
-                    // params: [BookmarkDto]
-                    JsonElement treeDtoJson = gson.toJsonTree(request.params.get(0));
-                    BookmarkDto treeDto = gson.fromJson(treeDtoJson, BookmarkDto.class);
-                    result = apiService.syncFromTree(treeDto);
                     break;
                 case "updateOffset":
                     // params: [offset]

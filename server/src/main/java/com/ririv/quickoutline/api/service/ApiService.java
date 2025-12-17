@@ -20,22 +20,6 @@ public interface ApiService {
     BookmarkDto getOutlineAsBookmark(int offset); 
     
     void saveOutline(Bookmark rootBookmark, String destFilePath, int offset, ViewScaleType viewMode);
-    
-    void saveOutlineFromText(String text, String destFilePath, int offset, ViewScaleType viewMode);
-    
-    String autoFormat(String text);
-
-    // --- State Synchronization (New) ---
-
-    /**
-     * Syncs text from frontend editor -> Backend State -> Returns Tree DTO for frontend preview.
-     */
-    BookmarkDto syncFromText(String text);
-
-    /**
-     * Syncs tree DTO from frontend drag/drop -> Backend State -> Returns Text for frontend editor.
-     */
-    String syncFromTree(BookmarkDto dto);
 
     /**
      * Updates the offset in Backend State.

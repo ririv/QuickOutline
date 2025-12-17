@@ -111,29 +111,6 @@ public class ApiServiceImpl implements ApiService {
         }
     }
 
-    @Override
-    public BookmarkDto syncFromText(String text) {
-        // Parse Text -> Domain
-        Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
-
-        // Update State
-        apiBookmarkState.setRootBookmark(root);
-
-        // Return DTO for Frontend Tree
-        return BookmarkDto.fromDomain(root);
-    }
-
-    @Override
-    public String syncFromTree(BookmarkDto dto) {
-        // DTO -> Domain
-        Bookmark root = dto.toDomain();
-
-        // Update State
-        apiBookmarkState.setRootBookmark(root);
-
-        // Return Text for Frontend Editor
-        return root.toOutlineString();
-    }
 
     @Override
     public void updateOffset(int offset) {
@@ -207,23 +184,7 @@ public class ApiServiceImpl implements ApiService {
         }
     }
 
-    @Override
-    public void saveOutlineFromText(String text, String destFilePath, int offset, ViewScaleType viewMode) {
-        checkFileOpen();
 
-        // Update state first
-        Bookmark rootBookmark = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
-        apiBookmarkState.setRootBookmark(rootBookmark);
-        apiBookmarkState.setOffset(offset);
-
-        // Then save
-        saveOutline(rootBookmark, destFilePath, offset, viewMode);
-    }
-
-    @Override
-    public String autoFormat(String text) {
-        return pdfOutlineService.autoFormat(text);
-    }
 
     @Override
     public void generateTocPage(TocConfig config, String destFilePath) {
