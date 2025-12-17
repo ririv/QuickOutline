@@ -7,6 +7,9 @@
     } from "@/lib/preview-engine/svg-engine";
     import { handleImageUpdate } from "@/lib/preview-engine/image-engine";
     import PagedRenderer from "./renderers/PagedRenderer.svelte";
+    import { docStore } from '@/stores/docStore'; // Import docStore
+    import { appStore, FnTab } from '@/stores/appStore'; // Import appStore and FnTab
+
     export let mode: "svg" | "image" | "paged" = "paged"; // Default to paged
     export let onrefresh: (() => void | Promise<void>) | undefined = undefined; // onrefresh might be async
     export let onScroll: ((top: number) => void) | undefined = undefined;
@@ -30,14 +33,20 @@
     let isRefreshing = false; // Refresh state for animation
     let isDoublePage = false; // Restore Double Page mode state
 
+    let currentPdfFilePath = $docStore.currentFilePath;
+    docStore.subscribe(state => {
+        currentPdfFilePath = state.currentFilePath;
+    });
+
     // Expose methods for parent to call (SVG/Image Engine)
-    export const renderSvg = (json: string) => {
+    // Note: json string still comes from Java part, containing page metadata
+    export const renderSvg = (json: string, pdfFilePath: string, scale: number) => {
         if (mode === "svg" && container && viewport)
-            handleSvgUpdate(json, container, viewport);
+            handleSvgUpdate(json, container, viewport, pdfFilePath, scale); // Pass pdfFilePath and scale
     };
 
-    export const renderImage = (json: string) => {
-        if (mode === "image" && container) handleImageUpdate(json, container);
+    export const renderImage = (json: string, pdfFilePath: string, scale: number) => {
+        if (mode === "image" && container) handleImageUpdate(json, container, pdfFilePath, scale); // Pass pdfFilePath and scale
     };
     export const setDoubleBuffer = (enable: boolean) => {
         setDoubleBuffering(enable);
@@ -63,7 +72,7 @@
             
             // Notify svg-engine if mode is svg (it might need to know for internal calculations, 
             // though zoom usually handles it seamlessly)
-            if (mode === "svg") onSvgViewChange(container, viewport);
+            if (mode === "svg") onSvgViewChange(container, viewport, currentPdfFilePath, currentScale); // Pass currentScale and pdfFilePath
         }
         updateSliderBackground(currentScale);
     }

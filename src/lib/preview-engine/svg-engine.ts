@@ -35,7 +35,7 @@ export function setDoubleBuffering(enable: boolean) {
 /**
  * 核心：处理 Java 传来的 SVG JSON 元数据
  */
-export function handleSvgUpdate(jsonString: string, container: HTMLElement, viewport: HTMLElement) {
+export function handleSvgUpdate(jsonString: string, container: HTMLElement, viewport: HTMLElement, pdfFilePath: string, scale: number) {
     let updates: SvgPageUpdateData[];
     try {
         updates = JSON.parse(jsonString);
@@ -72,7 +72,7 @@ export function handleSvgUpdate(jsonString: string, container: HTMLElement, view
                 height: u.heightPt,
                 version: u.version
             };
-            renderIfVisible(u.pageIndex, container, viewport);
+            renderIfVisible(u.pageIndex, container, viewport, pdfFilePath, scale);
             return;
         }
 
@@ -82,7 +82,7 @@ export function handleSvgUpdate(jsonString: string, container: HTMLElement, view
         // 如果缓存存在且版本一致，跳过 Fetch
         if (cached && cached.version === u.version && cached.content) {
             // 强制刷新当前视图（如果该页在视野内但未加载）
-            renderIfVisible(u.pageIndex, container, viewport);
+            renderIfVisible(u.pageIndex, container, viewport, pdfFilePath, scale);
             return;
         }
 
@@ -116,15 +116,15 @@ export function handleSvgUpdate(jsonString: string, container: HTMLElement, view
     });
 
     // 3. 立即触发一次可视区域渲染（处理那些不需要 Fetch 的页面）
-    renderVisiblePages(container, viewport);
+    renderVisiblePages(container, viewport, pdfFilePath, scale);
 }
 
 /**
  * 响应滚动或缩放事件（对外暴露）
  */
-export function onSvgViewChange(container: HTMLElement, viewport: HTMLElement) {
+export function onSvgViewChange(container: HTMLElement, viewport: HTMLElement, pdfFilePath: string, scale: number) {
     if (Object.keys(pageCache).length > 0) {
-        renderVisiblePages(container, viewport);
+        renderVisiblePages(container, viewport, pdfFilePath, scale);
     }
 }
 
@@ -152,7 +152,7 @@ function syncContainerForSvg(container: HTMLElement, totalPages: number) {
 /**
  * 内部：渲染特定页面（如果可见）
  */
-function renderIfVisible(pageIndex: number, container: HTMLElement, viewport: HTMLElement) {
+function renderIfVisible(pageIndex: number, container: HTMLElement, viewport: HTMLElement, pdfFilePath: string, scale: number) {
     const pageDiv = container.querySelector('#page-' + pageIndex) as HTMLElement;
     if (!pageDiv) return;
 
@@ -175,7 +175,7 @@ function renderIfVisible(pageIndex: number, container: HTMLElement, viewport: HT
 /**
  * 内部：虚拟渲染循环
  */
-function renderVisiblePages(container: HTMLElement, viewport: HTMLElement) {
+function renderVisiblePages(container: HTMLElement, viewport: HTMLElement, pdfFilePath: string, scale: number) {
     const pages = container.children;
     for (let i = 0; i < pages.length; i++) {
         const pageDiv = pages[i] as HTMLElement;

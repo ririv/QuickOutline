@@ -1,8 +1,11 @@
 use pdfium_render::prelude::*;
 use anyhow::{Result, format_err};
 use tokio::task;
-use image::{ImageFormat, RgbaImage};
+use image::ImageFormat;
 use std::io::Cursor;
+use std::fs::File;
+use std::io::Write;
+use tauri::ipc::Response;
 
 /// Helper function to render a specific page to a PNG byte vector
 fn perform_pdf_render(
@@ -34,30 +37,26 @@ fn perform_pdf_render(
     // For now we use basic render which returns a PdfBitmap
     let bitmap = page.render(width, height, None)?;
 
-    // Pdfium bitmaps are usually BGRA (Blue-Green-Red-Alpha) on little-endian systems
-    // We need to convert to RGBA for the `image` crate.
-    let bytes = bitmap.as_bytes();
-    let mut rgba_bytes = Vec::with_capacity(bytes.len());
-
-    // Basic loop to swap B and R. 
-    // Ideally check bitmap.format() but BGRA is standard for Pdfium.
-    for chunk in bytes.chunks(4) {
-        if chunk.len() == 4 {
-            rgba_bytes.push(chunk[2]); // R
-            rgba_bytes.push(chunk[1]); // G
-            rgba_bytes.push(chunk[0]); // B
-            rgba_bytes.push(chunk[3]); // A
-        }
-    }
-
-    let img_buffer = RgbaImage::from_raw(width as u32, height as u32, rgba_bytes)
-        .ok_or_else(|| format_err!("Failed to create image buffer"))?;
+    // Use the `image` feature of pdfium-render to get a DynamicImage directly
+    let dynamic_image = bitmap.as_image(); 
 
     let mut png_data = Vec::new();
     let mut cursor = Cursor::new(&mut png_data);
     
     // Write as PNG
-    img_buffer.write_to(&mut cursor, ImageFormat::Png)?;
+    dynamic_image.write_to(&mut cursor, ImageFormat::Png)?;
+
+    // DEBUG: Write to file for inspection
+    // let debug_path = format!("/tmp/debug_page_{}.png", page_index);
+    // if let Ok(mut file) = File::create(&debug_path) {
+    //     if let Err(e) = file.write_all(&png_data) {
+    //          eprintln!("DEBUG: Failed to write debug file: {}", e);
+    //     } else {
+    //          println!("DEBUG: Wrote page {} to {}", page_index, debug_path);
+    //     }
+    // } else {
+    //     eprintln!("DEBUG: Failed to create debug file at {}", debug_path);
+    // }
 
     Ok(png_data)
 }
@@ -67,11 +66,13 @@ pub async fn render_pdf_page(
     path: String,
     page_index: u16,
     scale: f32
-) -> Result<Vec<u8>, String> {
-    task::spawn_blocking(move || {
+) -> Result<Response, String> {
+    let png_data = task::spawn_blocking(move || {
         perform_pdf_render(&path, page_index, scale)
     })
     .await
     .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())
+    .map_err(|e| e.to_string())?;
+
+    Ok(Response::new(png_data))
 }

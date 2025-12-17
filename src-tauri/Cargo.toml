@@ -34,7 +34,7 @@ headless_chrome = "1.0.18"
 uuid = { version = "1.0", features = ["v4"] }
 anyhow = "1.0"
 tiny_http = "0.12.0"
-pdfium-render = "0.8"
+pdfium-render = { version = "0.8", features = ["image"] }
 tokio = { version = "1", features = ["full"] }
 image = "0.25.9"
 

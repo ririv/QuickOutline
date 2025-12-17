@@ -6,6 +6,8 @@
     import PreviewTooltip from './PreviewTooltip.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore';
     import Tooltip from './Tooltip.svelte';
+    import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
+    import { onDestroy } from 'svelte';
 
     interface Props {
         pageCount?: number;
@@ -15,8 +17,18 @@
     let { pageCount = 0, zoom = $bindable(1.0) }: Props = $props();
 
     let loadedState = $state<boolean[]>(new Array(pageCount).fill(false));
+    let thumbnailUrls = $state<Record<number, string>>({}); // Store blob URLs
     let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
     let closeTimer: number | undefined;
+
+    // Clean up Blob URLs on destroy
+    onDestroy(() => {
+        Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
+    });
+    onDestroy(() => {
+        console.log('[ThumbnailPane] Destroying component, cleaning up URLs');
+        // Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
+    });
 
     // Derived state for displayed page labels
     // Use backend simulated labels if available, otherwise fallback to simple numbering
@@ -38,6 +50,9 @@
         if (loadedState.length !== $docStore.pageCount) {
             console.log('PageCount changed:', $docStore.pageCount);
             loadedState = new Array($docStore.pageCount).fill(false);
+            // Revoke old URLs when page count (file) changes
+            Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
+            thumbnailUrls = {};
         }
     });
 
@@ -47,6 +62,17 @@
             if (entries[0].isIntersecting) {
                 loadedState[index] = true;
                 observer.disconnect();
+                
+                // Fetch thumbnail via Rust
+                if ($docStore.currentFilePath && !thumbnailUrls[index]) {
+                    console.log(`[ThumbnailPane] Lazy loading thumbnail for page ${index}. PDF: ${$docStore.currentFilePath}`);
+                    renderPdfPageAsUrl($docStore.currentFilePath, index, 0.2) // 0.2 scale for thumbnail
+                        .then(url => {
+                            console.log(`[ThumbnailPane] Thumbnail URL for page ${index}: ${url}`);
+                            thumbnailUrls[index] = url;
+                        })
+                        .catch(err => console.error(`[ThumbnailPane] Failed to load thumbnail for page ${index}`, err));
+                }
             }
         }, {
             rootMargin: "200px" // Load 200px early
@@ -61,36 +87,32 @@
         };
     }
 
-    function getThumbnailUrl(index: number) {
-        if ($appStore.serverPort && $appStore.serverPort > 0) {
-            const url = `http://127.0.0.1:${$appStore.serverPort}/file_images/${index}.png?v=${$docStore.version}&type=thumb`;
-            return url;
-        }
-        console.warn('Server port not set when requesting thumbnail');
-        return '';
-    }
-
-    function getNormalImageUrl(index: number) {
-        if ($appStore.serverPort && $appStore.serverPort > 0) {
-            const url = `http://127.0.0.1:${$appStore.serverPort}/file_images/${index}.png?v=${$docStore.version}`;
-            return url;
-        }
-        console.warn('Server port not set when requesting normal image');
-        return '';
-    }
+    // Removed getThumbnailUrl and getNormalImageUrl (replaced by async logic)
 
     function handleMouseEnter(e: MouseEvent, index: number) {
         clearTimeout(closeTimer);
         const target = e.currentTarget as HTMLElement;
         const rect = target.getBoundingClientRect();
-        hoveredImage = {
-            src: getNormalImageUrl(index),
-            y: rect.top + rect.height / 2,
-            x: rect.left
-        };
+        
+        // For now, we'll try to load the full image (scale 1.0 or similar)
+        if ($docStore.currentFilePath) {
+            renderPdfPageAsUrl($docStore.currentFilePath, index, 0.8) // 0.8 scale for preview tooltip
+                .then(url => {
+                    // Only set if still hovering the same element (simple check could be added)
+                    hoveredImage = {
+                        src: url,
+                        y: rect.top + rect.height / 2,
+                        x: rect.left
+                    };
+                })
+                .catch(e => console.error(`[ThumbnailPane] Failed to load preview for page ${index}`, e));
+        }
     }
 
     function handleMouseLeave() {
+        if (hoveredImage && hoveredImage.src.startsWith('blob:')) {
+            URL.revokeObjectURL(hoveredImage.src); // Clean up tooltip image immediately
+        }
         hoveredImage = null;
     }
 </script>
@@ -109,6 +131,8 @@
     </div>
     <div class="flex-1 overflow-y-auto p-2.5">
         {#if !$appStore.serverPort}
+           <!-- Keep the warning but it might be less relevant if we use Rust directly, 
+                though serverPort implies Java backend is running for other features (outline etc.) -->
             <div class="bg-red-100 text-red-700 p-2 text-center text-xs mb-2 border border-red-200 rounded">
                 Backend not connected (Port: {$appStore.serverPort})
             </div>
@@ -123,17 +147,21 @@
                     role="group"
                 >
                     <div 
-                        class="w-full shadow-[0_2px_5px_rgba(0,0,0,0.1)] bg-white p-1.5 box-border overflow-hidden"
+                        class="w-full shadow-[0_2px_5px_rgba(0,0,0,0.1)] bg-white p-1.5 box-border overflow-hidden relative"
                         onmouseenter={(e) => handleMouseEnter(e, i)}
                         onmouseleave={handleMouseLeave}
                         role="img"
                         aria-label="Page {i + 1} thumbnail"
                     >
-                        {#if isLoaded}
-                            <div class="w-full pt-[133.33%] bg-contain bg-no-repeat bg-center shrink-0" style="background-image: url('{getThumbnailUrl(i)}')"></div>
-                        {:else}
-                            <div class="w-full pt-[133.33%] bg-contain bg-no-repeat bg-center shrink-0 bg-[#eee]"></div>
-                        {/if}
+                        <div class="w-full pt-[133.33%] bg-[#eee] relative">
+                            {#if isLoaded && thumbnailUrls[i]}
+                                <img 
+                                    src={thumbnailUrls[i]} 
+                                    class="absolute top-0 left-0 w-full h-full object-contain" 
+                                    alt="Page {i + 1}"
+                                />
+                            {/if}
+                        </div>
                     </div>
                     <div class="w-full flex justify-center mt-1.5">
                         <Tooltip content="{i + 1} / {$docStore.pageCount}" position="top">
