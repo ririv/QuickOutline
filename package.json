@@ -13,7 +13,8 @@
     "tauri:dev": "tauri dev",
     "copy:katex": "node scripts/copy-katex-assets.mjs",
     "copy:pagedjs": "node scripts/copy-pagedjs.mjs",
-    "copy:assets": "npm run copy:katex && npm run copy:pagedjs",
+    "copy:pdfjs": "node scripts/copy-pdfjs.mjs",
+    "copy:assets": "npm run copy:katex && npm run copy:pagedjs && npm run copy:pdfjs",
     "build:unocss": "node scripts/build-unocss-runtime.mjs",
     "sign:sidecar": "node scripts/sign-sidecar.cjs",
     "update:sidecar": "node scripts/update-sidecar.cjs"
@@ -61,6 +62,7 @@
     "markdown-it-texmath": "^1.0.0",
     "pagedjs": "^0.4.3",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.449",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
