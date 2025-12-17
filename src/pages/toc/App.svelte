@@ -63,7 +63,9 @@
 
   async function loadOutline() {
       try {
-          const dto = await rpc.getOutlineAsBookmark(0);
+          const path = $docStore.currentFilePath;
+          if (!path) return;
+          const dto = await rpc.getOutlineAsBookmark(path, 0);
           const outline = serializeBookmarkTree(dto);
           // Initialize store with new file and default config
           tocStore.setFile($docStore.currentFilePath, outline || '');

@@ -34,7 +34,11 @@ struct PdfWorkerInternalState {
 
 impl PdfWorkerInternalState {
     fn new() -> Result<Self> {
+        println!("[PDF Worker] Init. CWD: {:?}", std::env::current_dir());
+        
         let pdfium_bind = Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
+            .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("src-tauri/")))
+            .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("../src-tauri/")))
             .or_else(|_| Pdfium::bind_to_system_library())
             .map_err(|e| format_err!("[PDF Worker] Failed to bind Pdfium: {}", e))?;
         

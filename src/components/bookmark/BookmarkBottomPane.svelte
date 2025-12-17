@@ -17,6 +17,7 @@
     import { rpc } from '@/lib/api/rpc';
     import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
+    import { docStore } from '@/stores/docStore';
     import { messageStore } from '@/stores/messageStore';
     import type { BookmarkUI } from '@/components/bookmark/types';
     import { untrack } from 'svelte';
@@ -102,6 +103,12 @@
         console.log('Get contents from:', getContentsMode);
         
         try {
+            const path = $docStore.currentFilePath;
+            if (!path) {
+                messageStore.add('No file open.', 'WARNING');
+                return;
+            }
+
             const offset = parseInt(offsetValue, 10) || 0;
             // 1. Update backend offset state
             await rpc.updateOffset(offset);
@@ -110,7 +117,7 @@
             // For now, we use standard getOutlineAsBookmark for 'bookmark' mode
             
             // 2. Get Bookmark DTO from backend
-            const bookmarkDto: BookmarkUI = await rpc.getOutlineAsBookmark(offset);
+            const bookmarkDto: BookmarkUI = await rpc.getOutlineAsBookmark(path, offset);
             
             // 3. Sync text locally
             const text = serializeBookmarkTree(bookmarkDto); 
@@ -135,6 +142,12 @@
     async function handleSetContentsClick() {
         console.log('Set contents click with view scale:', viewMode);
         try {
+            const path = $docStore.currentFilePath;
+            if (!path) {
+                messageStore.add('No file open.', 'WARNING');
+                return;
+            }
+
             const text = bookmarkStore.text;
             if (!text || !text.trim()) {
                 messageStore.add('No outline text to save. Please enter some text first.', 'WARNING');
@@ -146,7 +159,7 @@
 
             // 2. Parse locally and save tree
             const tree = processText(text);
-            await rpc.saveOutline(tree, null, offset, viewMode);
+            await rpc.saveOutline(path, tree, null, offset, viewMode);
             
             messageStore.add('Outline saved successfully!', 'SUCCESS');
         } catch (e: any) {

@@ -41,7 +41,7 @@ function createDocStore() {
                 const labels = await rpc.getPageLabels(null);
                 
                 // 3. 获取大纲树
-                const outlineRoot = await rpc.getOutlineAsBookmark(0);
+                const outlineRoot = await rpc.getOutlineAsBookmark(path, 0);
                 
                 const ver = Date.now(); // Generate a new version for cache busting
                 update(state => ({ ...state, currentFilePath: path, pageCount: count, originalPageLabels: labels, version: ver }));

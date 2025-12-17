@@ -1,5 +1,37 @@
 import {PageLabelNumberingStyle} from "@/lib/styleMaps";
 
+function convertForRust(bookmark: any): any {
+    const copy = { ...bookmark };
+    // Convert pageNum to integer
+    if (copy.pageNum !== null && copy.pageNum !== undefined) {
+        const num = parseInt(String(copy.pageNum), 10);
+        copy.pageNum = isNaN(num) ? null : num;
+    } else {
+        copy.pageNum = null;
+    }
+    
+    // Process children recursively
+    if (copy.children && Array.isArray(copy.children)) {
+        copy.children = copy.children.map((child: any) => convertForRust(child));
+    }
+    return copy;
+}
+
+function convertFromRust(bookmark: any): any {
+    const copy = { ...bookmark };
+    // Convert pageNum to string
+    if (copy.pageNum !== null && copy.pageNum !== undefined) {
+        copy.pageNum = String(copy.pageNum);
+    } else {
+        copy.pageNum = null;
+    }
+
+    if (copy.children && Array.isArray(copy.children)) {
+        copy.children = copy.children.map((child: any) => convertFromRust(child));
+    }
+    return copy;
+}
+
 /**
  * RPC 请求结构
  */
@@ -53,8 +85,8 @@ export interface QuickOutlineApi {
     getCurrentFilePath(): Promise<string>;
     
     // Outline
-    getOutlineAsBookmark(offset: number): Promise<any>;
-    saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // Corrected signature
+    getOutlineAsBookmark(srcFilePath: string, offset: number): Promise<any>;
+    saveOutline(srcFilePath: string, bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // Corrected signature
 
     // TOC
     generateTocPage(config: TocConfig, destFilePath: string | null): Promise<string>;
@@ -227,12 +259,24 @@ class RpcClient implements QuickOutlineApi {
         return this.send("getCurrentFilePath", []);
     }
 
-    public getOutlineAsBookmark(offset: number): Promise<any> {
-        return this.send("getOutlineAsBookmark", [offset]);
+    public getOutlineAsBookmark(srcFilePath: string, offset: number): Promise<any> {
+        // When using Rust backend, we invoke the Tauri command
+        return import("@tauri-apps/api/core").then(({ invoke }) => 
+            invoke("get_outline_as_bookmark", { path: srcFilePath, offset })
+        ).then(result => convertFromRust(result));
     }
 
-    public saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode: string = 'NONE'): Promise<string> {
-        return this.send("saveOutline", [bookmarkRoot, destFilePath, offset, viewMode]);
+    public saveOutline(srcFilePath: string, bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode: string = 'NONE'): Promise<string> {
+        const rustRoot = convertForRust(bookmarkRoot);
+        return import("@tauri-apps/api/core").then(({ invoke }) => 
+            invoke("save_outline", { 
+                srcPath: srcFilePath, 
+                bookmarkRoot: rustRoot, 
+                destPath: destFilePath, 
+                offset, 
+                viewMode 
+            })
+        ).then(() => "Success");
     }
 
     public generateTocPage(config: TocConfig, destFilePath: string | null): Promise<string> {

@@ -5,6 +5,7 @@ mod printer_headless_chrome;
 mod printer;
 mod static_server;
 mod pdf;
+mod pdf_outline;
 
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager, Runtime};
@@ -68,6 +69,59 @@ fn cleanup_pdf_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<(), St
         }
     }
     Ok(())
+}
+
+use crate::pdf_outline::model::{Bookmark, ViewScaleType};
+
+fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
+    if let Some(path) = dest_path {
+        if !path.trim().is_empty() {
+            return path;
+        }
+    }
+    
+    let src = Path::new(src_path);
+    let parent = src.parent().unwrap_or(Path::new(""));
+    let file_stem = src.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
+    let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("pdf");
+
+    let mut candidate_name = format!("{}_new.{}", file_stem, ext);
+    let mut candidate_path = parent.join(&candidate_name);
+    
+    if !candidate_path.exists() {
+        return candidate_path.to_string_lossy().to_string();
+    }
+
+    let mut counter = 1;
+    while candidate_path.exists() {
+        candidate_name = format!("{}_new_{}.{}", file_stem, counter, ext);
+        candidate_path = parent.join(&candidate_name);
+        counter += 1;
+    }
+
+    candidate_path.to_string_lossy().to_string()
+}
+
+#[tauri::command]
+async fn get_outline_as_bookmark(path: String, offset: i32) -> Result<Bookmark, String> {
+    pdf_outline::processor::get_outline(&path, offset).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn save_outline(
+    src_path: String, 
+    bookmark_root: Bookmark, 
+    dest_path: Option<String>, 
+    offset: i32, 
+    view_mode: Option<ViewScaleType>
+) -> Result<String, String> {
+    let actual_dest = resolve_dest_path(&src_path, dest_path);
+    let scale = view_mode.unwrap_or(ViewScaleType::None);
+    
+    pdf_outline::processor::set_outline(&src_path, &actual_dest, bookmark_root, offset, scale)
+        .map_err(|e| e.to_string())?;
+        
+    Ok(actual_dest)
 }
 
 #[tauri::command]
@@ -163,7 +217,16 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer::print_to_pdf, pdf::merge::merge_pdfs, pdf::render::render_pdf_page, pdf::render::get_pdf_page_count])
+        .invoke_handler(tauri::generate_handler![
+            greet, 
+            java_sidecar::get_java_port, 
+            printer::print_to_pdf, 
+            pdf::merge::merge_pdfs, 
+            pdf::render::render_pdf_page, 
+            pdf::render::get_pdf_page_count,
+            get_outline_as_bookmark,
+            save_outline
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
