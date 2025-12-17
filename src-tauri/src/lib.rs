@@ -95,6 +95,10 @@ pub fn run() {
         })
         .manage(static_server::LocalServerState::new())
         .setup(move |app| {
+            // Initialize PDF Worker and manage state
+            let pdf_worker = pdf::manager::init_pdf_worker();
+            app.manage(pdf_worker);
+
             // Setup print workspace on app startup
             let workspace_path = setup_print_workspace(app.handle()).expect("Failed to setup print workspace.");
 
