@@ -29,8 +29,16 @@ export async function renderPageToUrl(
     
     await page.render(renderContext).promise;
 
-    // Convert the canvas content to a data URL (PNG)
-    return canvas.toDataURL('image/png'); // Base64 encoded PNG
+    // Convert the canvas content to a Blob URL (more efficient than Data URL)
+    return new Promise<string>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (blob) {
+                resolve(URL.createObjectURL(blob));
+            } else {
+                reject(new Error("Canvas to Blob failed"));
+            }
+        }, 'image/jpeg', 0.8);
+    });
 }
 
 // Alternative for getting Blob URL directly for better memory management
