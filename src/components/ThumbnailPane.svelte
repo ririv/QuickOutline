@@ -17,6 +17,7 @@
     let { pageCount = 0, zoom = $bindable(1.0) }: Props = $props();
 
     let loadedState = $state<boolean[]>(new Array(pageCount).fill(false));
+    let aspectRatios = $state<number[]>(new Array(pageCount).fill(1.3333)); // Default A4 ratio
     let thumbnailUrls = $state<Record<number, string>>({}); // Store blob URLs
     let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
     let closeTimer: number | undefined;
@@ -51,11 +52,22 @@
         if (loadedState.length !== $docStore.pageCount) {
             console.log('PageCount changed:', $docStore.pageCount);
             loadedState = new Array($docStore.pageCount).fill(false);
+            aspectRatios = new Array($docStore.pageCount).fill(1.3333);
             // Revoke old URLs when page count (file) changes
             Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
             thumbnailUrls = {};
         }
     });
+
+    function onImageLoad(e: Event, index: number) {
+        const img = e.target as HTMLImageElement;
+        if (img.naturalWidth && img.naturalHeight) {
+            const ratio = img.naturalHeight / img.naturalWidth;
+            if (Math.abs(aspectRatios[index] - ratio) > 0.01) {
+                aspectRatios[index] = ratio;
+            }
+        }
+    }
 
     // Action for lazy loading
     function lazyLoad(node: HTMLElement, index: number) {
@@ -157,12 +169,13 @@
                         role="img"
                         aria-label="Page {i + 1} thumbnail"
                     >
-                        <div class="w-full pt-[133.33%] bg-[#eee] relative">
+                        <div class="w-full bg-[#eee] relative transition-[padding] duration-200" style="padding-top: {aspectRatios[i] * 100}%">
                             {#if isLoaded && thumbnailUrls[i]}
                                 <img 
                                     src={thumbnailUrls[i]} 
                                     class="absolute top-0 left-0 w-full h-full object-contain" 
                                     alt="Page {i + 1}"
+                                    onload={(e) => onImageLoad(e, i)}
                                 />
                             {/if}
                         </div>
