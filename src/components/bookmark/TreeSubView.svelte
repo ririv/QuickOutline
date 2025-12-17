@@ -4,6 +4,7 @@
     import { onMount, onDestroy, setContext, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { rpc } from '@/lib/api/rpc';
+    import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore';
     import { appStore } from '@/stores/appStore';
     import PreviewTooltip from '../PreviewTooltip.svelte';
@@ -62,7 +63,7 @@
                 level: 0,
                 children: tree
             };
-            const text = await rpc.syncFromTree(rootDto);
+            const text = serializeBookmarkTree(rootDto);
             bookmarkStore.setText(text); // Update text store with new text from tree
         } catch (e: any) {
             console.error("Failed to sync tree with backend:", e);

@@ -15,6 +15,7 @@
     import { ripple } from '@/lib/actions/ripple';
     
     import { rpc } from '@/lib/api/rpc';
+    import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { messageStore } from '@/stores/messageStore';
     import type { Bookmark } from '@/components/bookmark/types';
@@ -111,8 +112,8 @@
             // 2. Get Bookmark DTO from backend
             const bookmarkDto: Bookmark = await rpc.getOutlineAsBookmark(offset);
             
-            // 3. Sync text
-            const text = await rpc.syncFromTree(bookmarkDto); 
+            // 3. Sync text locally
+            const text = serializeBookmarkTree(bookmarkDto); 
 
             // 4. Update frontend store
             bookmarkStore.setText(text);
@@ -143,8 +144,9 @@
             const offset = parseInt(offsetValue, 10) || 0;
             await rpc.updateOffset(offset);
 
-            // 2. Use saveOutlineFromText which updates backend state AND saves in one go.
-            await rpc.saveOutlineFromText(text, null, offset, viewMode);
+            // 2. Parse locally and save tree
+            const tree = processText(text);
+            await rpc.saveOutline(tree, null, offset, viewMode);
             
             messageStore.add('Outline saved successfully!', 'SUCCESS');
         } catch (e: any) {
@@ -154,12 +156,7 @@
 
     function handleDelete() {
         bookmarkStore.reset(); // Clear frontend store (text, tree, offset)
-        // Sync empty state with backend
-        rpc.syncFromText('').then(() => {
-            messageStore.add('Editor cleared and backend state reset.', 'INFO');
-        }).catch(e => {
-            messageStore.add('Failed to clear editor and reset backend state: ' + (e.message || String(e)), 'ERROR');
-        });
+        messageStore.add('Editor cleared.', 'INFO');
     }
 
     function getButtonClass(isActive: boolean) {

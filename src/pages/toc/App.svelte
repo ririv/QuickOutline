@@ -10,6 +10,7 @@
   import { slide } from 'svelte/transition';
   
   import { rpc } from '@/lib/api/rpc';
+  import { serializeBookmarkTree } from '@/lib/outlineParser';
   import { messageStore } from '@/stores/messageStore';
   import { docStore } from '@/stores/docStore';
   import { tocStore } from '@/stores/tocStore.svelte';
@@ -62,7 +63,8 @@
 
   async function loadOutline() {
       try {
-          const outline = await rpc.getOutline(0);
+          const dto = await rpc.getOutlineAsBookmark(0);
+          const outline = serializeBookmarkTree(dto);
           // Initialize store with new file and default config
           tocStore.setFile($docStore.currentFilePath, outline || '');
           triggerPreview();

@@ -53,11 +53,8 @@ export interface QuickOutlineApi {
     getCurrentFilePath(): Promise<string>;
     
     // Outline
-    getOutline(offset: number): Promise<string>;
     getOutlineAsBookmark(offset: number): Promise<any>;
     saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // Corrected signature
-    saveOutlineFromText(text: string, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // New method
-    autoFormat(text: string): Promise<string>;
 
     // TOC
     generateTocPage(config: TocConfig, destFilePath: string | null): Promise<string>;
@@ -72,11 +69,7 @@ export interface QuickOutlineApi {
     getPageCount(): Promise<number>;
 
     // Sync Utils
-    parseTextToTree(text: string): Promise<any>;
-    syncFromText(text: string): Promise<any>; // Returns BookmarkDto
-    syncFromTree(dto: any): Promise<string>;  // Returns Text
     updateOffset(offset: number): Promise<void>;
-    serializeTreeToText(rootBookmark: any): Promise<string>;
 }
 
 
@@ -234,24 +227,12 @@ class RpcClient implements QuickOutlineApi {
         return this.send("getCurrentFilePath", []);
     }
 
-    public getOutline(offset: number): Promise<string> {
-        return this.send("getOutline", [offset]);
-    }
-
     public getOutlineAsBookmark(offset: number): Promise<any> {
         return this.send("getOutlineAsBookmark", [offset]);
     }
 
     public saveOutline(bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode: string = 'NONE'): Promise<string> {
         return this.send("saveOutline", [bookmarkRoot, destFilePath, offset, viewMode]);
-    }
-
-    public saveOutlineFromText(text: string, destFilePath: string | null, offset: number, viewMode: string = 'NONE'): Promise<string> {
-        return this.send("saveOutlineFromText", [text, destFilePath, offset, viewMode]);
-    }
-
-    public autoFormat(text: string): Promise<string> {
-        return this.send("autoFormat", [text]);
     }
 
     public generateTocPage(config: TocConfig, destFilePath: string | null): Promise<string> {
@@ -278,24 +259,8 @@ class RpcClient implements QuickOutlineApi {
         return this.send("getPageCount", []);
     }
 
-    public parseTextToTree(text: string): Promise<any> {
-        return this.send("parseTextToTree", [text]);
-    }
-
-    public syncFromText(text: string): Promise<any> {
-        return this.send("syncFromText", [text]);
-    }
-
-    public syncFromTree(dto: any): Promise<string> {
-        return this.send("syncFromTree", [dto]);
-    }
-
     public updateOffset(offset: number): Promise<void> {
         return this.send("updateOffset", [offset]);
-    }
-
-    public serializeTreeToText(rootBookmark: any): Promise<string> {
-        return this.send("serializeTreeToText", [rootBookmark]);
     }
 
     public openExternalEditor(textContent: string): Promise<void> {
