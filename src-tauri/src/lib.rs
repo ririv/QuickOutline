@@ -163,7 +163,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer::print_to_pdf, pdf::merge::merge_pdfs, pdf::render::render_pdf_page])
+        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer::print_to_pdf, pdf::merge::merge_pdfs, pdf::render::render_pdf_page, pdf::render::get_pdf_page_count])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

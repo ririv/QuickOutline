@@ -1,5 +1,8 @@
 import { writable } from 'svelte/store';
-import { rpc } from '@/lib/api/rpc'; // docStore 内部需要调用 RPC
+import { rpc } from '@/lib/api/rpc';
+import { getPageCount } from '@/lib/api/pdf-render';
+import { bookmarkStore } from './bookmarkStore.svelte';
+import { pageLabelStore } from './pageLabelStore';
 
 interface DocState {
     currentFilePath: string | null;
@@ -28,10 +31,18 @@ function createDocStore() {
          * 如果打开失败，将文件路径和页数重置。
          */
         openFile: async (path: string) => {
-            await rpc.openFile(path); // 通知 Java 端打开文件
             try {
-                const count = await rpc.getPageCount(); // 获取页数
-                const labels = await rpc.getPageLabels(null); // 获取原始页码标签
+                // 1. 调用后端打开文件
+                await rpc.openFile(path);
+                console.log("File opened in backend.");
+
+                // 2. 获取文档信息
+                const count = await getPageCount(path); // 获取页数
+                const labels = await rpc.getPageLabels(null);
+                
+                // 3. 获取大纲树
+                const outlineRoot = await rpc.getOutlineAsBookmark(0);
+                
                 const ver = Date.now(); // Generate a new version for cache busting
                 update(state => ({ ...state, currentFilePath: path, pageCount: count, originalPageLabels: labels, version: ver }));
             } catch (e) {

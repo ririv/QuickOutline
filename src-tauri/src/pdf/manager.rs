@@ -13,6 +13,10 @@ pub enum PdfRequest {
         scale: f32,
         response_tx: oneshot::Sender<Result<Vec<u8>>>,
     },
+    GetPageCount {
+        path: String,
+        response_tx: oneshot::Sender<Result<u16>>,
+    },
 }
 
 // The Sender type to be stored in Tauri State
@@ -51,9 +55,6 @@ impl PdfWorkerInternalState {
         }
 
         // Always load the document from Pdfium using the current_file_path.
-        // This avoids complex lifetime management for PdfDocument directly in the cache,
-        // as PdfDocument instances are typically temporary and tied to the Pdfium instance's lifetime.
-        // Loading an already "known" PDF should be fast if Pdfium has its own internal caches.
         let current_path = self.current_file_path.as_ref().ok_or_else(|| format_err!("No PDF file path set in worker state"))?;
 
         let doc = self.pdfium.load_pdf_from_file(current_path, None)
@@ -78,6 +79,19 @@ impl PdfWorkerInternalState {
 
         Ok(png_data)
     }
+
+    fn process_get_page_count(&mut self, path: String) -> Result<u16> {
+        // Similar caching logic as render
+        if self.current_file_path.as_ref().map_or(true, |p| *p != path) {
+            self.current_file_path = Some(path.clone());
+        }
+
+        let current_path = self.current_file_path.as_ref().ok_or_else(|| format_err!("No PDF file path set in worker state"))?;
+        let doc = self.pdfium.load_pdf_from_file(current_path, None)
+            .map_err(|e| format_err!("Failed to load PDF: {}", e))?;
+        
+        Ok(doc.pages().len())
+    }
 }
 
 
@@ -97,6 +111,10 @@ pub fn init_pdf_worker() -> PdfWorker {
             match request {
                 PdfRequest::RenderPage { path, page_index, scale, response_tx } => {
                     let result = worker_state.process_render_request(path, page_index, scale);
+                    let _ = response_tx.send(result);
+                },
+                PdfRequest::GetPageCount { path, response_tx } => {
+                    let result = worker_state.process_get_page_count(path);
                     let _ = response_tx.send(result);
                 }
             }

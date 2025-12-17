@@ -42,12 +42,27 @@ export async function renderPdfPage(path: string, pageIndex: number, scale: numb
         }
 
         return bytes;
-    } catch (error) {
-        console.error(`[PDF Render] Failed to render page ${pageIndex} of ${path}:`, error);
-        throw error;
+        } catch (error) {
+            console.error(`[PDF Render] Failed to render page ${pageIndex} of ${path}:`, error);
+            throw error;
+        }
     }
-}/**
- * Renders a page and returns a Blob URL directly usable in <img> tags.
+    
+    /**
+     * Gets the total page count of a PDF file via Rust backend.
+     */
+    export async function getPageCount(path: string): Promise<number> {
+        try {
+            const count = await invoke("get_pdf_page_count", { path }) as number;
+            return count;
+        } catch (error) {
+            console.error(`[PDF Render] Failed to get page count for ${path}:`, error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Renders a page and returns a Blob URL directly usable in <img> tags.
  * Note: The caller is responsible for revoking the object URL when it's no longer needed
  * to avoid memory leaks.
  */
