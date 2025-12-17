@@ -9,15 +9,16 @@
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
 
+    const DEFAULT_ASPECT_RATIO = 297 / 210; // A4 Portrait
+
     interface Props {
         pageCount?: number;
         zoom?: number;
     }
 
     let { pageCount = 0, zoom = $bindable(1.0) }: Props = $props();
-
     let loadedState = $state<boolean[]>(new Array(pageCount).fill(false));
-    let aspectRatios = $state<number[]>(new Array(pageCount).fill(1.3333)); // Default A4 ratio
+    let aspectRatios = $state<number[]>(new Array(pageCount).fill(DEFAULT_ASPECT_RATIO)); // Default A4 ratio
     let thumbnailUrls = $state<Record<number, string>>({}); // Store blob URLs
     let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
     let closeTimer: number | undefined;
@@ -52,7 +53,7 @@
         if (loadedState.length !== $docStore.pageCount) {
             console.log('PageCount changed:', $docStore.pageCount);
             loadedState = new Array($docStore.pageCount).fill(false);
-            aspectRatios = new Array($docStore.pageCount).fill(1.3333);
+            aspectRatios = new Array($docStore.pageCount).fill(DEFAULT_ASPECT_RATIO);
             // Revoke old URLs when page count (file) changes
             Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
             thumbnailUrls = {};
