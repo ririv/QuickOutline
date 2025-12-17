@@ -4,7 +4,7 @@ mod printer_headless;
 mod printer_headless_chrome;
 mod printer;
 mod static_server;
-mod pdf_handler;
+mod pdf;
 
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager, Runtime};
@@ -159,7 +159,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer::print_to_pdf, pdf_handler::merge_pdfs])
+        .invoke_handler(tauri::generate_handler![greet, java_sidecar::get_java_port, printer::print_to_pdf, pdf::merge::merge_pdfs, pdf::render::render_pdf_page])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
