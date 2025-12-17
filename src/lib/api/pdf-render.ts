@@ -8,7 +8,7 @@ import { invoke } from "@tauri-apps/api/core";
  * @param pageIndex 0-based page index.
  * @param scale Scaling factor (e.g., 1.0 for original size, 0.2 for thumbnail).
  */
-export async function renderPdfPage(path: string, pageIndex: number, scale: number): Promise<Uint8Array> {
+export async function renderPdfPage(path: string, pageIndex: number, scale: number): Promise<Uint8Array<ArrayBuffer>> {
     try {
         const result = await invoke("render_pdf_page", { 
             path, 
@@ -22,13 +22,15 @@ export async function renderPdfPage(path: string, pageIndex: number, scale: numb
         //      console.log(`[PDF Render DEBUG] Constructor: ${(result as any).constructor?.name}`);
         // }
 
-        let bytes: Uint8Array;
+        let bytes: Uint8Array<ArrayBuffer>;
         if (result instanceof ArrayBuffer) {
              // Zero-copy view on the ArrayBuffer returned by Tauri Response
              bytes = new Uint8Array(result);
         } else if (result instanceof Uint8Array) {
-            bytes = result;
+            // Zero-copy
+            bytes = result as Uint8Array<ArrayBuffer>;
         } else if (Array.isArray(result)) {
+            // Need copy
             console.warn("[PDF Render] Received standard Array, converting to Uint8Array");
             bytes = new Uint8Array(result);
         } else {

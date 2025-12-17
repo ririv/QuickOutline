@@ -100,9 +100,9 @@ export function handleImageUpdate(jsonString: string, container: HTMLElement, pd
                         const oldImages = Array.from(pageDiv.querySelectorAll('img:not(.current)'));
                         if (oldImages.length > 0) {
                             setTimeout(() => {
-                                oldImages.forEach(img => {
-                                    if (img !== newImg && img.src.startsWith('blob:')) {
-                                        URL.revokeObjectURL(img.src); // Revoke URL for old image
+                                oldImages.forEach((img: any) => {
+                                    if (img !== newImg && (img as HTMLImageElement).src.startsWith('blob:')) {
+                                        URL.revokeObjectURL((img as HTMLImageElement).src); // Revoke URL for old image
                                     }
                                     img.remove();
                                 });

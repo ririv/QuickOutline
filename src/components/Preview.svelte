@@ -40,9 +40,9 @@
 
     // Expose methods for parent to call (SVG/Image Engine)
     // Note: json string still comes from Java part, containing page metadata
-    export const renderSvg = (json: string, pdfFilePath: string, scale: number) => {
+    export const renderSvg = (json: string) => {
         if (mode === "svg" && container && viewport)
-            handleSvgUpdate(json, container, viewport, pdfFilePath, scale); // Pass pdfFilePath and scale
+            handleSvgUpdate(json, container, viewport);
     };
 
     export const renderImage = (json: string, pdfFilePath: string, scale: number) => {
@@ -72,7 +72,7 @@
             
             // Notify svg-engine if mode is svg (it might need to know for internal calculations, 
             // though zoom usually handles it seamlessly)
-            if (mode === "svg") onSvgViewChange(container, viewport, currentPdfFilePath, currentScale); // Pass currentScale and pdfFilePath
+            if (mode === "svg") onSvgViewChange(container, viewport);
         }
         updateSliderBackground(currentScale);
     }
