@@ -4271,6 +4271,7 @@ dependencies = [
  "tauri-plugin-cli",
  "tauri-plugin-devtools",
  "tauri-plugin-dialog",
+ "tauri-plugin-fs",
  "tauri-plugin-opener",
  "tauri-plugin-shell",
  "tiny_http",

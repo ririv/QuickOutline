@@ -35,6 +35,17 @@
       ]
     },
     "shell:default",
-    "dialog:default"
+    "dialog:default",
+    "fs:default",
+    "fs:allow-stat",
+    "fs:allow-open",
+    "fs:allow-read",
+    "fs:allow-seek",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        "$HOME/**"
+      ]
+    }
   ]
 }

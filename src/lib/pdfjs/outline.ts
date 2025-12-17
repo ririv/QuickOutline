@@ -2,8 +2,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import type { BookmarkUI } from '@/components/bookmark/types';
 
 // Recursively converts PDF.js outline format to our BookmarkUI format
-// pdfjsOutline parameter type will be inferred from pdfjsLib.PDFDocumentProxy['getOutline'] result
-function convertToBookmarkUI(pdfjsOutline: any[], level: number = 0): BookmarkUI[] {
+async function convertToBookmarkUI(pdfDocument: pdfjsLib.PDFDocumentProxy, pdfjsOutline: any[], level: number = 0): Promise<BookmarkUI[]> {
     const bookmarks: BookmarkUI[] = [];
     if (!pdfjsOutline || pdfjsOutline.length === 0) {
         return bookmarks;
@@ -11,37 +10,39 @@ function convertToBookmarkUI(pdfjsOutline: any[], level: number = 0): BookmarkUI
 
     for (const item of pdfjsOutline) {
         let pageNum: string | null = null;
-        // PDF.js's dest (destination) can be a string (named dest) or an array
-        // Common format for array dest: [pageRef, /XYZ, left, top, zoom]
-        // pageRef is usually an object {num: number, gen: number} or sometimes a page index (0-based)
-        if (Array.isArray(item.dest) && item.dest.length > 0) {
-            const pageRef = item.dest[0]; // This is the page reference
-            if (typeof pageRef === 'object' && pageRef !== null && 'num' in pageRef && 'gen' in pageRef) {
-                // This is a page dictionary reference. We can't get page number directly here.
-                // We would need pdfDocument.getPageIndex(pageRef) which is async.
-                // For now, we will leave it as null. A more complete implementation would resolve this.
-                console.warn("PDF.js Named Destination (object ref) encountered, not resolved to page number:", item.dest);
-            } else if (typeof pageRef === 'number') {
-                // Sometimes it's a direct 0-based page index.
-                pageNum = String(pageRef + 1); // PDF.js is 0-based, convert to 1-based
-            }
-        } else if (typeof item.dest === 'string') {
-            // This is a named destination string. Requires pdfDocument.getDestination(item.dest) then resolve.
-            console.warn("PDF.js Named Destination (string) encountered, not resolved to page number:", item.dest);
-        }
         
+        try {
+            let destArray = null;
+            if (typeof item.dest === 'string') {
+                destArray = await pdfDocument.getDestination(item.dest);
+            } else if (Array.isArray(item.dest)) {
+                destArray = item.dest;
+            }
+
+            if (destArray && destArray.length > 0) {
+                const pageRef = destArray[0];
+                if (typeof pageRef === 'object' && pageRef !== null) {
+                    const pageIndex = await pdfDocument.getPageIndex(pageRef);
+                    pageNum = String(pageIndex + 1);
+                } else if (typeof pageRef === 'number') {
+                    pageNum = String(pageRef + 1);
+                }
+            }
+        } catch (e) {
+            console.warn(`Failed to resolve destination for bookmark '${item.title}':`, e);
+        }
 
         const newBookmark: BookmarkUI = {
-            id: crypto.randomUUID(), // Generate a unique ID for frontend
+            id: crypto.randomUUID(), 
             title: item.title,
-            pageNum: pageNum, // Page number (1-based string)
-            level: level + 1, // PDF.js outline root is implicitly level 0. Our bookmarks start at 1.
+            pageNum: pageNum, 
+            level: level + 1, 
             children: [],
-            expanded: true // Default to expanded
+            expanded: true 
         };
 
         if (item.items && item.items.length > 0) {
-            newBookmark.children = convertToBookmarkUI(item.items, level + 1);
+            newBookmark.children = await convertToBookmarkUI(pdfDocument, item.items, level + 1);
         }
         bookmarks.push(newBookmark);
     }
@@ -53,5 +54,5 @@ export async function getBookmarks(pdfDocument: pdfjsLib.PDFDocumentProxy): Prom
     if (!outline) {
         return [];
     }
-    return convertToBookmarkUI(outline);
+    return convertToBookmarkUI(pdfDocument, outline);
 }

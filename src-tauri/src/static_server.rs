@@ -3,6 +3,7 @@ use std::sync::Mutex;
 use std::thread;
 use tiny_http::{Server, Response, Header, Method};
 use std::fs::File;
+use std::io::{Read, Seek, SeekFrom};
 use tauri::{AppHandle, Manager, Runtime}; // Import Manager and Runtime trait
 
 // Define a struct to hold the server state (port)
@@ -10,6 +11,7 @@ pub struct LocalServerState {
     pub port: Mutex<Option<u16>>,
     pub workspace: Mutex<PathBuf>,
     pub resources: Mutex<Option<PathBuf>>,
+    pub current_pdf: Mutex<Option<PathBuf>>,
 }
 
 impl LocalServerState {
@@ -18,6 +20,7 @@ impl LocalServerState {
             port: Mutex::new(None),
             workspace: Mutex::new(PathBuf::new()),
             resources: Mutex::new(None),
+            current_pdf: Mutex::new(None),
         }
     }
 }
@@ -66,6 +69,19 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
             }
 
             let url = request.url();
+            
+            // Intercept PDF request
+            if url.starts_with("/pdf/current.pdf") {
+                if let Some(state) = app_handle.try_state::<LocalServerState>() {
+                    if let Some(pdf_path) = state.current_pdf.lock().unwrap().clone() {
+                        serve_file_with_range(request, pdf_path);
+                        continue;
+                    }
+                }
+                let _ = request.respond(Response::from_string("Not Found (No PDF set)").with_status_code(404));
+                continue;
+            }
+
             // Basic path sanitization: prevent directory traversal
             if url.contains("..") {
                 let _ = request.respond(Response::from_string("Forbidden").with_status_code(403));
@@ -210,4 +226,68 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
             }
         }
     });
+}
+
+fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
+    let mut file = match File::open(&path) {
+        Ok(f) => f,
+        Err(_) => { let _ = request.respond(Response::from_string("Not Found").with_status_code(404)); return; }
+    };
+    let file_len = file.metadata().map(|m| m.len()).unwrap_or(0);
+
+    let mut start = 0;
+    let mut end = file_len - 1;
+    let mut is_range = false;
+
+    for header in request.headers() {
+        if header.field.equiv("Range") {
+            let val = header.value.as_str();
+            if val.starts_with("bytes=") {
+                let ranges: Vec<&str> = val["bytes=".len()..].split('-').collect();
+                if let Ok(s) = ranges[0].parse::<u64>() {
+                    start = s;
+                }
+                if ranges.len() > 1 && !ranges[1].is_empty() {
+                    if let Ok(e) = ranges[1].parse::<u64>() {
+                        end = e;
+                    }
+                }
+                is_range = true;
+            }
+        }
+    }
+    
+    if end >= file_len { end = if file_len > 0 { file_len - 1 } else { 0 }; }
+    if start > end && file_len > 0 { 
+        let _ = request.respond(Response::from_string("Range Not Satisfiable").with_status_code(416));
+        return;
+    }
+
+    let len = end - start + 1;
+    
+    if let Err(_) = file.seek(SeekFrom::Start(start)) {
+         let _ = request.respond(Response::from_string("Seek Failed").with_status_code(500));
+         return;
+    }
+
+    let reader = Box::new(file.take(len)) as Box<dyn Read + Send + Sync + 'static>;
+
+    let mut response = Response::new(
+        if is_range { tiny_http::StatusCode(206) } else { tiny_http::StatusCode(200) },
+        vec![
+            Header::from_bytes(&b"Content-Type"[..], &b"application/pdf"[..]).unwrap(),
+            Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap(),
+            Header::from_bytes(&b"Accept-Ranges"[..], &b"bytes"[..]).unwrap(),
+            Header::from_bytes(&b"Content-Length"[..], format!("{}", len).as_bytes()).unwrap(),
+        ],
+        reader,
+        Some(len as usize),
+        None,
+    );
+
+    if is_range {
+        response.add_header(Header::from_bytes(&b"Content-Range"[..], format!("bytes {}-{}/{}", start, end, file_len).as_bytes()).unwrap());
+    }
+
+    let _ = request.respond(response);
 }

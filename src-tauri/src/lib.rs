@@ -125,6 +125,25 @@ async fn save_outline(
 }
 
 #[tauri::command]
+async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, String> {
+    if let Some(state) = app.try_state::<static_server::LocalServerState>() {
+        state.port.lock().unwrap().ok_or("Server not started yet".to_string())
+    } else {
+        Err("Failed to access LocalServerState".to_string())
+    }
+}
+
+#[tauri::command]
+async fn set_current_pdf<R: Runtime>(app: AppHandle<R>, path: String) -> Result<(), String> {
+    if let Some(state) = app.try_state::<static_server::LocalServerState>() {
+        *state.current_pdf.lock().unwrap() = Some(PathBuf::from(path));
+        Ok(())
+    } else {
+        Err("Failed to access LocalServerState".to_string())
+    }
+}
+
+#[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
@@ -142,6 +161,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_cli::init())
         .manage(java_sidecar::JavaState {
@@ -225,7 +245,9 @@ pub fn run() {
             pdf::render::render_pdf_page, 
             pdf::render::get_pdf_page_count,
             get_outline_as_bookmark,
-            save_outline
+            save_outline,
+            set_current_pdf,
+            get_static_server_port
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
