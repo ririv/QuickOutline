@@ -3,13 +3,11 @@
   import MdEditor from '../../components/MdEditor.svelte';
   import Preview from '../../components/Preview.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
-  import HeaderFooterEditor from '../../components/HeaderFooterEditor.svelte';
-  import CollapseTrigger from '../../components/CollapseTrigger.svelte';
+  import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import ConfirmDialog from '../../components/ConfirmDialog.svelte'; // Import ConfirmDialog
   import { confirm } from '@/stores/confirm.svelte'; // Import confirm helper
   import '../../assets/global.css';
   import { onMount, onDestroy } from 'svelte';
-  import { slide } from 'svelte/transition';
   import { markdownStore } from '@/stores/markdownStore.svelte';
   import { messageStore } from '@/stores/messageStore'; // Import messageStore
   import { printStore } from '@/stores/printStore.svelte'; // Import printStore
@@ -166,45 +164,18 @@
       <SplitPane initialSplit={50}>
         {#snippet left()}
         <div class="h-full flex-col left-panel">
-          <!-- Header Trigger & Editor -->
-          <CollapseTrigger 
-            position="top" 
-            label="Header" 
-            expanded={markdownStore.showHeader} 
-            content={markdownStore.headerConfig}
-            ontoggle={() => markdownStore.showHeader = !markdownStore.showHeader} 
-          />
-          {#if markdownStore.showHeader}
-            <div transition:slide={{ duration: 200 }}>
-              <HeaderFooterEditor
-                type="header"
-                bind:config={markdownStore.headerConfig} 
-                onchange={triggerPreview}
-              />
+          <PageFrame
+            bind:headerConfig={markdownStore.headerConfig}
+            bind:footerConfig={markdownStore.footerConfig}
+            bind:showHeader={markdownStore.showHeader}
+            bind:showFooter={markdownStore.showFooter}
+            onHeaderChange={triggerPreview}
+            onFooterChange={triggerPreview}
+          >
+            <div class="editor-wrapper">
+              <MdEditor bind:this={editorComponent} onchange={debouncedPreview} />
             </div>
-          {/if}
-
-          <div class="editor-wrapper">
-            <MdEditor bind:this={editorComponent} onchange={debouncedPreview} />
-          </div>
-
-          <!-- Footer Trigger & Editor -->
-          {#if markdownStore.showFooter}
-            <div transition:slide={{ duration: 200 }}>
-              <HeaderFooterEditor
-                type="footer"
-                bind:config={markdownStore.footerConfig} 
-                onchange={triggerPreview}
-              />
-            </div>
-          {/if}
-          <CollapseTrigger 
-            position="bottom" 
-            label="Footer" 
-            expanded={markdownStore.showFooter} 
-            content={markdownStore.footerConfig}
-            ontoggle={() => markdownStore.showFooter = !markdownStore.showFooter} 
-          />
+          </PageFrame>
         </div>
         {/snippet}
         

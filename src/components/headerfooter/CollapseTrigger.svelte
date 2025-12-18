@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type {SectionConfig} from "@/lib/api/rpc";
+  import type {HeaderFooterConfig} from "@/lib/api/rpc.ts";
 
   interface Props {
     position: 'top' | 'bottom';
     label?: string;
     expanded?: boolean;
-    content?: SectionConfig;
+    content?: HeaderFooterConfig;
     ontoggle?: () => void;
   }
 
@@ -13,7 +13,7 @@
     position, 
     label = '', 
     expanded = false, 
-    content = {} as SectionConfig,
+    content = {} as HeaderFooterConfig,
     ontoggle 
   }: Props = $props();
 
@@ -29,7 +29,7 @@
       isHovered = false;
   }
 
-  function hasContent(config: SectionConfig) {
+  function hasContent(config: HeaderFooterConfig) {
       const hasText = Object.entries(config).some(([k, v]) => {
           if (k === 'drawLine') return false;
           return typeof v === 'string' && v.trim().length > 0 && v !== '{p}';

@@ -52,7 +52,7 @@ export interface RpcResponse {
 
 // --- Data Models ---
 
-export interface SectionConfig {
+export interface HeaderFooterConfig {
     left: string | null;
     center: string | null;
     right: string | null;
@@ -66,8 +66,8 @@ export interface TocConfig {
     title: string;
     insertPos: number;
     numberingStyle: PageLabelNumberingStyle;
-    header: SectionConfig | null;
-    footer: SectionConfig | null;
+    header: HeaderFooterConfig | null;
+    footer: HeaderFooterConfig | null;
 }
 
 export interface PageLabelRuleDto {

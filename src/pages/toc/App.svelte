@@ -3,11 +3,9 @@
   import Preview from '../../components/Preview.svelte';
   import TocEditor from '../../components/TocEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
-  import HeaderFooterEditor from '../../components/HeaderFooterEditor.svelte';
-  import CollapseTrigger from '../../components/CollapseTrigger.svelte';
+  import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
-  import { slide } from 'svelte/transition';
   
   import { rpc } from '@/lib/api/rpc';
   import { outlineService } from '@/lib/services/OutlineService';
@@ -237,53 +235,26 @@
       <SplitPane initialSplit={40}>
         {#snippet left()}
         <div class="left-panel">
-          <!-- Header Trigger & Editor -->
-          <CollapseTrigger 
-            position="top" 
-            label="Header" 
-            expanded={showHeader} 
-            content={tocStore.headerConfig}
-            ontoggle={() => showHeader = !showHeader} 
-          />
-          {#if showHeader}
-            <div transition:slide={{ duration: 200 }}>
-              <HeaderFooterEditor
-                type="header"
-                bind:config={tocStore.headerConfig} 
+          <PageFrame
+            bind:headerConfig={tocStore.headerConfig}
+            bind:footerConfig={tocStore.footerConfig}
+            bind:showHeader={showHeader}
+            bind:showFooter={showFooter}
+            onHeaderChange={triggerPreview}
+            onFooterChange={triggerPreview}
+          >
+            <div class="header">
+              <input type="text" bind:value={tocStore.title} oninput={triggerPreview} placeholder="Title" class="title-input"/>
+            </div>
+            
+            <div class="editor-wrapper">
+              <TocEditor 
+                  bind:value={tocStore.content} 
+                  onchange={handleContentChange} 
+                  placeholder="Enter TOC here..."
               />
             </div>
-          {/if}
-
-          <div class="header">
-            <input type="text" bind:value={tocStore.title} oninput={triggerPreview} placeholder="Title" class="title-input"/>
-          </div>
-          
-          <div class="editor-wrapper">
-            <TocEditor 
-                bind:value={tocStore.content} 
-                onchange={handleContentChange} 
-                placeholder="Enter TOC here..."
-            />
-          </div>
-
-          <!-- Print Mode Selector removed (moved to Settings) -->
-
-          <!-- Footer Trigger & Editor -->
-          {#if showFooter}
-            <div transition:slide={{ duration: 200 }}>
-              <HeaderFooterEditor
-                type="footer"
-                bind:config={tocStore.footerConfig} 
-              />
-            </div>
-          {/if}
-          <CollapseTrigger 
-            position="bottom" 
-            label="Footer" 
-            expanded={showFooter} 
-            content={tocStore.footerConfig}
-            ontoggle={() => showFooter = !showFooter} 
-          />
+          </PageFrame>
         </div>
         {/snippet}
         

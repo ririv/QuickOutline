@@ -1,19 +1,11 @@
 <script lang="ts">
-    import ArrowPopup from './controls/ArrowPopup.svelte';
-    import PositionDiagram from './PositionDiagram.svelte';
-    import Tooltip from './Tooltip.svelte';
-
-    interface SectionConfig {
-        left: string;
-        center: string;
-        right: string;
-        inner: string;
-        outer: string;
-        drawLine: boolean;
-    }
+    import ArrowPopup from '../controls/ArrowPopup.svelte';
+    import PositionDiagram from '../PositionDiagram.svelte';
+    import Tooltip from '../Tooltip.svelte';
+    import type { HeaderFooterConfig } from '@/lib/api/rpc.ts';
 
     interface Props {
-        config?: SectionConfig;
+        config?: HeaderFooterConfig;
         type?: 'header' | 'footer';
         onchange?: () => void;
     }
