@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { BookmarkUI } from "./types";
+    import type { BookmarkUI } from "../../lib/types/bookmark.ts";
     import BookmarkNode from "./BookmarkNode.svelte"; // Self-import for recursion
     import { tick, getContext } from "svelte";
     import { appStore } from '@/stores/appStore';

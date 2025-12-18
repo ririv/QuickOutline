@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { BookmarkUI } from "./types";
+    import type { BookmarkUI } from "../../lib/types/bookmark.ts";
     import BookmarkNode from "./BookmarkNode.svelte";
     import { onMount, onDestroy, setContext, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';

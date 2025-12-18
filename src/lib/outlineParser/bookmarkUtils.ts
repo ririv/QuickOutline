@@ -1,4 +1,4 @@
-import type { BookmarkUI } from "../../components/bookmark/types";
+import type { BookmarkUI } from "../types/bookmark.ts";
 import { INDENT_UNIT, FOUR_NORM_SPACE } from "./constants";
 
 export type LinkedBookmark = BookmarkUI & {

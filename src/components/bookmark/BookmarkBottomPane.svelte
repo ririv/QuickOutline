@@ -19,7 +19,7 @@
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore';
     import { messageStore } from '@/stores/messageStore';
-    import type { BookmarkUI } from '@/components/bookmark/types';
+    import type { BookmarkUI } from '@/lib/types/bookmark.ts';
     import { untrack } from 'svelte';
 
     interface Props {

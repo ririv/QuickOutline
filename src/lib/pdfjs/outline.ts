@@ -1,5 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import type { BookmarkUI } from '@/components/bookmark/types';
+import type { BookmarkUI } from '@/lib/types/bookmark.ts';
 
 // Recursively converts PDF.js outline format to our BookmarkUI format
 async function convertToBookmarkUI(pdfDocument: pdfjsLib.PDFDocumentProxy, pdfjsOutline: any[], level: number = 0): Promise<BookmarkUI[]> {

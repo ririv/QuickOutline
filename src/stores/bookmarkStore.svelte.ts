@@ -1,4 +1,4 @@
-import type { BookmarkUI } from '@/components/bookmark/types';
+import type { BookmarkUI } from '@/lib/types/bookmark.ts';
 import { reconcileTrees } from '@/lib/outlineParser/bookmarkUtils';
 import { Method } from '@/lib/outlineParser';
 
