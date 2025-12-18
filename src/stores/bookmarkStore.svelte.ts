@@ -1,4 +1,5 @@
 import type { BookmarkUI } from '@/components/bookmark/types';
+import { reconcileTrees } from '@/lib/outlineParser/bookmarkUtils';
 
 class BookmarkStore {
 	text = $state('');
@@ -10,6 +11,10 @@ class BookmarkStore {
 	}
 
 	setTree(tree: BookmarkUI[]) {
+		// Try to preserve IDs and state from the old tree
+		if (this.tree.length > 0 && tree.length > 0) {
+			reconcileTrees(this.tree, tree);
+		}
 		this.tree = tree;
 	}
 

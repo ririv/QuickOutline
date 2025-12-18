@@ -99,15 +99,32 @@
 
   $effect(() => {
       if (view && value !== view.state.doc.toString()) {
-          // Only update if content matches (avoid cursor jump loop)
-          // But this is tricky with binding. 
-          // Usually simple way:
           const current = view.state.doc.toString();
-          if (value !== current) {
-              view.dispatch({
-                  changes: { from: 0, to: current.length, insert: value }
-              });
+          if (value === current) return; // No actual change, skip dispatch
+
+          // Implement a character-based head-tail matching for incremental updates
+          let start = 0;
+          let oldEnd = current.length;
+          let newEnd = value.length;
+
+          // Find common prefix
+          while (start < oldEnd && start < newEnd && current.charCodeAt(start) === value.charCodeAt(start)) {
+              start++;
           }
+
+          // Find common suffix
+          while (oldEnd > start && newEnd > start && current.charCodeAt(oldEnd - 1) === value.charCodeAt(newEnd - 1)) {
+              oldEnd--;
+              newEnd--;
+          }
+          
+          view.dispatch({
+              changes: {
+                  from: start,
+                  to: oldEnd,
+                  insert: value.slice(start, newEnd)
+              }
+          });
       }
   });
 
