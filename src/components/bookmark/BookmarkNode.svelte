@@ -105,11 +105,11 @@
         const offset = bookmarkStore.offset || 0;
         const count = $docStore.pageCount;
         
+        const effectivePage = pageNum + offset;
         if (count > 0) {
-            // Check if calculated page (original + offset) exceeds total pages
-            return (pageNum + offset) > count;
+            return effectivePage > count || effectivePage < 1;
         }
-        return false;
+        return effectivePage < 1;
     });
 
 </script>
@@ -161,7 +161,7 @@
                     <div class="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-3 bg-[#409eff] rounded-full"></div>
                     <input 
                         type="text" 
-                        class="w-full outline-none px-1.5 py-0.5 text-sm leading-tight bg-transparent text-center rounded font-normal text-gray-900 font-sans"
+                        class="w-full outline-none px-1.5 py-0.5 text-sm leading-tight bg-transparent text-center rounded font-normal {isOutOfRange ? 'text-[rgba(255,0,0,0.7)]' : 'text-gray-900'} font-sans"
                         bind:value={bookmark.pageNum}
                         bind:this={pageInput}
                         onblur={() => isEditingPage = false}
@@ -169,7 +169,7 @@
                 </div>
             {:else}
                 <div 
-                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-center cursor-text w-full truncate hover:bg-gray-200 rounded-full transition-colors font-sans whitespace-pre {isOutOfRange ? 'text-red-600 font-medium' : 'text-gray-500'}"
+                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-center cursor-text w-full truncate hover:bg-gray-200 rounded-full transition-colors font-sans whitespace-pre {isOutOfRange ? 'text-[rgba(255,0,0,0.7)] font-medium' : 'text-gray-500'}"
                     onclick={editPage}
                     onmouseenter={handlePageMouseEnter}
                     onmouseleave={handlePageMouseLeave}
