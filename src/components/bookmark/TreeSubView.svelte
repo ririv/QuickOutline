@@ -11,7 +11,6 @@
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
-    let isUpdatingFromStore = false; // Add flag to prevent circular updates
     
     // Preview State
     let hoveredPage = $state<{src: string, y: number, x: number} | null>(null);
@@ -65,7 +64,10 @@
                 children: tree
             };
             const text = serializeBookmarkTree(rootDto);
-            bookmarkStore.setText(text); // Update text store with new text from tree
+            // Only update text if it's different to avoid loops
+            if (bookmarkStore.text !== text) {
+                bookmarkStore.setText(text);
+            }
         } catch (e: any) {
             console.error("Failed to sync tree with backend:", e);
             messageStore.add('Failed to sync changes: ' + (e.message || String(e)), 'ERROR');
@@ -87,8 +89,8 @@
         const storeTree = bookmarkStore.tree; // Track store
         untrack(() => {
              // Check for deep equality to avoid unnecessary updates and re-renders if the tree is the same
+             // Using JSON stringify is a bit expensive but robust for deep structures
              if (JSON.stringify(storeTree) !== JSON.stringify(bookmarks)) {
-                 isUpdatingFromStore = true; // Set flag
                  bookmarks = storeTree;
              }
         });
@@ -97,19 +99,16 @@
     // Sync from Local to Store & Backend
     $effect(() => {
         // Track local bookmarks changes (including deep changes due to JSON.stringify usage implicitly or just access)
-        // Accessing bookmarks to pass it tracks it.
         JSON.stringify(bookmarks); // Explicitly track deep changes
         const currentBookmarks = bookmarks;
         
         untrack(() => {
-            if (isUpdatingFromStore) { // If update came from store, don't echo back
-                isUpdatingFromStore = false; // Reset flag
-                return;
-            }
-
-            debouncedSyncTreeWithBackend(currentBookmarks);
-            if (JSON.stringify(bookmarkStore.tree) !== JSON.stringify(currentBookmarks)) {
+            // Check if store is already same as local to prevent loop
+            const isDifferent = JSON.stringify(bookmarkStore.tree) !== JSON.stringify(currentBookmarks);
+            
+            if (isDifferent) {
                 bookmarkStore.setTree(currentBookmarks); // Keep the store's tree up-to-date with local mutations
+                debouncedSyncTreeWithBackend(currentBookmarks);
             }
         });
     });
