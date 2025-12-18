@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { EditorState, RangeSetBuilder, Compartment } from '@codemirror/state';
+  import { EditorState, RangeSetBuilder, Compartment, Annotation } from '@codemirror/state';
   import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, ViewPlugin, Decoration, type ViewUpdate, WidgetType } from '@codemirror/view';
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { indentOnInput, indentUnit } from '@codemirror/language';
@@ -35,6 +35,8 @@
   let readOnlyCompartment = new Compartment();
   let validationConf = new Compartment();
 
+  const ExternalUpdate = Annotation.define<boolean>();
+
   // --- Lifecycle ---
   
     onMount(() => {
@@ -59,20 +61,25 @@
           ]),
           EditorView.updateListener.of((update) => {
               if (update.docChanged) {
-                  const newVal = update.state.doc.toString();
+                  // Check if the update was caused by an external prop change
+                  const isExternal = update.transactions.some(tr => tr.annotation(ExternalUpdate));
                   
-                  const changedLines = new Set<number>();
-                  update.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
-                       // Get line numbers in the new document state
-                       const startLine = update.state.doc.lineAt(fromB).number;
-                       const endLine = update.state.doc.lineAt(toB).number;
-                       for (let i = startLine; i <= endLine; i++) {
-                           changedLines.add(i);
-                       }
-                  });
-  
-                  value = newVal;
-                  onchange?.(newVal, Array.from(changedLines));
+                  const newVal = update.state.doc.toString();
+                  value = newVal; // Update local value binding
+
+                  if (!isExternal) {
+                      const changedLines = new Set<number>();
+                      update.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
+                           // Get line numbers in the new document state
+                           const startLine = update.state.doc.lineAt(fromB).number;
+                           const endLine = update.state.doc.lineAt(toB).number;
+                           for (let i = startLine; i <= endLine; i++) {
+                               changedLines.add(i);
+                           }
+                      });
+      
+                      onchange?.(newVal, Array.from(changedLines));
+                  }
               }
           }),
           // Add DOM event handlers for focus and blur
@@ -137,7 +144,8 @@
                   from: start,
                   to: oldEnd,
                   insert: value.slice(start, newEnd)
-              }
+              },
+              annotations: ExternalUpdate.of(true)
           });
       }
   });
