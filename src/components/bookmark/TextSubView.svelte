@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount, onDestroy, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore';
     import { rpc } from '@/lib/api/rpc';
-    import { processText, autoFormat } from '@/lib/outlineParser';
+    import { processText, autoFormat, Method } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore';
     import type { BookmarkUI } from './types';
     import formatIcon from '@/assets/icons/format.svg'; // Using text-edit for format
@@ -12,15 +12,15 @@
     import IconSwitch from '../controls/IconSwitch.svelte';
     import BookmarkEditor from '../editor/BookmarkEditor.svelte';
 
-    let method = $state('sequential');
+    // Using bookmarkStore.method directly with Enum
     const modeOptions = [
-        { value: 'sequential', label: 'Sequential', icon: sequentialIcon, title: 'Parse by Sequential Numbers (e.g., 1, 1.1, 2)' },
-        { value: 'indent', label: 'Indent', icon: indentIcon, title: 'Parse by Indentation Levels' }
+        { value: Method.SEQ, label: 'Sequential', icon: sequentialIcon, title: 'Parse by Sequential Numbers (e.g., 1, 1.1, 2)' },
+        { value: Method.INDENT, label: 'Indent', icon: indentIcon, title: 'Parse by Indentation Levels' }
     ];
 
     let textValue = $state('');
     let debounceTimer: number | undefined;
-    let highlightedMode = $state<string | null>(null); // State for highlight value
+    let highlightedMode = $state<Method | null>(null); // State for highlight value
     let isExternalEditing = $state(false); // State for external editor mode
     let isFocused = $state(false); // New state to track editor focus
 
@@ -35,7 +35,8 @@
     // Debounced function to sync text changes with backend and update tree
     const debouncedSyncWithBackend = debounce(async (newText: string) => {
         try {
-            const bookmarkDto: BookmarkUI = processText(newText);
+            // Use the global method from store directly
+            const bookmarkDto: BookmarkUI = processText(newText, bookmarkStore.method);
             bookmarkStore.setTree(bookmarkDto.children || []);
             // No need to setText here, as it's already done instantly by handleInput
         } catch (e: any) {
@@ -43,6 +44,21 @@
             messageStore.add('Failed to sync changes: ' + (e.message || String(e)), 'ERROR');
         }
     }, 500); // 500ms debounce delay
+
+    // React to method changes
+    $effect(() => {
+        const method = bookmarkStore.method;
+        untrack(() => {
+            if (!textValue) return;
+            try {
+                // Use method directly
+                const bookmarkDto: BookmarkUI = processText(textValue, method);
+                bookmarkStore.setTree(bookmarkDto.children || []);
+            } catch (e: any) {
+                console.error("Failed to re-process text after method change:", e);
+            }
+        });
+    });
 
     // Handlers for RPC events
     const onExternalUpdate = (payload: { text: string }) => {
@@ -129,17 +145,18 @@
             const formatted = autoFormat(textValue);
             
             // Sync formatted text to backend and get updated tree
-            const bookmarkDto: BookmarkUI = processText(formatted);
+            // Force Indent mode when parsing auto-formatted text
+            const bookmarkDto: BookmarkUI = processText(formatted, Method.INDENT);
 
             textValue = formatted;
             bookmarkStore.setText(formatted);
             bookmarkStore.setTree(bookmarkDto.children || []);
             
-            // Update Method
-            if (method !== 'indent') {
-                method = 'indent';
+            // Update Method in store
+            if (bookmarkStore.method !== Method.INDENT) {
+                bookmarkStore.setMethod(Method.INDENT);
                 // Only highlight if method actually changed
-                highlightedMode = 'indent';
+                highlightedMode = Method.INDENT;
                 setTimeout(() => {
                     highlightedMode = null;
                 }, 1500); // Highlight for 1.5 seconds
@@ -168,9 +185,9 @@
     <!-- Top Toolbar -->
     <div class="flex items-center justify-between shrink-0 py-2 px-2 bg-white">
         <!-- Mode Selector (IconSwitch) -->
-        <IconSwitch 
-            bind:value={method} 
-            options={modeOptions} 
+        <IconSwitch
+            bind:value={bookmarkStore.method}
+            options={modeOptions}
             highlightValue={highlightedMode}
         />
         

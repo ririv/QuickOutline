@@ -1,21 +1,21 @@
-<script lang="ts">
+<script lang="ts" generics="T">
     import { fade } from 'svelte/transition';
 
-    interface Option {
-        value: string;
+    interface Option<T> {
+        value: T;
         icon: string;
         label: string;
         title?: string;
     }
 
-    interface Props {
-        value: string;
-        options: Option[];
+    interface Props<T> {
+        value: T;
+        options: Option<T>[];
         class?: string;
-        highlightValue?: string | null;
+        highlightValue?: T | null;
     }
 
-    let { value = $bindable(), options, class: className = '', highlightValue = null }: Props = $props();
+    let { value = $bindable(), options, class: className = '', highlightValue = null }: Props<T> = $props();
 
     let selectedOption = $derived(options.find(o => o.value === value) || options[0]);
     let selectedIndex = $derived(options.findIndex(o => o.value === value));
