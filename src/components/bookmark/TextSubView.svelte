@@ -9,6 +9,7 @@
     import sequentialIcon from '@/assets/icons/mode-sequential.svg';
     import indentIcon from '@/assets/icons/mode-indent.svg';
     import IconSwitch from '../controls/IconSwitch.svelte';
+    import BookmarkEditor from '../editor/BookmarkEditor.svelte';
 
     let method = $state('sequential');
     const modeOptions = [
@@ -20,6 +21,7 @@
     let debounceTimer: number | undefined;
     let highlightedMode = $state<string | null>(null); // State for highlight value
     let isExternalEditing = $state(false); // State for external editor mode
+    let isFocused = $state(false); // New state to track editor focus
 
     // Simple debounce function
     function debounce<T extends any[]>(func: (...args: T) => void, delay: number) {
@@ -92,18 +94,28 @@
         rpc.off('external-editor-error', onExternalError);
     });
 
-    // Sync from Store to Local
+    // Sync from Store to Local (only when not focused, or when external editor is active)
     $effect(() => {
-        if (bookmarkStore.text !== textValue) {
-            textValue = bookmarkStore.text;
+        if (!isFocused || isExternalEditing) { // Only update if not focused or external editing is happening
+            if (bookmarkStore.text !== textValue) {
+                textValue = bookmarkStore.text;
+            }
         }
     });
 
+    function handleFocus() {
+        isFocused = true;
+    }
 
-    function handleInput(e: Event) {
-        const target = e.target as HTMLTextAreaElement;
-        const newText = target.value;
-        
+    function handleBlur() {
+        isFocused = false;
+        // When blur, force sync in case there were updates while focused
+        if (bookmarkStore.text !== textValue) {
+            textValue = bookmarkStore.text;
+        }
+    }
+
+    function handleEditorChange(newText: string, changedLines: number[]) {
         textValue = newText; // Update local state immediately for UI feedback
         bookmarkStore.setText(newText); // Update store immediately
 
@@ -201,16 +213,14 @@
             </div>
         {/if}
 
-        <textarea 
-            class="w-full h-full resize-none outline-none border-none rounded-none shadow-none
-                   font-mono text-sm leading-relaxed
-                   bg-white text-gray-800 p-4 disabled:text-gray-400"
-            placeholder="Enter bookmarks here..." 
-            value={textValue} 
-            oninput={handleInput}
-            spellcheck="false"
+        <BookmarkEditor 
+            bind:value={textValue} 
+            onchange={handleEditorChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder="Enter bookmarks here..."
             disabled={isExternalEditing}
-        ></textarea>
+        />
     </div>
 </div>
 <style>

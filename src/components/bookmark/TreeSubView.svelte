@@ -11,6 +11,7 @@
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
+    let isUpdatingFromStore = false; // Add flag to prevent circular updates
     
     // Preview State
     let hoveredPage = $state<{src: string, y: number, x: number} | null>(null);
@@ -87,6 +88,7 @@
         untrack(() => {
              // Check for deep equality to avoid unnecessary updates and re-renders if the tree is the same
              if (JSON.stringify(storeTree) !== JSON.stringify(bookmarks)) {
+                 isUpdatingFromStore = true; // Set flag
                  bookmarks = storeTree;
              }
         });
@@ -96,9 +98,15 @@
     $effect(() => {
         // Track local bookmarks changes (including deep changes due to JSON.stringify usage implicitly or just access)
         // Accessing bookmarks to pass it tracks it.
+        JSON.stringify(bookmarks); // Explicitly track deep changes
         const currentBookmarks = bookmarks;
         
         untrack(() => {
+            if (isUpdatingFromStore) { // If update came from store, don't echo back
+                isUpdatingFromStore = false; // Reset flag
+                return;
+            }
+
             debouncedSyncTreeWithBackend(currentBookmarks);
             if (JSON.stringify(bookmarkStore.tree) !== JSON.stringify(currentBookmarks)) {
                 bookmarkStore.setTree(currentBookmarks); // Keep the store's tree up-to-date with local mutations
