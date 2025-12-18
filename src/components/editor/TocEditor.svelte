@@ -5,7 +5,7 @@
     import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
     import { indentOnInput, indentUnit } from '@codemirror/language';
     import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
-    import { tocTheme, tocPlugin, pageValidationConfig, pageValidationExtension } from './tocPlugins';
+    import { tocTheme, tocPlugin, lineTheme, pageValidationConfig, pageValidationExtension } from './tocPlugins';
 
     // --- Props ---
     interface Props {
@@ -52,6 +52,7 @@
                 ]),
                 tocTheme,
                 tocPlugin,
+                lineTheme,
                 pageValidationExtension,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
