@@ -35,10 +35,10 @@
 </script>
 
 <!-- Container: Flex for border collapsing logic -->
-<div class="flex w-full {hasBorder ? 'isolate' : 'overflow-hidden rounded-md'}">
+<div class="flex {hasBorder ? 'isolate' : 'overflow-hidden rounded-md'}">
   {#each options as option (option.value)}
     <button
-      class="flex items-center justify-center flex-1 p-2 transition-colors focus:outline-none
+      class="flex items-center justify-center w-8 h-8 p-1 transition-colors focus:outline-none
              {hasBorder 
                 ? `-ml-[1px] first:ml-0 first:rounded-l-md last:rounded-r-md border
                    ${value === option.value 
@@ -52,9 +52,9 @@
       type="button"
     >
       {#if option.icon}
-        <img src={option.icon} alt={option.label} class="w-4 h-4" />
+        <img src={option.icon} alt={option.label} class="w-5 h-5" />
       {:else}
-        <span class="text-sm whitespace-nowrap">{option.label}</span>
+        <span class="text-sm whitespace-nowrap px-2">{option.label}</span>
       {/if}
     </button>
   {/each}
