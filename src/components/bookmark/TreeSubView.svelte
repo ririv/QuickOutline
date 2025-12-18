@@ -164,7 +164,7 @@
         </div>
     </div>
     <div class="tree-body">
-        {#each bookmarks as bookmark}
+        {#each bookmarks as bookmark (bookmark.id)}
             <BookmarkNode {bookmark} />
         {/each}
     </div>

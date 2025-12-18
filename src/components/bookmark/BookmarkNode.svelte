@@ -183,7 +183,7 @@
 
     {#if bookmark.expanded && bookmark.children.length > 0}
         <div>
-            {#each bookmark.children as child}
+            {#each bookmark.children as child (child.id)}
                 <BookmarkNode bookmark={child} />
             {/each}
         </div>
