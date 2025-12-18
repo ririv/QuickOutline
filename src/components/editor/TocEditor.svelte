@@ -5,7 +5,7 @@
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { indentOnInput, indentUnit } from '@codemirror/language';
   import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
-  import { generateDotLeaderData } from '@/lib/toc-gen/toc-generator';
+  import { generateDotLeaderData } from '@/lib/toc-gen/toc-generator.tsx';
 
   // --- Props ---
   interface Props {

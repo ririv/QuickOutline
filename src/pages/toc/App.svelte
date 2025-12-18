@@ -1,7 +1,7 @@
 <script lang="ts">
   import SplitPane from '../../components/SplitPane.svelte';
   import Preview from '../../components/Preview.svelte';
-  import TocEditor from '../../components/TocEditor.svelte';
+  import TocEditor from '../../components/editor/TocEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import '../../assets/global.css';
