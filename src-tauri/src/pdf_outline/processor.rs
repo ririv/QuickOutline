@@ -324,8 +324,8 @@ fn create_destination(doc: &Document, page_id: ObjectId, scale_type: ViewScaleTy
     
     // Simple helper to get top
     let page_obj = doc.get_object(page_id)?.as_dict()?;
-    let media_box = page_obj.get(b"MediaBox")
-        .or_else(|_| page_obj.get(b"CropBox")) // Fallback
+    let media_box = page_obj.get(b"CropBox")
+        .or_else(|_| page_obj.get(b"MediaBox")) // Fallback to MediaBox if CropBox is missing
         .and_then(|o| o.as_array())
         .map(|a| a.iter().map(|n| match n {
             Object::Integer(i) => *i as f64,
@@ -334,8 +334,12 @@ fn create_destination(doc: &Document, page_id: ObjectId, scale_type: ViewScaleTy
         }).collect::<Vec<f64>>())
         .unwrap_or(vec![0.0, 0.0, 595.0, 842.0]); // Default A4
 
+    // Typically MediaBox is [0, 0, width, height]
+    // left = box[0], top = box[3]
+    let left = if media_box.len() >= 1 { media_box[0] } else { 0.0 };
+    let bottom = if media_box.len() >= 2 { media_box[1] } else { 0.0 };
+    let right = if media_box.len() >= 3 { media_box[2] } else { 595.0 };
     let top = if media_box.len() >= 4 { media_box[3] } else { 842.0 };
-    let left = if media_box.len() >= 4 { media_box[0] } else { 0.0 };
 
     // [PageRef, /Name, args...]
     let mut dest = vec![Object::Reference(page_id)];
@@ -344,29 +348,33 @@ fn create_destination(doc: &Document, page_id: ObjectId, scale_type: ViewScaleTy
         ViewScaleType::FitToPage => {
             dest.push(Object::Name(b"Fit".to_vec()));
         },
-        ViewScaleType::ActualSize | ViewScaleType::None => {
-            // XYZ left top zoom
-            // Zoom = 1.0 for Actual, 0 or null for None? 
-            // Java: createXYZ(page, left, top, 0) for NONE.
+        ViewScaleType::ActualSize => {
+            // [page /XYZ left top 1.0]
             dest.push(Object::Name(b"XYZ".to_vec()));
+            dest.push(Object::Real(left as f32));
             dest.push(Object::Real(top as f32));
-            dest.push(Object::Real(0.0)); // Zoom 0 means "keep current"? Or 1.0? 
-            // iText 0 might mean "inherit". PDF spec says null is inherit.
-            // lopdf Null vs Integer(0).
-            // Let's use 0.0 as float.
+            dest.push(Object::Real(1.0)); 
         },
         ViewScaleType::FitToWidth => {
-            // FitH top
+            // [page /FitH top]
             dest.push(Object::Name(b"FitH".to_vec()));
             dest.push(Object::Real(top as f32));
         },
         ViewScaleType::FitToHeight => {
-            // FitV left
+            // [page /FitV left]
             dest.push(Object::Name(b"FitV".to_vec()));
             dest.push(Object::Real(left as f32));
         },
-        _ => {
-             // Fallback
+        ViewScaleType::FitToBox => {
+             // [page /FitR left bottom right top]
+             dest.push(Object::Name(b"FitR".to_vec()));
+             dest.push(Object::Real(left as f32));
+             dest.push(Object::Real(bottom as f32));
+             dest.push(Object::Real(right as f32));
+             dest.push(Object::Real(top as f32));
+        },
+        ViewScaleType::None => {
+             // [page /XYZ left top null] -> Keep current zoom
              dest.push(Object::Name(b"XYZ".to_vec()));
              dest.push(Object::Real(left as f32));
              dest.push(Object::Real(top as f32));

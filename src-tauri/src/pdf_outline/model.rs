@@ -11,20 +11,25 @@ pub struct Bookmark {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // Matches Java ViewScaleType enum constant names usually?
-// Java enum: FIT_TO_PAGE, ACTUAL_SIZE...
-// Let's check Java code provided earlier.
-// ViewScaleType.java was not provided, but ItextOutlineProcessor.java uses: ViewScaleType.FIT_TO_PAGE
-// So it expects SCREAMING_SNAKE_CASE in JSON if it's enum.
-// But frontend uses "NONE" string in rpc.ts.
-// "NONE", "FIT_TO_PAGE"...
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ViewScaleType {
+    /// `/Fit`: 缩放页面以适应整个窗口。
+    /// 对应 Adobe: "适合页面" (Fit Page)
     FitToPage,
+    /// `/XYZ ... 1.0`: 以 100% 实际大小显示页面。
+    /// 对应 Adobe: "实际大小" (Actual Size)
     ActualSize,
+    /// `/FitH`: 缩放页面以适应窗口宽度。
+    /// 对应 Adobe: "适合宽度" (Fit Width)
     FitToWidth,
+    /// `/FitV`: 缩放页面以适应窗口高度。
+    /// 对应 Adobe: "适合高度" (Fit Height)
     FitToHeight,
+    /// `/FitR`: 缩放页面以适应指定的矩形框（默认整页）。
+    /// 对应 Adobe: "适合可见" (Fit Visible)
     FitToBox,
-    CustomScale,
+    /// `/XYZ ... null`: 继承阅读器当前的缩放级别（保持不变）。
+    /// 对应 Adobe: "继承缩放" (Inherit Zoom)
     None,
 }
 
