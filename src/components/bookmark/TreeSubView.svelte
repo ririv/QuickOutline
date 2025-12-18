@@ -7,7 +7,7 @@
     import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore';
     import { appStore } from '@/stores/appStore';
-    import PreviewTooltip from '../PreviewTooltip.svelte';
+    import PreviewPopup from '../PreviewPopup.svelte';
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
@@ -162,7 +162,7 @@
     </div>
     
     {#if hoveredPage}
-        <PreviewTooltip 
+        <PreviewPopup
             src={hoveredPage.src} 
             y={hoveredPage.y} 
             anchorX={hoveredPage.x} 

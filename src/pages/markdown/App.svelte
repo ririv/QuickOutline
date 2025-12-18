@@ -3,7 +3,7 @@
   import MdEditor from '../../components/MdEditor.svelte';
   import Preview from '../../components/Preview.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
-  import SectionEditor from '../../components/SectionEditor.svelte';
+  import HeaderFooterEditor from '../../components/HeaderFooterEditor.svelte';
   import CollapseTrigger from '../../components/CollapseTrigger.svelte';
   import ConfirmDialog from '../../components/ConfirmDialog.svelte'; // Import ConfirmDialog
   import { confirm } from '@/stores/confirm.svelte'; // Import confirm helper
@@ -176,7 +176,7 @@
           />
           {#if markdownStore.showHeader}
             <div transition:slide={{ duration: 200 }}>
-              <SectionEditor 
+              <HeaderFooterEditor
                 type="header"
                 bind:config={markdownStore.headerConfig} 
                 onchange={triggerPreview}
@@ -191,7 +191,7 @@
           <!-- Footer Trigger & Editor -->
           {#if markdownStore.showFooter}
             <div transition:slide={{ duration: 200 }}>
-              <SectionEditor 
+              <HeaderFooterEditor
                 type="footer"
                 bind:config={markdownStore.footerConfig} 
                 onchange={triggerPreview}

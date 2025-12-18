@@ -3,7 +3,7 @@
     import StyledSlider from './controls/StyledSlider.svelte';
     import { appStore } from '@/stores/appStore';
     import { docStore } from '@/stores/docStore';
-    import PreviewTooltip from './PreviewTooltip.svelte';
+    import PreviewPopup from './PreviewPopup.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore';
     import Tooltip from './Tooltip.svelte';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
@@ -199,7 +199,7 @@
     </div>
     
     {#if hoveredImage}
-        <PreviewTooltip 
+        <PreviewPopup
             src={hoveredImage.src} 
             y={hoveredImage.y} 
             anchorX={hoveredImage.x} 

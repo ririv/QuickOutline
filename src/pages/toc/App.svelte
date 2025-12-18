@@ -3,7 +3,7 @@
   import Preview from '../../components/Preview.svelte';
   import TocEditor from '../../components/TocEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
-  import SectionEditor from '../../components/SectionEditor.svelte';
+  import HeaderFooterEditor from '../../components/HeaderFooterEditor.svelte';
   import CollapseTrigger from '../../components/CollapseTrigger.svelte';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
@@ -247,7 +247,7 @@
           />
           {#if showHeader}
             <div transition:slide={{ duration: 200 }}>
-              <SectionEditor 
+              <HeaderFooterEditor
                 type="header"
                 bind:config={tocStore.headerConfig} 
               />
@@ -271,7 +271,7 @@
           <!-- Footer Trigger & Editor -->
           {#if showFooter}
             <div transition:slide={{ duration: 200 }}>
-              <SectionEditor 
+              <HeaderFooterEditor
                 type="footer"
                 bind:config={tocStore.footerConfig} 
               />
