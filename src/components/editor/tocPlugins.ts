@@ -102,7 +102,7 @@ class LeaderWidget extends WidgetType {
 // Aggressive: Any whitespace before trailing digits triggers formatting
 const tocLineRegex = /^(.*?)(\s+)(\d+)$/;
 
-export const lineTheme = EditorView.baseTheme({
+export const lineTheme = EditorView.theme({
     ".cm-line": {
         borderRadius: "4px",
         transition: "background-color 0.1s ease"
@@ -113,7 +113,7 @@ export const lineTheme = EditorView.baseTheme({
     }
 })
 
-export const tocTheme = EditorView.baseTheme({
+export const tocTheme = EditorView.theme({
     ".cm-content": {
         fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
         fontSize: "14px",
