@@ -1,6 +1,70 @@
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, ViewPlugin, Decoration, type ViewUpdate, WidgetType } from '@codemirror/view';
 import { generateDotLeaderData } from '@/lib/toc-gen/toc-generator.tsx';
-import { EditorState, RangeSetBuilder } from '@codemirror/state';
+import { EditorState, RangeSetBuilder, Facet } from '@codemirror/state';
+
+// --- Page Validation Plugin ---
+
+export const pageValidationConfig = Facet.define<{offset: number, totalPage: number}, {offset: number, totalPage: number}>({
+    combine: values => values[0] || { offset: 0, totalPage: 0 }
+});
+
+const invalidPageDecoration = Decoration.line({ class: "cm-invalid-page-line" });
+
+const pageValidationTheme = EditorView.baseTheme({
+    ".cm-invalid-page-line": {
+        backgroundColor: "rgba(255, 0, 0, 0.15)"
+    }
+});
+
+const pageValidationPlugin = ViewPlugin.fromClass(class {
+    decorations: any;
+
+    constructor(view: EditorView) {
+        this.decorations = this.compute(view);
+    }
+
+    update(update: ViewUpdate) {
+        if (update.docChanged || update.viewportChanged || update.state.facet(pageValidationConfig) !== update.startState.facet(pageValidationConfig)) {
+            this.decorations = this.compute(update.view);
+        }
+    }
+
+    compute(view: EditorView) {
+        const { offset, totalPage } = view.state.facet(pageValidationConfig);
+        if (totalPage <= 0) return Decoration.none;
+
+        const builder = new RangeSetBuilder<Decoration>();
+
+        for (const { from, to } of view.visibleRanges) {
+            for (let pos = from; pos <= to;) {
+                const line = view.state.doc.lineAt(pos);
+                const text = line.text;
+                const match = text.match(tocLineRegex);
+
+                if (match) {
+                    // match[3] is the page number string
+                    const pageNum = parseInt(match[3], 10);
+                    if (!isNaN(pageNum)) {
+                        // Check if page + offset exceeds total pages
+                        // Note: offset is usually added to the logical page number to get physical page number
+                        if (pageNum + offset > totalPage || pageNum + offset < 1) {
+                             builder.add(line.from, line.from, invalidPageDecoration);
+                        }
+                    }
+                }
+                pos = line.to + 1;
+            }
+        }
+        return builder.finish();
+    }
+}, {
+    decorations: v => v.decorations
+});
+
+export const pageValidationExtension = [
+    pageValidationTheme,
+    pageValidationPlugin
+];
 
 // --- TOC Decoration Plugin ---
 

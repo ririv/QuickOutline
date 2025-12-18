@@ -252,6 +252,8 @@
                   bind:value={tocStore.content} 
                   onchange={handleContentChange} 
                   placeholder="Enter TOC here..."
+                  offset={tocStore.offset}
+                  totalPage={$docStore.pageCount}
               />
             </div>
           </PageFrame>

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
+    import { docStore } from '@/stores/docStore';
     import { rpc } from '@/lib/api/rpc';
     import { processText, autoFormat } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore';
@@ -220,6 +221,8 @@
             onBlur={handleBlur}
             placeholder="Enter bookmarks here..."
             disabled={isExternalEditing}
+            offset={bookmarkStore.offset}
+            totalPage={$docStore.pageCount}
         />
     </div>
 </div>

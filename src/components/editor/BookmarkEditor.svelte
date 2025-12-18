@@ -5,13 +5,15 @@
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { indentOnInput, indentUnit } from '@codemirror/language';
   import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
-  import { tocTheme, tocPlugin } from './tocPlugins';
+  import { tocTheme, tocPlugin, pageValidationConfig, pageValidationExtension } from './tocPlugins';
 
   // --- Props ---
   interface Props {
     value?: string;
     placeholder?: string;
     disabled?: boolean;
+    offset?: number;
+    totalPage?: number;
     onchange?: (val: string, changedLines: number[]) => void;
     onFocus?: () => void;
     onBlur?: () => void;
@@ -21,6 +23,8 @@
     value = $bindable(''), 
     placeholder = '', 
     disabled = false,
+    offset = 0,
+    totalPage = 0,
     onchange,
     onFocus,
     onBlur
@@ -29,6 +33,7 @@
   let editorContainer: HTMLDivElement;
   let view: EditorView;
   let readOnlyCompartment = new Compartment();
+  let validationConf = new Compartment();
 
   // --- Lifecycle ---
   
@@ -39,6 +44,10 @@
         doc: value,
         extensions: [
           readOnlyCompartment.of(EditorState.readOnly.of(disabled)),
+          validationConf.of(pageValidationConfig.of({ offset, totalPage })),
+          tocTheme,
+          tocPlugin,
+          pageValidationExtension,
           history(),
           highlightActiveLine(),
           indentOnInput(),
@@ -49,8 +58,6 @@
               ...historyKeymap, 
               ...searchKeymap
           ]),
-          tocTheme,
-          tocPlugin,
           EditorView.updateListener.of((update) => {
               if (update.docChanged) {
                   const newVal = update.state.doc.toString();
@@ -93,6 +100,14 @@
       if (view) {
           view.dispatch({
               effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(disabled))
+          });
+      }
+  });
+
+  $effect(() => {
+      if (view) {
+          view.dispatch({
+              effects: validationConf.reconfigure(pageValidationConfig.of({ offset, totalPage }))
           });
       }
   });
