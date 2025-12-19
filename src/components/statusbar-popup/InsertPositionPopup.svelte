@@ -1,15 +1,22 @@
 <script lang="ts">
   import ArrowPopup from '../controls/ArrowPopup.svelte';
   import StyledInput from '../controls/StyledInput.svelte';
+  import StyledSwitch from '../controls/StyledSwitch.svelte';
 
   interface Props {
     insertPos?: number;
+    autoCorrect?: boolean;
+    showAutoCorrect?: boolean; // Keep this toggle
     triggerEl: HTMLElement | undefined;
+    onchange?: () => void;
   }
 
   let { 
     insertPos = $bindable(1),
-    triggerEl
+    autoCorrect = $bindable(true),
+    showAutoCorrect = false,
+    triggerEl,
+    onchange
   }: Props = $props();
 </script>
 
@@ -21,8 +28,18 @@
 >
   <!-- svelte-ignore a11y_label_has_associated_control -->
   <label>Insert Position</label>
-  <StyledInput type="number" bind:value={insertPos} numericType="unsigned-integer" />
-  <div class="hint">Page number to insert TOC at.</div>
+  <StyledInput type="number" bind:value={insertPos} numericType="unsigned-integer" {onchange} />
+  <div class="hint">Page number to insert at.</div>
+  
+  {#if showAutoCorrect}
+    <div class="divider"></div>
+    
+    <div class="switch-row">
+        <span>Auto-correct Page Numbers</span>
+        <StyledSwitch bind:checked={autoCorrect} {onchange} size="small" />
+    </div>
+    <div class="hint">Automatically adjust page numbers based on TOC length.</div>
+  {/if}
 </ArrowPopup>
 
 <style>
@@ -39,5 +56,20 @@
       font-size: 11px;
       color: #888;
       line-height: 1.4;
+  }
+  
+  .divider {
+      height: 1px;
+      background-color: #eee;
+      margin: 12px 0;
+  }
+  
+  .switch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
   }
 </style>

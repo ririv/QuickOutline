@@ -8,10 +8,16 @@
   import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/styleMaps";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
 
+  export interface InsertionSettings {
+    pos: number;
+    autoCorrect: boolean;
+    showAutoCorrect: boolean;
+  }
+
   interface Props {
     offset?: number;
-    insertPos?: number;
-    numberingStyle?: PageLabelNumberingStyle; // 改为枚举名
+    insertion?: InsertionSettings; // New aggregated prop
+    numberingStyle?: PageLabelNumberingStyle; 
     pageLayout?: PageLayout;
     hfLayout?: HeaderFooterLayout;
     showOffset?: boolean;
@@ -21,7 +27,7 @@
 
   let { 
     offset = $bindable(0),
-    insertPos = $bindable(1),
+    insertion = $bindable({ pos: 1, autoCorrect: true, showAutoCorrect: false }),
     numberingStyle = $bindable(PageLabelNumberingStyle.NONE),
     pageLayout = $bindable(defaultPageLayout),
     hfLayout = $bindable(defaultHeaderFooterLayout),
@@ -134,10 +140,16 @@
       >
           <span class="icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-          </span> Pos: {insertPos}
+          </span> Pos: {insertion.pos}
       </div>
       {#if activePopup === 'insert-pos'}
-          <InsertPositionPopup bind:insertPos triggerEl={posBtnEl} />
+          <InsertPositionPopup 
+            bind:insertPos={insertion.pos} 
+            bind:autoCorrect={insertion.autoCorrect} 
+            showAutoCorrect={insertion.showAutoCorrect} 
+            triggerEl={posBtnEl} 
+            onchange={onParamChange} 
+          />
       {/if}
   </div>
 

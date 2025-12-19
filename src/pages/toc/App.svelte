@@ -19,7 +19,7 @@
   import { generateSectionHtml } from '@/lib/utils/html-generator';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
   import { TocPrintTemplate } from '@/lib/templates/TocPrintTemplate.tsx';
-  import { getTocLinkData } from '@/lib/preview-engine/paged-engine';
+  import { getTocLinkData, getPageCount } from '@/lib/preview-engine/paged-engine'; // Import getPageCount
   import { invoke } from '@tauri-apps/api/core';
 
   let previewComponent: Preview;
@@ -87,7 +87,7 @@
         hfl: JSON.stringify(tocStore.hfLayout),
         t: tocStore.title,
         o: tocStore.offset,
-        i: tocStore.insertPos,
+        i: JSON.stringify(tocStore.insertionConfig), // Watch insertion object
         s: tocStore.numberingStyle
     };
 
@@ -127,6 +127,17 @@
       }
       
       try {
+        let pageOffset = 0;
+        let threshold = 1;
+
+        if (tocStore.insertionConfig.autoCorrect) {
+            const tocPageCount = getPageCount();
+            if (tocPageCount > 0) {
+                pageOffset = tocPageCount;
+                threshold = Math.max(1, (parseInt(String(tocStore.insertionConfig.pos), 10) || 0) + 1);
+            }
+        }
+
         // Generate HTML locally instead of calling RPC
         const { html, styles } = generateTocHtml(
             tocStore.content, 
@@ -134,7 +145,9 @@
             tocStore.offset, 
             tocStore.numberingStyle,
             undefined, // Use default indentStep
-            tocStore.pageLayout
+            tocStore.pageLayout,
+            pageOffset,
+            threshold
         );
         
         // Update payload in store, which is passed to Preview component
@@ -163,14 +176,27 @@
           // 1. Calculate Links
           const links = getTocLinkData() as TocLinkDto[];
 
-          // 2. Generate HTML
+          // Prepare offset logic
+          let pageOffset = 0;
+          let threshold = 1;
+          if (tocStore.insertionConfig.autoCorrect) {
+              const tocPageCount = getPageCount();
+              if (tocPageCount > 0) {
+                  pageOffset = tocPageCount;
+                  threshold = Math.max(1, (parseInt(String(tocStore.insertionConfig.pos), 10) || 0) + 1);
+              }
+          }
+
+          // 2. Generate HTML with correction
           const { html, styles } = generateTocHtml(
             tocStore.content,
             tocStore.title,
             tocStore.offset,
             tocStore.numberingStyle,
             undefined, // Use default indentStep
-            tocStore.pageLayout
+            tocStore.pageLayout,
+            pageOffset,
+            threshold
           );
           
           const headerHtml = generateSectionHtml(tocStore.headerConfig);
@@ -210,7 +236,7 @@
             tocContent: tocStore.content,
             tocPdfPath: pdfPath as string, // Path to the generated PDF
             title: tocStore.title,
-            insertPos: parseInt(String(tocStore.insertPos), 10),
+            insertPos: parseInt(String(tocStore.insertionConfig.pos), 10),
             numberingStyle: tocStore.numberingStyle,
             header: tocStore.headerConfig,
             footer: tocStore.footerConfig,
@@ -278,7 +304,7 @@
 
   <StatusBar 
       bind:offset={tocStore.offset} 
-      bind:insertPos={tocStore.insertPos} 
+      bind:insertion={tocStore.insertionConfig}
       bind:numberingStyle={tocStore.numberingStyle}
       bind:pageLayout={tocStore.pageLayout}
       bind:hfLayout={tocStore.hfLayout}

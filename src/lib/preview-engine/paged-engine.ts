@@ -268,6 +268,12 @@ export class PagedEngine {
 
         return links;
     }
+
+    public getPageCount(): number {
+        const targetEl = this.activeBuffer === 'A' ? this.bufferA : this.bufferB;
+        if (!targetEl) return 0;
+        return targetEl.querySelectorAll('.pagedjs_page').length;
+    }
 }
 
 
@@ -277,4 +283,8 @@ export function getRenderedTocData() {
 
 export function getTocLinkData() {
     return activeEngineInstance?.getTocLinkData() || [];
+}
+
+export function getPageCount() {
+    return activeEngineInstance?.getPageCount() || 0;
 }

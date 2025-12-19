@@ -195,7 +195,7 @@
   </div>
   
   <StatusBar 
-      bind:insertPos={markdownStore.insertPos} 
+      bind:insertion={markdownStore.insertionConfig}
       bind:numberingStyle={markdownStore.numberingStyle}
       bind:pageLayout={markdownStore.pageLayout}
       bind:hfLayout={markdownStore.hfLayout}

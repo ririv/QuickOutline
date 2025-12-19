@@ -20,7 +20,13 @@ export class TocState {
     // Configuration
     title = $state('Table of Contents');
     offset = $state(0);
-    insertPos = $state(1);
+    
+    insertionConfig = $state({
+        pos: 1,
+        autoCorrect: true,
+        showAutoCorrect: true
+    });
+    
     numberingStyle = $state(PageLabelNumberingStyle.NONE);
     pageLayout = $state<PageLayout>({ ...defaultPageLayout });
     hfLayout = $state<HeaderFooterLayout>({ ...defaultHeaderFooterLayout });
@@ -52,7 +58,11 @@ export class TocState {
     resetConfig() {
         this.title = 'Table of Contents';
         this.offset = 0;
-        this.insertPos = 1;
+        this.insertionConfig = {
+            pos: 1,
+            autoCorrect: true,
+            showAutoCorrect: true
+        };
         this.numberingStyle = PageLabelNumberingStyle.NONE;
         this.pageLayout = { ...defaultPageLayout };
         this.hfLayout = { ...defaultHeaderFooterLayout };

@@ -46,7 +46,9 @@ export function generateTocHtml(
     offset: number, 
     numberingStyle: any,
     indentStep: number = 20,
-    pageLayout?: PageLayout
+    pageLayout?: PageLayout,
+    pageNumberOffset: number = 0, // New param: amount to add to page numbers
+    autoCorrectThreshold: number = 1 // New param: only correct pages >= this value
 ): { html: string, styles: string } {
     
     const lines = content.split('\n');
@@ -84,10 +86,25 @@ export function generateTocHtml(
                     
                     let label = trimmed;
                     let page = '';
+                    let displayPage = ''; // Page number to show in UI
 
                     if (pageMatch) {
                         label = pageMatch[1];
                         page = pageMatch[2];
+                        displayPage = page;
+
+                        // Auto-correct logic: if it's a number and meets threshold
+                        if (pageNumberOffset !== 0 && /^\d+$/.test(page)) {
+                            const pageNum = parseInt(page, 10);
+                            // If insertPos=1 (after page 1), we shouldn't shift page 1.
+                            // So we only shift if pageNum >= autoCorrectThreshold
+                            // Usually autoCorrectThreshold = insertPos + 1 (converted to 1-based logic)
+                            // But insertPos is 1-based in UI?
+                            // Let's assume threshold is passed correctly by caller.
+                            if (pageNum >= autoCorrectThreshold) {
+                                displayPage = (pageNum + pageNumberOffset).toString();
+                            }
+                        }
                     }
                     
                     label = label.replace(/[.\s]+$/, '');
@@ -101,7 +118,7 @@ export function generateTocHtml(
                         <li class="toc-item" style={{ '--toc-level': level }} data-target-page={escapeHtml(page)}>
                             <span class="toc-label">{escapeHtml(label)}</span>
                             <span class="toc-leader">{itemLeaderSvg}</span>
-                            <span class="toc-page">{escapeHtml(page)}</span>
+                            <span class="toc-page">{escapeHtml(displayPage)}</span>
                         </li>
                     );
                 })}
