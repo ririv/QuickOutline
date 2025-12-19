@@ -76,8 +76,8 @@ fn parse_outline_chain(
             page_num = resolve_dest_page(doc, dest, page_map);
         } else if let Ok(action) = dict.get(b"A") {
             if let Ok(action_dict) = action.as_dict() {
-                if let Ok(s) = action_dict.get(b"S").and_then(|o| o.as_name_str()) {
-                    if s == "GoTo" {
+                if let Ok(s) = action_dict.get(b"S").and_then(|o| o.as_name()) {
+                    if s == b"GoTo" {
                         if let Ok(d) = action_dict.get(b"D") {
                             page_num = resolve_dest_page(doc, d, page_map);
                         }

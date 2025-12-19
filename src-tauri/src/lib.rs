@@ -247,7 +247,8 @@ pub fn run() {
             get_outline_as_bookmark,
             save_outline,
             set_current_pdf,
-            get_static_server_port
+            get_static_server_port,
+            pdf::toc::generate_toc_page
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -5,6 +5,8 @@ use std::thread;
 use image::ImageFormat;
 use std::io::Cursor;
 
+use crate::pdf::toc::{TocConfig, process_toc_generation};
+
 // Request types for the PDF Worker
 pub enum PdfRequest {
     RenderPage {
@@ -16,6 +18,12 @@ pub enum PdfRequest {
     GetPageCount {
         path: String,
         response_tx: oneshot::Sender<Result<u16>>,
+    },
+    GenerateToc {
+        src_path: String,
+        config: TocConfig,
+        dest_path: Option<String>,
+        response_tx: oneshot::Sender<Result<String, String>>,
     },
 }
 
@@ -119,6 +127,10 @@ pub fn init_pdf_worker() -> PdfWorker {
                 },
                 PdfRequest::GetPageCount { path, response_tx } => {
                     let result = worker_state.process_get_page_count(path);
+                    let _ = response_tx.send(result);
+                },
+                PdfRequest::GenerateToc { src_path, config, dest_path, response_tx } => {
+                    let result = process_toc_generation(&worker_state.pdfium, src_path, config, dest_path);
                     let _ = response_tx.send(result);
                 }
             }
