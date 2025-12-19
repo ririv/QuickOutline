@@ -19,8 +19,10 @@
   import { generateSectionHtml } from '@/lib/utils/html-generator';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
   import { TocPrintTemplate } from '@/lib/templates/TocPrintTemplate.tsx';
-  import { getTocLinkData, getPageCount } from '@/lib/preview-engine/paged-engine'; // Import getPageCount
+  import { getTocLinkData, getPageCount } from '@/lib/preview-engine/paged-engine';
+  import { resolveLinkTarget } from '@/lib/services/PageLinkResolver';
   import { invoke } from '@tauri-apps/api/core';
+  import { get } from 'svelte/store';
 
   let previewComponent: Preview;
   
@@ -173,17 +175,44 @@
       }
 
       try {
-          // 1. Calculate Links
-          const links = getTocLinkData() as TocLinkDto[];
+          // 1. Calculate Links and Resolve Targets
+          const rawLinks = getTocLinkData();
+          const links: TocLinkDto[] = [];
+          
+          // Get current labels from docStore
+          const labels = $docStore.originalPageLabels;
 
-          // Prepare offset logic
+          const insertPosVal = parseInt(String(tocStore.insertionConfig.pos), 10) || 0;
+
+          const resolverConfig = {
+              labels: labels && labels.length > 0 ? labels : null,
+              offset: tocStore.offset,
+              insertPos: insertPosVal
+          };
+
+          for (const raw of rawLinks) {
+              const target = resolveLinkTarget(raw.targetPageLabel, resolverConfig);
+              if (target !== null) {
+                  links.push({
+                      tocPageIndex: raw.tocPageIndex,
+                      x: raw.x,
+                      y: raw.y,
+                      width: raw.width,
+                      height: raw.height,
+                      targetPageIndex: target.index,
+                      targetIsOriginal: target.isOriginal
+                  });
+              }
+          }
+
+          // Prepare offset logic for visual page numbers (if auto-correct enabled)
           let pageOffset = 0;
           let threshold = 1;
           if (tocStore.insertionConfig.autoCorrect) {
               const tocPageCount = getPageCount();
               if (tocPageCount > 0) {
                   pageOffset = tocPageCount;
-                  threshold = Math.max(1, (parseInt(String(tocStore.insertionConfig.pos), 10) || 0) + 1);
+                  threshold = Math.max(1, insertPosVal + 1);
               }
           }
 

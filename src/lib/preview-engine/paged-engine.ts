@@ -237,7 +237,7 @@ export class PagedEngine {
         const targetEl = this.activeBuffer === 'A' ? this.bufferA : this.bufferB;
         if (!targetEl) return [];
 
-        const links: Array<{ tocPageIndex: number, x: number, y: number, width: number, height: number, targetPageIndex: number }> = [];
+        const links: Array<{ tocPageIndex: number, x: number, y: number, width: number, height: number, targetPageLabel: string }> = [];
         const pages = targetEl.querySelectorAll('.pagedjs_page');
 
         pages.forEach((pageEl, pageIndex) => {
@@ -251,17 +251,14 @@ export class PagedEngine {
                 const targetPageStr = item.getAttribute('data-target-page');
 
                 if (targetPageStr) {
-                    const targetPageIndex = parseInt(targetPageStr, 10);
-                    if (!isNaN(targetPageIndex)) {
-                        links.push({
-                            tocPageIndex: pageIndex,
-                            x,
-                            y,
-                            width: itemRect.width,
-                            height: itemRect.height,
-                            targetPageIndex
-                        });
-                    }
+                    links.push({
+                        tocPageIndex: pageIndex,
+                        x,
+                        y,
+                        width: itemRect.width,
+                        height: itemRect.height,
+                        targetPageLabel: targetPageStr
+                    });
                 }
             });
         });

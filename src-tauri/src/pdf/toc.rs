@@ -17,6 +17,7 @@ pub struct TocLinkDto {
     pub width: f64,
     pub height: f64,
     pub target_page_index: i32,
+    pub target_is_original: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -141,14 +142,20 @@ fn add_links_to_lopdf_doc(
         let source_page_id = merged_pages_list[toc_page_idx_in_merged];
         
         // Convert 1-based page index to 0-based index
-        let target_idx = if link.target_page_index > 0 {
-            (link.target_page_index - 1) as usize
+        // Note: The frontend is now expected to handle the 0-based/1-based logic and pass a clean 0-based index in `target_page_index`.
+        // However, if we want to be safe or if the frontend logic varies, we should clarify.
+        // Assuming frontend sends 0-based index now as per our discussion.
+        let target_idx = link.target_page_index as usize;
+
+        let target_page_id = if link.target_is_original {
+            // Mapping Strategy: Use original ID to find the page, regardless of where it moved
+            if target_idx >= original_page_ids.len() { continue; }
+            original_page_ids[target_idx]
         } else {
-            continue; 
+            // Absolute Index Strategy: Use the index directly on the merged document
+            if target_idx >= merged_pages_list.len() { continue; }
+            merged_pages_list[target_idx]
         };
-        
-        if target_idx >= original_page_ids.len() { continue; }
-        let target_page_id = original_page_ids[target_idx];
         
         let page_height = {
             let page_dict = doc.get_object(source_page_id).map_err(|e| e.to_string())?.as_dict().map_err(|e| e.to_string())?;

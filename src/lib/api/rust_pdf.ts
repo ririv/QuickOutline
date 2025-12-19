@@ -9,6 +9,7 @@ export interface TocLinkDto {
     width: number;
     height: number;
     targetPageIndex: number;
+    targetIsOriginal: boolean;
 }
 
 export interface TocConfig {

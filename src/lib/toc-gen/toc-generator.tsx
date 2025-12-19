@@ -82,27 +82,40 @@ export function generateTocHtml(
                     const level = tabCount + Math.floor(spaceCount / 2);
 
                     const trimmed = line.trim();
-                    const pageMatch = trimmed.match(/^(.*?)\s+(\d+|[ivxIVX]+)$/);
+                    
+                    // New Parsing Logic: Look for the LAST "..." as the boundary
+                    const lastDotIdx = trimmed.lastIndexOf("...");
                     
                     let label = trimmed;
-                    let page = '';
-                    let displayPage = ''; // Page number to show in UI
+                    let displayPage = '';
+                    let targetLink = '';
 
-                    if (pageMatch) {
-                        label = pageMatch[1];
-                        page = pageMatch[2];
-                        displayPage = page;
+                    if (lastDotIdx !== -1) {
+                        label = trimmed.substring(0, lastDotIdx).trim();
+                        const pageInfo = trimmed.substring(lastDotIdx + 3).trim();
+                        
+                        // Parse pageInfo: "DisplayPage [<LinkTarget>]"
+                        // Match display part and optional bracketed target
+                        const infoMatch = pageInfo.match(/^([^\s<]+)(?:\s*<([^>]+)>)?/);
+                        if (infoMatch) {
+                            displayPage = infoMatch[1];
+                            targetLink = infoMatch[2] ? infoMatch[2].trim() : displayPage;
+                        } else if (pageInfo.startsWith("<") && pageInfo.endsWith(">")) {
+                            // Case where only <target> is provided, displayPage is empty
+                            targetLink = pageInfo.slice(1, -1).trim();
+                        } else {
+                            // Fallback: treat the whole right side as display page
+                            displayPage = pageInfo;
+                            targetLink = pageInfo;
+                        }
 
-                        // Auto-correct logic: if it's a number and meets threshold
-                        if (pageNumberOffset !== 0 && /^\d+$/.test(page)) {
-                            const pageNum = parseInt(page, 10);
-                            // If insertPos=1 (after page 1), we shouldn't shift page 1.
-                            // So we only shift if pageNum >= autoCorrectThreshold
-                            // Usually autoCorrectThreshold = insertPos + 1 (converted to 1-based logic)
-                            // But insertPos is 1-based in UI?
-                            // Let's assume threshold is passed correctly by caller.
+                        // Auto-correct logic: same threshold rules
+                        if (pageNumberOffset !== 0 && /^\d+$/.test(displayPage) && !pageInfo.includes("<")) {
+                            const pageNum = parseInt(displayPage, 10);
                             if (pageNum >= autoCorrectThreshold) {
-                                displayPage = (pageNum + pageNumberOffset).toString();
+                                const corrected = (pageNum + pageNumberOffset).toString();
+                                displayPage = corrected;
+                                targetLink = corrected;
                             }
                         }
                     }
@@ -115,7 +128,7 @@ export function generateTocHtml(
                     );
 
                     return (
-                        <li class="toc-item" style={{ '--toc-level': level }} data-target-page={escapeHtml(page)}>
+                        <li class="toc-item" style={{ '--toc-level': level }} data-target-page={escapeHtml(targetLink)}>
                             <span class="toc-label">{escapeHtml(label)}</span>
                             <span class="toc-leader">{itemLeaderSvg}</span>
                             <span class="toc-page">{escapeHtml(displayPage)}</span>
