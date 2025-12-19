@@ -86,12 +86,9 @@ export interface QuickOutlineApi {
     generateTocPreview(config: any): Promise<string>; // Returns JSON of ImagePageUpdate[]
 
     // Page Labels
-    getPageLabels(srcFilePath: string | null): Promise<string[]>;
     setPageLabels(rules: PageLabelRuleDto[], destFilePath: string | null): Promise<string>;
     simulatePageLabels(rules: PageLabelRuleDto[]): Promise<string[]>;
 
-    // Image Service (Async)
-    getPageCount(): Promise<number>;
 
     // Sync Utils
     updateOffset(offset: number): Promise<void>;
@@ -276,9 +273,6 @@ class RpcClient implements QuickOutlineApi {
         return this.send("generateTocPreview", [config]);
     }
 
-    public getPageLabels(srcFilePath: string | null): Promise<string[]> {
-        return this.send("getPageLabels", [srcFilePath]);
-    }
 
     public setPageLabels(rules: PageLabelRuleDto[], destFilePath: string | null): Promise<string> {
         return this.send("setPageLabels", [rules, destFilePath]);
@@ -288,9 +282,6 @@ class RpcClient implements QuickOutlineApi {
         return this.send("simulatePageLabels", [rules]);
     }
 
-    public getPageCount(): Promise<number> {
-        return this.send("getPageCount", []);
-    }
 
     public updateOffset(offset: number): Promise<void> {
         return this.send("updateOffset", [offset]);

@@ -3,6 +3,7 @@ import { rpc } from '@/lib/api/rpc';
 import { getPageCount } from '@/lib/api/pdf-render';
 import { bookmarkStore } from './bookmarkStore.svelte';
 import { pageLabelStore } from './pageLabelStore';
+import { pdfRenderService } from '@/lib/services/PdfRenderService'
 
 interface DocState {
     currentFilePath: string | null;
@@ -37,12 +38,11 @@ function createDocStore() {
                 console.log("File opened in backend.");
 
                 // 2. 获取文档信息
-                const count = await getPageCount(path); // 获取页数
-                const labels = await rpc.getPageLabels(null);
-                
-                // 3. 获取大纲树
-                const outlineRoot = await rpc.getOutlineAsBookmark(path, 0);
-                
+                const count = await pdfRenderService.getPageCount(path); // 获取页数
+                const labels = await pdfRenderService.getPageLabels(path) || [];
+
+                // 3. 获取大纲树 TODO
+
                 const ver = Date.now(); // Generate a new version for cache busting
                 update(state => ({ ...state, currentFilePath: path, pageCount: count, originalPageLabels: labels, version: ver }));
             } catch (e) {

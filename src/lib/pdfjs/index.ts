@@ -1,13 +1,14 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { renderPageToUrl, renderPageToDataUrl } from './renderer';
 import { getBookmarks } from './outline';
+import { getPageLabels } from './labels';
 import { invoke } from '@tauri-apps/api/core';
 
 // Assuming we have copied the worker to public/libs
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/libs/pdf.worker.min.mjs';
 
 // Re-export core functions for external usage
-export { renderPageToUrl, renderPageToDataUrl, getBookmarks };
+export { renderPageToUrl, renderPageToDataUrl, getBookmarks, getPageLabels };
 
 // Main PDF document loading function
 // src can be URL string, ArrayBuffer, or PDFDataRangeTransport
