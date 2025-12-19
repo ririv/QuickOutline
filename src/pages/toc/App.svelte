@@ -210,7 +210,7 @@
             tocContent: tocStore.content,
             tocPdfPath: pdfPath as string, // Path to the generated PDF
             title: tocStore.title,
-            insertPos: tocStore.insertPos,
+            insertPos: parseInt(String(tocStore.insertPos), 10),
             numberingStyle: tocStore.numberingStyle,
             header: tocStore.headerConfig,
             footer: tocStore.footerConfig,
