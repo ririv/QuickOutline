@@ -23,8 +23,8 @@ export class TocState {
     
     insertionConfig = $state({
         pos: 1,
-        autoCorrect: true,
-        showAutoCorrect: true
+        autoCorrect: false,
+        showAutoCorrect: false
     });
     
     numberingStyle = $state(PageLabelNumberingStyle.NONE);
@@ -60,8 +60,8 @@ export class TocState {
         this.offset = 0;
         this.insertionConfig = {
             pos: 1,
-            autoCorrect: true,
-            showAutoCorrect: true
+            autoCorrect: false,
+            showAutoCorrect: false
         };
         this.numberingStyle = PageLabelNumberingStyle.NONE;
         this.pageLayout = { ...defaultPageLayout };
