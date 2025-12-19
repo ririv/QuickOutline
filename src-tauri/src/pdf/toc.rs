@@ -62,19 +62,14 @@ pub fn process_toc_generation(
     let final_dest = resolve_dest_path(&src_path, dest_path);
     let insert_pos = config.insert_pos as u16;
 
-    let main_doc = pdfium.load_pdf_from_file(&src_path, None).map_err(|e| e.to_string())?;
+    let mut main_doc = pdfium.load_pdf_from_file(&src_path, None).map_err(|e| e.to_string())?;
     let toc_doc = pdfium.load_pdf_from_file(&toc_pdf_path, None).map_err(|e| e.to_string())?;
 
     let toc_len = toc_doc.pages().len();
     if toc_len > 0 {
-        // UNSAFE: Directly bypass borrow checker to call mutable methods on PdfPages.
-        // main_doc.pages() returns &PdfPages. We cast this reference to a mutable pointer.
-        let pages = main_doc.pages();
-        unsafe {
-            let pages_ptr = pages as *const PdfPages as *mut PdfPages;
-            (*pages_ptr).copy_page_range_from_document(&toc_doc, 0..=(toc_len - 1), insert_pos)
-                .map_err(|e| format!("Pdfium Import Error: {}", e))?;
-        }
+        // Safe Rust: Use pages_mut() instead of unsafe pointer casting
+        main_doc.pages_mut().copy_page_range_from_document(&toc_doc, 0..=(toc_len - 1), insert_pos)
+            .map_err(|e| format!("Pdfium Import Error: {}", e))?;
     }
     
     // Save to memory buffer to avoid multiple disk IOs
