@@ -61,14 +61,7 @@ export interface HeaderFooterConfig {
     drawLine: boolean;
 }
 
-export interface TocConfig {
-    tocContent: string;
-    title: string;
-    insertPos: number;
-    numberingStyle: PageLabelNumberingStyle;
-    header: HeaderFooterConfig | null;
-    footer: HeaderFooterConfig | null;
-}
+// TocConfig removed. Use src/lib/api/rust_pdf.ts
 
 export interface PageLabelRuleDto {
     fromPage: number;
@@ -89,8 +82,8 @@ export interface QuickOutlineApi {
     saveOutline(srcFilePath: string, bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // Corrected signature
 
     // TOC
-    generateTocPage(config: TocConfig, destFilePath: string | null): Promise<string>;
-    generateTocPreview(config: TocConfig): Promise<string>; // Returns JSON of ImagePageUpdate[]
+    // generateTocPage moved to rust_pdf.ts
+    generateTocPreview(config: any): Promise<string>; // Returns JSON of ImagePageUpdate[]
 
     // Page Labels
     getPageLabels(srcFilePath: string | null): Promise<string[]>;
@@ -279,11 +272,7 @@ class RpcClient implements QuickOutlineApi {
         ).then(() => "Success");
     }
 
-    public generateTocPage(config: TocConfig, destFilePath: string | null): Promise<string> {
-        return this.send("generateTocPage", [config, destFilePath]);
-    }
-
-    public generateTocPreview(config: TocConfig): Promise<string> {
+    public generateTocPreview(config: any): Promise<string> {
         return this.send("generateTocPreview", [config]);
     }
 

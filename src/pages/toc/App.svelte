@@ -8,6 +8,7 @@
   import { onMount } from 'svelte';
   
   import { rpc } from '@/lib/api/rpc';
+  import { generateTocPage, type TocConfig, type TocLinkDto } from '@/lib/api/rust_pdf';
   import { outlineService } from '@/lib/services/OutlineService';
   import { messageStore } from '@/stores/messageStore';
   import { docStore } from '@/stores/docStore';
@@ -160,7 +161,7 @@
 
       try {
           // 1. Calculate Links
-          const links = getTocLinkData();
+          const links = getTocLinkData() as TocLinkDto[];
 
           // 2. Generate HTML
           const { html, styles } = generateTocHtml(
@@ -205,21 +206,21 @@
           console.log("PDF Generated at:", pdfPath); // Added console.log
 
           // 4. Send to Backend for stitching
-          const config = {
+          const config: TocConfig = {
             tocContent: tocStore.content,
             tocPdfPath: pdfPath as string, // Path to the generated PDF
             title: tocStore.title,
-            offset: tocStore.offset,
             insertPos: tocStore.insertPos,
             numberingStyle: tocStore.numberingStyle,
             header: tocStore.headerConfig,
             footer: tocStore.footerConfig,
-            pageLayout: tocStore.pageLayout,
-            hfLayout: tocStore.hfLayout,
             links: links
           };
 
-          await rpc.generateTocPage(config, null); 
+          const currentFile = $docStore.currentFilePath;
+          if (!currentFile) throw new Error("No file opened");
+          await generateTocPage(currentFile, config, null);
+          console.info("PDF generated");
           messageStore.add("Table of Contents generated successfully!", "SUCCESS");
 
       } catch (e: any) {
