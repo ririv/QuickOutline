@@ -57,32 +57,43 @@ pub fn process_toc_generation(
     config: TocConfig,
     dest_path: Option<String>
 ) -> Result<String, String> {
-    println!("Processing TOC generation via shared PdfWorker");
+    println!("Processing TOC generation via shared PdfWorker (ID Mapping Strategy)");
     let toc_pdf_path = config.toc_pdf_path.as_ref().ok_or("No TOC PDF path provided")?.clone();
     let final_dest = resolve_dest_path(&src_path, dest_path);
     let insert_pos = config.insert_pos as u16;
 
+    // Step 1: Capture Original Page IDs (ID Mapping Strategy)
+    let original_page_ids = {
+        let doc = Document::load(&src_path).map_err(|e| format!("Failed to load source for ID mapping: {}", e))?;
+        let pages = doc.get_pages();
+        let mut ids = vec![];
+        let mut sorted_keys: Vec<_> = pages.keys().cloned().collect();
+        sorted_keys.sort();
+        for key in sorted_keys {
+            ids.push(pages[&key]);
+        }
+        ids
+    };
+
+    // Step 2: Merge TOC using Pdfium (Safe Rust)
     let mut main_doc = pdfium.load_pdf_from_file(&src_path, None).map_err(|e| e.to_string())?;
     let toc_doc = pdfium.load_pdf_from_file(&toc_pdf_path, None).map_err(|e| e.to_string())?;
 
     let toc_len = toc_doc.pages().len();
     if toc_len > 0 {
-        // Safe Rust: Use pages_mut() instead of unsafe pointer casting
         main_doc.pages_mut().copy_page_range_from_document(&toc_doc, 0..=(toc_len - 1), insert_pos)
             .map_err(|e| format!("Pdfium Import Error: {}", e))?;
     }
     
-    // Save to memory buffer to avoid multiple disk IOs
+    // Save to memory buffer
     let pdf_bytes = main_doc.save_to_bytes().map_err(|e| e.to_string())?;
     
-    // Load into lopdf for annotation adding (much easier in lopdf)
+    // Step 3: Inject Links using lopdf and the captured IDs
     let mut doc = Document::load_mem(&pdf_bytes).map_err(|e| e.to_string())?;
     
     if let Some(links) = config.links {
         if !links.is_empty() {
-            // Get TOC count from toc_doc (already open)
-            let toc_count = toc_doc.pages().len() as usize;
-            add_links_to_lopdf_doc(&mut doc, links, config.insert_pos as usize, toc_count)?;
+            add_links_to_lopdf_doc(&mut doc, links, config.insert_pos as usize, &original_page_ids)?;
         }
     }
 
@@ -110,37 +121,71 @@ pub async fn generate_toc_page(
     rx.await.map_err(|e| format!("Failed to receive response from PDF worker: {}", e))?
 }
 
-fn add_links_to_lopdf_doc(doc: &mut Document, links: Vec<TocLinkDto>, insert_pos: usize, toc_count: usize) -> Result<(), String> {
-    let page_ids_map = doc.get_pages(); 
-    let mut sorted_pages: Vec<lopdf::ObjectId> = vec![];
-    for (_, object_id) in page_ids_map { sorted_pages.push(object_id); }
+fn add_links_to_lopdf_doc(
+    doc: &mut Document, 
+    links: Vec<TocLinkDto>, 
+    insert_pos: usize, 
+    original_page_ids: &[lopdf::ObjectId]
+) -> Result<(), String> {
+    let merged_pages_map = doc.get_pages(); 
+    let mut merged_pages_list: Vec<lopdf::ObjectId> = vec![];
+    let mut sorted_keys: Vec<_> = merged_pages_map.keys().cloned().collect();
+    sorted_keys.sort();
+    for key in sorted_keys {
+        merged_pages_list.push(merged_pages_map[&key]);
+    }
     
     for link in links {
-        let toc_page_idx = insert_pos + link.toc_page_index;
-        if toc_page_idx >= sorted_pages.len() { continue; }
-        let page_id = sorted_pages[toc_page_idx];
+        let toc_page_idx_in_merged = insert_pos + link.toc_page_index;
+        if toc_page_idx_in_merged >= merged_pages_list.len() { continue; }
+        let source_page_id = merged_pages_list[toc_page_idx_in_merged];
         
-        let mut target_idx = link.target_page_index as usize;
-        if link.target_page_index >= 0 {
-             if target_idx >= insert_pos { target_idx += toc_count; }
-        } else { continue; }
-        
-        if target_idx >= sorted_pages.len() { continue; }
-        let target_page_id = sorted_pages[target_idx];
-        
-        let page_height = {
-            let page_dict = doc.get_object(page_id).map_err(|e| e.to_string())?.as_dict().map_err(|e| e.to_string())?;
-            let media_box = page_dict.get(b"MediaBox").and_then(|o| o.as_array()).map(|a| a.iter().map(|n| n.as_float().unwrap_or(0.0) as f64).collect::<Vec<f64>>()).unwrap_or(vec![0.0, 0.0, 595.0, 842.0]);
-            if media_box.len() >= 4 { media_box[3] } else { 842.0 }
+        // Convert 1-based page index to 0-based index
+        let target_idx = if link.target_page_index > 0 {
+            (link.target_page_index - 1) as usize
+        } else {
+            continue; 
         };
         
-        let rect = vec![Object::Real(link.x as f32), Object::Real((page_height - (link.y + link.height)) as f32), Object::Real((link.x + link.width) as f32), Object::Real((page_height - link.y) as f32)];
-        let annotation = Dictionary::from_iter(vec![("Type", Object::Name(b"Annot".to_vec())), ("Subtype", Object::Name(b"Link".to_vec())), ("Rect", Object::Array(rect)), ("Border", Object::Array(vec![Object::Integer(0), Object::Integer(0), Object::Integer(0)])), ("Dest", Object::Array(vec![Object::Reference(target_page_id), Object::Name(b"Fit".to_vec())]))]);
+        if target_idx >= original_page_ids.len() { continue; }
+        let target_page_id = original_page_ids[target_idx];
+        
+        let page_height = {
+            let page_dict = doc.get_object(source_page_id).map_err(|e| e.to_string())?.as_dict().map_err(|e| e.to_string())?;
+            
+            let box_array = page_dict.get(b"CropBox")
+                .or_else(|_| page_dict.get(b"MediaBox"))
+                .and_then(|o| o.as_array())
+                .map(|a| a.iter().map(|n| n.as_float().unwrap_or(0.0) as f64).collect::<Vec<f64>>());
+            
+            if let Ok(ba) = box_array {
+                if ba.len() >= 4 { ba[3] } else { 842.0 }
+            } else {
+                842.0 
+            }
+        };
+        
+        let rect = vec![
+            Object::Real(link.x as f32), 
+            Object::Real((page_height - (link.y + link.height)) as f32), 
+            Object::Real((link.x + link.width) as f32), 
+            Object::Real((page_height - link.y) as f32)
+        ];
+        
+        let annotation = Dictionary::from_iter(vec![
+            ("Type", Object::Name(b"Annot".to_vec())), 
+            ("Subtype", Object::Name(b"Link".to_vec())), 
+            ("Rect", Object::Array(rect)), 
+            ("Border", Object::Array(vec![Object::Integer(0), Object::Integer(0), Object::Integer(0)])), 
+            ("Dest", Object::Array(vec![Object::Reference(target_page_id), Object::Name(b"Fit".to_vec())]))
+        ]);
         let ann_id = doc.add_object(annotation);
         
-        if let Ok(page) = doc.get_object_mut(page_id).and_then(|o| o.as_dict_mut()) {
+        if let Ok(page) = doc.get_object_mut(source_page_id).and_then(|o| o.as_dict_mut()) {
              if !page.has(b"Annots") { page.set("Annots", Object::Array(vec![])); }
-             if let Ok(annots) = page.get_mut(b"Annots").and_then(|o| o.as_array_mut()) { annots.push(Object::Reference(ann_id)); }
+             if let Ok(annots) = page.get_mut(b"Annots").and_then(|o| o.as_array_mut()) { 
+                 annots.push(Object::Reference(ann_id)); 
+             }
         }
     }
     Ok(())
