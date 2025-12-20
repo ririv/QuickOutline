@@ -241,7 +241,6 @@ pub fn run() {
             greet, 
             java_sidecar::get_java_port, 
             printer::print_to_pdf, 
-            pdf::merge::merge_pdfs, 
             pdf::render::render_pdf_page, 
             pdf::render::get_pdf_page_count,
             get_outline_as_bookmark,

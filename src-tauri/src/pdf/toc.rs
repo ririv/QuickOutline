@@ -7,6 +7,7 @@ use anyhow::Result;
 use tauri::{State};
 use crate::pdf::manager::{PdfWorker, PdfRequest};
 use crate::pdf::page_label::{PageLabelProcessor, PageLabel, PageLabelNumberingStyle};
+use crate::pdf::merge::merge_pdfs;
 use tokio::sync::oneshot;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -78,15 +79,9 @@ pub fn process_toc_generation(
         ids
     };
 
-    // Step 2: Merge TOC using Pdfium (Safe Rust)
-    let mut main_doc = pdfium.load_pdf_from_file(&src_path, None).map_err(|e| e.to_string())?;
-    let toc_doc = pdfium.load_pdf_from_file(&toc_pdf_path, None).map_err(|e| e.to_string())?;
-
-    let toc_len = toc_doc.pages().len();
-    if toc_len > 0 {
-        main_doc.pages_mut().copy_page_range_from_document(&toc_doc, 0..=(toc_len - 1), insert_pos)
-            .map_err(|e| format!("Pdfium Import Error: {}", e))?;
-    }
+    // Step 2: Merge TOC using Pdfium (Safe Rust) via helper
+    let main_doc = merge_pdfs(pdfium, &src_path, &toc_pdf_path, insert_pos)
+        .map_err(|e| format!("Pdfium Merge Error: {}", e))?;
     
     // Save to memory buffer
     let pdf_bytes = main_doc.save_to_bytes().map_err(|e| e.to_string())?;
