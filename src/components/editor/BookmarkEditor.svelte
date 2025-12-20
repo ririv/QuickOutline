@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { EditorState, RangeSetBuilder, Compartment, Annotation } from '@codemirror/state';
-  import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, ViewPlugin, Decoration, type ViewUpdate, WidgetType } from '@codemirror/view';
+  import { EditorState, Compartment, Annotation } from '@codemirror/state';
+  import { EditorView, keymap, highlightActiveLine } from '@codemirror/view';
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { indentOnInput, indentUnit } from '@codemirror/language';
-  import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
-  import {tocTheme, tocPlugin, pageValidationConfig, pageValidationExtension, lineTheme} from './tocPlugins';
+  import { searchKeymap } from '@codemirror/search';
+  import { pageValidationConfig, pageValidationExtension, lineTheme} from './boomarkPlugins.ts';
 
   // --- Props ---
   interface Props {
