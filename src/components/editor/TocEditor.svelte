@@ -13,6 +13,8 @@
         placeholder?: string;
         offset?: number;
         totalPage?: number;
+        pageLabels?: string[] | null;
+        insertPos?: number;
         onchange?: (val: string) => void;
     }
 
@@ -21,6 +23,8 @@
         placeholder = '',
         offset = 0,
         totalPage = 0,
+        pageLabels = null,
+        insertPos = 0,
         onchange
     }: Props = $props();
 
@@ -37,7 +41,7 @@
         const startState = EditorState.create({
             doc: value,
             extensions: [
-                validationConf.of(pageValidationConfig.of({ offset, totalPage })),
+                validationConf.of(pageValidationConfig.of({ offset, totalPage, labels: pageLabels, insertPos })),
                 history(),
                 highlightActiveLine(),
                 // highlightActiveLineGutter(), // Remove potentially layout-shifting gutter
@@ -79,7 +83,7 @@
     $effect(() => {
         if (view) {
             view.dispatch({
-                effects: validationConf.reconfigure(pageValidationConfig.of({ offset, totalPage }))
+                effects: validationConf.reconfigure(pageValidationConfig.of({ offset, totalPage, labels: pageLabels, insertPos }))
             });
         }
     });

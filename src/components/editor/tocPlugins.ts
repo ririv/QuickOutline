@@ -1,12 +1,20 @@
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, ViewPlugin, Decoration, type ViewUpdate, WidgetType } from '@codemirror/view';
 import { generateDotLeaderData } from '@/lib/toc-gen/toc-generator.tsx';
 import { parseTocLine } from '@/lib/toc-gen/parser';
+import { resolveLinkTarget } from '@/lib/services/PageLinkResolver';
 import { EditorState, RangeSetBuilder, Facet } from '@codemirror/state';
 
 // --- Page Validation Plugin ---
 
-export const pageValidationConfig = Facet.define<{offset: number, totalPage: number}, {offset: number, totalPage: number}>({
-    combine: values => values[0] || { offset: 0, totalPage: 0 }
+export interface ValidationState {
+    offset: number;
+    totalPage: number;
+    labels: string[] | null;
+    insertPos: number;
+}
+
+export const pageValidationConfig = Facet.define<ValidationState, ValidationState>({
+    combine: values => values[0] || { offset: 0, totalPage: 0, labels: null, insertPos: 0 }
 });
 
 const invalidPageDecoration = Decoration.line({ class: "cm-invalid-page-line" });
@@ -31,10 +39,17 @@ const pageValidationPlugin = ViewPlugin.fromClass(class {
     }
 
     compute(view: EditorView) {
-        const { offset, totalPage } = view.state.facet(pageValidationConfig);
+        const { offset, totalPage, labels, insertPos } = view.state.facet(pageValidationConfig);
         if (totalPage <= 0) return Decoration.none;
 
         const builder = new RangeSetBuilder<Decoration>();
+
+        // We need a resolver config
+        const resolverConfig = {
+            labels: labels,
+            offset: offset,
+            insertPos: insertPos
+        };
 
         for (const { from, to } of view.visibleRanges) {
             for (let pos = from; pos <= to;) {
@@ -43,12 +58,41 @@ const pageValidationPlugin = ViewPlugin.fromClass(class {
                 const parsed = parseTocLine(text);
 
                 if (parsed) {
-                    // Use displayPage for basic numeric validation
-                    // This is a "best effort" validation for simple cases
-                    const pageNum = parseInt(parsed.displayPage, 10);
-                    if (!isNaN(pageNum)) {
-                        // Check if page + offset exceeds total pages
-                        if (pageNum + offset > totalPage || pageNum + offset < 1) {
+                    // Determine the target link string (either explicit <...> or display page)
+                    const targetStr = parsed.hasExplicitLink ? parsed.linkTarget : parsed.displayPage;
+                    
+                    // Resolve to physical index (0-based)
+                    const result = resolveLinkTarget(targetStr, resolverConfig);
+                    
+                    if (result) {
+                        const idx = result.index;
+                        // Check bounds
+                        // If targeting original (isOriginal=true): idx must be within original doc (0 to totalPage-1)
+                        // If targeting absolute (isOriginal=false): idx depends on merged doc size... 
+                        // But wait, totalPage passed here is likely the ORIGINAL doc page count ($docStore.pageCount).
+                        // If we are targeting TOC (isOriginal=false), we can't easily validate against original count.
+                        // However, usually absolute links (#15) are meant for the final doc.
+                        // Let's assume validation is primarily for "Original Doc" targets.
+                        
+                        if (result.isOriginal) {
+                             if (idx < 0 || idx >= totalPage) {
+                                 builder.add(line.from, line.from, invalidPageDecoration);
+                             }
+                        } else {
+                            // For absolute links (#15), we warn if it seems excessively large compared to original doc?
+                            // Or just skip validation because user knows what they are doing.
+                            // Let's validate against a loose upper bound if possible, or just skip.
+                            // Skipping is safer to avoid false positives.
+                        }
+                    } else {
+                        // Unresolvable link? Maybe mark as warning?
+                        // For now, if we can't resolve it (e.g. invalid label), let's mark it as invalid.
+                        // But be careful with partial inputs.
+                        // If it's a number and we failed (impossible with fallback), but if it's a label "iv" and labels are missing...
+                        if (!labels && !/^\d+$/.test(targetStr)) {
+                             // If we have no labels loaded, we can't validate non-numeric labels. Don't mark as error.
+                        } else {
+                             // Mark as invalid if unresolvable
                              builder.add(line.from, line.from, invalidPageDecoration);
                         }
                     }

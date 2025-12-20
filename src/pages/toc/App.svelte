@@ -310,6 +310,8 @@
                   placeholder="Enter TOC here..."
                   offset={tocStore.offset}
                   totalPage={$docStore.pageCount}
+                  pageLabels={$docStore.originalPageLabels}
+                  insertPos={parseInt(String(tocStore.insertionConfig.pos), 10) || 0}
               />
             </div>
           </PageFrame>
