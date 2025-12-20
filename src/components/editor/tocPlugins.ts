@@ -1,5 +1,6 @@
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, ViewPlugin, Decoration, type ViewUpdate, WidgetType } from '@codemirror/view';
 import { generateDotLeaderData } from '@/lib/toc-gen/toc-generator.tsx';
+import { parseTocLine } from '@/lib/toc-gen/parser';
 import { EditorState, RangeSetBuilder, Facet } from '@codemirror/state';
 
 // --- Page Validation Plugin ---
@@ -39,14 +40,14 @@ const pageValidationPlugin = ViewPlugin.fromClass(class {
             for (let pos = from; pos <= to;) {
                 const line = view.state.doc.lineAt(pos);
                 const text = line.text;
-                const match = text.match(tocLineRegex);
+                const parsed = parseTocLine(text);
 
-                if (match) {
-                    // match[3] is the page number string
-                    const pageNum = parseInt(match[3], 10);
+                if (parsed) {
+                    // Use displayPage for basic numeric validation
+                    // This is a "best effort" validation for simple cases
+                    const pageNum = parseInt(parsed.displayPage, 10);
                     if (!isNaN(pageNum)) {
                         // Check if page + offset exceeds total pages
-                        // Note: offset is usually added to the logical page number to get physical page number
                         if (pageNum + offset > totalPage || pageNum + offset < 1) {
                              builder.add(line.from, line.from, invalidPageDecoration);
                         }
@@ -97,13 +98,6 @@ class LeaderWidget extends WidgetType {
 
     eq(other: LeaderWidget) { return other.page == this.page; }
 }
-
-// Match: Title + (whitespace) + "..." + (whitespace) + PageInfo
-// We look for the LAST "..." to be safe, but regex runs left-to-right.
-// Group 1: Title
-// Group 2: Separator (whitespace + dots + whitespace)
-// Group 3: Page Info (Display Page + optional <Link>)
-const tocLineRegex = /^(.*?)(\s*\.{3,}\s*)(.*)$/;
 
 export const lineTheme = EditorView.theme({
     ".cm-line": {
@@ -197,7 +191,6 @@ export const tocPlugin = ViewPlugin.fromClass(class {
         const selection = view.state.selection;
         const hasFocus = view.hasFocus;
         const cursorLines = new Set<number>();
-
         if (hasFocus) {
             for (const range of selection.ranges) {
                 const startLine = view.state.doc.lineAt(range.from).number;
@@ -208,26 +201,20 @@ export const tocPlugin = ViewPlugin.fromClass(class {
             }
         }
 
-        for (const { from, to } of view.visibleRanges) {
+        for (const {from, to} of view.visibleRanges) {
             for (let pos = from; pos <= to;) {
                 const line = view.state.doc.lineAt(pos);
 
                 // Only decorate if cursor is NOT on this line
                 if (!cursorLines.has(line.number)) {
                     const text = line.text;
-                    const match = text.match(tocLineRegex);
 
-                    if (match) {
-                        // match[1] = title
-                        // match[2] = separator (" ... ") - to be replaced
-                        // match[3] = page info ("5 <#15>") - to be replaced
+                    const parsed = parseTocLine(text);
 
-                        const titleLen = match[1].length;
-                        
-                        // Extract display page from page info (first token)
-                        const pageInfo = match[3].trim();
-                        const displayPageMatch = pageInfo.match(/^([^\s<]+)/);
-                        const displayPage = displayPageMatch ? displayPageMatch[1] : pageInfo;
+
+                    if (parsed) {
+
+                        const titleLen = parsed.title.length;
 
                         const sepStart = line.from + titleLen;
                         const lineEnd = line.from + text.length;
@@ -236,7 +223,7 @@ export const tocPlugin = ViewPlugin.fromClass(class {
                         builder.add(
                             line.from,
                             line.from,
-                            Decoration.line({ attributes: { class: "cm-flex-line" } })
+                            Decoration.line({attributes: {class: "cm-flex-line"}})
                         );
 
                         // 2. Then add the widget replacement (at separator position)
@@ -244,7 +231,7 @@ export const tocPlugin = ViewPlugin.fromClass(class {
                             sepStart,
                             lineEnd,
                             Decoration.replace({
-                                widget: new LeaderWidget(displayPage),
+                                widget: new LeaderWidget(parsed.displayPage),
                                 inclusive: true // Include text in replacement
                             })
                         );

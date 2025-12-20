@@ -2,6 +2,7 @@ import tocStyles from './toc.css?inline';
 import { css } from "@/lib/utils/tags";
 import { type PageLayout, PAGE_SIZES_MM } from '@/lib/types/page';
 import { createElement, Fragment } from '@/lib/utils/jsx';
+import { parseTocLine } from './parser';
 
 interface DotConfig {
     width?: number;
@@ -79,49 +80,33 @@ export function generateTocHtml(
                     
                     const tabCount = (whitespace.match(/\t/g) || []).length;
                     const spaceCount = (whitespace.match(/ /g) || []).length;
-                    const level = tabCount + Math.floor(spaceCount / 2);
-
-                    const trimmed = line.trim();
+                            const level = tabCount + Math.floor(spaceCount / 2);
                     
-                    // New Parsing Logic: Look for the LAST "..." as the boundary
-                    const lastDotIdx = trimmed.lastIndexOf("...");
+                            const trimmed = line.trim();
+                            const parsed = parseTocLine(trimmed);
+                            
+                            let label = trimmed;
+                            let displayPage = '';
+                            let targetLink = '';
                     
-                    let label = trimmed;
-                    let displayPage = '';
-                    let targetLink = '';
-
-                    if (lastDotIdx !== -1) {
-                        label = trimmed.substring(0, lastDotIdx).trim();
-                        const pageInfo = trimmed.substring(lastDotIdx + 3).trim();
-                        
-                        // Parse pageInfo: "DisplayPage [<LinkTarget>]"
-                        // Match display part and optional bracketed target
-                        const infoMatch = pageInfo.match(/^([^\s<]+)(?:\s*<([^>]+)>)?/);
-                        if (infoMatch) {
-                            displayPage = infoMatch[1];
-                            targetLink = infoMatch[2] ? infoMatch[2].trim() : displayPage;
-                        } else if (pageInfo.startsWith("<") && pageInfo.endsWith(">")) {
-                            // Case where only <target> is provided, displayPage is empty
-                            targetLink = pageInfo.slice(1, -1).trim();
-                        } else {
-                            // Fallback: treat the whole right side as display page
-                            displayPage = pageInfo;
-                            targetLink = pageInfo;
-                        }
-
-                        // Auto-correct logic: same threshold rules
-                        if (pageNumberOffset !== 0 && /^\d+$/.test(displayPage) && !pageInfo.includes("<")) {
-                            const pageNum = parseInt(displayPage, 10);
-                            if (pageNum >= autoCorrectThreshold) {
-                                const corrected = (pageNum + pageNumberOffset).toString();
-                                displayPage = corrected;
-                                targetLink = corrected;
+                            if (parsed) {
+                                label = parsed.title;
+                                displayPage = parsed.displayPage;
+                                // If explicit link exists (<...>), use it. Otherwise use the display page.
+                                targetLink = parsed.hasExplicitLink ? parsed.linkTarget : parsed.displayPage;
+                    
+                                // Auto-correct logic: only applies if NO explicit link is provided
+                                if (!parsed.hasExplicitLink && pageNumberOffset !== 0 && /^\d+$/.test(displayPage)) {
+                                    const pageNum = parseInt(displayPage, 10);
+                                    if (pageNum >= autoCorrectThreshold) {
+                                        const corrected = (pageNum + pageNumberOffset).toString();
+                                        displayPage = corrected;
+                                        targetLink = corrected;
+                                    }
+                                }
                             }
-                        }
-                    }
-                    
-                    label = label.replace(/[.\s]+$/, '');
-
+                            
+                            label = label.replace(/[.\s]+$/, '');
                     // The leader SVG for each item will also be populated by fixDots.js
                     const itemLeaderSvg = (
                         <svg class="dotted-line" width="100%" height="1em" style={{display: "block", overflow: "hidden"}} />
