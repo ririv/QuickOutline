@@ -98,9 +98,12 @@ class LeaderWidget extends WidgetType {
     eq(other: LeaderWidget) { return other.page == this.page; }
 }
 
-// Match: Title + (at least 1 space/tab) + PageNumber(digits) + EndOfLine
-// Aggressive: Any whitespace before trailing digits triggers formatting
-const tocLineRegex = /^(.*?)(\s+)(\d+)$/;
+// Match: Title + (whitespace) + "..." + (whitespace) + PageInfo
+// We look for the LAST "..." to be safe, but regex runs left-to-right.
+// Group 1: Title
+// Group 2: Separator (whitespace + dots + whitespace)
+// Group 3: Page Info (Display Page + optional <Link>)
+const tocLineRegex = /^(.*?)(\s*\.{3,}\s*)(.*)$/;
 
 export const lineTheme = EditorView.theme({
     ".cm-line": {
@@ -215,13 +218,16 @@ export const tocPlugin = ViewPlugin.fromClass(class {
                     const match = text.match(tocLineRegex);
 
                     if (match) {
-                        // match[1] = title (keep)
-                        // match[2] = separator spaces (replace)
-                        // match[3] = page number (replace -> move into widget)
+                        // match[1] = title
+                        // match[2] = separator (" ... ") - to be replaced
+                        // match[3] = page info ("5 <#15>") - to be replaced
 
                         const titleLen = match[1].length;
-                        const sepLen = match[2].length;
-                        const pageLen = match[3].length;
+                        
+                        // Extract display page from page info (first token)
+                        const pageInfo = match[3].trim();
+                        const displayPageMatch = pageInfo.match(/^([^\s<]+)/);
+                        const displayPage = displayPageMatch ? displayPageMatch[1] : pageInfo;
 
                         const sepStart = line.from + titleLen;
                         const lineEnd = line.from + text.length;
@@ -238,7 +244,7 @@ export const tocPlugin = ViewPlugin.fromClass(class {
                             sepStart,
                             lineEnd,
                             Decoration.replace({
-                                widget: new LeaderWidget(match[3]),
+                                widget: new LeaderWidget(displayPage),
                                 inclusive: true // Include text in replacement
                             })
                         );
