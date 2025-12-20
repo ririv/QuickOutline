@@ -6,6 +6,7 @@ use anyhow::Result;
 
 use tauri::{State};
 use crate::pdf::manager::{PdfWorker, PdfRequest};
+use crate::pdf::page_label::{PageLabelProcessor, PageLabel, PageLabelNumberingStyle};
 use tokio::sync::oneshot;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -26,6 +27,7 @@ pub struct TocConfig {
     pub toc_content: String,
     pub title: String,
     pub insert_pos: i32,
+    pub numbering_style: PageLabelNumberingStyle,
     pub toc_pdf_path: Option<String>,
     pub links: Option<Vec<TocLinkDto>>,
 }
@@ -98,9 +100,97 @@ pub fn process_toc_generation(
         }
     }
 
+    // Step 4: Correct Page Labels
+    apply_toc_page_labels(&mut doc, &src_path, &toc_pdf_path, config.insert_pos, &config.numbering_style);
+
     doc.save(&final_dest).map_err(|e| e.to_string())?;
     println!("TOC generation complete: {}", final_dest);
     Ok(final_dest)
+}
+
+fn apply_toc_page_labels(
+    doc: &mut Document,
+    src_path: &str,
+    toc_path: &str,
+    insert_pos: i32, // 0-based index where TOC starts
+    toc_style: &PageLabelNumberingStyle
+) {
+    if let Ok(src_doc) = Document::load(src_path) {
+        if let Ok(rules) = PageLabelProcessor::get_page_label_rules(&src_doc) {
+            let toc_len = if let Ok(toc_doc) = Document::load(toc_path) {
+                toc_doc.get_pages().len() as i32
+            } else {
+                0
+            };
+
+            if toc_len > 0 {
+                let new_rules = calculate_merged_rules(rules, insert_pos, toc_len, toc_style);
+                let _ = PageLabelProcessor::set_page_labels(doc, new_rules);
+            }
+        }
+    }
+}
+
+fn calculate_merged_rules(
+    mut rules: Vec<PageLabel>, 
+    insert_pos: i32, 
+    toc_len: i32, 
+    toc_style: &PageLabelNumberingStyle
+) -> Vec<PageLabel> {
+    let insert_idx_1based = insert_pos + 1;
+    let resume_idx_1based = insert_idx_1based + toc_len;
+
+    // 1. Identify the "Impact Rule" (the rule active at insert_pos)
+    let mut impact_rule_idx = None;
+    for (i, rule) in rules.iter().enumerate() {
+        if rule.page_num <= insert_idx_1based {
+            impact_rule_idx = Some(i);
+        } else {
+            break;
+        }
+    }
+
+    // 2. Prepare Resume Rule
+    let mut resume_rule = None;
+    let exact_match = rules.iter().any(|r| r.page_num == insert_idx_1based);
+    
+    if !exact_match {
+        let (style, prefix, start_num) = if let Some(idx) = impact_rule_idx {
+            let r = &rules[idx];
+            let offset = insert_pos - (r.page_num - 1);
+            (r.numbering_style.clone(), r.label_prefix.clone(), r.first_page.unwrap_or(1) + offset)
+        } else {
+            (PageLabelNumberingStyle::DecimalArabicNumerals, None, insert_pos + 1)
+        };
+
+        resume_rule = Some(PageLabel {
+            page_num: resume_idx_1based,
+            numbering_style: style,
+            label_prefix: prefix,
+            first_page: Some(start_num),
+        });
+    }
+
+    // 3. Shift existing rules
+    for rule in &mut rules {
+        if rule.page_num >= insert_idx_1based {
+            rule.page_num += toc_len;
+        }
+    }
+
+    // 4. Insert new rules
+    rules.push(PageLabel {
+        page_num: insert_idx_1based, 
+        numbering_style: toc_style.clone(),
+        label_prefix: None,
+        first_page: Some(1),
+    });
+
+    if let Some(rr) = resume_rule {
+        rules.push(rr);
+    }
+    
+    rules
 }
 
 #[tauri::command]
