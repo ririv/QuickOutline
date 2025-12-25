@@ -266,7 +266,12 @@
             tocPdfPath: pdfPath as string, // Path to the generated PDF
             title: tocStore.title,
             insertPos: parseInt(String(tocStore.insertionConfig.pos), 10),
-            numberingStyle: tocStore.numberingStyle,
+            tocPageLabel: {
+                pageNum: 1, // Will be overwritten by backend based on insertPos
+                numberingStyle: tocStore.numberingStyle,
+                labelPrefix: null,
+                firstPage: 1
+            },
             header: tocStore.headerConfig,
             footer: tocStore.footerConfig,
             links: links

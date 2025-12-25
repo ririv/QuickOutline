@@ -28,7 +28,7 @@ pub struct TocConfig {
     pub toc_content: String,
     pub title: String,
     pub insert_pos: i32,
-    pub numbering_style: PageLabelNumberingStyle,
+    pub toc_page_label: Option<PageLabel>,
     pub toc_pdf_path: Option<String>,
     pub links: Option<Vec<TocLinkDto>>,
 }
@@ -95,11 +95,16 @@ pub fn process_toc_generation(
         }
     }
 
-    // Step 4: Correct Page Labels
-    apply_toc_page_labels(&mut doc, &src_path, &toc_pdf_path, config.insert_pos);
-
-    doc.save(&final_dest).map_err(|e| e.to_string())?;
-    println!("TOC generation complete: {}", final_dest);
+        // Step 4: Correct Page Labels
+        apply_toc_page_labels(
+            &mut doc, 
+            &src_path, 
+            &toc_pdf_path, 
+            config.insert_pos, 
+            config.toc_page_label.as_ref()
+        );
+    
+        doc.save(&final_dest).map_err(|e| e.to_string())?;    println!("TOC generation complete: {}", final_dest);
     Ok(final_dest)
 }
 
@@ -108,6 +113,7 @@ fn apply_toc_page_labels(
     src_path: &str,
     toc_path: &str,
     insert_pos: i32,
+    toc_label_opt: Option<&PageLabel>
 ) {
     if let Ok(src_doc) = Document::load(src_path) {
         if let Ok(rules) = PageLabelProcessor::get_page_label_rules(&src_doc) {
@@ -121,13 +127,12 @@ fn apply_toc_page_labels(
             };
 
             if toc_len > 0 {
-                // Optimization: If both docs have no PageLabel rules, do nothing.
-                // This preserves the default "Physical Page Number" behavior without bloating the PDF.
-                if rules.is_empty() && toc_rules.is_empty() {
+                // Optimization: If both docs have no PageLabel rules AND no label config requested, do nothing.
+                if rules.is_empty() && toc_rules.is_empty() && toc_label_opt.is_none() {
                     return;
                 }
 
-                let new_rules = calculate_merged_rules(rules, insert_pos, toc_len, toc_rules);
+                let new_rules = calculate_merged_rules(rules, insert_pos, toc_len, toc_rules, toc_label_opt);
                 let _ = PageLabelProcessor::set_page_labels(doc, new_rules);
             }
         }
@@ -138,7 +143,8 @@ fn calculate_merged_rules(
     mut rules: Vec<PageLabel>, 
     insert_pos: i32, 
     toc_len: i32,
-    mut toc_rules: Vec<PageLabel>
+    mut toc_rules: Vec<PageLabel>,
+    toc_label_opt: Option<&PageLabel>
 ) -> Vec<PageLabel> {
     let insert_idx_1based = insert_pos + 1;
     let resume_idx_1based = insert_idx_1based + toc_len;
@@ -183,21 +189,25 @@ fn calculate_merged_rules(
 
     // 4. Insert TOC rules
     if toc_rules.is_empty() {
-        // If TOC has no rules, we MUST insert a default rule to prevent inheritance from previous pages.
-        // Default: Decimal, Start 1.
-        rules.push(PageLabel {
-            page_num: insert_idx_1based, 
-            numbering_style: PageLabelNumberingStyle::DecimalArabicNumerals,
-            label_prefix: None,
-            first_page: Some(1),
-        });
+        // Use requested label config or fallback to Decimal
+        let mut new_rule = if let Some(l) = toc_label_opt {
+            l.clone()
+        } else {
+            PageLabel {
+                page_num: 1, // Placeholder
+                numbering_style: PageLabelNumberingStyle::DecimalArabicNumerals,
+                label_prefix: None,
+                first_page: Some(1),
+            }
+        };
+        
+        // Ensure the rule starts at the correct position
+        new_rule.page_num = insert_idx_1based;
+        rules.push(new_rule);
     } else {
         // Shift and merge TOC rules
-        // TOC rules are 1-based relative to TOC start.
-        // We need to map them to absolute position.
-        // rule.page_num 1 -> insert_idx_1based
         for tr in &mut toc_rules {
-            tr.page_num += insert_pos; // 1 + insert_pos = insert_idx_1based
+            tr.page_num += insert_pos; 
         }
         rules.extend(toc_rules);
     }

@@ -2,6 +2,13 @@ import { invoke } from '@tauri-apps/api/core';
 import type { PageLabelNumberingStyle } from '@/lib/styleMaps';
 import type { HeaderFooterConfig } from './rpc';
 
+export interface PageLabel {
+    pageNum: number;
+    numberingStyle: PageLabelNumberingStyle;
+    labelPrefix?: string | null;
+    firstPage?: number | null;
+}
+
 export interface TocLinkDto {
     tocPageIndex: number;
     x: number;
@@ -16,7 +23,7 @@ export interface TocConfig {
     tocContent: string;
     title: string;
     insertPos: number;
-    numberingStyle: PageLabelNumberingStyle;
+    tocPageLabel: PageLabel | null;
     header: HeaderFooterConfig | null;
     footer: HeaderFooterConfig | null;
     tocPdfPath?: string;
