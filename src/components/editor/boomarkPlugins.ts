@@ -1,6 +1,6 @@
 import {Facet, RangeSetBuilder} from "@codemirror/state";
 import {Decoration, EditorView, ViewPlugin, type ViewUpdate} from "@codemirror/view";
-import {parseTocLine} from "@/lib/toc-gen/parser.ts";
+import {parseTocLine} from "@/lib/templates/toc/toc-gen/parser.ts";
 
 export const pageValidationConfig = Facet.define<{offset: number, totalPage: number}, {offset: number, totalPage: number}>({
     combine: values => values[0] || { offset: 0, totalPage: 0 }

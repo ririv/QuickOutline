@@ -9,7 +9,7 @@ interface DotConfig {
     height?: number;
     radius?: number;
     color?: string;
-    position?: string; 
+    position?: string;
 }
 
 export function generateDotLeaderData(config: DotConfig = {}) {
@@ -25,7 +25,7 @@ export function generateDotLeaderData(config: DotConfig = {}) {
     const cy = height - radius;
     const encodedColor = color.startsWith('#') ? color.replace('#', '%23') : color;
     const svgContent = `%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 ${width} ${height}'%3E%3Ccircle cx='${cx}' cy='${cy}' r='${radius}' fill='${encodedColor}' /%3E%3C/svg%3E`;
-    
+
     return {
         backgroundImage: `url("data:image/svg+xml,${svgContent}")`,
         backgroundSize: `${width}px ${height}px`,
@@ -44,30 +44,30 @@ export const DOT_GAP = 6;      // px (Center-to-Center distance)
 export function generateTocHtml(
     content: string,
     title: string,
-    offset: number, 
+    offset: number,
     numberingStyle: any,
     indentStep: number = 20,
     pageLayout?: PageLayout,
     pageNumberOffset: number = 0, // New param: amount to add to page numbers
     autoCorrectThreshold: number = 1 // New param: only correct pages >= this value
 ): { html: string, styles: string } {
-    
+
     const lines = content.split('\n');
-    
-    const dotDiameter = DOT_DIAMETER; 
-    const dotGap = DOT_GAP;      
+
+    const dotDiameter = DOT_DIAMETER;
+    const dotGap = DOT_GAP;
     const dotColor = "currentColor";
-    
+
     let pageWidthMm = PAGE_SIZES_MM['A4'][0];
     if (pageLayout) {
         const size = PAGE_SIZES_MM[pageLayout.size] || PAGE_SIZES_MM['A4'];
         pageWidthMm = pageLayout.orientation === 'landscape' ? size[1] : size[0];
     }
-    const maxWidth = Math.ceil(pageWidthMm * 3.8); 
+    const maxWidth = Math.ceil(pageWidthMm * 3.8);
     const dotCount = Math.ceil(maxWidth / dotGap);
 
     // Initial dot generation logic is moved to fixDots.js for dynamic rendering
-    
+
     const htmlOutput = (
         <>
             <h1 class="toc-title">{escapeHtml(title)}</h1>
@@ -77,36 +77,36 @@ export function generateTocHtml(
 
                     const indentMatch = line.match(/^(\s*)/);
                     const whitespace = indentMatch ? indentMatch[1] : '';
-                    
+
                     const tabCount = (whitespace.match(/\t/g) || []).length;
                     const spaceCount = (whitespace.match(/ /g) || []).length;
-                            const level = tabCount + Math.floor(spaceCount / 2);
-                    
-                            const trimmed = line.trim();
-                            const parsed = parseTocLine(trimmed);
-                            
-                            let label = trimmed;
-                            let displayPage = '';
-                            let targetLink = '';
-                    
-                            if (parsed) {
-                                label = parsed.title;
-                                displayPage = parsed.displayPage;
-                                // If explicit link exists (<...>), use it. Otherwise use the display page.
-                                targetLink = parsed.hasExplicitLink ? parsed.linkTarget : parsed.displayPage;
-                    
-                                // Auto-correct logic: only applies if NO explicit link is provided
-                                if (!parsed.hasExplicitLink && pageNumberOffset !== 0 && /^\d+$/.test(displayPage)) {
-                                    const pageNum = parseInt(displayPage, 10);
-                                    if (pageNum >= autoCorrectThreshold) {
-                                        const corrected = (pageNum + pageNumberOffset).toString();
-                                        displayPage = corrected;
-                                        targetLink = corrected;
-                                    }
-                                }
+                    const level = tabCount + Math.floor(spaceCount / 2);
+
+                    const trimmed = line.trim();
+                    const parsed = parseTocLine(trimmed);
+
+                    let label = trimmed;
+                    let displayPage = '';
+                    let targetLink = '';
+
+                    if (parsed) {
+                        label = parsed.title;
+                        displayPage = parsed.displayPage;
+                        // If explicit link exists (<...>), use it. Otherwise use the display page.
+                        targetLink = parsed.hasExplicitLink ? parsed.linkTarget : parsed.displayPage;
+
+                        // Auto-correct logic: only applies if NO explicit link is provided
+                        if (!parsed.hasExplicitLink && pageNumberOffset !== 0 && /^\d+$/.test(displayPage)) {
+                            const pageNum = parseInt(displayPage, 10);
+                            if (pageNum >= autoCorrectThreshold) {
+                                const corrected = (pageNum + pageNumberOffset).toString();
+                                displayPage = corrected;
+                                targetLink = corrected;
                             }
-                            
-                            label = label.replace(/[.\s]+$/, '');
+                        }
+                    }
+
+                    label = label.replace(/[.\s]+$/, '');
                     // The leader SVG for each item will also be populated by fixDots.js
                     const itemLeaderSvg = (
                         <svg class="dotted-line" width="100%" height="1em" style={{display: "block", overflow: "hidden"}} />
@@ -128,7 +128,7 @@ export function generateTocHtml(
         ${tocStyles}
         .toc-leader {
             display: flex;
-            align-items: flex-end; 
+            align-items: flex-end;
             overflow: hidden;
         }
     `;
@@ -138,7 +138,7 @@ export function generateTocHtml(
 export function _generateTocHtmlCanvas(
     content: string,
     title: string,
-    offset: number, 
+    offset: number,
     numberingStyle: any,
     indentStep: number = 20
 ): { html: string, styles: string } {
@@ -146,8 +146,8 @@ export function _generateTocHtmlCanvas(
     let html = `<h1 class="toc-title">${escapeHtml(title)}</h1>`;
     html += `<ul class="toc-list" style="--toc-indent-step: ${indentStep}pt;">`;
 
-    const dotDiameter = 2; 
-    const dotGap = 6;      
+    const dotDiameter = 2;
+    const dotGap = 6;
     const leaderCanvasHtml = `<canvas class="toc-leader-canvas" style="width: 100%; height: 1em; display: block;"></canvas>`;
 
     const canvasScript = `

@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { PagedEngine } from '../../lib/preview-engine/paged-engine';
-    import { fixDots } from '@/lib/templates/scripts/fix-dots.js'; // Updated path
-    import { DOT_GAP } from '@/lib/toc-gen/toc-generator.tsx'; // Import DOT_GAP constant
+    import { fixDots } from '@/lib/templates/toc/fix-dots.js'; // Updated path
+    import { DOT_GAP } from '@/lib/templates/toc/toc-gen/toc-generator.tsx'; // Import DOT_GAP constant
   
     export let payload: { html: string, styles: string, header: any, footer: any };
     // 父组件通知渲染完成（例如用于恢复滚动条）

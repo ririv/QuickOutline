@@ -1,6 +1,6 @@
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, ViewPlugin, Decoration, type ViewUpdate, WidgetType } from '@codemirror/view';
-import { generateDotLeaderData } from '@/lib/toc-gen/toc-generator.tsx';
-import { parseTocLine } from '@/lib/toc-gen/parser';
+import { generateDotLeaderData } from '@/lib/templates/toc/toc-gen/toc-generator.tsx';
+import { parseTocLine } from '@/lib/templates/toc/toc-gen/parser';
 import { resolveLinkTarget } from '@/lib/services/PageLinkResolver';
 import { EditorState, RangeSetBuilder, Facet } from '@codemirror/state';
 

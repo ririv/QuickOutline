@@ -1,7 +1,7 @@
 // src/lib/preview-engine/PrintTemplate.tsx
 
 import { createElement, Fragment } from '@/lib/utils/jsx.ts';
-import fixDotsRaw from '@/lib/templates/scripts/fix-dots.js?raw'; // Corrected import path
+import fixDotsRaw from '@/lib/templates/toc/fix-dots.js?raw'; // Corrected import path
 
 interface PrintTemplateProps {
     styles: string;

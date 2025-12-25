@@ -15,10 +15,10 @@
   import { tocStore } from '@/stores/tocStore.svelte';
   import { printStore } from '@/stores/printStore.svelte'; // Import global print store
   import { appStore, FnTab } from '@/stores/appStore';
-  import { generateTocHtml, DOT_GAP } from '@/lib/toc-gen/toc-generator.tsx';
+  import { generateTocHtml, DOT_GAP } from '@/lib/templates/toc/toc-gen/toc-generator.tsx';
   import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
-  import { TocPrintTemplate } from '@/lib/templates/TocPrintTemplate.tsx';
+  import { TocPrintTemplate } from '@/lib/templates/toc/TocPrintTemplate.tsx';
   import { getTocLinkData, getPageCount } from '@/lib/preview-engine/paged-engine';
   import { resolveLinkTarget } from '@/lib/services/PageLinkResolver';
   import { invoke } from '@tauri-apps/api/core';
