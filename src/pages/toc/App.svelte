@@ -16,7 +16,7 @@
   import { printStore } from '@/stores/printStore.svelte'; // Import global print store
   import { appStore, FnTab } from '@/stores/appStore';
   import { generateTocHtml, DOT_GAP } from '@/lib/toc-gen/toc-generator.tsx';
-  import { generateSectionHtml } from '@/lib/utils/html-generator';
+  import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
   import { TocPrintTemplate } from '@/lib/templates/TocPrintTemplate.tsx';
   import { getTocLinkData, getPageCount } from '@/lib/preview-engine/paged-engine';
@@ -228,8 +228,8 @@
             threshold
           );
           
-          const headerHtml = generateSectionHtml(tocStore.headerConfig);
-          const footerHtml = generateSectionHtml(tocStore.footerConfig);
+          const headerHtml = PageSectionTemplate(tocStore.headerConfig);
+          const footerHtml = PageSectionTemplate(tocStore.footerConfig);
           const pageCss = generatePageCss(tocStore.headerConfig, tocStore.footerConfig, tocStore.pageLayout, tocStore.hfLayout);
 
           const fullHtml = TocPrintTemplate({

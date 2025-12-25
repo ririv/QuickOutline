@@ -1,7 +1,7 @@
 import { Previewer } from 'pagedjs';
 import type { PageLayout, HeaderFooterLayout } from '@/lib/types/page';
 import { generatePageCss } from './css-generator';
-import { generateSectionHtml } from '@/lib/utils/html-generator';
+import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
 
 interface PagedPayload {
     html: string;
@@ -139,8 +139,8 @@ export class PagedEngine {
             [window.location.href]: pageCss
         };
 
-        const headerHtml = generateSectionHtml(header);
-        const footerHtml = generateSectionHtml(footer);
+        const headerHtml = PageSectionTemplate(header);
+        const footerHtml = PageSectionTemplate(footer);
 
         const contentWithStyle = `
         <style>${styles}</style>

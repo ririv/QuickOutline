@@ -16,7 +16,7 @@
   import { appDataDir, join } from '@tauri-apps/api/path'; // Import path utils
   import { getEditorPreviewCss } from '@/lib/editor/style-converter';
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
-  import { generateSectionHtml } from '@/lib/utils/html-generator';
+  import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
   import { MarkdownPrintTemplate } from '@/lib/templates/MarkdownPrintTemplate.tsx'; // Import the new template
   
@@ -115,8 +115,8 @@
     const baseUrl = '.';
 
     // Generate Header/Footer HTML
-    const headerHtml = generateSectionHtml(pagedContent.header);
-    const footerHtml = generateSectionHtml(pagedContent.footer);
+    const headerHtml = PageSectionTemplate(pagedContent.header);
+    const footerHtml = PageSectionTemplate(pagedContent.footer);
 
     // Generate Page CSS
     const pageCss = generatePageCss(pagedContent.header, pagedContent.footer, pagedContent.pageLayout, pagedContent.hfLayout);
