@@ -30,6 +30,15 @@ export const defaultHeaderFooterLayout: HeaderFooterLayout = {
     footerPadding: 1
 };
 
+export interface SectionConfig {
+    left: string;
+    center: string;
+    right: string;
+    inner: string;
+    outer: string;
+    drawLine: boolean;
+}
+
 // Standard page sizes in millimeters [width, height]
 export const PAGE_SIZES_MM: Record<string, [number, number]> = {
     'A4': [210, 297],

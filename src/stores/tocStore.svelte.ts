@@ -1,14 +1,5 @@
 import { PageLabelNumberingStyle } from "@/lib/styleMaps";
-import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout } from "@/lib/types/page";
-
-interface SectionConfig {
-    left: string;
-    center: string;
-    right: string;
-    inner: string;
-    outer: string;
-    drawLine: boolean;
-}
+import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout, type SectionConfig } from "@/lib/types/page";
 
 export class TocState {
     // File association

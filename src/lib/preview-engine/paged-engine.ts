@@ -1,13 +1,13 @@
 import { Previewer } from 'pagedjs';
-import type { PageLayout, HeaderFooterLayout } from '@/lib/types/page';
+import type { PageLayout, HeaderFooterLayout, SectionConfig } from '@/lib/types/page';
 import { generatePageCss } from './css-generator';
 import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
 
 interface PagedPayload {
     html: string;
     styles: string;
-    header: any;
-    footer: any;
+    header: SectionConfig;
+    footer: SectionConfig;
     pageLayout?: PageLayout;
     hfLayout?: HeaderFooterLayout;
 }
