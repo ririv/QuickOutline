@@ -14,7 +14,7 @@ export interface LinkResolverConfig {
  * @param config Context configuration for resolution.
  * @returns An object with the 0-based index and a flag indicating if it targets the original document structure.
  */
-export function resolveLinkTarget(target: string, config: LinkResolverConfig): { index: number, isOriginal: boolean } | null {
+export function resolveLinkTarget(target: string, config: LinkResolverConfig): { index: number, isOriginalDoc: boolean } | null {
     if (!target) return null;
     const trimmed = target.trim();
 
@@ -24,7 +24,7 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         const n = parseInt(numStr, 10);
         if (!isNaN(n)) {
             // Physical index = insertPos + (n - 1)
-            return { index: config.insertPos + (n - 1), isOriginal: false };
+            return { index: config.insertPos + (n - 1), isOriginalDoc: false };
         }
     }
 
@@ -34,7 +34,7 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         const n = parseInt(numStr, 10);
         if (!isNaN(n)) {
             // Physical absolute index
-            return { index: n - 1, isOriginal: false };
+            return { index: n - 1, isOriginalDoc: false };
         }
     }
 
@@ -44,7 +44,7 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         if (config.labels) {
             const idx = config.labels.indexOf(labelStr);
             if (idx !== -1) {
-                return { index: idx, isOriginal: true };
+                return { index: idx, isOriginalDoc: true };
             }
         }
         return null; // Explicit target not found
@@ -55,7 +55,7 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         const n = parseInt(trimmed, 10);
         if (!isNaN(n)) {
             // Logic index with offset correction
-            return { index: (n + config.offset) - 1, isOriginal: true };
+            return { index: (n + config.offset) - 1, isOriginalDoc: true };
         }
     }
 

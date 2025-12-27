@@ -67,14 +67,14 @@ const pageValidationPlugin = ViewPlugin.fromClass(class {
                     if (result) {
                         const idx = result.index;
                         // Check bounds
-                        // If targeting original (isOriginal=true): idx must be within original doc (0 to totalPage-1)
-                        // If targeting absolute (isOriginal=false): idx depends on merged doc size... 
+                        // If targeting original (isOriginalDoc=true): idx must be within original doc (0 to totalPage-1)
+                        // If targeting absolute (isOriginalDoc=false): idx depends on merged doc size...
                         // But wait, totalPage passed here is likely the ORIGINAL doc page count ($docStore.pageCount).
-                        // If we are targeting TOC (isOriginal=false), we can't easily validate against original count.
+                        // If we are targeting TOC (isOriginalDoc=false), we can't easily validate against original count.
                         // However, usually absolute links (#15) are meant for the final doc.
                         // Let's assume validation is primarily for "Original Doc" targets.
                         
-                        if (result.isOriginal) {
+                        if (result.isOriginalDoc) {
                              if (idx < 0 || idx >= totalPage) {
                                  builder.add(line.from, line.from, invalidPageDecoration);
                              }

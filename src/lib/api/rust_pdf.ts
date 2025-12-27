@@ -16,7 +16,7 @@ export interface TocLinkDto {
     width: number;
     height: number;
     targetPageIndex: number;
-    targetIsOriginal: boolean;
+    targetIsOriginalDoc: boolean;
 }
 
 export interface TocConfig {

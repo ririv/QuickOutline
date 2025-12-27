@@ -19,7 +19,7 @@ pub struct TocLinkDto {
     pub width: f64,
     pub height: f64,
     pub target_page_index: i32,
-    pub target_is_original: bool,
+    pub target_is_original_doc: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -263,7 +263,7 @@ fn add_links_to_lopdf_doc(
         // Assuming frontend sends 0-based index now as per our discussion.
         let target_idx = link.target_page_index as usize;
 
-        let target_page_id = if link.target_is_original {
+        let target_page_id = if link.target_is_original_doc {
             // Mapping Strategy: Use original ID to find the page, regardless of where it moved
             if target_idx >= original_page_ids.len() { continue; }
             original_page_ids[target_idx]

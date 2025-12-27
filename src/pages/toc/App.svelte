@@ -200,7 +200,7 @@
                       width: raw.width,
                       height: raw.height,
                       targetPageIndex: target.index,
-                      targetIsOriginal: target.isOriginal
+                      targetIsOriginalDoc: target.isOriginalDoc
                   });
               }
           }
