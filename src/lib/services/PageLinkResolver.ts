@@ -38,15 +38,28 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         }
     }
 
-    // 3. Logic Page Label Matching
+    // 3. Explicit Page Label Matching (e.g., @5 or @iv)
+    if (trimmed.startsWith("@")) {
+        const labelStr = trimmed.substring(1);
+        if (config.labels) {
+            const idx = config.labels.indexOf(labelStr);
+            if (idx !== -1) {
+                return { index: idx, isOriginal: true };
+            }
+        }
+        return null; // Explicit target not found
+    }
+
+    // 4. Implicit Page Label Matching
     if (config.labels) {
         const idx = config.labels.indexOf(trimmed);
         if (idx !== -1) {
+            // Label matches, return exact index without offset
             return { index: idx, isOriginal: true };
         }
     }
 
-    // 4. Fallback: Pure number + Global Offset
+    // 5. Fallback: Pure number + Global Offset
     if (/^\d+$/.test(trimmed)) {
         const n = parseInt(trimmed, 10);
         if (!isNaN(n)) {
