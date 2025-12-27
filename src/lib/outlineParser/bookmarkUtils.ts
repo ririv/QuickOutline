@@ -1,5 +1,4 @@
-import type { BookmarkUI } from "../types/bookmark.ts";
-import { INDENT_UNIT, FOUR_NORM_SPACE } from "./constants";
+import type {BookmarkUI} from "../types/bookmark.ts";
 
 export type LinkedBookmark = BookmarkUI & {
     parent?: LinkedBookmark;
@@ -92,30 +91,6 @@ function cleanupParentReferences(node: LinkedBookmark) {
             cleanupParentReferences(child as LinkedBookmark);
         }
     }
-}
-
-export function serializeBookmarkTree(root: BookmarkUI): string {
-    let result = "";
-    
-    function traverse(node: BookmarkUI) {
-        if (node.level > 0) {
-            const pageNumStr = node.pageNum ? node.pageNum : "";
-            result += buildLine(node.level, node.title, pageNumStr);
-        }
-        
-        if (node.children) {
-            node.children.forEach(child => traverse(child));
-        }
-    }
-
-    traverse(root);
-    return result;
-}
-
-function buildLine(level: number, title: string, pageNum: string): string {
-    if (level < 1) return "";
-    const indent = INDENT_UNIT.repeat(level - 1);
-    return `${indent}${title}${FOUR_NORM_SPACE}${pageNum}\n`;
 }
 
 function flatten(nodes: BookmarkUI[]): BookmarkUI[] {

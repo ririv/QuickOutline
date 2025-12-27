@@ -1,6 +1,6 @@
 import { rpc } from '@/lib/api/rpc';
-import { serializeBookmarkTree } from '@/lib/outlineParser';
 import { tocStore } from '@/stores/tocStore.svelte';
+import { tocService } from './TocService';
 
 export class OutlineService {
     // Engine Switch (Internal Config)
@@ -15,15 +15,38 @@ export class OutlineService {
             
             if (this.engine === 'pdfjs') {
                 // Dynamic import to keep bundle size optimized
-                const { loadPdfFromPath, getBookmarks } = await import('@/lib/pdfjs');
+                const { loadPdfFromPath, getBookmarks, getPageLabels } = await import('@/lib/pdfjs');
                 
                 console.log("[OutlineService] Loading outline via PDF.js...");
                 // 1. Load PDF
                 const pdf = await loadPdfFromPath(path);
                 // 2. Get Bookmarks
                 const bookmarks = await getBookmarks(pdf);
+                // 3. Get Page Labels
+                const labels = await getPageLabels(pdf);
+
+                // 4. Post-process bookmarks to include labels
+                if (labels) {
+                    const updatePageNums = (nodes: any[]) => {
+                        for (const node of nodes) {
+                            if (node.pageNum) {
+                                const physical = parseInt(node.pageNum, 10);
+                                if (!isNaN(physical) && physical >= 1 && physical <= labels.length) {
+                                    const label = labels[physical - 1];
+                                    // Use explicit link format: "Label <#Physical>"
+                                    // This ensures the editor displays "Label" but links to "Physical"
+                                    node.pageNum = `${label} <#${physical}>`;
+                                }
+                            }
+                            if (node.children) {
+                                updatePageNums(node.children);
+                            }
+                        }
+                    };
+                    updatePageNums(bookmarks);
+                }
                 
-                // 3. Serialize to Text (for the editor)
+                // 5. Serialize to Text (for the editor)
                 // Wrap bookmarks in a virtual root
                 const root: any = { 
                     id: 'virtual-root',
@@ -32,7 +55,7 @@ export class OutlineService {
                     children: bookmarks,
                     pageNum: null
                 };
-                outline = serializeBookmarkTree(root);
+                outline = tocService.serializeForTocEditor(root);
                 
                 // Cleanup
                 pdf.destroy();
@@ -41,7 +64,7 @@ export class OutlineService {
                 // Fallback to lopdf (Rust)
                 console.log("[OutlineService] Loading outline via lopdf (Rust)...");
                 const dto = await rpc.getOutlineAsBookmark(path, 0);
-                outline = serializeBookmarkTree(dto);
+                outline = tocService.serializeForTocEditor(dto);
             }
 
             // Initialize store with new file and default config

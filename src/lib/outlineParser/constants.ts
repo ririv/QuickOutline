@@ -4,7 +4,7 @@
 export const NORM_SPACE = " ";
 export const TWO_NORM_SPACE = NORM_SPACE + NORM_SPACE;
 export const FOUR_NORM_SPACE = NORM_SPACE + NORM_SPACE + NORM_SPACE + NORM_SPACE;
-export const INDENT_UNIT = "\t";
+export const INDENT_UNIT = "    ";
 export const NORM_DOT = ".";
 
 // Regex patterns
