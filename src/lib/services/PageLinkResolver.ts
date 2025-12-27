@@ -50,17 +50,8 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         return null; // Explicit target not found
     }
 
-    // 4. Implicit Page Label Matching
-    if (config.labels) {
-        const idx = config.labels.indexOf(trimmed);
-        if (idx !== -1) {
-            // Label matches, return exact index without offset
-            return { index: idx, isOriginal: true };
-        }
-    }
-
-    // 5. Fallback: Pure number + Global Offset
-    if (/^\d+$/.test(trimmed)) {
+    // 4. Logic Page Number (Strict priority for numbers, NO implicit label fallback)
+    if (/^-?\d+$/.test(trimmed)) {
         const n = parseInt(trimmed, 10);
         if (!isNaN(n)) {
             // Logic index with offset correction

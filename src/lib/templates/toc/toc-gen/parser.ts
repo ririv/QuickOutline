@@ -39,34 +39,20 @@ export function parseTocLine(line: string): TocLineParsed | null {
     const separator = match[2];
     const pageInfo = match[3].trim();
 
-    // Parse Page Info: "DisplayPage [<LinkTarget>]"
-    // Regex: Start with non-whitespace/non-< chars, optionally followed by <...>
-    // e.g. "5" -> match[1]="5", match[2]=undefined
-    // e.g. "5 <#15>" -> match[1]="5", match[2]="#15"
-    // e.g. "<toc:1>" -> match[1]=undefined (if strict) or need handling
-    
-    let displayPage = pageInfo;
-    let linkTarget = pageInfo;
+    // Parse Page Info: "DisplayPage [| LinkTarget]"
+    let displayPage = "";
+    let linkTarget = "";
     let hasExplicitLink = false;
 
-    // Try to extract display page and bracketed link
-    const infoMatch = pageInfo.match(/^([^\s<]+)(?:\s*<([^>]+)>)?/);
-    
-    if (infoMatch) {
-        displayPage = infoMatch[1];
-        if (infoMatch[2]) {
-            linkTarget = infoMatch[2].trim();
-            hasExplicitLink = true;
-        } else {
-            linkTarget = displayPage;
-        }
-    } else if (pageInfo.startsWith("<") && pageInfo.endsWith(">")) {
-        // Case: Only link provided, e.g. "<toc:1>"
-        // Display page is empty or maybe we treat the whole thing as link?
-        // Let's say display page is empty string (visual gap)
-        displayPage = ""; 
-        linkTarget = pageInfo.slice(1, -1).trim();
+    if (pageInfo.includes("|")) {
+        const parts = pageInfo.split("|");
+        displayPage = parts[0].trim();
+        linkTarget = parts[1].trim();
         hasExplicitLink = true;
+    } else {
+        displayPage = pageInfo.trim();
+        linkTarget = displayPage;
+        hasExplicitLink = false;
     }
 
     return {
