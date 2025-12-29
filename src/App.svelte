@@ -1,7 +1,7 @@
 <script lang="ts">
     import LeftPane from './components/LeftPane.svelte';
-    import { appStore, FnTab } from '@/stores/appStore';
-    import { docStore } from '@/stores/docStore.svelte.ts';
+    import { appStore, FnTab } from '@/stores/appStore.svelte';
+    import { docStore } from '@/stores/docStore.svelte';
     import BookmarkTab from './pages/bookmark/App.svelte';
     import PageLabelTab from './pages/pagelabel/App.svelte';
     import TocGeneratorTab from './pages/toc/App.svelte';
@@ -14,10 +14,7 @@
     import { listen } from '@tauri-apps/api/event';
     import { onMount, onDestroy } from 'svelte';
 
-    let activeTab = $state(FnTab.bookmark);
-    appStore.subscribe(state => {
-        activeTab = state.activeTab;
-    });
+    let activeTab = $derived(appStore.activeTab);
 
     let isDragging = $state(false);
     let unlistenFns: (() => void)[] = [];

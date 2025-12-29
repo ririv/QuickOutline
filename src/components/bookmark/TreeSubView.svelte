@@ -5,8 +5,8 @@
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { rpc } from '@/lib/api/rpc';
     import { serializeBookmarkTree } from '@/lib/outlineParser';
-    import { messageStore } from '@/stores/messageStore';
-    import { appStore } from '@/stores/appStore';
+    import { messageStore } from '@/stores/messageStore.svelte.ts';
+    import { appStore } from '@/stores/appStore.svelte.ts';
     import PreviewPopup from '../PreviewPopup.svelte';
 
     let bookmarks = $state<BookmarkUI[]>([]);

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { flip } from 'svelte/animate';
-    import { messageStore } from '@/stores/messageStore';
+    import { messageStore } from '@/stores/messageStore.svelte';
     import Message from './Message.svelte';
 </script>
 
@@ -9,7 +9,7 @@
     aria-live="polite"
     role="status"
 >
-    {#each $messageStore as message (message.id)}
+    {#each messageStore.list as message (message.id)}
         <div animate:flip={{ duration: 500 }}>
             <Message {...message} />
         </div>

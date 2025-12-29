@@ -8,7 +8,6 @@
     import { handleImageUpdate } from "@/lib/preview-engine/image-engine";
     import PagedRenderer from "./renderers/PagedRenderer.svelte";
     import { docStore } from '@/stores/docStore.svelte'; // Import docStore
-    import { appStore, FnTab } from '@/stores/appStore'; // Import appStore and FnTab
 
     interface Props {
         mode?: "svg" | "image" | "paged";

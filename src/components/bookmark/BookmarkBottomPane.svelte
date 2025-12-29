@@ -18,9 +18,8 @@
     import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte.ts';
-    import { messageStore } from '@/stores/messageStore';
+    import { messageStore } from '@/stores/messageStore.svelte.ts';
     import type { BookmarkUI } from '@/lib/types/bookmark.ts';
-    import { untrack } from 'svelte';
 
     interface Props {
         view: 'text' | 'tree' | 'double';

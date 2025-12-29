@@ -3,7 +3,7 @@
     import TreeSubView from '../../components/bookmark/TreeSubView.svelte';
     import BookmarkBottomPane from '../../components/bookmark/BookmarkBottomPane.svelte';
     import SplitPane from '../../components/SplitPane.svelte';
-    import { messageStore } from '@/stores/messageStore';
+    import { messageStore } from '@/stores/messageStore.svelte.ts';
     
     type View = 'text' | 'tree' | 'double';
     let currentView = $state<View>('text');

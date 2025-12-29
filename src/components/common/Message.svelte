@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fade, slide } from 'svelte/transition';
     import { onMount } from 'svelte';
-    import { messageStore, type MessageType } from '@/stores/messageStore';
+    import { messageStore, type MessageType } from '@/stores/messageStore.svelte.ts';
 
     interface Props {
         id: number;

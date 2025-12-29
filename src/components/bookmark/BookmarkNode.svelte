@@ -2,7 +2,6 @@
     import type { BookmarkUI } from "../../lib/types/bookmark.ts";
     import BookmarkNode from "./BookmarkNode.svelte"; // Self-import for recursion
     import { tick, getContext } from "svelte";
-    import { appStore } from '@/stores/appStore';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte.ts';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';

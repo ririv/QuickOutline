@@ -6,15 +6,14 @@
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import '../../assets/global.css';
   import { onMount } from 'svelte';
-  
-  import { rpc } from '@/lib/api/rpc';
+
   import { generateTocPage, type TocConfig, type TocLinkDto } from '@/lib/api/rust_pdf';
   import { outlineService } from '@/lib/services/OutlineService';
-  import { messageStore } from '@/stores/messageStore';
+  import { messageStore } from '@/stores/messageStore.svelte.ts';
   import { docStore } from '@/stores/docStore.svelte.ts';
   import { tocStore } from '@/stores/tocStore.svelte';
   import { printStore } from '@/stores/printStore.svelte'; // Import global print store
-  import { appStore, FnTab } from '@/stores/appStore';
+  import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
   import { generateTocHtml, DOT_GAP } from '@/lib/templates/toc/toc-gen/toc-generator.tsx';
   import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
   import { generatePageCss } from '@/lib/preview-engine/css-generator';
@@ -31,13 +30,7 @@
   
   let debounceTimer: number;
 
-  let activeTab = $state($appStore.activeTab); // Local state for activeTab
-  // Subscribe to appStore updates
-  $effect(() => {
-    return appStore.subscribe(val => {
-      activeTab = val.activeTab;
-    });
-  });
+  let activeTab = $derived(appStore.activeTab);
 
   // Refresh preview when tab becomes active to restore CSS
   $effect(() => {

@@ -1,17 +1,15 @@
 <script lang="ts">
-    import { appStore, type ConnectionStatus } from '@/stores/appStore'; 
+    import { appStore, type ConnectionStatus } from '@/stores/appStore.svelte';
     import { rpc } from '@/lib/api/rpc';
     import { printStore } from '@/stores/printStore.svelte';
     import StyledSelect from '@/components/controls/StyledSelect.svelte';
 
     let port = $state(0);
-    let currentPort = $state(0);
+    const currentPort = $derived(appStore.serverPort);
 
-    // Sync with store
-    appStore.subscribe(state => {
-        if (state.serverPort !== currentPort) {
-            currentPort = state.serverPort;
-            if (port === 0) port = currentPort;
+    $effect(() => {
+        if (currentPort > 0 && port === 0) {
+            port = currentPort;
         }
     });
 
@@ -111,15 +109,15 @@
                            bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed
                            min-w-[120px] text-center" 
                     onclick={handleConnect}
-                    disabled={$appStore.connectionStatus === 'connecting'}
+                    disabled={appStore.connectionStatus === 'connecting'}
                 >
-                    {getConnectionStatusText($appStore.connectionStatus) === 'Connecting...' ? 'Connecting...' : 'Connect'}
+                    {getConnectionStatusText(appStore.connectionStatus) === 'Connecting...' ? 'Connecting...' : 'Connect'}
                 </button>
             </div>
             <p class="text-xs text-gray-600 mt-0">
                 Current Port: <strong class="font-bold mr-2">{currentPort || 'Not Connected'}</strong>
-                Status: <span class="font-bold {getConnectionStatusColor($appStore.connectionStatus)}">
-                            {getConnectionStatusText($appStore.connectionStatus)}
+                Status: <span class="font-bold {getConnectionStatusColor(appStore.connectionStatus)}">
+                            {getConnectionStatusText(appStore.connectionStatus)}
                         </span>
             </p>
         </div>

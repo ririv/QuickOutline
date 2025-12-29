@@ -12,7 +12,7 @@
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
     import StyledInput from "@/components/controls/StyledInput.svelte";
     import { ripple } from '@/lib/actions/ripple';
-    import { messageStore } from '@/stores/messageStore';
+    import { messageStore } from '@/stores/messageStore.svelte.ts';
     import { docStore } from '@/stores/docStore.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
     import { rpc, type PageLabelRuleDto } from '@/lib/api/rpc';

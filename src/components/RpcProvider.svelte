@@ -1,10 +1,9 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { get } from 'svelte/store';
     import { rpc } from '@/lib/api/rpc';
     import { listen } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/core';
-    import { appStore } from '@/stores/appStore';
+    import { appStore } from '@/stores/appStore.svelte';
 
     let { children } = $props();
 
@@ -164,7 +163,7 @@
     function handleDisconnect(info: any) {
         console.warn("RpcProvider: Disconnected", info);
         if (status === 'connected') {
-            const currentPort = get(appStore).serverPort || rpc.port;
+            const currentPort = appStore.serverPort || rpc.port;
             handleError(`Connection lost: ${info.reason || 'Server stopped'}.\nWaiting for recovery...`);
             
             if (currentPort > 0) {

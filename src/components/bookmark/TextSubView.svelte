@@ -4,8 +4,8 @@
     import { docStore } from '@/stores/docStore.svelte.ts';
     import { rpc } from '@/lib/api/rpc';
     import { processText, autoFormat, Method } from '@/lib/outlineParser';
-    import { messageStore } from '@/stores/messageStore';
-    import type { BookmarkUI } from '../../lib/types/bookmark.ts';
+    import { messageStore } from '@/stores/messageStore.svelte.ts';
+    import type { BookmarkUI } from '@/lib/types/bookmark.ts';
     import formatIcon from '@/assets/icons/format.svg'; // Using text-edit for format
     import sequentialIcon from '@/assets/icons/mode-sequential.svg';
     import indentIcon from '@/assets/icons/mode-indent.svg';

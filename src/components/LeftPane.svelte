@@ -1,14 +1,9 @@
 <script lang="ts">
-    import { appStore, FnTab } from '../stores/appStore';
+    import { appStore, FnTab } from '../stores/appStore.svelte';
     import HelpWindow from './HelpWindow.svelte';
     
-    let activeTab = $state(FnTab.bookmark);
+    const activeTab = $derived(appStore.activeTab);
     let showHelpModal = $state(false);
-
-    // Subscribe to the store to update local state
-    appStore.subscribe(state => {
-        activeTab = state.activeTab;
-    });
 
     function switchTab(tab: FnTab) {
         appStore.switchTab(tab);
