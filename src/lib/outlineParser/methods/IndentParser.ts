@@ -9,9 +9,9 @@ export class IndentParser extends BaseParser {
     // JS Regex:
     // Group 1: Indent (optional)
     // Group 2: Title (non-greedy)
-    // Group 3: Page Number (optional, integer)
+    // Group 3: Page Number (optional, string)
     // Note: [\s.]* handles dots/spaces between title and page number
-    private readonly indentPattern = /^(\s*)?(.*?)[\s.]*(-?[0-9]+)?\s*$/;
+    private readonly indentPattern = /^(\s*)?(.*?)[\s.]*([#@\-]?[^\s.]+)?\s*$/;
 
     parseLine(line: string, linearBookmarkList: BookmarkUI[]): BookmarkUI {
         const match = line.match(this.indentPattern);

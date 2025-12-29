@@ -21,7 +21,7 @@ export class CnSeqParser extends BaseParser {
     // 4: pageNum
     
     // Using [\s\u3000] for whitespace to be safe with Chinese input
-    private readonly cnPattern = /^([\s\u3000]*)?(\S?[\s\u3000]?[零一二三四五六七八九十百千0-9]+[\s\u3000]?(?:篇|章|节|部分)|[0-9.]+)?[\s\u3000]*(.*?)[\s\u3000.]*(-?[0-9]+)?[\s\u3000]*$/;
+    private readonly cnPattern = /^([\s\u3000]*)?(\S?[\s\u3000]?[零一二三四五六七八九十百千0-9]+[\s\u3000]?(?:篇|章|节|部分)|[0-9.]+)?[\s\u3000]*(.*?)[\s\u3000.]*([#@\-]?[^\s\u3000.]+)?[\s\u3000]*$/;
 
     parseLine(line: string, linearBookmarkList: BookmarkUI[]): BookmarkUI {
         const match = line.match(this.cnPattern);

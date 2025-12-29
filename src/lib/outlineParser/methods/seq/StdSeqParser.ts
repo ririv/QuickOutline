@@ -9,9 +9,9 @@ export class StdSeqParser extends BaseParser {
     // JS:
     // Group 1: indent (unused)
     // Group 2: seq (digits.digits...)
-    // Group 4: title
-    // Group 5: pageNum
-    private readonly stdPattern = /^(\s*)?(\d+(?:\.\d+)*\.?)?\s*(.*?)["\s.]*(-?[0-9]+)?\s*$/;
+    // Group 3: title
+    // Group 4: pageNum
+    private readonly stdPattern = /^(\s*)?(\d+(?:\.\d+)*\.?)?\s*(.*?)[\s.]*([#@\-]?[^\s.]+)?\s*$/;
 
     parseLine(line: string, linearBookmarkList: BookmarkUI[]): BookmarkUI {
         const match = line.match(this.stdPattern);
