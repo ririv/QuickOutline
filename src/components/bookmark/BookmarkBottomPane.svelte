@@ -16,6 +16,7 @@
     import { ripple } from '@/lib/actions/ripple';
     
     import { rpc } from '@/lib/api/rpc';
+    import { outlineService } from '@/lib/services/OutlineService';
     import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte.ts';
@@ -40,6 +41,20 @@
     
     let offsetValue = $state('');
     let debounceTimer: number | undefined;
+    let lastLoadedPath = $state<string | null>(null);
+
+    // Auto-load bookmarks when file changes
+    $effect(() => {
+        const path = docStore.currentFilePath;
+        if (path && path !== lastLoadedPath) {
+            untrack(() => {
+                lastLoadedPath = path;
+                handleGetContentsClick();
+            });
+        } else if (!path) {
+            lastLoadedPath = null;
+        }
+    });
 
     // Simple debounce function
     function debounce(func: Function, delay: number) {
@@ -101,17 +116,16 @@
                 return;
             }
 
-            const offset = parseInt(offsetValue, 10) || 0;
-            // 1. Get Bookmark DTO from backend
-            const bookmarkDto: BookmarkUI = await rpc.getOutlineAsBookmark(path, offset);
+            // 1. Get Bookmark DTO via unified service
+            const bookmarkDto: BookmarkUI = await outlineService.fetchBookmarks(path);
+            console.log('[Bookmark] Loaded data:', bookmarkDto);
             
-            // 3. Sync text locally
+            // 2. Sync text locally
             const text = serializeBookmarkTree(bookmarkDto); 
 
-            // 4. Update frontend store
+            // 3. Update frontend store
             bookmarkStore.setText(text);
             bookmarkStore.setTree(bookmarkDto.children || []);
-            bookmarkStore.offset = offset;
             
             messageStore.add('Outline loaded successfully', 'SUCCESS');
         } catch (e: any) {
