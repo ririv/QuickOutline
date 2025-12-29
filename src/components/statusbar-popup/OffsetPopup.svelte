@@ -1,6 +1,7 @@
 <script lang="ts">
   import ArrowPopup from '../controls/ArrowPopup.svelte';
   import StyledInput from '../controls/StyledInput.svelte';
+  import PreviewPopup from '../PreviewPopup.svelte'; // Import PreviewPopup
   import { docStore } from '@/stores/docStore';
   import { pdfRenderService } from '@/lib/services/PdfRenderService';
   import { onMount } from 'svelte';
@@ -21,6 +22,10 @@
   let isLoading = $state(false);
   let listContainer: HTMLDivElement;
   
+  // Hover Preview State
+  let hoveredPage = $state<{ src: string, y: number, anchorX: number } | null>(null);
+  let previewCache = new Map<number, string>(); // Cache for high-res previews
+
   // How many pages to load initially. Usually offset is found within the first few pages (front matter).
   const INITIAL_LOAD_COUNT = 30; 
   const LOAD_INCREMENT = 20;
@@ -46,7 +51,6 @@
       loadedCount = end;
 
       // Fetch thumbnails concurrently
-      // We don't await this blocking the UI, but we process in chunks to be nice
       processThumbnails(newItems);
       
       isLoading = false;
@@ -60,13 +64,46 @@
           try {
               // 'thumbnail' scale is usually 0.5 or small
               const url = await pdfRenderService.renderPage(filePath, item.index, 'thumbnail');
-              // Update state
               const found = pages.find(p => p.index === item.index);
               if (found) found.url = url;
           } catch (e) {
               console.error(`Failed to load thumb for page ${item.index}`, e);
           }
       }
+  }
+  
+  async function handleMouseEnter(e: MouseEvent, page: {index: number, url: string | null}) {
+      const target = e.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      
+      // Calculate anchor position (center right of the thumbnail)
+      const anchorX = rect.right; 
+      const y = rect.top + rect.height / 2;
+
+      // Determine initial source (cache > thumbnail > placeholder)
+      let src = previewCache.get(page.index) || page.url || '';
+      
+      if (!src) return; // Should not happen if thumb loaded, but just in case
+
+      hoveredPage = { src, y, anchorX };
+
+      // If not cached, fetch high-res
+      if (!previewCache.has(page.index) && $docStore.currentFilePath) {
+          try {
+              const highResUrl = await pdfRenderService.renderPage($docStore.currentFilePath, page.index, 'preview');
+              previewCache.set(page.index, highResUrl);
+              // Update if still hovering the same position (simple check)
+              if (hoveredPage && Math.abs(hoveredPage.y - y) < 1) { 
+                   hoveredPage = { ...hoveredPage, src: highResUrl };
+               }
+          } catch (e) {
+              console.error("Failed to load high-res preview", e);
+          }
+      }
+  }
+
+  function handleMouseLeave() {
+      hoveredPage = null;
   }
 
   function handleScroll(e: UIEvent) {
@@ -77,24 +114,38 @@
   }
 
   function setAsLogicOne(idx: number) {
-      // Logic Page 1 = Index + 1 - Offset
-      // If we want this page (Index) to be Logic 1:
-      // 1 = Index + 1 - Offset  =>  Offset = Index
       offset = idx;
       onchange?.();
   }
 
   onMount(() => {
       // Initial load
-      loadMorePages();
+      loadMorePages().then(() => {
+          // Auto-scroll to offset after initial load
+          if (offset > 0 && listContainer) {
+              const targetRow = listContainer.children[offset] as HTMLElement;
+              if (targetRow) {
+                  targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+          }
+      });
   });
 
   const hasLabels = $derived($docStore.originalPageLabels && $docStore.originalPageLabels.length > 0);
 </script>
 
+{#if hoveredPage}
+    <PreviewPopup 
+        src={hoveredPage.src} 
+        y={hoveredPage.y} 
+        anchorX={hoveredPage.anchorX} 
+        placement="right"
+    />
+{/if}
+
 <ArrowPopup 
   placement="top" 
-  minWidth="340px" 
+  minWidth="380px" 
   padding="0"
   {triggerEl}
 >
@@ -106,53 +157,70 @@
           </div>
           <div class="hint">
             {#if hasLabels}
-                <span class="badge success">Page Labels Detected</span>
+                <span class="badge success">Labels Detected</span>
             {:else}
-                <span class="badge warning">No Page Labels</span>
+                <span class="badge warning">No Labels</span>
             {/if}
-            <div style="margin-top: 4px;">Adjust so logic page 1 matches content.</div>
+            <span class="hint-text">Set the physical page that matches "Page 1".</span>
           </div>
       </div>
 
       <div class="divider"></div>
 
       <div class="calibration-header">
-          <span>Calibration Helper</span>
-          <span class="sub-text">Find the actual 1st page</span>
+          <span>Visual Calibration</span>
+          <span class="sub-text">Scroll to find start of content</span>
       </div>
 
       <div class="page-list" onscroll={handleScroll} bind:this={listContainer}>
           {#each pages as page (page.index)}
               <div class="page-row" class:active={page.index === offset}>
-                  <div class="thumb-col">
+                  <!-- svelte-ignore a11y_mouse_events_have_key_events -->
+                  <div 
+                    class="thumb-col"
+                    onmouseenter={(e) => handleMouseEnter(e, page)}
+                    onmouseleave={handleMouseLeave}
+                    role="img" 
+                  >
                       {#if page.url}
-                          <img src={page.url} alt="p{page.index}"/>
+                          <img src={page.url} alt="p{page.index}" class="fade-in"/>
                       {:else}
-                          <div class="thumb-placeholder">...</div>
+                          <div class="thumb-skeleton"></div>
                       {/if}
                       <div class="phys-idx">#{page.index + 1}</div>
                   </div>
                   
                   <div class="info-col">
+                      <div class="logic-row">
+                          <span class="label">Logic:</span>
+                          <span class="value logic">{page.index - offset + 1}</span>
+                      </div>
                       {#if hasLabels}
-                        <div class="label-info">Label: <strong>{page.label}</strong></div>
+                        <div class="meta-row">
+                            <span class="label">Label@</span>
+                            <span class="value label-text">{page.label}</span>
+                        </div>
                       {/if}
-                      <div class="logic-info">Logic: <strong>{page.index - offset + 1}</strong></div>
                   </div>
 
                   <div class="action-col">
                       {#if page.index === offset}
-                          <span class="current-badge">Start Here</span>
+                          <div class="current-indicator">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              <span>Logic P1</span>
+                          </div>
                       {:else}
-                          <button class="set-btn" onclick={() => setAsLogicOne(page.index)} title="Set this as Logic Page 1">
-                              Set #1
+                          <button class="set-btn" onclick={() => setAsLogicOne(page.index)} title="Set this page as Logic Page 1">
+                              Set as Logic P1
                           </button>
                       {/if}
                   </div>
               </div>
           {/each}
           {#if isLoading}
-              <div class="loading-row">Loading...</div>
+              <div class="loading-row">
+                  <span class="spinner"></span> Loading pages...
+              </div>
           {/if}
       </div>
   </div>
@@ -162,164 +230,248 @@
   .popup-content {
       display: flex;
       flex-direction: column;
-      max-height: 450px; /* Limit total height */
+      max-height: 500px;
+      background: #fff;
   }
 
   .header-section {
-      padding: 12px 15px;
+      padding: 16px;
       flex-shrink: 0;
+      background: #fff;
+      z-index: 2;
   }
 
   label {
       display: block;
       font-weight: 600;
-      margin-bottom: 6px;
-      color: #333;
+      margin-bottom: 8px;
+      color: #1f2937;
       font-size: 13px;
   }
   
   .hint {
-      margin-top: 8px;
-      font-size: 11px;
-      color: #666;
-      line-height: 1.4;
+      margin-top: 10px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
   }
+  
+  .hint-text { color: #6b7280; font-size: 11px; }
 
   .badge {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 12px;
       font-size: 10px;
-      font-weight: bold;
+      font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.02em;
   }
-  .badge.success { background: #e6fffa; color: #047857; border: 1px solid #a7f3d0; }
-  .badge.warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  .badge.success { background: #d1fae5; color: #065f46; }
+  .badge.warning { background: #fef3c7; color: #92400e; }
 
   .divider {
       height: 1px;
-      background: #eee;
+      background: #e5e7eb;
       width: 100%;
       flex-shrink: 0;
   }
 
   .calibration-header {
-      padding: 8px 15px;
+      padding: 10px 16px;
       background: #f9fafb;
       font-size: 12px;
       font-weight: 600;
-      color: #555;
-      border-bottom: 1px solid #eee;
+      color: #374151;
+      border-bottom: 1px solid #e5e7eb;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
   }
   
-  .sub-text { font-weight: normal; color: #999; font-size: 11px; }
+  .sub-text { font-weight: normal; color: #9ca3af; font-size: 11px; }
 
   .page-list {
       flex: 1;
       overflow-y: auto;
       padding: 0;
-      min-height: 200px;
+      min-height: 250px;
+      position: relative;
   }
 
   .page-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: 70px 1fr auto;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      transition: background 0.15s ease;
       align-items: center;
-      padding: 8px 15px;
-      border-bottom: 1px solid #f0f0f0;
-      transition: background 0.1s;
   }
   
   .page-row:hover {
-      background: #f8f9fa;
+      background: #f9fafb;
   }
   
   .page-row.active {
-      background: #e6f7ff; /* Highlight the offset page */
-      border-left: 3px solid #1890ff;
+      background: #eff6ff;
   }
 
   .thumb-col {
-      width: 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-right: 12px;
+      cursor: zoom-in; /* Indicate zoom interaction */
   }
 
   .thumb-col img {
-      width: 40px;
+      width: 60px; /* Increased size */
       height: auto;
-      border: 1px solid #ddd;
-      border-radius: 2px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
       background: #fff;
       display: block;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   }
   
-  .thumb-placeholder {
-      width: 40px;
-      height: 56px;
-      background: #eee;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      color: #999;
+  .thumb-skeleton {
+      width: 60px;
+      height: 84px; /* Approx A4 aspect ratio */
+      background: #f3f4f6;
+      border-radius: 4px;
+      animation: pulse 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+  }
+  
+  .fade-in {
+      animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
   }
 
   .phys-idx {
       font-size: 10px;
-      color: #999;
-      margin-top: 2px;
+      color: #9ca3af;
+      margin-top: 4px;
+      font-family: monospace;
   }
 
   .info-col {
-      flex: 1;
-      font-size: 12px;
-      color: #444;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 2px;
+      gap: 4px;
   }
   
-  .label-info { color: #666; font-size: 11px; }
-  .logic-info { color: #333; }
-  strong { font-weight: 600; color: #000; }
+  .logic-row, .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }
+  
+  .label { 
+      font-size: 10px; 
+      color: #9ca3af; 
+      text-transform: uppercase; 
+      font-family: 'Consolas', monospace;
+      width: 45px; /* Fixed width for alignment */
+      display: inline-block;
+      flex-shrink: 0;
+  }
+  
+  .value { 
+      font-size: 12px; 
+      font-weight: 500; 
+      color: #374151;
+  }
+  
+  .page-row.active .value.logic {
+      color: #2563eb;
+      font-weight: 600;
+  }
 
   .action-col {
-      margin-left: 10px;
+      min-width: 80px;
+      display: flex;
+      justify-content: flex-end;
   }
 
   .set-btn {
-      padding: 4px 8px;
-      background: #fff;
-      border: 1px solid #d9d9d9;
-      border-radius: 4px;
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
       font-size: 11px;
+      font-weight: 500;
       cursor: pointer;
-      color: #666;
+      color: #374151;
       transition: all 0.2s;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+      opacity: 0; /* Hidden by default */
+      transform: translateX(5px);
+  }
+  
+  .page-row:hover .set-btn {
+      opacity: 1;
+      transform: translateX(0);
+  }
+  
+  /* Always show button on touch devices or if preferred */
+  @media (hover: none) {
+      .set-btn { opacity: 1; transform: none; }
   }
   
   .set-btn:hover {
-      border-color: #40a9ff;
-      color: #40a9ff;
+      border-color: #3b82f6;
+      color: #2563eb;
+      background: #eff6ff;
   }
 
-  .current-badge {
+  .current-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
       font-size: 11px;
-      color: #1890ff;
-      font-weight: bold;
+      color: #2563eb;
+      font-weight: 600;
+      background: #dbeafe;
+      padding: 4px 8px;
+      border-radius: 12px;
   }
   
   .loading-row {
-      padding: 10px;
+      padding: 16px;
       text-align: center;
-      font-size: 11px;
-      color: #999;
+      font-size: 12px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+  }
+  
+  .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #6b7280;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+      to { transform: rotate(360deg); }
   }
 </style>
