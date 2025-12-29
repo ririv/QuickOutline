@@ -187,10 +187,10 @@
                       {:else}
                           <div class="thumb-skeleton"></div>
                       {/if}
-                      <div class="phys-idx">#{page.index + 1}</div>
                   </div>
                   
                   <div class="info-col">
+                      <div class="phys-idx">#{page.index + 1}</div>
                       <div class="logic-row">
                           <span class="label">Logic:</span>
                           <span class="value logic">{page.index - offset + 1}</span>
@@ -367,8 +367,10 @@
   .phys-idx {
       font-size: 10px;
       color: #9ca3af;
-      margin-top: 4px;
+      margin-top: 0;
+      margin-bottom: 4px;
       font-family: monospace;
+      text-align: left;
   }
 
   .info-col {
