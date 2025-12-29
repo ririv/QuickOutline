@@ -2,25 +2,61 @@
   import ArrowPopup from '../controls/ArrowPopup.svelte';
   import StyledInput from '../controls/StyledInput.svelte';
   import PreviewPopup from '../PreviewPopup.svelte'; // Import PreviewPopup
-  import { docStore } from '@/stores/docStore.svelte.ts';
+  import { docStore } from '@/stores/docStore.svelte';
   import { pdfRenderService } from '@/lib/services/PdfRenderService';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   interface Props {
     offset?: number;
     onchange?: () => void;
     triggerEl: HTMLElement | undefined;
+    [key: string]: any; // Allow passing extra props like mouse events
   }
 
   let { 
     offset = $bindable(0),
     onchange,
-    triggerEl
+    triggerEl,
+    ...rest // Capture onmouseenter, onmouseleave etc.
   }: Props = $props();
 
   let pages = $state<{index: number, label: string, url: string | null}[]>([]);
   let isLoading = $state(false);
   let listContainer: HTMLDivElement;
+  
+  // Local input state to allow flexible typing (e.g. '-')
+  let localOffset = $state('');
+
+  // Sync: Store -> Local (Only when store changes externally or init)
+  $effect(() => {
+      const current = offset; // Dependency
+      untrack(() => {
+          // If user is typing a minus sign, don't overwrite it
+          if (localOffset === '-') return;
+          
+          const strVal = current === 0 ? '' : String(current);
+          if (localOffset !== strVal) {
+               // Only update if conceptually different to avoid cursor jumps
+               if (parseInt(localOffset || '0') !== current) {
+                   localOffset = strVal;
+               }
+          }
+      });
+  });
+
+  function handleInput(e: Event) {
+      const target = e.target as HTMLInputElement;
+      localOffset = target.value;
+      
+      const val = parseInt(localOffset, 10);
+      if (!isNaN(val)) {
+          offset = val;
+          onchange?.();
+      } else if (localOffset === '') {
+          offset = 0;
+          onchange?.();
+      }
+  }
   
   // Hover Preview State
   let hoveredPage = $state<{ src: string, y: number, anchorX: number } | null>(null);
@@ -148,12 +184,18 @@
   minWidth="380px" 
   padding="0"
   {triggerEl}
+  {...rest}
 >
   <div class="popup-content">
       <div class="header-section">
           <div class="popup-label">Page Offset</div>
           <div class="input-row">
-            <StyledInput type="number" bind:value={offset} oninput={onchange} numericType="integer" />
+            <StyledInput 
+                type="text" 
+                bind:value={localOffset} 
+                oninput={handleInput} 
+                numericType="integer" 
+            />
           </div>
           <div class="hint">
             {#if hasLabels}

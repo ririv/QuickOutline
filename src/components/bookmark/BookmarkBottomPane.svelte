@@ -9,6 +9,7 @@
 
     import GetContentsPopup from './GetContentsPopup.svelte';
     import SetContentsPopup from './SetContentsPopup.svelte';
+    import OffsetPopup from '../statusbar-popup/OffsetPopup.svelte';
     import type { ViewScaleType } from './SetContentsPopup.svelte';
     import GraphButton from '../controls/GraphButton.svelte';
     import StyledInput from '../controls/StyledInput.svelte';
@@ -20,15 +21,17 @@
     import { docStore } from '@/stores/docStore.svelte.ts';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
     import type { BookmarkUI } from '@/lib/types/bookmark.ts';
+    import { untrack } from 'svelte';
 
     interface Props {
         view: 'text' | 'tree' | 'double';
     }
     let { view = $bindable() }: Props = $props();
 
-    let activePopup = $state<'get' | 'set' | null>(null);
+    let activePopup = $state<'get' | 'set' | 'offset' | null>(null);
     let getContentsBtnEl = $state<HTMLButtonElement | undefined>();
     let setContentsBtnEl = $state<HTMLButtonElement | undefined>();
+    let offsetContainerEl = $state<HTMLElement | undefined>();
     let hideTimer: number | null = null;
     
     // State for Popups
@@ -53,11 +56,25 @@
         bookmarkStore.offset = offset;
     }
 
+    // Sync offsetValue with store updates
+    $effect(() => {
+        const currentStoreOffset = bookmarkStore.offset;
+        untrack(() => {
+            // 如果当前输入框只有负号，说明用户正在输入负数，不要被 Store 的 0 覆盖
+            if (offsetValue === '-') return;
+
+            const currentOffsetStr = currentStoreOffset === 0 ? '' : String(currentStoreOffset);
+            if (offsetValue !== currentOffsetStr) {
+                offsetValue = currentOffsetStr;
+            }
+        });
+    });
+
     function setView(newView: 'text' | 'tree' | 'double') {
         view = newView;
     }
 
-    function showPopup(popup: 'get' | 'set') {
+    function showPopup(popup: 'get' | 'set' | 'offset') {
         if (hideTimer) clearTimeout(hideTimer);
         activePopup = popup;
     }
@@ -213,14 +230,24 @@
         </div>
 
         <!-- Offset Input Group -->
-        <StyledInput 
-            icon={offsetIcon}
-            placeholder="Offset"
-            bind:value={offsetValue}
-            oninput={handleOffsetInput}
-            width="100px"
-            numericType="integer"
-        />
+        <div class="relative inline-flex" bind:this={offsetContainerEl} onmouseenter={() => showPopup('offset')} onmouseleave={hidePopup}>
+            <StyledInput 
+                icon={offsetIcon}
+                placeholder="Offset"
+                bind:value={offsetValue}
+                oninput={handleOffsetInput}
+                width="100px"
+                numericType="integer"
+            />
+            {#if activePopup === 'offset' && offsetContainerEl}
+                <OffsetPopup 
+                    bind:offset={bookmarkStore.offset} 
+                    triggerEl={offsetContainerEl} 
+                    onmouseenter={() => { if (hideTimer) clearTimeout(hideTimer); }}
+                    onmouseleave={hidePopup}
+                />
+            {/if}
+        </div>
     </div>
 
     <div class="flex-1"></div>

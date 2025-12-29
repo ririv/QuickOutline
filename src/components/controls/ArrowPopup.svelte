@@ -11,6 +11,8 @@
     children?: Snippet;
     triggerEl?: HTMLElement; // The element that triggers the popup, for positioning
     usePortal?: boolean;
+    onmouseenter?: (e: MouseEvent) => void;
+    onmouseleave?: (e: MouseEvent) => void;
   }
 
   let { 
@@ -20,7 +22,9 @@
     className = '',
     children,
     triggerEl,
-    usePortal = true
+    usePortal = true,
+    onmouseenter,
+    onmouseleave
   }: Props = $props();
 
   function portalAction(node: HTMLElement, enabled: boolean) {
@@ -37,6 +41,8 @@
   style:--min-width={minWidth}
   style:--padding={padding}
   onclick={(e) => e.stopPropagation()}
+  {onmouseenter}
+  {onmouseleave}
   use:portalAction={usePortal}
   use:autoPosition={{ triggerEl, fixed: usePortal }}
 >
