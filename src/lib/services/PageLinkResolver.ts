@@ -2,7 +2,7 @@
  * Configuration for resolving page links.
  */
 export interface LinkResolverConfig {
-    labels: string[] | null; // Page labels from the document
+    pageLabels: string[] | null; // Page labels from the document
     offset: number;          // Global page offset (user defined)
     insertPos: number;       // Where the TOC is inserted
 }
@@ -41,8 +41,8 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
     // 3. Explicit Page Label Matching (e.g., @5 or @iv)
     if (trimmed.startsWith("@")) {
         const labelStr = trimmed.substring(1);
-        if (config.labels) {
-            const idx = config.labels.indexOf(labelStr);
+        if (config.pageLabels) {
+            const idx = config.pageLabels.indexOf(labelStr);
             if (idx !== -1) {
                 return { index: idx, isOriginalDoc: true };
             }
@@ -50,12 +50,36 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         return null; // Explicit target not found
     }
 
-    // 4. Logic Page Number (Strict priority for numbers, NO implicit label fallback)
+    // 4. Numeric Input Handling
     if (/^-?\d+$/.test(trimmed)) {
         const n = parseInt(trimmed, 10);
         if (!isNaN(n)) {
-            // Logic index with offset correction
-            return { index: (n + config.offset) - 1, isOriginalDoc: true };
+            // Strategy: "Non-zero Offset Takes Precedence"
+            
+            // Case A: User set an offset. Trust their manual correction.
+            if (config.offset !== 0) {
+                return { index: (n + config.offset) - 1, isOriginalDoc: true };
+            }
+
+            // Case B: Offset is 0. Try to be smart (Label First).
+            if (config.pageLabels) {
+                const idx = config.pageLabels.indexOf(trimmed);
+                if (idx !== -1) {
+                    return { index: idx, isOriginalDoc: true };
+                }
+            }
+            
+            // Case C: Offset is 0 and no label match. Fallback to raw physical index.
+            return { index: n - 1, isOriginalDoc: true };
+        }
+    }
+
+    // 5. Non-Numeric Input: Implicit Label Matching
+    // (e.g., "iv", "Appendix")
+    if (config.pageLabels) {
+        const idx = config.pageLabels.indexOf(trimmed);
+        if (idx !== -1) {
+            return { index: idx, isOriginalDoc: true };
         }
     }
 

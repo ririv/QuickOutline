@@ -41,7 +41,7 @@
         const startState = EditorState.create({
             doc: value,
             extensions: [
-                validationConf.of(pageValidationConfig.of({ offset, totalPage, labels: pageLabels, insertPos })),
+                validationConf.of(pageValidationConfig.of({ offset, totalPage, pageLabels, insertPos })),
                 history(),
                 highlightActiveLine(),
                 // highlightActiveLineGutter(), // Remove potentially layout-shifting gutter
@@ -83,7 +83,7 @@
     $effect(() => {
         if (view) {
             view.dispatch({
-                effects: validationConf.reconfigure(pageValidationConfig.of({ offset, totalPage, labels: pageLabels, insertPos }))
+                effects: validationConf.reconfigure(pageValidationConfig.of({ offset, totalPage, pageLabels, insertPos }))
             });
         }
     });

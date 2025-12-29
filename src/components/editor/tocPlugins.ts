@@ -9,12 +9,12 @@ import { EditorState, RangeSetBuilder, Facet } from '@codemirror/state';
 export interface ValidationState {
     offset: number;
     totalPage: number;
-    labels: string[] | null;
+    pageLabels: string[] | null;
     insertPos: number;
 }
 
 export const pageValidationConfig = Facet.define<ValidationState, ValidationState>({
-    combine: values => values[0] || { offset: 0, totalPage: 0, labels: null, insertPos: 0 }
+    combine: values => values[0] || { offset: 0, totalPage: 0, pageLabels: null, insertPos: 0 }
 });
 
 const invalidPageDecoration = Decoration.line({ class: "cm-invalid-page-line" });
@@ -39,14 +39,14 @@ const pageValidationPlugin = ViewPlugin.fromClass(class {
     }
 
     compute(view: EditorView) {
-        const { offset, totalPage, labels, insertPos } = view.state.facet(pageValidationConfig);
+        const { offset, totalPage, pageLabels, insertPos } = view.state.facet(pageValidationConfig);
         if (totalPage <= 0) return Decoration.none;
 
         const builder = new RangeSetBuilder<Decoration>();
 
         // We need a resolver config
         const resolverConfig = {
-            labels: labels,
+            pageLabels: pageLabels,
             offset: offset,
             insertPos: insertPos
         };
@@ -89,7 +89,7 @@ const pageValidationPlugin = ViewPlugin.fromClass(class {
                         // For now, if we can't resolve it (e.g. invalid label), let's mark it as invalid.
                         // But be careful with partial inputs.
                         // If it's a number and we failed (impossible with fallback), but if it's a label "iv" and labels are missing...
-                        if (!labels && !/^\d+$/.test(targetStr)) {
+                        if (!pageLabels && !/^\d+$/.test(targetStr)) {
                              // If we have no labels loaded, we can't validate non-numeric labels. Don't mark as error.
                         } else {
                              // Mark as invalid if unresolvable

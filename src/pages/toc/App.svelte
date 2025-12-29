@@ -179,13 +179,13 @@
           const rawLinks = getTocLinkData();
           const links: TocLinkDto[] = [];
           
-          // Get current labels from docStore
-          const labels = $docStore.originalPageLabels;
+          // Get current pageLabels from docStore
+          const pageLabels = $docStore.originalPageLabels;
 
           const insertPosVal = parseInt(String(tocStore.insertionConfig.pos), 10) || 0;
 
           const resolverConfig = {
-              labels: labels && labels.length > 0 ? labels : null,
+              pageLabels: pageLabels && pageLabels.length > 0 ? pageLabels : null,
               offset: tocStore.offset,
               insertPos: insertPosVal
           };
