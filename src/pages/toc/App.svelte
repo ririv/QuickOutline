@@ -11,7 +11,7 @@
   import { generateTocPage, type TocConfig, type TocLinkDto } from '@/lib/api/rust_pdf';
   import { outlineService } from '@/lib/services/OutlineService';
   import { messageStore } from '@/stores/messageStore';
-  import { docStore } from '@/stores/docStore';
+  import { docStore } from '@/stores/docStore.svelte.ts';
   import { tocStore } from '@/stores/tocStore.svelte';
   import { printStore } from '@/stores/printStore.svelte'; // Import global print store
   import { appStore, FnTab } from '@/stores/appStore';
@@ -48,7 +48,7 @@
 
   // Auto-load TOC when file changes
   $effect(() => {
-      const path = $docStore.currentFilePath;
+      const path = docStore.currentFilePath;
       
       // Only load if path has changed (new file opened)
       // If path matches tocStore, we are just remounting (switching tabs), 
@@ -64,7 +64,7 @@
 
   async function loadOutline() {
       try {
-          const path = $docStore.currentFilePath;
+          const path = docStore.currentFilePath;
           if (!path) return;
           
           await outlineService.loadOutline(path);
@@ -104,7 +104,7 @@
   // onMount: just trigger preview if we have content (e.g. switching back to tab)
   onMount(() => {
       // Check if store matches current file
-      if (tocStore.filePath !== $docStore.currentFilePath) {
+      if (tocStore.filePath !== docStore.currentFilePath) {
           // Store is stale, do not render previewData
           return;
       }
@@ -180,7 +180,7 @@
           const links: TocLinkDto[] = [];
           
           // Get current pageLabels from docStore
-          const pageLabels = $docStore.originalPageLabels;
+          const pageLabels = docStore.originalPageLabels;
 
           const insertPosVal = parseInt(String(tocStore.insertionConfig.pos), 10) || 0;
 
@@ -277,7 +277,7 @@
             links: links
           };
 
-          const currentFile = $docStore.currentFilePath;
+          const currentFile = docStore.currentFilePath;
           if (!currentFile) throw new Error("No file opened");
           await generateTocPage(currentFile, config, null);
           console.info("PDF generated");
@@ -314,8 +314,8 @@
                   onchange={handleContentChange} 
                   placeholder="Enter TOC here..."
                   offset={tocStore.offset}
-                  totalPage={$docStore.pageCount}
-                  pageLabels={$docStore.originalPageLabels}
+                  totalPage={docStore.pageCount}
+                  pageLabels={docStore.originalPageLabels}
                   insertPos={parseInt(String(tocStore.insertionConfig.pos), 10) || 0}
               />
             </div>

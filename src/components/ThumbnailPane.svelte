@@ -2,9 +2,9 @@
     import landscapeIcon from '../assets/icons/landscape.svg';
     import StyledSlider from './controls/StyledSlider.svelte';
     import { appStore } from '@/stores/appStore';
-    import { docStore } from '@/stores/docStore';
+    import { docStore } from '@/stores/docStore.svelte';
     import PreviewPopup from './PreviewPopup.svelte';
-    import { pageLabelStore } from '@/stores/pageLabelStore';
+    import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
     import Tooltip from './Tooltip.svelte';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
@@ -36,12 +36,12 @@
     // Derived state for displayed page labels
     // Use backend simulated labels if available, otherwise fallback to simple numbering
     const displayedPageLabels = $derived(
-        ($pageLabelStore.simulatedLabels && $pageLabelStore.simulatedLabels.length > 0)
-            ? $pageLabelStore.simulatedLabels
-            : Array.from({ length: $docStore.pageCount }, (_, i) => String(i + 1))
+        (pageLabelStore.simulatedLabels && pageLabelStore.simulatedLabels.length > 0)
+            ? pageLabelStore.simulatedLabels
+            : Array.from({ length: docStore.pageCount }, (_, i) => String(i + 1))
     );
     
-    const originalLabels = $derived($docStore.originalPageLabels || []);
+    const originalLabels = $derived(docStore.originalPageLabels || []);
 
     function isLabelModified(index: number, currentLabel: string) {
         if (!originalLabels || originalLabels.length <= index) return false;
@@ -50,10 +50,10 @@
 
     // Listener for pageCount changes
     $effect(() => {
-        if (loadedState.length !== $docStore.pageCount) {
-            console.log('PageCount changed:', $docStore.pageCount);
-            loadedState = new Array($docStore.pageCount).fill(false);
-            aspectRatios = new Array($docStore.pageCount).fill(DEFAULT_ASPECT_RATIO);
+        if (loadedState.length !== docStore.pageCount) {
+            console.log('PageCount changed:', docStore.pageCount);
+            loadedState = new Array(docStore.pageCount).fill(false);
+            aspectRatios = new Array(docStore.pageCount).fill(DEFAULT_ASPECT_RATIO);
             // Revoke old URLs when page count (file) changes
             Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
             thumbnailUrls = {};
@@ -78,8 +78,8 @@
                 observer.disconnect();
                 
                 // Fetch thumbnail
-                if ($docStore.currentFilePath && !thumbnailUrls[index]) {
-                    const path = $docStore.currentFilePath;
+                if (docStore.currentFilePath && !thumbnailUrls[index]) {
+                    const path = docStore.currentFilePath;
                     const pageIndex = index; // 0-based
                     
                     pdfRenderService.renderPage(path, pageIndex, 'thumbnail')
@@ -111,8 +111,8 @@
         const rect = target.getBoundingClientRect();
         
         // For now, we'll try to load the full image (scale 1.0 or similar)
-        if ($docStore.currentFilePath) {
-            const path = $docStore.currentFilePath;
+        if (docStore.currentFilePath) {
+            const path = docStore.currentFilePath;
             
             pdfRenderService.renderPage(path, index, 'preview')
                 .then(url => {
@@ -136,7 +136,7 @@
 
 <div class="flex flex-col h-full bg-[#f5f5f5] border-l border-[#ddd]">
     <div class="flex items-center p-2.5 gap-2.5 border-b border-[#eee] bg-white">
-        <span class="text-xs text-gray-500 mr-2">Pages: {$docStore.pageCount}</span>
+        <span class="text-xs text-gray-500 mr-2">Pages: {docStore.pageCount}</span>
         <img src={landscapeIcon} class="block opacity-60 w-3 h-3" alt="Zoom Out" />
         <StyledSlider
             min={0.5}
@@ -154,7 +154,7 @@
                 Backend not connected (Port: {$appStore.serverPort})
             </div>
         {/if}
-        {#key $docStore.version}
+        {#key docStore.version}
         <div class="flex flex-wrap gap-2.5 justify-center" style="--zoom: {zoom}">
 
             {#each loadedState as isLoaded, i}
@@ -182,7 +182,7 @@
                         </div>
                     </div>
                     <div class="w-full flex justify-center mt-1.5">
-                        <Tooltip content="{i + 1} / {$docStore.pageCount}" position="top">
+                        <Tooltip content="{i + 1} / {docStore.pageCount}" position="top">
                              <div 
                                 class="text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-full {isLabelModified(i, displayedPageLabels[i] || '') ? 'text-[#666] font-bold' : 'text-[#666]'}"
                             >

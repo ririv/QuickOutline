@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
-    import { docStore } from '@/stores/docStore';
+    import { docStore } from '@/stores/docStore.svelte.ts';
     import { rpc } from '@/lib/api/rpc';
     import { processText, autoFormat, Method } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore';
@@ -239,7 +239,7 @@
             placeholder="Enter bookmarks here..."
             disabled={isExternalEditing}
             offset={bookmarkStore.offset}
-            totalPage={$docStore.pageCount}
+            totalPage={docStore.pageCount}
         />
     </div>
 </div>

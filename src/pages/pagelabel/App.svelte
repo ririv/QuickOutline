@@ -2,7 +2,6 @@
     import '@/assets/global.css';
     import SplitPane from '../../components/SplitPane.svelte';
     import ThumbnailPane from '../../components/ThumbnailPane.svelte';
-    import { onMount } from 'svelte';
     import Icon from "@/components/Icon.svelte";
     
     import deleteIcon from '../../assets/icons/delete-item.svg?raw';
@@ -14,44 +13,30 @@
     import StyledInput from "@/components/controls/StyledInput.svelte";
     import { ripple } from '@/lib/actions/ripple';
     import { messageStore } from '@/stores/messageStore';
-    import { docStore } from '@/stores/docStore';
-    // Import Store Rule Type
-    import { pageLabelStore, type PageLabelRule as StoreRule } from '@/stores/pageLabelStore';
-    // Import RPC Rule Type (DTO) and Enum
+    import { docStore } from '@/stores/docStore.svelte';
+    import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
     import { rpc, type PageLabelRuleDto } from '@/lib/api/rpc';
-    import {PageLabelNumberingStyle, pageLabelStyleMap} from '@/lib/styleMaps';
+    import { PageLabelNumberingStyle, pageLabelStyleMap } from '@/lib/styleMaps';
     import GraphButton from "@/components/controls/GraphButton.svelte";
 
     const styles = pageLabelStyleMap.getAllStyles();
 
-    // Sync original labels from docStore to pageLabelStore and handle initialization
-    $: if ($docStore.originalPageLabels) {
-        pageLabelStore.setOriginalLabels($docStore.originalPageLabels);
-        // If no rules exist, show original labels
-        if ($pageLabelStore.rules.length === 0) {
-            pageLabelStore.setSimulatedLabels($docStore.originalPageLabels);
-        }
-    }
-
     function addRule() {
-        if (!$pageLabelStore.startPage) {
-             // Simple validation
+        if (!pageLabelStore.startPage) {
              messageStore.add("Please enter Start Page", "WARNING");
              return;
         }
 
-        // Create ViewModel object for the Store
-        const newRule: StoreRule = {
+        const newRule = {
             id: Date.now().toString(),
-            numberingStyleDisplay: $pageLabelStore.numberingStyle == PageLabelNumberingStyle.NONE ? "" : pageLabelStyleMap.getDisplayText($pageLabelStore.numberingStyle), // Keep display string in store
-            prefix: $pageLabelStore.prefix,
-            start: parseInt($pageLabelStore.startNumber) || 1,
-            fromPage: parseInt($pageLabelStore.startPage) || 1
+            numberingStyleDisplay: pageLabelStore.numberingStyle == PageLabelNumberingStyle.NONE ? "" : pageLabelStyleMap.getDisplayText(pageLabelStore.numberingStyle),
+            prefix: pageLabelStore.prefix,
+            start: parseInt(pageLabelStore.startNumber) || 1,
+            fromPage: parseInt(pageLabelStore.startPage) || 1
         };
 
         pageLabelStore.addRule(newRule);
         pageLabelStore.resetForm();
-
         simulate();
     }
 
@@ -62,20 +47,15 @@
 
     function clearRules() {
         pageLabelStore.removeAllRules();
-        // Restore original labels to the preview
-        pageLabelStore.setSimulatedLabels($docStore.originalPageLabels);
+        pageLabelStore.setSimulatedLabels(docStore.originalPageLabels);
         pageLabelStore.resetForm();
     }
 
     async function simulate() {
-        console.log("Simulating labels with rules:", $pageLabelStore.rules);
-        
-        // Convert ViewModel (StoreRule) to DTO (RpcRule)
-        const dtos: PageLabelRuleDto[] = $pageLabelStore.rules.map(r => ({
+        const dtos: PageLabelRuleDto[] = pageLabelStore.rules.map(r => ({
             fromPage: r.fromPage,
             start: r.start,
             prefix: r.prefix,
-            // Map display string back to Enum for the backend
             numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
         }));
 
@@ -88,31 +68,25 @@
     }
 
     function apply() {
-        console.log("Applying rules:", $pageLabelStore.rules);
-        
-        // Also convert for apply() if needed, or apply logic might use the same DTOs
-        const dtos: PageLabelRuleDto[] = $pageLabelStore.rules.map(r => ({
+        const dtos: PageLabelRuleDto[] = pageLabelStore.rules.map(r => ({
             fromPage: r.fromPage,
             start: r.start,
             prefix: r.prefix,
             numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
         }));
         
-        // TODO: Call backend apply API with dtos
         rpc.setPageLabels(dtos, null).then(() => {
              messageStore.add("Page labels applied successfully!", "SUCCESS");
         }).catch(e => {
              messageStore.add("Failed to apply page labels: " + e.message, "ERROR");
         });
     }
-
 </script>
 
 <main class="h-full w-full overflow-hidden">
     <SplitPane initialSplit={30}>
         {#snippet left()}
         <div class="flex flex-col h-full p-4 bg-white box-border overflow-y-auto">
-            <!-- Form Section -->
             <div class="flex flex-col gap-4">
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
@@ -122,24 +96,24 @@
                             displayKey="displayText"
                             optionKey="displayText"
                             valueKey="enumName"
-                            bind:value={$pageLabelStore.numberingStyle} 
+                            bind:value={pageLabelStore.numberingStyle} 
                         />
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="prefix" class="text-right text-sm text-[#333]">Prefix</label>
-                    <StyledInput id="prefix" type="text" bind:value={$pageLabelStore.prefix} placeholder="Optional" />
+                    <StyledInput id="prefix" type="text" bind:value={pageLabelStore.prefix} placeholder="Optional" />
                 </div>
 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="startNum" class="text-right text-sm text-[#333]">Start Number</label>
-                    <StyledInput id="startNum" type="number" min="1" step="1" bind:value={$pageLabelStore.startNumber} placeholder="1" numericType="unsigned-integer" />
+                    <StyledInput id="startNum" type="number" min="1" step="1" bind:value={pageLabelStore.startNumber} placeholder="1" numericType="unsigned-integer" />
                 </div>
 
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="startPage" class="text-right text-sm text-[#333]">Start Page</label>
-                    <StyledInput id="startPage" type="number" min="1" step="1" bind:value={$pageLabelStore.startPage} placeholder="e.g. 1 (Required)" numericType="unsigned-integer" />
+                    <StyledInput id="startPage" type="number" min="1" step="1" bind:value={pageLabelStore.startPage} placeholder="e.g. 1 (Required)" numericType="unsigned-integer" />
                 </div>
 
                 <div class="flex justify-center mt-2.5">
@@ -156,7 +130,6 @@
 
             <div class="h-px bg-gray-200 my-5"></div>
 
-            <!-- Rule List Section -->
             <div class="flex-1 overflow-hidden flex flex-col min-h-[150px]">
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="title m-0">Rule List</h3>
@@ -171,7 +144,7 @@
                     </GraphButton>
                 </div>
                 <div class="flex-1 overflow-y-auto border border-el-default-border p-2 bg-white rounded-md">
-                    {#each $pageLabelStore.rules as rule (rule.id)}
+                    {#each pageLabelStore.rules as rule (rule.id)}
                         <div class="flex items-center justify-between px-2 py-1 border-b border-[#f0f0f0] text-[13px] bg-transparent rounded mb-0.5 hover:bg-gray-50 transition-colors last:border-0 last:mb-0">
                             <div class="flex items-center gap-2 flex-1 overflow-hidden">
                                 <span class="bg-el-plain-primary-bg text-el-primary border border-[#d9ecff] rounded px-1.5 py-0.5 text-xs font-semibold min-w-[32px] text-center shrink-0">
@@ -196,7 +169,7 @@
                             </button>
                         </div>
                     {/each}
-                    {#if $pageLabelStore.rules.length === 0}
+                    {#if pageLabelStore.rules.length === 0}
                         <div class="p-4 text-center text-xs text-gray-400 italic">
                             No rules added yet.
                         </div>
@@ -219,7 +192,7 @@
 
         {#snippet right()}
         <div class="h-full bg-[#f5f5f5]">
-            <ThumbnailPane pageCount={$docStore.pageCount} />
+            <ThumbnailPane pageCount={docStore.pageCount} />
         </div>
         {/snippet}
     </SplitPane>

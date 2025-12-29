@@ -2,7 +2,7 @@
   import ArrowPopup from '../controls/ArrowPopup.svelte';
   import StyledInput from '../controls/StyledInput.svelte';
   import PreviewPopup from '../PreviewPopup.svelte'; // Import PreviewPopup
-  import { docStore } from '@/stores/docStore';
+  import { docStore } from '@/stores/docStore.svelte.ts';
   import { pdfRenderService } from '@/lib/services/PdfRenderService';
   import { onMount } from 'svelte';
 
@@ -32,18 +32,18 @@
   let loadedCount = 0;
 
   async function loadMorePages() {
-      if (!$docStore.currentFilePath || isLoading || loadedCount >= $docStore.pageCount) return;
+      if (!docStore.currentFilePath || isLoading || loadedCount >= docStore.pageCount) return;
       
       isLoading = true;
       const start = loadedCount;
-      const end = Math.min(loadedCount + LOAD_INCREMENT, $docStore.pageCount);
+      const end = Math.min(loadedCount + LOAD_INCREMENT, docStore.pageCount);
       
       // Create placeholders
       const newItems = [];
       for (let i = start; i < end; i++) {
           newItems.push({
               index: i,
-              label: $docStore.originalPageLabels?.[i] ?? '',
+              label: docStore.originalPageLabels?.[i] ?? '',
               url: null
           });
       }
@@ -57,7 +57,7 @@
   }
 
   async function processThumbnails(items: typeof pages) {
-      const filePath = $docStore.currentFilePath;
+      const filePath = docStore.currentFilePath;
       if (!filePath) return;
 
       for (const item of items) {
@@ -88,9 +88,9 @@
       hoveredPage = { src, y, anchorX };
 
       // If not cached, fetch high-res
-      if (!previewCache.has(page.index) && $docStore.currentFilePath) {
+      if (!previewCache.has(page.index) && docStore.currentFilePath) {
           try {
-              const highResUrl = await pdfRenderService.renderPage($docStore.currentFilePath, page.index, 'preview');
+              const highResUrl = await pdfRenderService.renderPage(docStore.currentFilePath, page.index, 'preview');
               previewCache.set(page.index, highResUrl);
               // Update if still hovering the same position (simple check)
               if (hoveredPage && Math.abs(hoveredPage.y - y) < 1) { 
@@ -131,7 +131,7 @@
       });
   });
 
-  const hasLabels = $derived($docStore.originalPageLabels && $docStore.originalPageLabels.length > 0);
+  const hasLabels = $derived(docStore.originalPageLabels && docStore.originalPageLabels.length > 0);
 </script>
 
 {#if hoveredPage}

@@ -4,7 +4,7 @@
     import { tick, getContext } from "svelte";
     import { appStore } from '@/stores/appStore';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
-    import { docStore } from '@/stores/docStore';
+    import { docStore } from '@/stores/docStore.svelte.ts';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
 
     interface Props {
@@ -59,13 +59,13 @@
         const effectivePageNum = showOffset ? (pageNum + offset) : pageNum;
         const pageIndex = effectivePageNum - 1;
         
-        if ($docStore.currentFilePath) {
+        if (docStore.currentFilePath) {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
             
             // Clean up any previous URL just in case
             if (currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl);
             
-            pdfRenderService.renderPage($docStore.currentFilePath, pageIndex, 'preview')
+            pdfRenderService.renderPage(docStore.currentFilePath, pageIndex, 'preview')
                 .then(url => {
                     currentPreviewUrl = url;
                     // Only show if still hovering (simple check: logic in mouseleave handles the nulling)
@@ -103,7 +103,7 @@
         if (isNaN(pageNum)) return false;
         
         const offset = bookmarkStore.offset || 0;
-        const count = $docStore.pageCount;
+        const count = docStore.pageCount;
         
         const effectivePage = pageNum + offset;
         if (count > 0) {

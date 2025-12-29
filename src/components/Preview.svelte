@@ -7,36 +7,43 @@
     } from "@/lib/preview-engine/svg-engine";
     import { handleImageUpdate } from "@/lib/preview-engine/image-engine";
     import PagedRenderer from "./renderers/PagedRenderer.svelte";
-    import { docStore } from '@/stores/docStore'; // Import docStore
+    import { docStore } from '@/stores/docStore.svelte'; // Import docStore
     import { appStore, FnTab } from '@/stores/appStore'; // Import appStore and FnTab
 
-    export let mode: "svg" | "image" | "paged" = "paged"; // Default to paged
-    export let onrefresh: (() => void | Promise<void>) | undefined = undefined; // onrefresh might be async
-    export let onScroll: ((top: number) => void) | undefined = undefined;
-    export let onRenderStats: ((stats: { duration: number }) => void) | undefined = undefined;
-    export let isActive: boolean = true; // Added prop
+    interface Props {
+        mode?: "svg" | "image" | "paged";
+        onrefresh?: () => void | Promise<void>;
+        onScroll?: (top: number) => void;
+        onRenderStats?: (stats: { duration: number }) => void;
+        isActive?: boolean;
+        pagedPayload?: {
+            html: string;
+            styles: string;
+            header: any;
+            footer: any;
+        } | null;
+    }
 
-    // Payload for PagedRenderer
-    export let pagedPayload: {
-        html: string;
-        styles: string;
-        header: any;
-        footer: any;
-    } | null = null;
-    let container: HTMLDivElement;
-    let viewport: HTMLDivElement;
-    let slider: HTMLInputElement;
+    let { 
+        mode = "paged",
+        onrefresh,
+        onScroll,
+        onRenderStats,
+        isActive = true,
+        pagedPayload = null
+    }: Props = $props();
 
-    let currentScale = 1.0;
+    let container: HTMLDivElement | undefined = $state();
+    let viewport: HTMLDivElement | undefined = $state();
+    let slider: HTMLInputElement | undefined = $state();
+
+    let currentScale = $state(1.0);
     let isScrolling = false;
-    let sliderPercent = "20%";
-    let isRefreshing = false; // Refresh state for animation
+    let sliderPercent = $state("20%");
+    let isRefreshing = $state(false); // Refresh state for animation
     let isDoublePage = false; // Restore Double Page mode state
 
-    let currentPdfFilePath = $docStore.currentFilePath;
-    docStore.subscribe(state => {
-        currentPdfFilePath = state.currentFilePath;
-    });
+    let currentPdfFilePath = $derived(docStore.currentFilePath);
 
     // Expose methods for parent to call (SVG/Image Engine)
     // Note: json string still comes from Java part, containing page metadata
@@ -72,7 +79,7 @@
             
             // Notify svg-engine if mode is svg (it might need to know for internal calculations, 
             // though zoom usually handles it seamlessly)
-            if (mode === "svg") onSvgViewChange(container, viewport);
+            if (mode === "svg" && container && viewport) onSvgViewChange(container, viewport);
         }
         updateSliderBackground(currentScale);
     }
@@ -96,9 +103,11 @@
         }
         
         // Only SVG mode needs scroll notification to manage virtual rendering
-        if (mode === "svg" && !isScrolling) {
+        if (mode === "svg" && !isScrolling && container && viewport) {
             window.requestAnimationFrame(() => {
-                onSvgViewChange(container, viewport);
+                if (container && viewport) {
+                    onSvgViewChange(container, viewport);
+                }
                 isScrolling = false;
             });
             isScrolling = true;

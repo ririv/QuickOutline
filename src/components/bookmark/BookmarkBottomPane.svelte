@@ -17,7 +17,7 @@
     import { rpc } from '@/lib/api/rpc';
     import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
-    import { docStore } from '@/stores/docStore';
+    import { docStore } from '@/stores/docStore.svelte.ts';
     import { messageStore } from '@/stores/messageStore';
     import type { BookmarkUI } from '@/lib/types/bookmark.ts';
     import { untrack } from 'svelte';
@@ -79,7 +79,7 @@
         console.log('Get contents from:', getContentsMode);
         
         try {
-            const path = $docStore.currentFilePath;
+            const path = docStore.currentFilePath;
             if (!path) {
                 messageStore.add('No file open.', 'WARNING');
                 return;
@@ -112,7 +112,7 @@
     async function handleSetContentsClick() {
         console.log('Set contents click with view scale:', viewMode);
         try {
-            const path = $docStore.currentFilePath;
+            const path = docStore.currentFilePath;
             if (!path) {
                 messageStore.add('No file open.', 'WARNING');
                 return;

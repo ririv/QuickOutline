@@ -2,15 +2,10 @@
     import { rpc } from '@/lib/api/rpc';
     import { onMount } from 'svelte';
     import { open } from '@tauri-apps/plugin-dialog';
-    import { docStore } from '@/stores/docStore'; // Import docStore
+    import { docStore } from '@/stores/docStore.svelte.ts'; // Import docStore
 
-    let currentFilePath = $state<string | null>(null);
+    const currentFilePath = $derived(docStore.currentFilePath);
     let fileName = $derived(currentFilePath ? getFileName(currentFilePath) : 'Click to Open or Drop PDF');
-
-    // Sync with global store
-    docStore.subscribe(state => { // Subscribe to docStore
-        currentFilePath = state.currentFilePath;
-    });
 
     function getFileName(path: string) {
         // Handle both Windows and Unix paths

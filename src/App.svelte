@@ -1,7 +1,7 @@
 <script lang="ts">
     import LeftPane from './components/LeftPane.svelte';
     import { appStore, FnTab } from '@/stores/appStore';
-    import { docStore } from '@/stores/docStore';
+    import { docStore } from '@/stores/docStore.svelte.ts';
     import BookmarkTab from './pages/bookmark/App.svelte';
     import PageLabelTab from './pages/pagelabel/App.svelte';
     import TocGeneratorTab from './pages/toc/App.svelte';
