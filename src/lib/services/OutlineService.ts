@@ -33,9 +33,13 @@ export class OutlineService {
                                 const physical = parseInt(node.pageNum, 10);
                                 if (!isNaN(physical) && physical >= 1 && physical <= labels.length) {
                                     const label = labels[physical - 1];
-                                    // Use explicit link format: "Label <#Physical>"
-                                    // This ensures the editor displays "Label" but links to "Physical"
-                                    node.pageNum = `${label} <#${physical}>`;
+                                    // If label matches physical page (e.g. "5" == 5), keep it simple so Offset works.
+                                    // Otherwise (e.g. "iv" != 4), use explicit target to ensure accuracy.
+                                    if (label === String(physical)) {
+                                        node.pageNum = label;
+                                    } else {
+                                        node.pageNum = `${label} | #${physical}`;
+                                    }
                                 }
                             }
                             if (node.children) {
