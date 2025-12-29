@@ -204,16 +204,19 @@
                   </div>
 
                   <div class="action-col">
-                      {#if page.index === offset}
-                          <div class="current-indicator">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <button 
+                          class="action-btn" 
+                          class:is-active={page.index === offset}
+                          onclick={() => page.index !== offset && setAsLogicOne(page.index)}
+                          title={page.index === offset ? "Current Logic Page 1" : "Set this page as Logic Page 1"}
+                      >
+                          {#if page.index === offset}
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                               <span>Logic P1</span>
-                          </div>
-                      {:else}
-                          <button class="set-btn" onclick={() => setAsLogicOne(page.index)} title="Set this page as Logic Page 1">
-                              Set as Logic P1
-                          </button>
-                      {/if}
+                          {:else}
+                              <span>Set as Logic P1</span>
+                          {/if}
+                      </button>
                   </div>
               </div>
           {/each}
@@ -408,49 +411,52 @@
       justify-content: flex-end;
   }
 
-  .set-btn {
-      padding: 6px 12px;
-      background: white;
-      border: 1px solid #d1d5db;
+  .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
       border-radius: 6px;
       font-size: 11px;
       font-weight: 500;
       cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Default State (Inactive) */
+      background: white;
+      border: 1px solid #d1d5db;
       color: #374151;
-      transition: all 0.2s;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.05);
-      opacity: 0; /* Hidden by default */
+      opacity: 0;
       transform: translateX(5px);
   }
   
-  .page-row:hover .set-btn {
+  .page-row:hover .action-btn {
       opacity: 1;
       transform: translateX(0);
   }
-  
-  /* Always show button on touch devices or if preferred */
-  @media (hover: none) {
-      .set-btn { opacity: 1; transform: none; }
-  }
-  
-  .set-btn:hover {
+
+  .action-btn:hover:not(.is-active) {
       border-color: #3b82f6;
       color: #2563eb;
       background: #eff6ff;
   }
 
-  .current-indicator {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      color: #2563eb;
-      font-weight: 600;
+  /* Active State (Selected) */
+  .action-btn.is-active {
+      opacity: 1; /* Always visible */
+      transform: none;
       background: #dbeafe;
-      padding: 4px 8px;
-      border-radius: 12px;
+      color: #2563eb;
+      border-color: transparent;
+      font-weight: 600;
+      cursor: default; /* Indicate non-clickable */
   }
-  
+
+  /* Mobile/Touch support */
+  @media (hover: none) {
+      .action-btn { opacity: 1; transform: none; }
+  }
+
   .loading-row {
       padding: 16px;
       text-align: center;
