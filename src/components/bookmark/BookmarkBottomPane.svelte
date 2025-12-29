@@ -47,35 +47,11 @@
         };
     }
 
-    const debouncedUpdateOffset = debounce(async (val: string) => {
-        const offset = parseInt(val, 10) || 0;
-        try {
-            await rpc.updateOffset(offset);
-        } catch (e) {
-            console.error("Failed to sync offset", e);
-        }
-    }, 500);
-
-    // Sync offsetValue with bookmarkStore
-    $effect(() => {
-        const currentStoreOffset = bookmarkStore.offset;
-        untrack(() => {
-            // 如果当前输入框只有负号，说明用户正在输入负数，不要被 Store 的 0 覆盖
-            if (offsetValue === '-') return;
-
-            const currentOffsetStr = currentStoreOffset === 0 ? '' : String(currentStoreOffset);
-            if (offsetValue !== currentOffsetStr) {
-                offsetValue = currentOffsetStr;
-            }
-        });
-    });
-
     function handleOffsetInput(e: Event) {
         const target = e.target as HTMLInputElement;
         offsetValue = target.value;
         const offset = parseInt(offsetValue, 10) || 0;
-        bookmarkStore.setOffset(offset);
-        debouncedUpdateOffset(offsetValue);
+        bookmarkStore.offset = offset;
     }
 
     function setView(newView: 'text' | 'tree' | 'double') {
@@ -110,13 +86,7 @@
             }
 
             const offset = parseInt(offsetValue, 10) || 0;
-            // 1. Update backend offset state
-            await rpc.updateOffset(offset);
-            
-            // TODO: Handle 'toc' mode if backend supports it distinctively
-            // For now, we use standard getOutlineAsBookmark for 'bookmark' mode
-            
-            // 2. Get Bookmark DTO from backend
+            // 1. Get Bookmark DTO from backend
             const bookmarkDto: BookmarkUI = await rpc.getOutlineAsBookmark(path, offset);
             
             // 3. Sync text locally
@@ -125,7 +95,7 @@
             // 4. Update frontend store
             bookmarkStore.setText(text);
             bookmarkStore.setTree(bookmarkDto.children || []);
-            bookmarkStore.setOffset(offset);
+            bookmarkStore.offset = offset;
             
             messageStore.add('Outline loaded successfully', 'SUCCESS');
         } catch (e: any) {
@@ -155,7 +125,6 @@
             }
             
             const offset = parseInt(offsetValue, 10) || 0;
-            await rpc.updateOffset(offset);
 
             // 2. Parse locally and save tree
             const tree = processText(text);

@@ -1,8 +1,5 @@
 import { writable } from 'svelte/store';
 import { rpc } from '@/lib/api/rpc';
-import { getPageCount } from '@/lib/api/pdf-render';
-import { bookmarkStore } from './bookmarkStore.svelte';
-import { pageLabelStore } from './pageLabelStore';
 import { pdfRenderService } from '@/lib/services/PdfRenderService'
 
 interface DocState {

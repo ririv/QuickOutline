@@ -151,7 +151,7 @@
 >
   <div class="popup-content">
       <div class="header-section">
-          <label>Page Offset</label>
+          <div class="popup-label">Page Offset</div>
           <div class="input-row">
             <StyledInput type="number" bind:value={offset} oninput={onchange} numericType="integer" />
           </div>
@@ -244,7 +244,7 @@
       z-index: 2;
   }
 
-  label {
+  .popup-label {
       display: block;
       font-weight: 600;
       margin-bottom: 8px;

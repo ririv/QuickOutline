@@ -1,5 +1,6 @@
 import { PageLabelNumberingStyle } from "@/lib/styleMaps";
 import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout, type SectionConfig } from "@/lib/types/page";
+import { offsetStore } from "./offsetStore.svelte";
 
 export class TocState {
     // File association
@@ -10,7 +11,15 @@ export class TocState {
     
     // Configuration
     title = $state('Table of Contents');
-    offset = $state(0);
+    
+    // Proxy offset to the global offsetStore
+    get offset() {
+        return offsetStore.value;
+    }
+
+    set offset(val: number) {
+        offsetStore.set(val);
+    }
     
     insertionConfig = $state({
         pos: 1,
@@ -48,7 +57,7 @@ export class TocState {
     // Reset configuration to defaults
     resetConfig() {
         this.title = 'Table of Contents';
-        this.offset = 0;
+        // offset is managed globally by offsetStore now, so we don't reset it here.
         this.insertionConfig = {
             pos: 1,
             autoCorrect: false,

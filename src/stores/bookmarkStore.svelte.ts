@@ -1,11 +1,20 @@
 import type { BookmarkUI } from '@/lib/types/bookmark.ts';
 import { reconcileTrees } from '@/lib/outlineParser/bookmarkUtils';
 import { Method } from '@/lib/outlineParser';
+import { offsetStore } from './offsetStore.svelte';
 
 class BookmarkStore {
 	text = $state('');
 	tree = $state<BookmarkUI[]>([]);
-	offset = $state(0);
+	
+	get offset() {
+		return offsetStore.value;
+	}
+
+	set offset(val: number) {
+		offsetStore.set(val);
+	}
+	
 	method = $state<Method>(Method.SEQ);
 
 	setText(text: string) {
@@ -20,9 +29,7 @@ class BookmarkStore {
 		this.tree = tree;
 	}
 
-	setOffset(offset: number) {
-		this.offset = offset;
-	}
+	// setOffset is removed, assign directly to .offset
 
 	setMethod(method: Method) {
 		this.method = method;
@@ -31,7 +38,7 @@ class BookmarkStore {
 	reset() {
 		this.text = '';
 		this.tree = [];
-		this.offset = 0;
+		// offset is managed globally
 		this.method = Method.SEQ;
 	}
 }
