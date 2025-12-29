@@ -230,7 +230,11 @@
         </div>
 
         <!-- Offset Input Group -->
-        <div class="relative inline-flex" bind:this={offsetContainerEl} onmouseenter={() => showPopup('offset')} onmouseleave={hidePopup}>
+        <div class="relative inline-flex" 
+             role="group"
+             bind:this={offsetContainerEl} 
+             onmouseenter={() => showPopup('offset')} 
+             onmouseleave={hidePopup}>
             <StyledInput 
                 icon={offsetIcon}
                 placeholder="Offset"

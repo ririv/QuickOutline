@@ -21,7 +21,6 @@
   import { getTocLinkData, getPageCount } from '@/lib/preview-engine/paged-engine';
   import { resolveLinkTarget } from '@/lib/services/PageLinkResolver';
   import { invoke } from '@tauri-apps/api/core';
-  import { get } from 'svelte/store';
 
   let previewComponent: Preview;
   

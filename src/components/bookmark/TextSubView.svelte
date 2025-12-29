@@ -233,13 +233,12 @@
 
         <BookmarkEditor 
             bind:value={textValue} 
-            onchange={handleEditorChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            placeholder="Enter bookmarks here..."
-            disabled={isExternalEditing}
             offset={bookmarkStore.offset}
             totalPage={docStore.pageCount}
+            pageLabels={docStore.originalPageLabels}
+            onchange={handleEditorChange}
+            onFocus={() => isFocused = true}
+            onBlur={() => isFocused = false}
         />
     </div>
 </div>

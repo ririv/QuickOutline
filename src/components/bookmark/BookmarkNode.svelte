@@ -3,8 +3,9 @@
     import BookmarkNode from "./BookmarkNode.svelte"; // Self-import for recursion
     import { tick, getContext } from "svelte";
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
-    import { docStore } from '@/stores/docStore.svelte.ts';
+    import { docStore } from '@/stores/docStore.svelte';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
+    import { resolveLinkTarget, validatePageTarget } from '@/lib/services/PageLinkResolver';
 
     interface Props {
         bookmark: BookmarkUI;
@@ -43,28 +44,21 @@
     }
 
     function handlePageMouseEnter(e: MouseEvent) {
-        // console.log('Hover page:', bookmark.page);
         if (isEditingPage || !bookmark.pageNum) return;
         
-        const pageNum = parseInt(bookmark.pageNum, 10);
-        if (isNaN(pageNum)) {
-            // console.warn('Page is not a number:', bookmark.page);
-            return;
-        }
+        // Use common resolver
+        const result = resolveLinkTarget(bookmark.pageNum, {
+            offset: offsetContext.show ? (bookmarkStore.offset || 0) : 0,
+            pageLabels: docStore.originalPageLabels,
+            insertPos: 0
+        });
 
-        const offset = bookmarkStore.offset || 0;
-        const showOffset = offsetContext.show;
-
-        const effectivePageNum = showOffset ? (pageNum + offset) : pageNum;
-        const pageIndex = effectivePageNum - 1;
-        
-        if (docStore.currentFilePath) {
+        if (result && docStore.currentFilePath) {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
             
-            // Clean up any previous URL just in case
             if (currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl);
             
-            pdfRenderService.renderPage(docStore.currentFilePath, pageIndex, 'preview')
+            pdfRenderService.renderPage(docStore.currentFilePath, result.index, 'preview')
                 .then(url => {
                     currentPreviewUrl = url;
                     // Only show if still hovering (simple check: logic in mouseleave handles the nulling)
@@ -90,25 +84,27 @@
     // Computed page to display
     let displayedPage = $derived.by(() => {
         if (!bookmark.pageNum) return '';
+        
+        // If it's a special syntax or label, show as is
+        if (bookmark.pageNum.startsWith('#') || bookmark.pageNum.startsWith('@') || isNaN(parseInt(bookmark.pageNum, 10))) {
+            return bookmark.pageNum;
+        }
+
+        // It's a standard logical number
         const pageNum = parseInt(bookmark.pageNum, 10);
-        if (isNaN(pageNum)) return bookmark.pageNum;
         const offset = bookmarkStore.offset || 0;
         return offsetContext.show ? String(pageNum + offset) : bookmark.pageNum;
     });
 
     let isOutOfRange = $derived.by(() => {
         if (!bookmark.pageNum) return false;
-        const pageNum = parseInt(bookmark.pageNum, 10);
-        if (isNaN(pageNum)) return false;
         
-        const offset = bookmarkStore.offset || 0;
-        const count = docStore.pageCount;
-        
-        const effectivePage = pageNum + offset;
-        if (count > 0) {
-            return effectivePage > count || effectivePage < 1;
-        }
-        return effectivePage < 1;
+        return !validatePageTarget(bookmark.pageNum, {
+            offset: offsetContext.show ? (bookmarkStore.offset || 0) : 0,
+            totalPage: docStore.pageCount,
+            pageLabels: docStore.originalPageLabels,
+            insertPos: 0
+        });
     });
 
 </script>

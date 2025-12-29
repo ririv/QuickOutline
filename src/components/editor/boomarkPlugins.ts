@@ -1,12 +1,33 @@
 import {Facet, RangeSetBuilder} from "@codemirror/state";
 import {Decoration, EditorView, ViewPlugin, type ViewUpdate} from "@codemirror/view";
-import {parseTocLine} from "@/lib/templates/toc/toc-gen/parser.ts";
+import {validatePageTarget} from "@/lib/services/PageLinkResolver";
 
-export const pageValidationConfig = Facet.define<{offset: number, totalPage: number}, {offset: number, totalPage: number}>({
-    combine: values => values[0] || { offset: 0, totalPage: 0 }
+export interface ValidationState {
+    offset: number;
+    totalPage: number;
+    pageLabels: string[] | null;
+}
+
+export const pageValidationConfig = Facet.define<ValidationState, ValidationState>({
+    combine: values => values[0] || { offset: 0, totalPage: 0, pageLabels: null }
 });
 
 const invalidPageDecoration = Decoration.line({ class: "cm-invalid-page-line" });
+
+/**
+ * Extracts the potential page target from a bookmark line.
+ * Bookmark format: "Indent Title    PageTarget"
+ * We look for the last whitespace-separated token.
+ */
+function getBookmarkTarget(lineText: string): string | null {
+    const trimmed = lineText.trim();
+    if (!trimmed) return null;
+    
+    const lastSpaceIndex = trimmed.lastIndexOf(' ');
+    if (lastSpaceIndex === -1) return null; // No page found
+    
+    return trimmed.substring(lastSpaceIndex + 1);
+}
 
 const pageValidationTheme = EditorView.baseTheme({
     ".cm-invalid-page-line": {
@@ -22,32 +43,34 @@ const pageValidationPlugin = ViewPlugin.fromClass(class {
     }
 
     update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged || update.state.facet(pageValidationConfig) !== update.startState.facet(pageValidationConfig)) {
+        const stateChanged = update.docChanged || update.viewportChanged || 
+                           update.state.facet(pageValidationConfig) !== update.startState.facet(pageValidationConfig);
+        if (stateChanged) {
             this.decorations = this.compute(update.view);
         }
     }
 
     compute(view: EditorView) {
-        const { offset, totalPage } = view.state.facet(pageValidationConfig);
-        if (totalPage <= 0) return Decoration.none;
+        const config = view.state.facet(pageValidationConfig);
+        if (config.totalPage <= 0) return Decoration.none;
 
         const builder = new RangeSetBuilder<Decoration>();
 
         for (const { from, to } of view.visibleRanges) {
             for (let pos = from; pos <= to;) {
                 const line = view.state.doc.lineAt(pos);
-                const text = line.text;
-                const parsed = parseTocLine(text);
+                const targetStr = getBookmarkTarget(line.text);
 
-                if (parsed) {
-                    // Use displayPage for basic numeric validation
-                    // This is a "best effort" validation for simple cases
-                    const pageNum = parseInt(parsed.displayPage, 10);
-                    if (!isNaN(pageNum)) {
-                        // Check if page + offset exceeds total pages
-                        if (pageNum + offset > totalPage || pageNum + offset < 1) {
-                            builder.add(line.from, line.from, invalidPageDecoration);
-                        }
+                if (targetStr) {
+                    const isValid = validatePageTarget(targetStr, {
+                        offset: config.offset,
+                        totalPage: config.totalPage,
+                        pageLabels: config.pageLabels,
+                        insertPos: 0 // Bookmarks don't have insertPos context
+                    });
+
+                    if (!isValid) {
+                        builder.add(line.from, line.from, invalidPageDecoration);
                     }
                 }
                 pos = line.to + 1;
@@ -64,14 +87,12 @@ export const pageValidationExtension = [
     pageValidationPlugin
 ];
 
-
 export const lineTheme = EditorView.theme({
     ".cm-line": {
         borderRadius: "4px",
         transition: "background-color 0.1s ease"
     },
-    // Hover effect for lines
     ".cm-line:hover": {
         backgroundColor: "rgba(0, 0, 0, 0.04)"
     }
-})
+});

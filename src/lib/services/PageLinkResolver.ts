@@ -33,8 +33,8 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         const numStr = trimmed.substring(1);
         const n = parseInt(numStr, 10);
         if (!isNaN(n)) {
-            // Physical absolute index
-            return { index: n - 1, isOriginalDoc: false };
+            // Physical absolute index - This IS part of the original document
+            return { index: n - 1, isOriginalDoc: true };
         }
     }
 
@@ -84,4 +84,33 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
     }
 
     return null;
+}
+
+/**
+ * Validates a target page string against the document context.
+ * Returns true if the target resolves to a valid physical page index.
+ */
+export function validatePageTarget(
+    target: string, 
+    config: LinkResolverConfig & { totalPage: number }
+): boolean {
+    const result = resolveLinkTarget(target, config);
+    if (!result) {
+        // If unresolvable, it could be a label we don't know about yet.
+        // If it's pure numeric and failed, it's definitely invalid (shouldn't happen with current resolver).
+        // If we have no labels context, we assume it might be a valid label to avoid false positives.
+        if (!config.pageLabels && !/^-?\d+$/.test(target.trim())) {
+            return true;
+        }
+        return false;
+    }
+
+    // Boundary check
+    // If it targets the original doc, it must be within [0, totalPage)
+    if (result.isOriginalDoc) {
+        return result.index >= 0 && result.index < config.totalPage;
+    }
+
+    // For absolute or TOC internal links, we just ensure it's non-negative
+    return result.index >= 0;
 }
