@@ -46,9 +46,9 @@
     function handlePageMouseEnter(e: MouseEvent) {
         if (isEditingPage || !bookmark.pageNum) return;
         
-        // Use common resolver
+        // Use real offset for preview, regardless of display toggle
         const result = resolveLinkTarget(bookmark.pageNum, {
-            offset: offsetContext.show ? (bookmarkStore.offset || 0) : 0,
+            offset: bookmarkStore.offset || 0,
             pageLabels: docStore.originalPageLabels,
             insertPos: 0
         });
@@ -99,8 +99,9 @@
     let isOutOfRange = $derived.by(() => {
         if (!bookmark.pageNum) return false;
         
+        // Validation must always use the real offset to match the editor's behavior
         return !validatePageTarget(bookmark.pageNum, {
-            offset: offsetContext.show ? (bookmarkStore.offset || 0) : 0,
+            offset: bookmarkStore.offset || 0,
             totalPage: docStore.pageCount,
             pageLabels: docStore.originalPageLabels,
             insertPos: 0
