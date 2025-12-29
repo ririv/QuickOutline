@@ -365,18 +365,23 @@
   }
 
   .phys-idx {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
       font-size: 10px;
+      font-weight: 700;
       color: #9ca3af;
-      margin-top: 0;
-      margin-bottom: 4px;
-      font-family: monospace;
-      text-align: left;
+      background: #f3f4f6;
+      padding: 1px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 6px;
+      line-height: 1.2;
   }
 
   .info-col {
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: flex-start;
       gap: 4px;
   }
   
