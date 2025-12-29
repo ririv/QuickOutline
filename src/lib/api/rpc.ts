@@ -81,17 +81,10 @@ export interface QuickOutlineApi {
     getOutlineAsBookmark(srcFilePath: string, offset: number): Promise<any>;
     saveOutline(srcFilePath: string, bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // Corrected signature
 
-    // TOC
-    // generateTocPage moved to rust_pdf.ts
-    generateTocPreview(config: any): Promise<string>; // Returns JSON of ImagePageUpdate[]
-
     // Page Labels
     setPageLabels(rules: PageLabelRuleDto[], destFilePath: string | null): Promise<string>;
     simulatePageLabels(rules: PageLabelRuleDto[]): Promise<string[]>;
 
-
-    // Sync Utils
-    updateOffset(offset: number): Promise<void>;
 }
 
 
@@ -269,9 +262,6 @@ class RpcClient implements QuickOutlineApi {
         ).then(() => "Success");
     }
 
-    public generateTocPreview(config: any): Promise<string> {
-        return this.send("generateTocPreview", [config]);
-    }
 
 
     public setPageLabels(rules: PageLabelRuleDto[], destFilePath: string | null): Promise<string> {
@@ -283,9 +273,6 @@ class RpcClient implements QuickOutlineApi {
     }
 
 
-    public updateOffset(offset: number): Promise<void> {
-        return this.send("updateOffset", [offset]);
-    }
 
     public openExternalEditor(textContent: string): Promise<void> {
         return this.send("openExternalEditor", [textContent]);
