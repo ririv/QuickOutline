@@ -1,15 +1,17 @@
-use std::process::Command;
+use std::process::{Command, Child};
 use std::sync::Mutex;
-use tauri::{AppHandle, Runtime, Emitter};
+use tauri::{AppHandle, Runtime, Emitter, Manager};
 use tempfile::Builder;
 use std::io::{Write, Seek, SeekFrom};
 use notify::{Watcher, RecursiveMode, Event, Config};
 use tokio::sync::oneshot;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub struct ExternalEditorState {
     pub temp_file: Mutex<Option<tempfile::NamedTempFile>>,
     pub abort_handle: Mutex<Option<oneshot::Sender<()>>>,
+    /// Tracks the active editor process to kill it on app exit.
+    pub active_child: Mutex<Option<Child>>,
 }
 
 impl ExternalEditorState {
@@ -17,6 +19,7 @@ impl ExternalEditorState {
         Self {
             temp_file: Mutex::new(None),
             abort_handle: Mutex::new(None),
+            active_child: Mutex::new(None),
         }
     }
 }
@@ -24,13 +27,8 @@ impl ExternalEditorState {
 // --- Editor Backend Abstraction ---
 
 pub trait EditorBackend: Send + Sync {
-    /// Returns true if the editor's command-line tool is available.
     fn is_available(&self) -> bool;
-    
-    /// Builds the command to launch the editor at a specific position and wait for it to close.
     fn build_command(&self, file_path: &Path, line: u32, col: u32) -> Command;
-    
-    /// A human-readable identifier for logging.
     fn id(&self) -> &'static str;
 }
 
@@ -99,16 +97,23 @@ impl ExternalEditor {
         editor_id: Option<String>,
         state: tauri::State<'_, ExternalEditorState>,
     ) -> Result<(), String> {
-        // 1. Cancel existing watcher task
+        // 1. Cancel existing watcher
         if let Ok(mut handle) = state.abort_handle.lock() {
             if let Some(old_abort) = handle.take() {
                 let _ = old_abort.send(());
             }
         }
 
+        // 2. Kill existing child process if any
+        if let Ok(mut child_guard) = state.active_child.lock() {
+            if let Some(mut child) = child_guard.take() {
+                let _ = child.kill();
+            }
+        }
+
         let mut temp_file_guard = state.temp_file.lock().map_err(|e| e.to_string())?;
         
-        // 2. Setup temp file
+        // 3. Setup temp file
         if temp_file_guard.is_none() {
             let file = Builder::new()
                 .prefix("contents_")
@@ -134,7 +139,7 @@ impl ExternalEditor {
             *handle = Some(stop_tx);
         }
 
-        // 3. Watcher
+        // 4. Watcher
         let file_path_for_watcher = file_path.clone();
         tokio::spawn(async move {
             let watcher_result = Self::async_watcher();
@@ -168,14 +173,13 @@ impl ExternalEditor {
             }
         });
 
-        // 4. Editor Discovery
+        // 5. Editor Discovery
         let backends: Vec<Box<dyn EditorBackend>> = vec![
             Box::new(VscodeBackend { executable: "code" }),
             Box::new(VscodeBackend { executable: "code-insiders" }),
             Box::new(ZedBackend),
         ];
 
-        // Filter by user preference if specified
         let selected_backend = if let Some(ref id) = editor_id {
             if id != "auto" {
                 backends.into_iter().find(|b| b.id() == id)
@@ -187,6 +191,7 @@ impl ExternalEditor {
         };
         
         let file_path_for_final = file_path.clone();
+        let app_clone_final = app.clone();
         
         drop(temp_file_guard);
 
@@ -196,15 +201,41 @@ impl ExternalEditor {
             }
 
             let mut command = backend.build_command(&file_path, line, col);
+            let child = command.spawn().map_err(|e| format!("Failed to spawn editor: {}", e))?;
             let _ = app.emit("external-editor-start", ());
 
-            let app_clone_for_exit = app.clone();
+            // Store the handle
+            if let Ok(mut child_guard) = state.active_child.lock() {
+                *child_guard = Some(child);
+            }
+
             std::thread::spawn(move || {
-                let _ = command.status();
-                if let Ok(final_content) = std::fs::read_to_string(&file_path_for_final) {
-                    let _ = app_clone_for_exit.emit("external-editor-sync", final_content);
+                loop {
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    if let Some(s) = app_clone_final.try_state::<ExternalEditorState>() {
+                        let mut guard = s.active_child.lock().unwrap();
+                        if let Some(ref mut child) = *guard {
+                            // Specify ExitStatus as expected type
+                            match child.try_wait() {
+                                Ok(Some(_status)) => { 
+                                    *guard = None;
+                                    break;
+                                }
+                                Ok(None) => continue, // Still running
+                                Err(_) => { *guard = None; break; }
+                            }
+                        } else {
+                            break; 
+                        }
+                    } else {
+                        break;
+                    }
                 }
-                let _ = app_clone_for_exit.emit("external-editor-end", ());
+
+                if let Ok(final_content) = std::fs::read_to_string(&file_path_for_final) {
+                    let _ = app_clone_final.emit("external-editor-sync", final_content);
+                }
+                let _ = app_clone_final.emit("external-editor-end", ());
             });
             Ok(())
         } else {
@@ -214,9 +245,7 @@ impl ExternalEditor {
 
     fn async_watcher() -> notify::Result<(notify::RecommendedWatcher, tokio::sync::mpsc::Receiver<notify::Result<Event>>)> {
         let (tx, rx) = tokio::sync::mpsc::channel(1);
-        let watcher = notify::RecommendedWatcher::new(move |res| { 
-            let _ = tx.blocking_send(res); 
-        }, Config::default())?;
+        let watcher = notify::RecommendedWatcher::new(move |res| { let _ = tx.blocking_send(res); }, Config::default())?;
         Ok((watcher, rx))
     }
 

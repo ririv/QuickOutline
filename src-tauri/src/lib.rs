@@ -266,6 +266,19 @@ pub fn run() {
             pdf::toc::generate_toc_page,
             external_editor::open_external_editor
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                // Cleanup: Kill active external editor process
+                if let Some(state) = app_handle.try_state::<external_editor::ExternalEditorState>() {
+                    if let Ok(mut child_guard) = state.active_child.lock() {
+                        if let Some(mut child) = child_guard.take() {
+                            let _ = child.kill();
+                            println!("Rust Exit Hook: Killed active external editor.");
+                        }
+                    }
+                }
+            }
+        });
 }

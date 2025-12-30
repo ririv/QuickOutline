@@ -10,6 +10,8 @@
 - **稳健的监听策略**：采用“监视父目录”策略，完美解决了现代编辑器在保存时因“原子写（Atomic Save/Inode Swap）”导致的文件句柄失效问题。
 - **智能过滤**：引入内容 Hash 校验，避免因编辑器多次触发保存事件而产生的冗余同步和界面抖动。
 - **生命周期管理**：支持自动取消机制。当开启新编辑器任务时，旧的监听任务会被自动销毁，确保系统资源占用最小。
+- **用户首选项**：前端设置支持手动指定偏好编辑器（Auto / VS Code / Zed），系统会根据选择精确匹配或自动探活。
+- **进程自动清理**：主程序退出时，通过 Tauri 生命周期钩子自动杀掉由其启动的编辑器子进程，确保不留下残留窗口。
 
 ## 3. 技术实现架构
 
@@ -18,14 +20,14 @@
     定义了通用的编辑器行为接口，包括环境检测 (`is_available`) 和命令构建 (`build_command`)。这使得添加新编辑器支持（如 Cursor 或 Sublime）仅需实现一个结构体。
 - **异步监听 (`notify` + `tokio`)**：
     使用 `notify` 库捕捉文件系统事件。监听任务在 `tokio::spawn` 的异步协程中运行，并通过 `oneshot` 通道接收取消信号。
-- **状态管理 (`ExternalEditorState`)**：
-    在 Tauri 的 `Managed State` 中维护 `NamedTempFile`（临时文件）和 `abort_handle`（取消信号发送端），确保文件在程序退出或任务切换时被物理删除。
-- **进程管理**：
-    使用 `std::process::Command` 启动子进程。在 Windows 下通过 `cmd /C` 增强批处理脚本（.cmd）的启动兼容性。
+- **状态管理 (`ExternalEditorState`)**：在 Tauri 的 `Managed State` 中维护 `NamedTempFile`（临时文件）、取消信号发送端以及当前活跃的子进程句柄 (`active_child`)。
+- **生命周期集成**：利用 Tauri v2 的 `.build().run()` 模式，在 `RunEvent::Exit` 应用退出事件中强制清理残留子进程。
+- **进程 management**：使用 `std::process::Command` 启动子进程。在 Windows 下通过 `cmd /C` 增强批处理脚本（.cmd）的启动兼容性。
 
-### 前端 (Svelte 5 + CodeMirror 6)
-- **实例类型化**：
-    通过 `ReturnType<typeof Component>` 对 CodeMirror 实例进行严格类型定义，确保光标位置获取的安全。
+### 前端 (Svelte 5 + Bridge 模式)
+- **Bridge 架构 (`useExternalEditor`)**：采用了基于 Context API 的 Bridge 模式，将逻辑、状态与 UI 彻底解耦。
+- **自动生命周期管理**：通过 `provideExternalEditor` 自动管理 `onMount` (初始化) 和 `onDestroy` (清理) 钩子，实现组件级的无感监听。
+- **实例类型化**：通过 `ReturnType<typeof Component>` 对 CodeMirror 6 实例进行严格类型定义，确保光标位置获取的安全。
 - **双向事件流**：
     - 调用 `open_external_editor` 指令发起同步。
     - 监听 `external-editor-sync` 事件实时更新文本。
