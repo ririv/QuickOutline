@@ -1,20 +1,10 @@
 package com.ririv.quickoutline.api.service;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
-import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.api.model.RpcRequest;
 import com.ririv.quickoutline.api.model.RpcResponse;
-import com.ririv.quickoutline.api.model.TocConfig;
-import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.utils.RpcUtils;
-import com.ririv.quickoutline.model.ViewScaleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Type;
-import java.util.List;
 
 public class RpcProcessor {
     private static final Logger log = LoggerFactory.getLogger(RpcProcessor.class);
@@ -23,17 +13,6 @@ public class RpcProcessor {
 
     public RpcProcessor(ApiService apiService) {
         this.apiService = apiService;
-    }
-
-    private ViewScaleType parseViewMode(Object obj) {
-        if (obj instanceof String) {
-            try {
-                return ViewScaleType.valueOf((String) obj);
-            } catch (IllegalArgumentException e) {
-                log.warn("Invalid ViewScaleType: {}", obj);
-            }
-        }
-        return ViewScaleType.NONE;
     }
 
     public String process(String jsonRequest) {
