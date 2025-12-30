@@ -2,7 +2,7 @@
   import HeaderFooterEditor from './HeaderFooterEditor.svelte';
   import CollapseTrigger from './CollapseTrigger.svelte';
   import { slide } from 'svelte/transition';
-  import type { HeaderFooterConfig } from '@/lib/api/rpc.ts';
+  import type { HeaderFooterConfig } from '@/lib/types/header-footer.ts';
 
   interface Props {
       headerConfig: HeaderFooterConfig;

@@ -1,12 +1,41 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { PageLabelNumberingStyle } from '@/lib/styleMaps';
-import type { HeaderFooterConfig } from './rpc';
+import type { ViewScaleType } from '@/lib/types/pdf';
+import type { BookmarkData } from '@/lib/types/bookmark';
+import type { HeaderFooterConfig } from '@/lib/types/header-footer';
 
 export interface PageLabel {
     pageNum: number;
     numberingStyle: PageLabelNumberingStyle;
     labelPrefix?: string | null;
     firstPage?: number | null;
+}
+
+function convertForRust(bookmark: any): any {
+    const copy = { ...bookmark };
+    if (copy.pageNum !== null && copy.pageNum !== undefined) {
+        const num = parseInt(String(copy.pageNum), 10);
+        copy.pageNum = isNaN(num) ? null : num;
+    } else {
+        copy.pageNum = null;
+    }
+    if (copy.children && Array.isArray(copy.children)) {
+        copy.children = copy.children.map((child: any) => convertForRust(child));
+    }
+    return copy;
+}
+
+function convertFromRust(bookmark: any): any {
+    const copy = { ...bookmark };
+    if (copy.pageNum !== null && copy.pageNum !== undefined) {
+        copy.pageNum = String(copy.pageNum);
+    } else {
+        copy.pageNum = null;
+    }
+    if (copy.children && Array.isArray(copy.children)) {
+        copy.children = copy.children.map((child: any) => convertFromRust(child));
+    }
+    return copy;
 }
 
 export interface TocLinkDto {
@@ -51,7 +80,7 @@ export async function generateTocPage(
 
 /**
  * Invokes the Rust backend to set page labels for the PDF.
- * @param srcFilePath Path to the source PDF.
+ * @param srcFilePath Path to the source PDF.  
  * @param rules List of page label rules.
  * @param destFilePath Optional destination path.
  * @returns Promise resolving to the path of the modified PDF.
@@ -65,5 +94,33 @@ export async function setPageLabels(
         srcPath: srcFilePath,
         rules: rules,
         destPath: destFilePath
+    });
+}
+
+/**
+ * Fetches the outline as a hierarchical bookmark structure.
+ */
+export async function getOutlineAsBookmark(srcFilePath: string, offset: number): Promise<BookmarkData> {
+    const result = await invoke<any>('get_outline_as_bookmark', { path: srcFilePath, offset });
+    return convertFromRust(result);
+}
+
+/**
+ * Saves the outline to a PDF file.
+ */
+export async function saveOutline(
+    srcFilePath: string, 
+    bookmarkRoot: BookmarkData, 
+    destFilePath: string | null, 
+    offset: number, 
+    viewMode: ViewScaleType = 'NONE' as ViewScaleType
+): Promise<string> {
+    const rustRoot = convertForRust(bookmarkRoot);
+    return invoke<string>('save_outline', { 
+        srcPath: srcFilePath, 
+        bookmarkRoot: rustRoot, 
+        destPath: destFilePath, 
+        offset, 
+        viewMode 
     });
 }

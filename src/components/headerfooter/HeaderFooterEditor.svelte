@@ -2,7 +2,7 @@
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import PositionDiagram from '../PositionDiagram.svelte';
     import Tooltip from '../Tooltip.svelte';
-    import type { HeaderFooterConfig } from '@/lib/api/rpc.ts';
+    import type { HeaderFooterConfig } from '@/lib/types/header-footer.ts';
 
     interface Props {
         config?: HeaderFooterConfig;

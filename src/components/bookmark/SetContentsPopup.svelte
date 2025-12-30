@@ -6,8 +6,7 @@
     import fitToPageIcon from '@/assets/icons/fit-to-page.svg';
     import fitToBoxIcon from '@/assets/icons/fit-to-box.svg';
     import actualSizeIcon from '@/assets/icons/actual-size.svg';
-
-    export type ViewScaleType = 'NONE' | 'FIT_TO_HEIGHT' | 'FIT_TO_WIDTH' | 'FIT_TO_PAGE' | 'FIT_TO_BOX' | 'ACTUAL_SIZE';
+    import type { ViewScaleType } from "@/lib/types/pdf";
 
     interface Props {
         triggerEl: HTMLElement;

@@ -1,10 +1,10 @@
-import { rpc } from '@/lib/api/rpc';
+import { getOutlineAsBookmark } from '@/lib/api/rust_pdf';
 import { tocStore } from '@/stores/tocStore.svelte';
 import { tocService } from './TocService';
 
 export class OutlineService {
     // Engine Options: 'lopdf' (Rust Backend) | 'pdfjs' (Frontend JS)
-    private engine: 'lopdf' | 'pdfjs' = 'pdfjs';
+    private engine: 'pdfjs' | 'lopdf' = 'pdfjs';
 
     /**
      * Common method to fetch and process bookmarks from a PDF.
@@ -50,7 +50,7 @@ export class OutlineService {
             return root;
         } else {
             console.log("[OutlineService] Fetching via lopdf (Rust)...");
-            return await rpc.getOutlineAsBookmark(path, 0);
+            return await getOutlineAsBookmark(path, 0);
         }
     }
 

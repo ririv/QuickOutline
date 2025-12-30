@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type {HeaderFooterConfig} from "@/lib/api/rpc.ts";
+  import type {HeaderFooterConfig} from "@/lib/types/header-footer.ts";
 
   interface Props {
     position: 'top' | 'bottom';

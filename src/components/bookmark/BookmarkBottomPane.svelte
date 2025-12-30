@@ -10,13 +10,13 @@
     import GetContentsPopup from './GetContentsPopup.svelte';
     import SetContentsPopup from './SetContentsPopup.svelte';
     import OffsetPopup from '../statusbar-popup/OffsetPopup.svelte';
-    import type { ViewScaleType } from './SetContentsPopup.svelte';
+    import type { ViewScaleType } from '@/lib/types/pdf';
     import GraphButton from '../controls/GraphButton.svelte';
     import StyledInput from '../controls/StyledInput.svelte';
     import { ripple } from '@/lib/actions/ripple';
     
-    import { rpc } from '@/lib/api/rpc';
     import { outlineService } from '@/lib/services/OutlineService';
+    import { saveOutline } from '@/lib/api/rust_pdf';
     import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte.ts';
@@ -158,7 +158,7 @@
 
             // 2. Parse locally and save tree
             const tree = processText(text);
-            await rpc.saveOutline(path, tree, null, offset, viewMode);
+            await saveOutline(path, tree as any, null, offset, viewMode);
             
             messageStore.add('Outline saved successfully!', 'SUCCESS');
         } catch (e: any) {
