@@ -54,11 +54,6 @@ public class RpcProcessor {
                 case "getCurrentFilePath":
                     result = apiService.getCurrentFilePath();
                     break;
-                case "openExternalEditor":
-                    // params: [text]
-                    apiService.openExternalEditor((String) request.params.get(0));
-                    result = "OK";
-                    break;
 
                 default:
                     throw new IllegalArgumentException("Unknown method: " + request.method);

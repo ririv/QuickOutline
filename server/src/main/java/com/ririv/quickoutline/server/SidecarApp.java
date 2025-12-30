@@ -8,7 +8,6 @@ import com.ririv.quickoutline.api.service.impl.ApiServiceImpl;
 import com.ririv.quickoutline.api.state.ApiBookmarkState;
 import com.ririv.quickoutline.api.state.CurrentFileState;
 import com.ririv.quickoutline.service.*;
-import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 
@@ -32,9 +31,6 @@ public class SidecarApp {
 
         // 1. 初始化服务
         PdfCheckService pdfCheckService = new PdfCheckService();
-        PdfOutlineService pdfOutlineService = new PdfOutlineService();
-        SyncWithExternalEditorService syncWithExternalEditorService = new SyncWithExternalEditorService();
-
         // 2. Initialize State and Managers
         ApiBookmarkState apiBookmarkState = new ApiBookmarkState();
         CurrentFileState currentFileState = new CurrentFileState();
@@ -43,11 +39,8 @@ public class SidecarApp {
         // 3. 初始化 API 实现
         ApiService apiService = new ApiServiceImpl(
                 pdfCheckService,
-                pdfOutlineService,
                 apiBookmarkState,
-                currentFileState,
-                syncWithExternalEditorService,
-                sessionManager
+                currentFileState
         );
 
         // 4. 初始化 RPC 处理器

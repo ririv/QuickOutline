@@ -34,10 +34,7 @@ module quickoutline {
     exports com.ririv.quickoutline.textProcess.methods;
     exports com.ririv.quickoutline.exception;
     exports com.ririv.quickoutline.pdfProcess;
-    exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor;
-    exports com.ririv.quickoutline.service.syncWithExternelEditor.externalEditor.exceptions;
     exports com.ririv.quickoutline.pdfProcess.itextImpl;
     exports com.ririv.quickoutline.pdfProcess.itextImpl.model;
-    exports com.ririv.quickoutline.pdfProcess.numbering;
     opens com.ririv.quickoutline.api.model to com.google.gson;
 }
