@@ -1,6 +1,7 @@
 import { getOutlineAsBookmark } from '@/lib/api/rust_pdf';
 import { tocStore } from '@/stores/tocStore.svelte';
 import { tocService } from './TocService';
+import type { BookmarkUI } from '@/lib/types/bookmark';
 
 export class OutlineService {
     // Engine Options: 'lopdf' (Rust Backend) | 'pdfjs' (Frontend JS)
@@ -9,7 +10,7 @@ export class OutlineService {
     /**
      * Common method to fetch and process bookmarks from a PDF.
      */
-    async fetchBookmarks(path: string): Promise<any> {
+    async fetchBookmarks(path: string): Promise<BookmarkUI> {
         const { docStore } = await import('@/stores/docStore.svelte');
         
         if (this.engine === 'pdfjs') {
@@ -22,23 +23,17 @@ export class OutlineService {
             }
 
             console.log("[OutlineService] Fetching via shared PDF.js instance...");
-            const bookmarks = await getBookmarks(pdf);
+            const bookmarks = await getBookmarks(pdf) as BookmarkUI[];
             const labels = await getPageLabels(pdf);
 
             if (labels) {
-                const updatePageNums = (nodes: any[]) => {
+                const updatePageNums = (nodes: BookmarkUI[]) => {
                     for (const node of nodes) {
                         if (node.pageNum) {
                             const physical = parseInt(node.pageNum, 10);
                             if (!isNaN(physical) && physical >= 1 && physical <= labels.length) {
                                 const label = labels[physical - 1];
-                                if (label === String(physical)) {
-                                    node.pageNum = label;
-                                } else {
-                                    // For TOC we use |, but for generic BookmarkUI we might want just the label or a structured object
-                                    // Given requirements, let's keep the label if possible.
-                                    node.pageNum = label; 
-                                }
+                                node.pageNum = label;
                             }
                         }
                         if (node.children) updatePageNums(node.children);
@@ -47,7 +42,7 @@ export class OutlineService {
                 updatePageNums(bookmarks);
             }
             
-            const root = { 
+            const root: BookmarkUI = { 
                 id: 'virtual-root',
                 title: 'Outlines',
                 level: 0,
@@ -57,7 +52,7 @@ export class OutlineService {
             return root;
         } else {
             console.log("[OutlineService] Fetching via lopdf (Rust)...");
-            return await getOutlineAsBookmark(path, 0);
+            return await getOutlineAsBookmark(path, 0) as BookmarkUI;
         }
     }
 

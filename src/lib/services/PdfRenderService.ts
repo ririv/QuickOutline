@@ -1,6 +1,7 @@
 import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
 import { renderPageToDataUrl, getPageLabels } from '@/lib/pdfjs';
 import { docStore } from '@/stores/docStore.svelte';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 class PdfRenderService {
     // Engine Switch
@@ -10,7 +11,7 @@ class PdfRenderService {
      * Get page labels for the current document
      * Uses the shared document instance from docStore or provided doc.
      */
-    async getPageLabels(path: string, providedDoc?: any): Promise<string[] | null> {
+    async getPageLabels(path: string, providedDoc?: PDFDocumentProxy): Promise<string[] | null> {
         const doc = providedDoc || this.getDoc(path);
         if (!doc) return null;
         return getPageLabels(doc);
@@ -63,7 +64,7 @@ class PdfRenderService {
      * Private helper to get the managed document from docStore.
      * Ensures we are accessing the correct file.
      */
-    private getDoc(path: string) {
+    private getDoc(path: string): PDFDocumentProxy | null {
         if (docStore.currentFilePath === path && docStore.pdfDoc) {
             return docStore.pdfDoc;
         }

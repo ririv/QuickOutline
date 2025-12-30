@@ -3,6 +3,7 @@ import { openExternalEditor as openExternalEditorApi } from '@/lib/api/rust_pdf'
 import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
 import { appStore } from '@/stores/appStore.svelte';
 import { messageStore } from '@/stores/messageStore.svelte';
+import { formatError } from '@/lib/utils/error';
 import { setContext, getContext, onMount, onDestroy } from 'svelte';
 
 export type ExternalEditorType = 'auto' | 'code' | 'code-insiders' | 'zed';
@@ -56,8 +57,8 @@ export class ExternalEditorBridge {
         }
         try {
             await openExternalEditorApi(content, line, col, appStore.externalEditor);
-        } catch (e: any) {
-            messageStore.add('Failed to launch external editor: ' + (e.message || String(e)), 'ERROR');
+        } catch (e: unknown) {
+            messageStore.add('Failed to launch external editor: ' + formatError(e), 'ERROR');
         }
     }
 

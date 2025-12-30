@@ -3,6 +3,7 @@ import { offsetStore } from './offsetStore.svelte';
 import { pageLabelStore } from './pageLabelStore.svelte';
 import { checkPdf } from '@/lib/pdfjs/pdfChecker';
 import { messageStore } from './messageStore.svelte';
+import { formatError } from '@/lib/utils/error';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 /**
@@ -81,10 +82,10 @@ class DocStore {
 
             console.log(`Document opened: ${path}`);
 
-        } catch (e: any) {
-            console.error("Failed to open file:", e);
-            messageStore.add("Failed to open file: " + (e.message || String(e)), "ERROR");
-            this.reset();
+        } catch (e: unknown) {
+            console.error("DocStore: Failed to open file", e);
+            messageStore.add("Failed to open file: " + formatError(e), "ERROR");
+            this.activeDoc = null;
         }
     }
 

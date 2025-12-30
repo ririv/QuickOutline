@@ -3,6 +3,7 @@ import { renderPageToUrl, renderPageToDataUrl } from './renderer';
 import { getBookmarks } from './outline';
 import { getPageLabels } from './labels';
 import { invoke } from '@tauri-apps/api/core';
+import type { DocumentInitParameters } from 'pdfjs-dist/types/src/display/api';
 
 // Assuming we have copied the worker to public/libs
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/libs/pdf.worker.min.mjs';
@@ -10,9 +11,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = '/libs/pdf.worker.min.mjs';
 // Re-export core functions for external usage
 export { renderPageToUrl, renderPageToDataUrl, getBookmarks, getPageLabels };
 
-// Main PDF document loading function
-export async function loadPdfDocument(src: any): Promise<pdfjsLib.PDFDocumentProxy> {
-    let config: any = {};
+/**
+ * Main PDF document loading function.
+ * @param src URL string, ArrayBuffer, Uint8Array, or DocumentInitParameters
+ */
+export async function loadPdfDocument(src: string | ArrayBuffer | Uint8Array | DocumentInitParameters): Promise<pdfjsLib.PDFDocumentProxy> {
+    let config: DocumentInitParameters = {};
     if (typeof src === 'string') {
         config = { url: src };
     } else if (src instanceof ArrayBuffer || src instanceof Uint8Array) {
