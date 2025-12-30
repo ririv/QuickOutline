@@ -8,10 +8,10 @@ class PdfRenderService {
 
     /**
      * Get page labels for the current document
-     * Uses the shared document instance from docStore.
+     * Uses the shared document instance from docStore or provided doc.
      */
-    async getPageLabels(path: string): Promise<string[] | null> {
-        const doc = this.getDoc(path);
+    async getPageLabels(path: string, providedDoc?: any): Promise<string[] | null> {
+        const doc = providedDoc || this.getDoc(path);
         if (!doc) return null;
         return getPageLabels(doc);
     }

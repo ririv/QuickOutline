@@ -11,7 +11,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = '/libs/pdf.worker.min.mjs';
 export { renderPageToUrl, renderPageToDataUrl, getBookmarks, getPageLabels };
 
 // Main PDF document loading function
-// src can be URL string, ArrayBuffer, or PDFDataRangeTransport
 export async function loadPdfDocument(src: any): Promise<pdfjsLib.PDFDocumentProxy> {
     let config: any = {};
     if (typeof src === 'string') {
@@ -19,7 +18,7 @@ export async function loadPdfDocument(src: any): Promise<pdfjsLib.PDFDocumentPro
     } else if (src instanceof ArrayBuffer || src instanceof Uint8Array) {
         config = { data: src };
     } else {
-        config = { ...src }; // Clone existing config
+        config = { ...src };
     }
 
     // Configure CMaps for CJK support
@@ -30,22 +29,21 @@ export async function loadPdfDocument(src: any): Promise<pdfjsLib.PDFDocumentPro
     return loadingTask.promise;
 }
 
-let lastSyncedPath: string | null = null;
-
+/**
+ * Loads a PDF document using the stateless static server.
+ * Supports multi-doc by passing the path as a query parameter.
+ */
 export async function loadPdfFromPath(path: string): Promise<pdfjsLib.PDFDocumentProxy> {
-    // 1. Only sync with backend if the path has changed
-    if (path !== lastSyncedPath) {
-        await invoke('set_current_pdf', { path });
-        lastSyncedPath = path;
-    }
+    // 1. Get static server port
+    const port = await invoke<number>('get_static_server_port');
     
-    // 2. Get static server port
-    const port = await invoke('get_static_server_port');
+    // 2. Encode path for URL (handles spaces, slashes, etc.)
+    const encodedPath = encodeURIComponent(path);
     
-    // 3. Construct local URL
-    // Append timestamp to prevent caching if file changes
-    const url = `http://127.0.0.1:${port}/pdf/current.pdf?t=${Date.now()}`;
+    // 3. Construct the stateless URL
+    // New endpoint: /pdf/view?path=...
+    const url = `http://127.0.0.1:${port}/pdf/view?path=${encodedPath}&t=${Date.now()}`;
     
-    // 4. Load with PDF.js (Standard HTTP Range Requests supported by backend)
+    // 4. Load with PDF.js
     return loadPdfDocument(url);
 }

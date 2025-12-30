@@ -18,7 +18,6 @@ pub struct LocalServerState {
     pub port: Mutex<Option<u16>>,
     pub workspace: Mutex<PathBuf>,
     pub resources: Mutex<Option<PathBuf>>,
-    pub current_pdf: Mutex<Option<ActiveDocument>>,
 }
 
 impl LocalServerState {
@@ -27,7 +26,6 @@ impl LocalServerState {
             port: Mutex::new(None),
             workspace: Mutex::new(PathBuf::new()),
             resources: Mutex::new(None),
-            current_pdf: Mutex::new(None),
         }
     }
 }
@@ -77,16 +75,16 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
 
             let url = request.url();
             
-            // Intercept PDF request
-            if url.starts_with("/pdf/current.pdf") {
-                if let Some(state) = app_handle.try_state::<LocalServerState>() {
-                    let doc_opt = state.current_pdf.lock().unwrap().clone();
-                    if let Some(doc) = doc_opt {
-                        serve_file_with_range(request, doc.path);
+            // Intercept PDF request: /pdf/view?path=...
+            if url.starts_with("/pdf/view") {
+                if let Some(path_param) = extract_path_from_url(url) {
+                    let pdf_path = PathBuf::from(path_param);
+                    if pdf_path.exists() && pdf_path.is_file() {
+                        serve_file_with_range(request, pdf_path);
                         continue;
                     }
                 }
-                let _ = request.respond(Response::from_string("Not Found (No PDF set)").with_status_code(404));
+                let _ = request.respond(Response::from_string("PDF Not Found").with_status_code(404));
                 continue;
             }
 
@@ -298,4 +296,42 @@ fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
     }
 
     let _ = request.respond(response);
+}
+
+/**
+ * Extracts 'path' query parameter from URL and performs full Percent-Decoding.
+ */
+fn extract_path_from_url(url: &str) -> Option<String> {
+    let query_start = url.find('?')?;
+    let query = &url[query_start + 1..];
+    for pair in query.split('&') {
+        let mut parts = pair.splitn(2, '=');
+        if parts.next()? == "path" {
+            let encoded_path = parts.next()?;
+            return decode_url_component(encoded_path);
+        }
+    }
+    None
+}
+
+/**
+ * Manual Percent-Decoding to handle Chinese characters and special paths.
+ */
+fn decode_url_component(s: &str) -> Option<String> {
+    let mut result = Vec::with_capacity(s.len());
+    let mut chars = s.as_bytes().iter();
+    while let Some(&b) = chars.next() {
+        if b == b'%' {
+            let h = *chars.next()?;
+            let l = *chars.next()?;
+            let hex_str = format!("{}{}", h as char, l as char);
+            let byte = u8::from_str_radix(&hex_str, 16).ok()?;
+            result.push(byte);
+        } else if b == b'+' {
+            result.push(b' ');
+        } else {
+            result.push(b);
+        }
+    }
+    String::from_utf8(result).ok()
 }
