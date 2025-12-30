@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount, onDestroy, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
-    import { docStore } from '@/stores/docStore.svelte.ts';
+    import { docStore } from '@/stores/docStore.svelte';
+    import { appStore } from '@/stores/appStore.svelte';
     import { openExternalEditor } from '@/lib/api/rust_pdf';
     import { listen, type UnlistenFn } from '@tauri-apps/api/event';
     import { processText, autoFormat, Method } from '@/lib/outlineParser';
@@ -159,7 +160,7 @@
         }
         try {
             const { line, ch } = editor?.getCursor() || { line: 1, ch: 1 };
-            await openExternalEditor(textValue, line, ch);
+            await openExternalEditor(textValue, line, ch, appStore.externalEditor);
             // UI state will be updated by events
         } catch (e: any) {
             messageStore.add('Failed to open in external editor: ' + (e.message || String(e)), 'ERROR');

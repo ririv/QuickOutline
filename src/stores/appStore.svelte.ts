@@ -10,11 +10,13 @@ export enum FnTab {
 
 // 定义连接状态类型
 export type ConnectionStatus = 'init' | 'connecting' | 'connected' | 'error';
+export type ExternalEditorType = 'auto' | 'code' | 'code-insiders' | 'zed';
 
 class AppStore {
     activeTab = $state(FnTab.bookmark);
     serverPort = $state(0);
     connectionStatus = $state<ConnectionStatus>('init');
+    externalEditor = $state<ExternalEditorType>('auto');
 
     switchTab(tab: FnTab) {
         this.activeTab = tab;

@@ -131,8 +131,11 @@ export async function saveOutline(
 
  */
 
-export async function openExternalEditor(content: string, line: number = 1, col: number = 1): Promise<void> {
-
-    return invoke('open_external_editor', { content, line, col });
-
+export async function openExternalEditor(
+    content: string,
+    line: number = 1,
+    col: number = 1,
+    editorId: string = 'auto'
+): Promise<void> {
+    return invoke('open_external_editor', { content, line, col, editorId });
 }
