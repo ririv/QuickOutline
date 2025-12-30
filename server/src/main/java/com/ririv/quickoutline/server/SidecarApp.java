@@ -5,7 +5,6 @@ import com.ririv.quickoutline.api.service.ApiService;
 import com.ririv.quickoutline.api.service.RpcProcessor;
 import com.ririv.quickoutline.api.WebSocketRpcHandler;
 import com.ririv.quickoutline.api.service.impl.ApiServiceImpl;
-import com.ririv.quickoutline.api.state.CurrentFileState;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 
@@ -29,13 +28,10 @@ public class SidecarApp {
 
         // 1. 初始化服务
         // 2. Initialize State and Managers
-        CurrentFileState currentFileState = new CurrentFileState();
         WebSocketSessionManager sessionManager = new WebSocketSessionManager();
 
         // 3. 初始化 API 实现
-        ApiService apiService = new ApiServiceImpl(
-                currentFileState
-        );
+        ApiService apiService = new ApiServiceImpl();
 
         // 4. 初始化 RPC 处理器
         RpcProcessor rpcProcessor = new RpcProcessor(apiService);

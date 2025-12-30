@@ -30,7 +30,6 @@ module quickoutline {
 
     exports com.ririv.quickoutline.model;
     exports com.ririv.quickoutline.service;
-    exports com.ririv.quickoutline.exception;
     exports com.ririv.quickoutline.pdfProcess;
     exports com.ririv.quickoutline.pdfProcess.itextImpl;
     exports com.ririv.quickoutline.pdfProcess.itextImpl.model;

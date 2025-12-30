@@ -26,12 +26,9 @@ public class RpcProcessor {
             Object result = null;
 
             switch (request.method) {
-                case "openFile":
-                    apiService.openFile((String) request.params.get(0));
+                case "placeholder":
+//                    apiService.placeholder();
                     result = "OK";
-                    break;
-                case "getCurrentFilePath":
-                    result = apiService.getCurrentFilePath();
                     break;
 
                 default:
