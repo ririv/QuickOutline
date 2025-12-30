@@ -51,28 +51,6 @@ public class RpcProcessor {
                     apiService.openFile((String) request.params.get(0));
                     result = "OK";
                     break;
-                case "getOutline":
-                    result = apiService.getOutline(RpcUtils.getInt(request.params.get(0)));
-                    break;
-                case "getOutlineAsBookmark":
-                    result = apiService.getOutlineAsBookmark(RpcUtils.getInt(request.params.get(0)));
-                    break;
-                case "saveOutline":
-                    // params: [bookmarkDto (nullable), destPath, offset, viewMode]
-                    Bookmark root = null;
-                    if (request.params.get(0) != null) {
-                        JsonElement bookmarkJson = gson.toJsonTree(request.params.get(0));
-                        BookmarkDto dto = gson.fromJson(bookmarkJson, BookmarkDto.class);
-                        if (dto != null) {
-                            root = dto.toDomain();
-                        }
-                    }
-                    String dest = request.params.size() > 1 ? (String) request.params.get(1) : null;
-                    int offset = request.params.size() > 2 ? RpcUtils.getInt(request.params.get(2)) : 0;
-                    ViewScaleType viewMode = request.params.size() > 3 ? parseViewMode(request.params.get(3)) : ViewScaleType.NONE;
-                    apiService.saveOutline(root, dest, offset, viewMode);
-                    result = "OK";
-                    break;
                 case "getCurrentFilePath":
                     result = apiService.getCurrentFilePath();
                     break;

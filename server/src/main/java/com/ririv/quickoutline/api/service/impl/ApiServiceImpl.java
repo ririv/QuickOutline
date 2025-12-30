@@ -3,16 +3,13 @@ package com.ririv.quickoutline.api.service.impl;
 import com.google.gson.Gson;
 import com.ririv.quickoutline.api.state.ApiBookmarkState;
 import com.ririv.quickoutline.api.state.CurrentFileState;
-import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.api.service.ApiService;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.model.ViewScaleType;
 import com.ririv.quickoutline.service.*;
 import com.ririv.quickoutline.textProcess.methods.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,106 +62,6 @@ public class ApiServiceImpl implements ApiService {
     @Override
     public String getCurrentFilePath() {
         return currentFileState.getFilePath();
-    }
-
-    @Override
-    public String getOutline(int offset) {
-        checkFileOpen();
-        try {
-            String content = pdfOutlineService.getContents(currentFileState.getFilePath(), offset);
-
-            // Sync State: Parse back to object to hold in memory
-            Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(content, Method.INDENT);
-            apiBookmarkState.setRootBookmark(root);
-            apiBookmarkState.setOffset(offset);
-
-            return content;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public BookmarkDto getOutlineAsBookmark(int offset) {
-        checkFileOpen();
-        try {
-            Bookmark root = pdfOutlineService.getOutlineAsBookmark(currentFileState.getFilePath(), offset);
-
-            // Sync State
-            apiBookmarkState.setRootBookmark(root);
-            apiBookmarkState.setOffset(offset);
-
-            return BookmarkDto.fromDomain(root);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String resolveDestFilePath(String destFilePath) {
-        if (destFilePath != null && !destFilePath.trim().isEmpty()) {
-            return destFilePath;
-        }
-        return calculateAutoDestPath(currentFileState.getFilePath());
-    }
-
-    private String calculateAutoDestPath(String srcPath) {
-        File srcFile = new File(srcPath);
-        String fileName = srcFile.getName();
-        String parent = srcFile.getParent();
-
-        int dotIndex = fileName.lastIndexOf('.');
-        String name = (dotIndex == -1) ? fileName : fileName.substring(0, dotIndex);
-        String ext = (dotIndex == -1) ? "" : fileName.substring(dotIndex);
-
-        // 1. Try base suffix _new
-        String candidateName = name + "_new" + ext;
-        File candidateFile = new File(parent, candidateName);
-
-        if (!candidateFile.exists()) {
-            return candidateFile.getAbsolutePath();
-        }
-
-        // 2. Collision detected, increment: _new_1, _new_2...
-        int counter = 1;
-        while (candidateFile.exists()) {
-            candidateName = name + "_new_" + counter + ext;
-            candidateFile = new File(parent, candidateName);
-            counter++;
-        }
-
-        return candidateFile.getAbsolutePath();
-    }
-
-    @Override
-    public void saveOutline(Bookmark rootBookmark, String destFilePath, int offset, ViewScaleType viewMode) {
-        checkFileOpen();
-        String actualDest = resolveDestFilePath(destFilePath);
-
-        // Strategy: Use provided params if present (stateless call),
-        // otherwise fallback to state (stateful call).
-        // For standard flow, we prefer the state if it exists and matches context.
-
-        Bookmark targetRoot = rootBookmark;
-        int targetOffset = offset;
-
-        if (targetRoot == null && apiBookmarkState.hasRootBookmark()) {
-            targetRoot = apiBookmarkState.getRootBookmark();
-            targetOffset = apiBookmarkState.getOffset();
-            log.info("Saving outline using Server State (offset={})", targetOffset);
-        }
-
-        if (targetRoot == null) {
-            throw new IllegalArgumentException("No bookmark data provided and no server state available.");
-        }
-
-        // Use the provided viewMode directly, defaulting to NONE if null (though RpcProcessor handles default)
-        ViewScaleType scaleType = (viewMode != null) ? viewMode : ViewScaleType.NONE;
-
-        try {
-            pdfOutlineService.setOutline(targetRoot, currentFileState.getFilePath(), actualDest, targetOffset, scaleType);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override

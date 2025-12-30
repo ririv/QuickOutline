@@ -1,9 +1,7 @@
 package com.ririv.quickoutline.service;
 
 import com.ririv.quickoutline.exception.EncryptedPdfException;
-import com.ririv.quickoutline.pdfProcess.OutlineProcessor;
 import com.ririv.quickoutline.pdfProcess.PdfChecker;
-import com.ririv.quickoutline.pdfProcess.itextImpl.ItextOutlineProcessor;
 import com.ririv.quickoutline.pdfProcess.itextImpl.ItextPdfCheckerImpl;
 
 import java.io.IOException;
