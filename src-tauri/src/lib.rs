@@ -72,6 +72,7 @@ fn cleanup_pdf_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<(), St
 }
 
 use crate::pdf_outline::model::{Bookmark, ViewScaleType};
+use crate::pdf::page_label::{PageLabel, PageLabelProcessor};
 
 fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
     if let Some(path) = dest_path {
@@ -121,6 +122,18 @@ async fn save_outline(
     pdf_outline::processor::set_outline(&src_path, &actual_dest, bookmark_root, offset, scale)
         .map_err(|e| e.to_string())?;
         
+    Ok(actual_dest)
+}
+
+#[tauri::command]
+async fn set_page_labels(
+    src_path: String,
+    rules: Vec<PageLabel>,
+    dest_path: Option<String>
+) -> Result<String, String> {
+    let actual_dest = resolve_dest_path(&src_path, dest_path);
+    PageLabelProcessor::set_page_labels(&src_path, &actual_dest, rules)
+        .map_err(|e| e.to_string())?;
     Ok(actual_dest)
 }
 
@@ -245,6 +258,7 @@ pub fn run() {
             pdf::render::get_pdf_page_count,
             get_outline_as_bookmark,
             save_outline,
+            set_page_labels,
             set_current_pdf,
             get_static_server_port,
             pdf::toc::generate_toc_page

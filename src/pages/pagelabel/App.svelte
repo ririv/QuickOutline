@@ -15,8 +15,9 @@
     import { messageStore } from '@/stores/messageStore.svelte.ts';
     import { docStore } from '@/stores/docStore.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
-    import { rpc, type PageLabelRuleDto } from '@/lib/api/rpc';
     import { PageLabelNumberingStyle, pageLabelStyleMap } from '@/lib/styleMaps';
+    import { simulatePageLabelsLocal, type PageLabel } from '@/lib/pdf-processing/page-label';
+    import { setPageLabels } from '@/lib/api/rust_pdf';
     import GraphButton from "@/components/controls/GraphButton.svelte";
 
     const styles = pageLabelStyleMap.getAllStyles();
@@ -51,16 +52,16 @@
         pageLabelStore.resetForm();
     }
 
-    async function simulate() {
-        const dtos: PageLabelRuleDto[] = pageLabelStore.rules.map(r => ({
-            fromPage: r.fromPage,
-            start: r.start,
-            prefix: r.prefix,
+    function simulate() {
+        const rules: PageLabel[] = pageLabelStore.rules.map(r => ({
+            pageNum: r.fromPage,
+            firstPage: r.start,
+            labelPrefix: r.prefix,
             numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
         }));
 
         try {
-            const labels = await rpc.simulatePageLabels(dtos);
+            const labels = simulatePageLabelsLocal(rules, docStore.pageCount);
             pageLabelStore.setSimulatedLabels(labels);
         } catch (e) {
             console.error("Simulation failed", e);
@@ -68,14 +69,19 @@
     }
 
     function apply() {
-        const dtos: PageLabelRuleDto[] = pageLabelStore.rules.map(r => ({
-            fromPage: r.fromPage,
-            start: r.start,
-            prefix: r.prefix,
+        if (!docStore.currentFilePath) {
+            messageStore.add("No file opened.", "ERROR");
+            return;
+        }
+
+        const rules: PageLabel[] = pageLabelStore.rules.map(r => ({
+            pageNum: r.fromPage,
+            firstPage: r.start,
+            labelPrefix: r.prefix,
             numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
         }));
         
-        rpc.setPageLabels(dtos, null).then(() => {
+        setPageLabels(docStore.currentFilePath, rules, null).then(() => {
              messageStore.add("Page labels applied successfully!", "SUCCESS");
         }).catch(e => {
              messageStore.add("Failed to apply page labels: " + e.message, "ERROR");

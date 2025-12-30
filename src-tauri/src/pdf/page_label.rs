@@ -1,7 +1,7 @@
 use lopdf::{Document, Object, Dictionary, StringFormat};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use crate::pdf::numbering::Numbering;
+use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum PageLabelNumberingStyle {
@@ -32,9 +32,48 @@ pub struct PageLabelProcessor;
 
 impl PageLabelProcessor {
     
-    pub fn set_page_labels(doc: &mut Document, label_list: Vec<PageLabel>) -> Result<(), Box<dyn std::error::Error>> {
+    /// Sets page labels for a PDF file (Reads, Modifies, Saves).
+    pub fn set_page_labels(src_path: &str, dest_path: &str, rules: Vec<PageLabel>) -> Result<(), Box<dyn std::error::Error>> {
+        let mut doc = Document::load(src_path)?;
+        Self::set_page_labels_in_doc(&mut doc, rules)?;
+        doc.save(dest_path)?;
+        Ok(())
+    }
+
+    /// Gets formatted page labels from a PDF file (Reads file).
+    pub fn get_page_labels(path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+        let doc = Document::load(path)?;
+        Self::get_page_labels_from_doc(&doc)
+    }
+
+    /// Pure logic to simulate page labels without a PDF file.
+    pub fn simulate_page_labels(rules: Vec<PageLabel>, total_pages: u32) -> Vec<String> {
+        let mut simulated_labels = Vec::with_capacity(total_pages as usize);
+        let mut sorted_rules = rules;
+        sorted_rules.sort_by_key(|r| r.page_num);
+
+        for i in 1..=total_pages {
+            // Find the applicable rule for the current page `i`
+            let active_rule = sorted_rules.iter()
+                .filter(|r| i as i32 >= r.page_num)
+                .last();
+
+            let label = if let Some(rule) = active_rule {
+                let page_offset = (i as i32) - rule.page_num;
+                let start_val = rule.first_page.unwrap_or(1);
+                Numbering::format_page_number(&rule.numbering_style, start_val + page_offset, rule.label_prefix.as_deref())
+            } else {
+                i.to_string()
+            };
+            simulated_labels.push(label);
+        }
+        simulated_labels
+    }
+
+    /// Updates page labels in an existing lopdf::Document.
+    pub fn set_page_labels_in_doc(doc: &mut Document, label_list: Vec<PageLabel>) -> Result<(), Box<dyn std::error::Error>> {
         // Ensure page 1 has a label if not provided? Java code did this.
-        // Let's stick to the provided list. 
+        // Let's stick to the provided list.
         // Note: PDF requires PageLabels to be sorted by index.
         
         let mut nums = Vec::new();
@@ -93,12 +132,12 @@ impl PageLabelProcessor {
         Ok(())
     }
 
-    /// Merges new page labels into the existing ones.
+    /// Merges new page labels into the existing ones in a Document.
     /// New rules will be inserted.
-    pub fn merge_page_labels(doc: &mut Document, label_list: Vec<PageLabel>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn merge_page_labels_in_doc(doc: &mut Document, label_list: Vec<PageLabel>) -> Result<(), Box<dyn std::error::Error>> {
         // 1. Get existing rules
-        let mut current_rules = Self::get_page_label_rules(doc)?;
-        
+        let mut current_rules = Self::get_page_label_rules_from_doc(doc)?;
+
         // 2. Merge logic
         for new_label in label_list {
             // Find if there is an existing rule starting at the same page
@@ -113,24 +152,23 @@ impl PageLabelProcessor {
         
         // 3. Sort (set_page_labels handles sorting, but good to be explicit)
         current_rules.sort_by_key(|r| r.page_num);
-        
+
         // 4. Write back using the overwrite method
-        Self::set_page_labels(doc, current_rules)
+        Self::set_page_labels_in_doc(doc, current_rules)
     }
 
-    /// Removes page label rules that start at the specified page numbers.
-    pub fn remove_page_labels(doc: &mut Document, page_nums: Vec<i32>) -> Result<(), Box<dyn std::error::Error>> {
+    /// Removes page label rules that start at the specified page numbers from a Document.
+    pub fn remove_page_labels_in_doc(doc: &mut Document, page_nums: Vec<i32>) -> Result<(), Box<dyn std::error::Error>> {
         // 1. Get existing rules
-        let mut current_rules = Self::get_page_label_rules(doc)?;
-        
-        // 2. Filter out rules to be removed
+        let mut current_rules = Self::get_page_label_rules_from_doc(doc)?;
         current_rules.retain(|r| !page_nums.contains(&r.page_num));
-        
-        // 3. Write back
-        Self::set_page_labels(doc, current_rules)
+
+        // 2. Filter out rules to be removed
+        Self::set_page_labels_in_doc(doc, current_rules)
     }
 
-    pub fn get_page_labels(doc: &Document) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    /// Gets formatted page labels from a Document.
+    pub fn get_page_labels_from_doc(doc: &Document) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let page_count = doc.get_pages().len();
         let mut labels = vec![String::new(); page_count];
         
@@ -140,8 +178,8 @@ impl PageLabelProcessor {
         }
 
         // Reuse the parsing logic from get_page_label_rules
-        let rules = Self::get_page_label_rules(doc)?;
-        
+        let rules = Self::get_page_label_rules_from_doc(doc)?;
+
         // No rules found, return default
         if rules.is_empty() {
             return Ok(labels);
@@ -169,11 +207,11 @@ impl PageLabelProcessor {
                 current_num += 1;
             }
         }
-        
         Ok(labels)
     }
 
-    pub fn get_page_label_rules(doc: &Document) -> Result<Vec<PageLabel>, Box<dyn std::error::Error>> {
+    /// Gets page label rules from a Document.
+    pub fn get_page_label_rules_from_doc(doc: &Document) -> Result<Vec<PageLabel>, Box<dyn std::error::Error>> {
         let mut rules_list = Vec::new();
 
         let catalog_id = doc.trailer.get(b"Root")?.as_reference()?;
@@ -196,7 +234,7 @@ impl PageLabelProcessor {
                 for chunk in nums_array.chunks(2) {
                     if chunk.len() != 2 { break; }
                     let index = chunk[0].as_i64()? as i32; // 0-based index
-                    
+
                     let dict = match &chunk[1] {
                         Object::Reference(id) => doc.get_object(*id)?.as_dict()?,
                         Object::Dictionary(d) => d,

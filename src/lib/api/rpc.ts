@@ -63,13 +63,6 @@ export interface HeaderFooterConfig {
 
 // TocConfig removed. Use src/lib/api/rust_pdf.ts
 
-export interface PageLabelRuleDto {
-    fromPage: number;
-    numberingStyle: PageLabelNumberingStyle;
-    prefix: string;
-    start: number;
-}
-
 /**
  * 定义 Java 端 ApiService 对应的方法
  */
@@ -80,10 +73,6 @@ export interface QuickOutlineApi {
     // Outline
     getOutlineAsBookmark(srcFilePath: string, offset: number): Promise<any>;
     saveOutline(srcFilePath: string, bookmarkRoot: any, destFilePath: string | null, offset: number, viewMode?: string): Promise<string>; // Corrected signature
-
-    // Page Labels
-    setPageLabels(rules: PageLabelRuleDto[], destFilePath: string | null): Promise<string>;
-    simulatePageLabels(rules: PageLabelRuleDto[]): Promise<string[]>;
 
 }
 
@@ -260,16 +249,6 @@ class RpcClient implements QuickOutlineApi {
                 viewMode 
             })
         ).then(() => "Success");
-    }
-
-
-
-    public setPageLabels(rules: PageLabelRuleDto[], destFilePath: string | null): Promise<string> {
-        return this.send("setPageLabels", [rules, destFilePath]);
-    }
-
-    public simulatePageLabels(rules: PageLabelRuleDto[]): Promise<string[]> {
-        return this.send("simulatePageLabels", [rules]);
     }
 
 

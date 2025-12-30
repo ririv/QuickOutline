@@ -48,3 +48,22 @@ export async function generateTocPage(
         destPath: destFilePath
     });
 }
+
+/**
+ * Invokes the Rust backend to set page labels for the PDF.
+ * @param srcFilePath Path to the source PDF.
+ * @param rules List of page label rules.
+ * @param destFilePath Optional destination path.
+ * @returns Promise resolving to the path of the modified PDF.
+ */
+export async function setPageLabels(
+    srcFilePath: string,
+    rules: PageLabel[],
+    destFilePath: string | null
+): Promise<string> {
+    return invoke<string>('set_page_labels', {
+        srcPath: srcFilePath,
+        rules: rules,
+        destPath: destFilePath
+    });
+}

@@ -116,11 +116,11 @@ fn apply_toc_page_labels(
     toc_label_opt: Option<&PageLabel>
 ) {
     if let Ok(src_doc) = Document::load(src_path) {
-        if let Ok(rules) = PageLabelProcessor::get_page_label_rules(&src_doc) {
+        if let Ok(rules) = PageLabelProcessor::get_page_label_rules_from_doc(&src_doc) {
             // Try to load TOC rules
             let (toc_len, toc_rules) = if let Ok(toc_doc) = Document::load(toc_path) {
                 let len = toc_doc.get_pages().len() as i32;
-                let r = PageLabelProcessor::get_page_label_rules(&toc_doc).unwrap_or_default();
+                let r = PageLabelProcessor::get_page_label_rules_from_doc(&toc_doc).unwrap_or_default();
                 (len, r)
             } else {
                 (0, vec![])
@@ -133,7 +133,7 @@ fn apply_toc_page_labels(
                 }
 
                 let new_rules = calculate_merged_rules(rules, insert_pos, toc_len, toc_rules, toc_label_opt);
-                let _ = PageLabelProcessor::set_page_labels(doc, new_rules);
+                let _ = PageLabelProcessor::set_page_labels_in_doc(doc, new_rules);
             }
         }
     }

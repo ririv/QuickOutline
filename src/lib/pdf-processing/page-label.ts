@@ -1,3 +1,5 @@
+import { Numbering } from './numbering';
+
 export enum PageLabelNumberingStyle {
     /**
      * 1, 2, 3, 4...
@@ -38,3 +40,28 @@ export const STYLE_MAP: Record<string, PageLabelNumberingStyle> = {
     "a, b, c, ...": PageLabelNumberingStyle.LOWERCASE_LETTERS,
     "A, B, C, ...": PageLabelNumberingStyle.UPPERCASE_LETTERS,
 };
+
+export function simulatePageLabelsLocal(rules: PageLabel[], pageCount: number): string[] {
+    const sortedRules = [...rules].sort((a, b) => a.pageNum - b.pageNum);
+    const labels: string[] = new Array(pageCount);
+
+    for (let i = 1; i <= pageCount; i++) {
+        let activeRule: PageLabel | null = null;
+        for (const rule of sortedRules) {
+            if (i >= rule.pageNum) {
+                activeRule = rule;
+            } else {
+                break;
+            }
+        }
+
+        if (activeRule) {
+            const offset = i - activeRule.pageNum;
+            const start = activeRule.firstPage ?? 1;
+            labels[i - 1] = Numbering.formatPageNumber(activeRule.numberingStyle, start + offset, activeRule.labelPrefix || null);
+        } else {
+            labels[i - 1] = String(i);
+        }
+    }
+    return labels;
+}
