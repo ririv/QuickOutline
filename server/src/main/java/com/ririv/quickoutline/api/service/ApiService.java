@@ -3,7 +3,6 @@ package com.ririv.quickoutline.api.service;
 import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.service.PageLabelRule;
 import com.ririv.quickoutline.model.ViewScaleType;
 
 import java.util.List;
@@ -29,11 +28,6 @@ public interface ApiService {
 
     // --- TOC ---
     void generateTocPage(TocConfig config, String destFilePath);
-
-    // --- Page Labels ---
-    String[] getPageLabels(String srcFilePath);
-    void setPageLabels(List<PageLabelRule> rules, String destFilePath);
-    List<String> simulatePageLabels(List<PageLabelRule> rules);
 
     // --- Utils ---
     BookmarkDto parseTextToTree(String text);

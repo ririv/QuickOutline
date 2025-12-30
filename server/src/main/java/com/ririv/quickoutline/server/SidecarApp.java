@@ -38,7 +38,6 @@ public class SidecarApp {
         FontManager fontManager = new FontManager();
         TocPageGenerator tocPageGenerator = new iTextTocPageGenerator(fontManager);
         PdfTocPageGeneratorService pdfTocPageGeneratorService = new PdfTocPageGeneratorService(tocPageGenerator);
-        PdfPageLabelService pdfPageLabelService = new PdfPageLabelService();
         SyncWithExternalEditorService syncWithExternalEditorService = new SyncWithExternalEditorService();
 
         // 2. Initialize State and Managers
@@ -51,7 +50,6 @@ public class SidecarApp {
                 pdfCheckService,
                 pdfOutlineService,
                 pdfTocPageGeneratorService,
-                pdfPageLabelService,
                 apiBookmarkState,
                 currentFileState,
                 syncWithExternalEditorService,

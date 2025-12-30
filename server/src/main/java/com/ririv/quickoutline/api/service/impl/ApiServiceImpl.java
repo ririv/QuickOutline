@@ -32,7 +32,6 @@ public class ApiServiceImpl implements ApiService {
 
     private final PdfCheckService pdfCheckService;
     private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
-    private final PdfPageLabelService pdfPageLabelService;
     private final ApiBookmarkState apiBookmarkState;
     private final CurrentFileState currentFileState;
     private final SyncWithExternalEditorService syncService;
@@ -42,7 +41,6 @@ public class ApiServiceImpl implements ApiService {
     public ApiServiceImpl(PdfCheckService pdfCheckService,
                           PdfOutlineService pdfOutlineService,
                           PdfTocPageGeneratorService pdfTocPageGeneratorService,
-                          PdfPageLabelService pdfPageLabelService,
                           ApiBookmarkState apiBookmarkState,
                           CurrentFileState currentFileState,
                           SyncWithExternalEditorService syncService,
@@ -50,7 +48,6 @@ public class ApiServiceImpl implements ApiService {
         this.pdfCheckService = pdfCheckService;
         this.pdfOutlineService = pdfOutlineService;
         this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
-        this.pdfPageLabelService = pdfPageLabelService;
         this.apiBookmarkState = apiBookmarkState;
         this.currentFileState = currentFileState;
         this.syncService = syncService;
@@ -208,43 +205,6 @@ public class ApiServiceImpl implements ApiService {
                         throw new RuntimeException(err);
                     }
             );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    @Override
-    public String[] getPageLabels(String srcFilePath) {
-        String path = srcFilePath != null ? srcFilePath : currentFileState.getFilePath();
-        if (path == null) throw new IllegalStateException("No file specified and no file open");
-        try {
-            return pdfPageLabelService.getPageLabels(path);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void setPageLabels(List<PageLabelRule> rules, String destFilePath) {
-        checkFileOpen();
-        String actualDest = resolveDestFilePath(destFilePath);
-        List<PageLabel> finalLabels = pdfPageLabelService.convertRulesToPageLabels(rules);
-        try {
-            pdfPageLabelService.setPageLabels(currentFileState.getFilePath(), actualDest, finalLabels);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public List<String> simulatePageLabels(List<PageLabelRule> rules) {
-        try {
-            String[] existingLabels = pdfPageLabelService.getPageLabels(currentFileState.getFilePath());
-            int totalPages = existingLabels == null ? 0 : existingLabels.length;
-            if (totalPages == 0) return Collections.emptyList();
-
-            return pdfPageLabelService.simulatePageLabels(rules, totalPages);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

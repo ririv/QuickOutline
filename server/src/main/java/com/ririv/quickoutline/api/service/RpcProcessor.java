@@ -8,7 +8,6 @@ import com.ririv.quickoutline.api.model.RpcRequest;
 import com.ririv.quickoutline.api.model.RpcResponse;
 import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.service.PageLabelRule;
 import com.ririv.quickoutline.utils.RpcUtils;
 import com.ririv.quickoutline.model.ViewScaleType;
 import org.slf4j.Logger;
@@ -85,27 +84,6 @@ public class RpcProcessor {
                     String tocDest = request.params.size() > 1 ? (String) request.params.get(1) : null;
                     apiService.generateTocPage(tocConfig, tocDest);
                     result = "OK";
-                    break;
-
-                // --- Page Labels ---
-                case "getPageLabels":
-                    // params: [srcPath (optional)]
-                    String srcPath = request.params.isEmpty() || request.params.get(0) == null ? null : (String) request.params.get(0);
-                    result = apiService.getPageLabels(srcPath);
-                    break;
-                case "setPageLabels":
-                    // params: [List<PageLabelRule>, destPath]
-                    Type ruleListType = new TypeToken<List<PageLabelRule>>(){}.getType();
-                    List<PageLabelRule> rules = gson.fromJson(gson.toJsonTree(request.params.get(0)), ruleListType);
-                    String labelDest = request.params.size() > 1 ? (String) request.params.get(1) : null;
-                    apiService.setPageLabels(rules, labelDest);
-                    result = "OK";
-                    break;
-                case "simulatePageLabels":
-                    // params: [List<PageLabelRule>]
-                    Type simRuleListType = new TypeToken<List<PageLabelRule>>(){}.getType();
-                    List<PageLabelRule> simRules = gson.fromJson(gson.toJsonTree(request.params.get(0)), simRuleListType);
-                    result = apiService.simulatePageLabels(simRules);
                     break;
 
                 // --- Sync Utils ---
