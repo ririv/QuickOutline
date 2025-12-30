@@ -11,6 +11,7 @@
     import MessageContainer from './components/common/MessageContainer.svelte';
     import FileHeader from './components/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
+    import { provideExternalEditor } from '@/lib/bridge/useExternalEditor.svelte';
     import { listen } from '@tauri-apps/api/event';
     import { onMount, onDestroy } from 'svelte';
 
@@ -19,6 +20,9 @@
     let isDragging = $state(false);
     let unlistenFns: (() => void)[] = [];
     let isTauri = false;
+
+    // Automatic lifecycle: initialization and destruction are handled internally
+    provideExternalEditor();
 
     onMount(async () => {
         // @ts-ignore
