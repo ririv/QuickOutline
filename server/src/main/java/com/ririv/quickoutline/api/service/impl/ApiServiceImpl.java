@@ -3,11 +3,9 @@ package com.ririv.quickoutline.api.service.impl;
 import com.google.gson.Gson;
 import com.ririv.quickoutline.api.state.ApiBookmarkState;
 import com.ririv.quickoutline.api.state.CurrentFileState;
-import com.ririv.quickoutline.api.model.TocConfig;
 import com.ririv.quickoutline.api.model.BookmarkDto;
 import com.ririv.quickoutline.api.service.ApiService;
 import com.ririv.quickoutline.model.Bookmark;
-import com.ririv.quickoutline.model.PageLabel;
 import com.ririv.quickoutline.model.ViewScaleType;
 import com.ririv.quickoutline.service.*;
 import com.ririv.quickoutline.textProcess.methods.Method;
@@ -15,10 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
@@ -31,7 +26,6 @@ public class ApiServiceImpl implements ApiService {
     private final PdfOutlineService pdfOutlineService;
 
     private final PdfCheckService pdfCheckService;
-    private final PdfTocPageGeneratorService pdfTocPageGeneratorService;
     private final ApiBookmarkState apiBookmarkState;
     private final CurrentFileState currentFileState;
     private final SyncWithExternalEditorService syncService;
@@ -40,14 +34,12 @@ public class ApiServiceImpl implements ApiService {
     @Inject
     public ApiServiceImpl(PdfCheckService pdfCheckService,
                           PdfOutlineService pdfOutlineService,
-                          PdfTocPageGeneratorService pdfTocPageGeneratorService,
                           ApiBookmarkState apiBookmarkState,
                           CurrentFileState currentFileState,
                           SyncWithExternalEditorService syncService,
                           WebSocketSessionManager sessionManager) {
         this.pdfCheckService = pdfCheckService;
         this.pdfOutlineService = pdfOutlineService;
-        this.pdfTocPageGeneratorService = pdfTocPageGeneratorService;
         this.apiBookmarkState = apiBookmarkState;
         this.currentFileState = currentFileState;
         this.syncService = syncService;
@@ -106,12 +98,6 @@ public class ApiServiceImpl implements ApiService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-
-    @Override
-    public void updateOffset(int offset) {
-        apiBookmarkState.setOffset(offset);
     }
 
     private String resolveDestFilePath(String destFilePath) {
@@ -179,48 +165,6 @@ public class ApiServiceImpl implements ApiService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-
-
-    @Override
-    public void generateTocPage(TocConfig config, String destFilePath) {
-        checkFileOpen();
-        String actualDest = resolveDestFilePath(destFilePath);
-        Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(config.tocContent(), Method.INDENT);
-
-        try {
-            pdfTocPageGeneratorService.createTocPage(
-                    currentFileState.getFilePath(),
-                    actualDest,
-                    config.title(),
-                    config.insertPos(),
-                    config.numberingStyle(),
-                    root,
-                    config.header(),
-                    config.footer(),
-                    config.links(),
-                    msg -> log.info("TOC Gen msg: {}", msg),
-                    err -> {
-                        throw new RuntimeException(err);
-                    }
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    @Override
-    public BookmarkDto parseTextToTree(String text) {
-        Bookmark root = pdfOutlineService.convertTextToBookmarkTreeByMethod(text, Method.INDENT);
-        return BookmarkDto.fromDomain(root);
-    }
-
-    @Override
-    public String serializeTreeToText(Bookmark root) {
-        if (root == null) return "";
-        return root.toOutlineString();
     }
 
     @Override

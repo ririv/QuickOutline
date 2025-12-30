@@ -76,33 +76,6 @@ public class RpcProcessor {
                 case "getCurrentFilePath":
                     result = apiService.getCurrentFilePath();
                     break;
-                
-                // --- TOC ---
-                case "generateTocPage":
-                    // params: [TocConfig, destPath]
-                    TocConfig tocConfig = gson.fromJson(gson.toJsonTree(request.params.get(0)), TocConfig.class);
-                    String tocDest = request.params.size() > 1 ? (String) request.params.get(1) : null;
-                    apiService.generateTocPage(tocConfig, tocDest);
-                    result = "OK";
-                    break;
-
-                // --- Sync Utils ---
-                case "parseTextToTree":
-                    // params: [text]
-                    result = apiService.parseTextToTree((String) request.params.get(0));
-                    break;
-                case "updateOffset":
-                    // params: [offset]
-                    apiService.updateOffset(RpcUtils.getInt(request.params.get(0)));
-                    result = "OK";
-                    break;
-                case "serializeTreeToText":
-                    // params: [rootBookmarkDto]
-                    JsonElement dtoElement = gson.toJsonTree(request.params.get(0));
-                    BookmarkDto dto = gson.fromJson(dtoElement, BookmarkDto.class);
-                    Bookmark domainRoot = dto != null ? dto.toDomain() : null;
-                    result = apiService.serializeTreeToText(domainRoot);
-                    break;
                 case "openExternalEditor":
                     // params: [text]
                     apiService.openExternalEditor((String) request.params.get(0));

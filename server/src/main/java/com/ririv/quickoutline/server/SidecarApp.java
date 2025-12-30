@@ -7,8 +7,6 @@ import com.ririv.quickoutline.api.WebSocketRpcHandler;
 import com.ririv.quickoutline.api.service.impl.ApiServiceImpl;
 import com.ririv.quickoutline.api.state.ApiBookmarkState;
 import com.ririv.quickoutline.api.state.CurrentFileState;
-import com.ririv.quickoutline.pdfProcess.TocPageGenerator;
-import com.ririv.quickoutline.pdfProcess.itextImpl.iTextTocPageGenerator;
 import com.ririv.quickoutline.service.*;
 import com.ririv.quickoutline.service.syncWithExternelEditor.SyncWithExternalEditorService;
 import io.vertx.core.Vertx;
@@ -35,9 +33,6 @@ public class SidecarApp {
         // 1. 初始化服务
         PdfCheckService pdfCheckService = new PdfCheckService();
         PdfOutlineService pdfOutlineService = new PdfOutlineService();
-        FontManager fontManager = new FontManager();
-        TocPageGenerator tocPageGenerator = new iTextTocPageGenerator(fontManager);
-        PdfTocPageGeneratorService pdfTocPageGeneratorService = new PdfTocPageGeneratorService(tocPageGenerator);
         SyncWithExternalEditorService syncWithExternalEditorService = new SyncWithExternalEditorService();
 
         // 2. Initialize State and Managers
@@ -49,7 +44,6 @@ public class SidecarApp {
         ApiService apiService = new ApiServiceImpl(
                 pdfCheckService,
                 pdfOutlineService,
-                pdfTocPageGeneratorService,
                 apiBookmarkState,
                 currentFileState,
                 syncWithExternalEditorService,
