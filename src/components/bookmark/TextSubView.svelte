@@ -2,7 +2,8 @@
     import { onMount, onDestroy, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte.ts';
-    import { rpc } from '@/lib/api/rpc';
+    import { openExternalEditor } from '@/lib/api/rust_pdf';
+    import { listen, type UnlistenFn } from '@tauri-apps/api/event';
     import { processText, autoFormat, Method } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
     import type { BookmarkUI } from '@/lib/types/bookmark.ts';
@@ -23,6 +24,8 @@
     let highlightedMode = $state<Method | null>(null); // State for highlight value
     let isExternalEditing = $state(false); // State for external editor mode
     let isFocused = $state(false); // New state to track editor focus
+    let unlistenFunctions: UnlistenFn[] = [];
+    let editor = $state<ReturnType<typeof BookmarkEditor> | undefined>();
 
     // Simple debounce function
     function debounce<T extends any[]>(func: (...args: T) => void, delay: number) {
@@ -60,55 +63,37 @@
         });
     });
 
-    // Handlers for RPC events
-    const onExternalUpdate = (payload: { text: string }) => {
-        console.log('Received external update');
-        textValue = payload.text;
-        bookmarkStore.setText(payload.text);
-        // Also trigger tree update? The backend syncService usually updates backend state, 
-        // but we might need to fetch the tree. 
-        // However, `syncFromText` does both. 
-        // Since backend state is updated by `syncService`, we can just fetch tree or trust backend sent everything.
-        // For now, just update text. The tree view will react if we update store.tree?
-        // We should probably ask backend for tree update or have backend push it.
-        // Let's trigger a sync to be sure the tree view gets updated.
-        debouncedSyncWithBackend(payload.text); 
-    };
-
-    const onExternalStart = () => {
-        isExternalEditing = true;
-        messageStore.add('External editor connected.', 'INFO');
-    };
-
-    const onExternalEnd = () => {
-        isExternalEditing = false;
-        messageStore.add('External editor disconnected.', 'INFO');
-    };
-
-    const onExternalError = (msg: string) => {
-        isExternalEditing = false;
-        messageStore.add('External editor error: ' + msg, 'ERROR');
-    };
-
-    onMount(() => {
+    onMount(async () => {
         // Initialize textValue from store
         textValue = bookmarkStore.text;
 
-        // Register RPC listeners
-        rpc.on('external-editor-update', onExternalUpdate);
-        rpc.on('external-editor-start', onExternalStart);
-        rpc.on('external-editor-end', onExternalEnd);
-        rpc.on('external-editor-error', onExternalError);
+        // Register Tauri listeners
+        unlistenFunctions.push(await listen<string>('external-editor-sync', (event) => {
+            console.log('Received external update');
+            const newText = event.payload;
+            textValue = newText;
+            bookmarkStore.setText(newText);
+            debouncedSyncWithBackend(newText); 
+        }));
+
+        unlistenFunctions.push(await listen('external-editor-start', () => {
+            isExternalEditing = true;
+            messageStore.add('External editor connected.', 'INFO');
+        }));
+
+        unlistenFunctions.push(await listen('external-editor-end', () => {
+            isExternalEditing = false;
+            messageStore.add('External editor disconnected.', 'INFO');
+        }));
     });
 
     onDestroy(() => {
         clearTimeout(debounceTimer); // Clear any pending debounced calls
         
-        // Unregister RPC listeners
-        rpc.off('external-editor-update', onExternalUpdate);
-        rpc.off('external-editor-start', onExternalStart);
-        rpc.off('external-editor-end', onExternalEnd);
-        rpc.off('external-editor-error', onExternalError);
+        // Unregister listeners
+        for (const unlisten of unlistenFunctions) {
+            unlisten();
+        }
     });
 
     // Sync from Store to Local (only when not focused, or when external editor is active)
@@ -173,7 +158,8 @@
             return;
         }
         try {
-            await rpc.openExternalEditor(textValue);
+            const { line, ch } = editor?.getCursor() || { line: 1, ch: 1 };
+            await openExternalEditor(textValue, line, ch);
             // UI state will be updated by events
         } catch (e: any) {
             messageStore.add('Failed to open in external editor: ' + (e.message || String(e)), 'ERROR');
@@ -232,6 +218,7 @@
         {/if}
 
         <BookmarkEditor 
+            bind:this={editor}
             bind:value={textValue} 
             offset={bookmarkStore.offset}
             totalPage={docStore.pageCount}

@@ -6,6 +6,7 @@ mod printer;
 mod static_server;
 mod pdf;
 mod pdf_outline;
+mod external_editor;
 
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager, Runtime};
@@ -180,6 +181,7 @@ pub fn run() {
         .manage(java_sidecar::JavaState {
             port: Mutex::new(None),
         })
+        .manage(external_editor::ExternalEditorState::new())
         .manage(static_server::LocalServerState::new())
         .setup(move |app| {
             // Initialize PDF Worker and manage state
@@ -261,7 +263,8 @@ pub fn run() {
             set_page_labels,
             set_current_pdf,
             get_static_server_port,
-            pdf::toc::generate_toc_page
+            pdf::toc::generate_toc_page,
+            external_editor::open_external_editor
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -184,10 +184,6 @@ class RpcClient implements QuickOutlineApi {
     public getCurrentFilePath(): Promise<string> {
         return this.send("getCurrentFilePath", []);
     }
-
-    public openExternalEditor(textContent: string): Promise<void> {
-        return this.send("openExternalEditor", [textContent]);
-    }
 }
 
 export const rpc = new RpcClient();

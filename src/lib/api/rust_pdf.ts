@@ -113,7 +113,7 @@ export async function saveOutline(
     bookmarkRoot: BookmarkData, 
     destFilePath: string | null, 
     offset: number, 
-    viewMode: ViewScaleType = 'NONE' as ViewScaleType
+    viewMode: ViewScaleType = 'NONE'
 ): Promise<string> {
     const rustRoot = convertForRust(bookmarkRoot);
     return invoke<string>('save_outline', { 
@@ -123,4 +123,16 @@ export async function saveOutline(
         offset, 
         viewMode 
     });
+}
+
+/**
+
+ * Opens the external editor (VS Code) with the provided content and cursor position.
+
+ */
+
+export async function openExternalEditor(content: string, line: number = 1, col: number = 1): Promise<void> {
+
+    return invoke('open_external_editor', { content, line, col });
+
 }

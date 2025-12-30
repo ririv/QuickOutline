@@ -31,6 +31,19 @@
         onFocus,
         onBlur
       }: Props = $props();
+
+      /**
+       * Returns 1-based line and column of the primary cursor.
+       */
+      export function getCursor() {
+          if (!view) return { line: 1, ch: 1 };
+          const pos = view.state.selection.main.head;
+          const line = view.state.doc.lineAt(pos);
+          return {
+              line: line.number,
+              ch: pos - line.from + 1
+          };
+      }
     
       let editorContainer: HTMLDivElement;
       let view: EditorView;
