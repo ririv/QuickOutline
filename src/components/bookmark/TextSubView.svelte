@@ -23,10 +23,7 @@
     let isFocused = $state(false);
     let editor = $state<ReturnType<typeof BookmarkEditor> | undefined>();
 
-    // Consume the bridge from context
     const externalEditor = useExternalEditor();
-
-    // Derived values from bridge
     let isExternalEditing = $derived(externalEditor.isEditing);
     let editorName = $derived(externalEditor.editorName);
 
@@ -48,7 +45,6 @@
         }
     }, 500);
 
-    // React to method changes
     $effect(() => {
         const method = bookmarkStore.method;
         untrack(() => {
@@ -70,12 +66,10 @@
         clearTimeout(debounceTimer);
     });
 
-    // Sync from Store to Local (only when not focused, or when external editor is active)
     $effect(() => {
         if (!isFocused || isExternalEditing) { 
             if (bookmarkStore.text !== textValue) {
                 textValue = bookmarkStore.text;
-                // Force a tree re-sync when text comes from external editor
                 if (isExternalEditing) {
                     debouncedSyncWithBackend(textValue);
                 }
@@ -159,31 +153,32 @@
 
     <!-- Editor Area -->
     <div class="flex-1 min-h-0 relative group
-                border border-gray-200 rounded-lg mx-2
-                focus-within:border-el-primary focus-within:ring-2 focus-within:ring-el-primary/20
-                transition-all duration-200 overflow-hidden">
+                border rounded-lg mx-2 transition-all duration-500 overflow-hidden
+                {isExternalEditing ? 'border-blue-400/20 shadow-inner' : 'border-gray-200'}">
         
         {#if isExternalEditing}
-            <div class="absolute inset-0 z-10 bg-gray-50/90 flex flex-col items-center justify-center text-gray-500">
-                <div class="animate-spin mb-2">
-                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+            <!-- Transparent Subtle Overlay (No Blur) -->
+            <div class="absolute inset-0 z-20 pointer-events-none flex flex-col items-center justify-center animate-in fade-in duration-500 bg-gray-400/10">
+                <div class="flex flex-col items-center gap-2 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link opacity-60"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <span class="text-[11px] font-semibold opacity-90 tracking-tight text-gray-600">Syncing with {editorName}</span>
                 </div>
-                <span class="text-sm font-medium">Editing in {editorName}...</span>
             </div>
+            <!-- Invisible Click Blocker -->
+            <div class="absolute inset-0 z-10 cursor-not-allowed"></div>
         {/if}
 
-        <BookmarkEditor 
-            bind:this={editor}
-            bind:value={textValue} 
-            offset={bookmarkStore.offset}
-            totalPage={docStore.pageCount}
-            pageLabels={docStore.originalPageLabels}
-            onchange={handleEditorChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-        />
+        <div class="h-full transition-all duration-500 {isExternalEditing ? 'opacity-70' : ''}">
+            <BookmarkEditor 
+                bind:this={editor}
+                bind:value={textValue} 
+                offset={bookmarkStore.offset}
+                totalPage={docStore.pageCount}
+                pageLabels={docStore.originalPageLabels}
+                onchange={handleEditorChange}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+            />
+        </div>
     </div>
 </div>
