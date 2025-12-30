@@ -30,9 +30,14 @@ export async function loadPdfDocument(src: any): Promise<pdfjsLib.PDFDocumentPro
     return loadingTask.promise;
 }
 
+let lastSyncedPath: string | null = null;
+
 export async function loadPdfFromPath(path: string): Promise<pdfjsLib.PDFDocumentProxy> {
-    // 1. Set current PDF path in Rust backend
-    await invoke('set_current_pdf', { path });
+    // 1. Only sync with backend if the path has changed
+    if (path !== lastSyncedPath) {
+        await invoke('set_current_pdf', { path });
+        lastSyncedPath = path;
+    }
     
     // 2. Get static server port
     const port = await invoke('get_static_server_port');

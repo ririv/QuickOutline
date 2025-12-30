@@ -1,19 +1,18 @@
 import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
-import { renderPageToDataUrl, loadPdfFromPath, getPageLabels } from '@/lib/pdfjs';
+import { renderPageToDataUrl, getPageLabels } from '@/lib/pdfjs';
+import { docStore } from '@/stores/docStore.svelte';
 
 class PdfRenderService {
     // Engine Switch
     private engine: 'pdfium' | 'pdfjs' = 'pdfjs';
-    
-    // Cache for PDF.js document to avoid reloading for every thumbnail
-    private cachedPath: string | null = null;
-    private cachedDoc: any = null;
 
     /**
      * Get page labels for the current document
+     * Uses the shared document instance from docStore.
      */
     async getPageLabels(path: string): Promise<string[] | null> {
-        const doc = await this.getPdfJsDoc(path);
+        const doc = this.getDoc(path);
+        if (!doc) return null;
         return getPageLabels(doc);
     }
 
@@ -21,15 +20,12 @@ class PdfRenderService {
      * Get the total page count for the PDF
      */
     async getPageCount(path: string): Promise<number> {
-        const doc = await this.getPdfJsDoc(path);
-        return doc.numPages;
+        const doc = this.getDoc(path);
+        return doc ? doc.numPages : 0;
     }
     
     /**
      * Render a PDF page to a URL (Blob URL)
-     * @param path Absolute path to PDF file
-     * @param pageIndex 0-based page index
-     * @param scaleOrType
      */
     async renderPage(path: string, pageIndex: number, scaleOrType: number | 'thumbnail' | 'preview'): Promise<string> {
         if (!path) throw new Error("Path is required for rendering");
@@ -49,7 +45,8 @@ class PdfRenderService {
 
         try {
             if (this.engine === 'pdfjs') {
-                const doc = await this.getPdfJsDoc(path);
+                const doc = this.getDoc(path);
+                if (!doc) throw new Error("Document not loaded in docStore");
                 // PDF.js uses 1-based page numbers
                 return await renderPageToDataUrl(doc, pageIndex + 1, scale);
             } else {
@@ -62,25 +59,22 @@ class PdfRenderService {
         }
     }
 
-    private async getPdfJsDoc(path: string) {
-        if (this.cachedPath !== path || !this.cachedDoc) {
-        // Cleanup old doc if exists
-        if (this.cachedDoc) {
-            this.cachedDoc.destroy();
+    /**
+     * Private helper to get the managed document from docStore.
+     * Ensures we are accessing the correct file.
+     */
+    private getDoc(path: string) {
+        if (docStore.currentFilePath === path && docStore.pdfDoc) {
+            return docStore.pdfDoc;
         }
-            console.log(`[PdfRenderService] Loading PDF via PDF.js for rendering: ${path}`);
-            this.cachedDoc = await loadPdfFromPath(path);
-            this.cachedPath = path;
-        }
-        return this.cachedDoc;
+        return null;
     }
 
+    /**
+     * Legacy Cleanup - DocStore now handles lifecycle
+     */
     public clearCache() {
-        if (this.cachedDoc) {
-            this.cachedDoc.destroy();
-            this.cachedDoc = null;
-        }
-        this.cachedPath = null;
+        // No-op: docStore handles destruction
     }
 }
 

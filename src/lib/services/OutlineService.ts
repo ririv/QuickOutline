@@ -10,10 +10,18 @@ export class OutlineService {
      * Common method to fetch and process bookmarks from a PDF.
      */
     async fetchBookmarks(path: string): Promise<any> {
+        const { docStore } = await import('@/stores/docStore.svelte');
+        
         if (this.engine === 'pdfjs') {
-            const { loadPdfFromPath, getBookmarks, getPageLabels } = await import('@/lib/pdfjs');
-            console.log("[OutlineService] Fetching via PDF.js...");
-            const pdf = await loadPdfFromPath(path);
+            const { getBookmarks, getPageLabels } = await import('@/lib/pdfjs');
+            
+            const pdf = docStore.currentFilePath === path ? docStore.pdfDoc : null;
+            if (!pdf) {
+                console.error("[OutlineService] Document not available in docStore");
+                throw new Error("Document not loaded");
+            }
+
+            console.log("[OutlineService] Fetching via shared PDF.js instance...");
             const bookmarks = await getBookmarks(pdf);
             const labels = await getPageLabels(pdf);
 
@@ -46,7 +54,6 @@ export class OutlineService {
                 children: bookmarks,
                 pageNum: null
             };
-            pdf.destroy();
             return root;
         } else {
             console.log("[OutlineService] Fetching via lopdf (Rust)...");

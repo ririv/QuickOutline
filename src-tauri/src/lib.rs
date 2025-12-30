@@ -149,8 +149,33 @@ async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, St
 
 #[tauri::command]
 async fn set_current_pdf<R: Runtime>(app: AppHandle<R>, path: String) -> Result<(), String> {
-    if let Some(state) = app.try_state::<static_server::LocalServerState>() {
-        *state.current_pdf.lock().unwrap() = Some(PathBuf::from(path));
+    use std::time::UNIX_EPOCH;
+    use crate::static_server::{LocalServerState, ActiveDocument};
+
+    let pdf_path = PathBuf::from(&path);
+    let metadata = fs::metadata(&pdf_path).map_err(|e| format!("Failed to read file metadata: {}", e))?;
+    
+    let size = metadata.len();
+    let modified_at = metadata.modified()
+        .map(|t| t.duration_since(UNIX_EPOCH).unwrap_or_default().as_secs())
+        .unwrap_or(0);
+
+    if let Some(state) = app.try_state::<LocalServerState>() {
+        let mut current_pdf = state.current_pdf.lock().unwrap();
+        
+        // Idempotency check: skip update if metadata is identical
+        if let Some(existing) = &*current_pdf {
+            if existing.path == pdf_path && existing.size == size && existing.modified_at == modified_at {
+                return Ok(());
+            }
+        }
+
+        println!("Rust: Setting active PDF to {}", path);
+        *current_pdf = Some(ActiveDocument {
+            path: pdf_path,
+            size,
+            modified_at,
+        });
         Ok(())
     } else {
         Err("Failed to access LocalServerState".to_string())

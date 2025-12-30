@@ -6,12 +6,19 @@ use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use tauri::{AppHandle, Manager, Runtime}; // Import Manager and Runtime trait
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct ActiveDocument {
+    pub path: PathBuf,
+    pub size: u64,
+    pub modified_at: u64, // Unix timestamp
+}
+
 // Define a struct to hold the server state (port)
 pub struct LocalServerState {
     pub port: Mutex<Option<u16>>,
     pub workspace: Mutex<PathBuf>,
     pub resources: Mutex<Option<PathBuf>>,
-    pub current_pdf: Mutex<Option<PathBuf>>,
+    pub current_pdf: Mutex<Option<ActiveDocument>>,
 }
 
 impl LocalServerState {
@@ -73,8 +80,9 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
             // Intercept PDF request
             if url.starts_with("/pdf/current.pdf") {
                 if let Some(state) = app_handle.try_state::<LocalServerState>() {
-                    if let Some(pdf_path) = state.current_pdf.lock().unwrap().clone() {
-                        serve_file_with_range(request, pdf_path);
+                    let doc_opt = state.current_pdf.lock().unwrap().clone();
+                    if let Some(doc) = doc_opt {
+                        serve_file_with_range(request, doc.path);
                         continue;
                     }
                 }
