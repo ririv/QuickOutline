@@ -11,6 +11,7 @@
     import MessageContainer from './components/common/MessageContainer.svelte';
     import FileHeader from './components/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
+    import ConfirmDialog from './components/ConfirmDialog.svelte';
     import { provideExternalEditor } from '@/lib/bridge/useExternalEditor.svelte';
     import { listen } from '@tauri-apps/api/event';
     import { onMount, onDestroy } from 'svelte';
@@ -108,6 +109,7 @@
         </div>
     {/if}
 
+    <ConfirmDialog />
     <MessageContainer />
     <FileHeader />
     <div class="app-body">

@@ -13,6 +13,7 @@
     import type { ViewScaleType } from '@/lib/types/pdf';
     import GraphButton from '../controls/GraphButton.svelte';
     import StyledInput from '../controls/StyledInput.svelte';
+    import { confirmState } from '@/stores/confirm.svelte';
     import { ripple } from '@/lib/actions/ripple';
     
     import { outlineService } from '@/lib/services/OutlineService';
@@ -166,9 +167,43 @@
         }
     }
 
-    function handleDelete() {
-        bookmarkStore.reset(); // Clear frontend store (text, tree, offset)
-        messageStore.add('Editor cleared.', 'INFO');
+    async function handleDeleteClick() {
+        if (!docStore.currentFilePath) {
+            messageStore.add('No file open.', 'WARNING');
+            return;
+        }
+
+        const confirmed = await confirmState.request({
+            title: 'Delete PDF Bookmarks',
+            message: 'Clear all bookmarks from this PDF?',
+            type: 'warning',
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+
+        if (confirmed) {
+            try {
+                const path = docStore.currentFilePath;
+                if (!path) return;
+
+                // Create an empty virtual root to effectively clear bookmarks
+                const emptyRoot: BookmarkUI = {
+                    id: 'virtual-root',
+                    title: 'Outlines',
+                    level: 0,
+                    children: [],
+                    pageNum: null
+                };
+
+                await saveOutline(path, emptyRoot as any, null, 0, 'NONE');
+                
+                // Sync frontend
+                bookmarkStore.reset();
+                messageStore.add('PDF bookmarks removed successfully.', 'SUCCESS');
+            } catch (e: any) {
+                messageStore.add('Failed to delete PDF bookmarks: ' + (e.message || String(e)), 'ERROR');
+            }
+        }
     }
 
     function getButtonClass(isActive: boolean) {
@@ -183,7 +218,7 @@
 <div class="flex items-center gap-[15px] py-[10px] pl-[15px] pr-[10px] bg-white border-none">
     <!-- Left Group: Delete and Load -->
     <div class="flex items-center gap-2">
-        <GraphButton class="graph-button-important group" title="Clear Editor" onclick={handleDelete}>
+        <GraphButton class="graph-button-important group" title="Delete PDF Bookmarks" onclick={handleDeleteClick}>
             <img 
                 src={trashIcon} 
                 alt="Delete" 
@@ -296,4 +331,6 @@
     </div>
 </div>
 
-
+<style>
+  /* Base styles are empty as Tailwind classes are used mainly */
+</style>
