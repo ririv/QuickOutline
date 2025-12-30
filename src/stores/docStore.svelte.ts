@@ -30,21 +30,17 @@ class DocStore {
                 return;
             }
 
-            // 2. 调用后端打开文件
-            await rpc.openFile(path);
-            console.log("File opened in backend.");
-
-            // 3. 获取文档信息
-            const count = checkResult.pageCount; // 直接使用预检得到的页数
+            // 2. 获取文档信息
+            const count = checkResult.pageCount; 
             const labels = await pdfRenderService.getPageLabels(path) || [];
 
-            // 4. 更新状态
+            // 3. 更新状态
             this.currentFilePath = path;
             this.pageCount = count;
             this.originalPageLabels = labels;
             this.version = Date.now();
 
-            // 5. 主动触发相关 Store 的初始化
+            // 4. 主动触发相关 Store 的初始化
             offsetStore.autoDetect(labels);
             pageLabelStore.init(labels);
 

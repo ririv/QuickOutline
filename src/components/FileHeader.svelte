@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { rpc } from '@/lib/api/rpc';
     import { onMount } from 'svelte';
     import { open } from '@tauri-apps/plugin-dialog';
     import { docStore } from '@/stores/docStore.svelte.ts'; // Import docStore
@@ -33,16 +32,6 @@
             }
         }
     }
-    
-    // Init
-    onMount(async () => {
-        try {
-            const path = await rpc.getCurrentFilePath();
-            if (path) docStore.setCurrentFile(path); // Call docStore.setCurrentFile
-        } catch (e) {
-            console.warn("Failed to get current file path", e);
-        }
-    });
 </script>
 
 <header class="file-header">

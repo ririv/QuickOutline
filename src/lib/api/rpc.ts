@@ -22,16 +22,7 @@ export interface RpcResponse {
 
 // TocConfig removed. Use src/lib/api/rust_pdf.ts
 
-/**
- * 定义 Java 端 ApiService 对应的方法
- */
-export interface QuickOutlineApi {
-    openFile(filePath: string): Promise<string>;
-    getCurrentFilePath(): Promise<string>;
-}
-
-
-class RpcClient implements QuickOutlineApi {
+class RpcClient {
     private ws: WebSocket | null = null;
     private pendingRequests = new Map<string, { resolve: Function, reject: Function }>();
     private eventListeners = new Map<string, Function[]>(); // For unsolicited messages
@@ -173,16 +164,6 @@ class RpcClient implements QuickOutlineApi {
                 this.ws.send(json);
             });
         }
-    }
-
-    // --- API 实现 ---
-
-    public openFile(filePath: string): Promise<string> {
-        return this.send("openFile", [filePath]);
-    }
-
-    public getCurrentFilePath(): Promise<string> {
-        return this.send("getCurrentFilePath", []);
     }
 }
 
