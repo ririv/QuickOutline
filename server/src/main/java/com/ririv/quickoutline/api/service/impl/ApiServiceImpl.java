@@ -12,14 +12,12 @@ public class ApiServiceImpl implements ApiService {
     private static final Logger log = LoggerFactory.getLogger(ApiServiceImpl.class);
 
 
-    private final PdfCheckService pdfCheckService;
     private final CurrentFileState currentFileState;
 
     @Inject
-    public ApiServiceImpl(PdfCheckService pdfCheckService,
+    public ApiServiceImpl(
                           CurrentFileState currentFileState
                           ) {
-        this.pdfCheckService = pdfCheckService;
         this.currentFileState = currentFileState;
     }
 
@@ -30,7 +28,6 @@ public class ApiServiceImpl implements ApiService {
     @Override
     public void openFile(String filePath) {
         try {
-            pdfCheckService.checkOpenFile(filePath);
             currentFileState.open(filePath);
 
         } catch (Exception e) {

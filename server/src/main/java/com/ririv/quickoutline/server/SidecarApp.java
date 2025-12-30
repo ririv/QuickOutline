@@ -6,7 +6,6 @@ import com.ririv.quickoutline.api.service.RpcProcessor;
 import com.ririv.quickoutline.api.WebSocketRpcHandler;
 import com.ririv.quickoutline.api.service.impl.ApiServiceImpl;
 import com.ririv.quickoutline.api.state.CurrentFileState;
-import com.ririv.quickoutline.service.*;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 
@@ -29,14 +28,12 @@ public class SidecarApp {
         Vertx vertx = Vertx.vertx();
 
         // 1. 初始化服务
-        PdfCheckService pdfCheckService = new PdfCheckService();
         // 2. Initialize State and Managers
         CurrentFileState currentFileState = new CurrentFileState();
         WebSocketSessionManager sessionManager = new WebSocketSessionManager();
 
         // 3. 初始化 API 实现
         ApiService apiService = new ApiServiceImpl(
-                pdfCheckService,
                 currentFileState
         );
 
