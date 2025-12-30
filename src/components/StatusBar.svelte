@@ -325,13 +325,13 @@
   }
   
   .generate-btn {
-      color: #28a745;
+      color: #4096ff;
       margin-left: 0;
       margin-right: 8px;
   }
   .generate-btn:hover {
-      background-color: rgba(40, 167, 69, 0.1);
-      color: #218838;
+      background-color: rgba(64, 150, 255, 0.1);
+      color: #1677ff;
   }
 
   .hf-summary-content {
