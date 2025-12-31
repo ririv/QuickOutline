@@ -22,6 +22,7 @@
     let highlightedMode = $state<Method | null>(null);
     let isFocused = $state(false);
     let editor = $state<ReturnType<typeof BookmarkEditor> | undefined>();
+    let isUpdatingFromStore = false; // Lock to prevent circular updates
 
     const externalEditor = useExternalEditor();
     let isExternalEditing = $derived(externalEditor.isEditing);
@@ -69,7 +70,14 @@
     $effect(() => {
         if (!isFocused || isExternalEditing) { 
             if (bookmarkStore.text !== textValue) {
-                textValue = bookmarkStore.text;
+                isUpdatingFromStore = true;
+                try {
+                    textValue = bookmarkStore.text;
+                } finally {
+                    // CodeMirror updates are synchronous, so this lock works
+                    isUpdatingFromStore = false;
+                }
+                
                 if (isExternalEditing) {
                     debouncedSyncWithBackend(textValue);
                 }
@@ -81,6 +89,14 @@
     function handleBlur() { isFocused = false; }
 
     function handleEditorChange(newText: string, changedLines: number[]) {
+        // Prevent infinite loop if the update came from the store (via prop binding)
+        if (newText === bookmarkStore.text) return;
+        
+        if (isUpdatingFromStore) {
+            console.log(`[TextSubView] Loop prevented. Store len: ${bookmarkStore.text.length}, Editor len: ${newText.length}`);
+            return;
+        }
+
         textValue = newText;
         bookmarkStore.setText(newText);
         debouncedSyncWithBackend(newText);

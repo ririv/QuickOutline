@@ -36,7 +36,7 @@ pub struct PdfWorker(pub mpsc::Sender<PdfRequest>);
 
 // Internal state of the PDF worker thread
 struct PdfWorkerInternalState {
-    pdfium: Pdfium,
+    pdfium: &'static Pdfium,
     // Store the path of the currently loaded document, if any.
     // The PdfDocument itself cannot be directly cached here due to lifetime issues with Pdfium.
     // Instead, we will reload the PdfDocument from the Pdfium instance when needed.
@@ -48,7 +48,7 @@ impl PdfWorkerInternalState {
     fn new() -> Result<Self> {
         println!("[PDF Worker] Init. CWD: {:?}", std::env::current_dir());
         
-        let pdfium = crate::pdf::init_pdfium()
+        let pdfium = crate::pdf::get_pdfium()
             .map_err(|e| format_err!("[PDF Worker] {}", e))?;
         
         Ok(Self {

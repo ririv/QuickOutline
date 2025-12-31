@@ -139,3 +139,12 @@ export async function openExternalEditor(
 ): Promise<void> {
     return invoke('open_external_editor', { content, line, col, editorId });
 }
+
+/**
+ * Extracts the visual TOC from the PDF document based on layout analysis.
+ * @param srcFilePath Path to the source PDF.
+ * @returns Promise resolving to a list of strings (lines of the TOC).
+ */
+export async function extractToc(srcFilePath: string): Promise<string[]> {
+    return invoke<string[]>('extract_toc', { path: srcFilePath });
+}
