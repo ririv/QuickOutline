@@ -1,7 +1,6 @@
 <script lang="ts">
     import landscapeIcon from '../assets/icons/landscape.svg';
     import StyledSlider from './controls/StyledSlider.svelte';
-    import { appStore } from '@/stores/appStore.svelte';
     import { docStore } from '@/stores/docStore.svelte';
     import PreviewPopup from './PreviewPopup.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
@@ -147,13 +146,6 @@
         <img src={landscapeIcon} class="block opacity-60 w-5 h-5" alt="Zoom In" />
     </div>
     <div class="flex-1 overflow-y-auto p-2.5">
-        {#if !appStore.serverPort}
-           <!-- Keep the warning but it might be less relevant if we use Rust directly, 
-                though serverPort implies Java backend is running for other features (outline etc.) -->
-            <div class="bg-red-100 text-red-700 p-2 text-center text-xs mb-2 border border-red-200 rounded">
-                Backend not connected (Port: {appStore.serverPort})
-            </div>
-        {/if}
         {#key docStore.version}
         <div class="flex flex-wrap gap-2.5 justify-center" style="--zoom: {zoom}">
 

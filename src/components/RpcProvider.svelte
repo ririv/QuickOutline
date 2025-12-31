@@ -3,11 +3,11 @@
     import { rpc } from '@/lib/api/rpc';
     import { listen } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/core';
-    import { appStore } from '@/stores/appStore.svelte';
+    import { connectionStore, type ConnectionStatus } from '@/stores/connectionStore.svelte';
 
     let { children } = $props();
 
-    let status = $state<'init' | 'connecting' | 'connected' | 'error'>('connecting');
+    let status = $state<ConnectionStatus>('connected');
     let errorMessage = $state<string>('');
     let manualPort = $state('');
     let unlistenFn = $state<() => void>();
@@ -23,6 +23,7 @@
     }
 
     onMount(async () => {
+        /* RPC Disabled for now - keeping code for future use
         // 监听断开连接事件
         rpc.on('rpc-disconnected', handleDisconnect);
 
@@ -30,7 +31,7 @@
         // @ts-ignore
         const isAndroid = typeof window['AndroidRpc'] !== 'undefined';
         if (isAndroid) {
-            status = 'connected';
+            status = ConnectionStatus.Connected;
             return;
         }
 
@@ -47,7 +48,7 @@
         // 1. 启动计时器：如果 300ms 后还没连上，才把 showLoadingUI 设为 true
         // 这个时间阈值可以根据你的 App 启动速度微调 (通常 200-500ms)
         loadingTimer = window.setTimeout(() => {
-            if (status === 'connecting') {
+            if (status === ConnectionStatus.Connecting) {
                 showLoadingUI = true;
             }
         }, 300);
@@ -72,6 +73,7 @@
             // 这里选择直接显示，方便开发调试
             handleError("Browser Environment Detected.\n\nTauri APIs are unavailable in the browser.\nPlease enter the Java Sidecar port manually.");
         }
+        */
     });
 
     async function setupTauriConnection() {
@@ -136,7 +138,8 @@
             await rpc.connect(port);
             console.info(`%c[RpcProvider] 🚀 Connected via [${source}] on port ${port}`, 'color: #4caf50; font-weight: bold;');
             
-            appStore.setServerPort(port);
+            connectionStore.setServerPort(port);
+            connectionStore.setConnectionStatus('connected');
 
             // 连接成功，清理所有计时器
             clearTimeout(loadingTimer);
@@ -163,7 +166,7 @@
     function handleDisconnect(info: any) {
         console.warn("RpcProvider: Disconnected", info);
         if (status === 'connected') {
-            const currentPort = appStore.serverPort || rpc.port;
+            const currentPort = connectionStore.serverPort || rpc.port;
             handleError(`Connection lost: ${info.reason || 'Server stopped'}.\nWaiting for recovery...`);
             
             if (currentPort > 0) {

@@ -3,10 +3,8 @@
     import BookmarkNode from "./BookmarkNode.svelte";
     import { onMount, onDestroy, setContext, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
-    import { rpc } from '@/lib/api/rpc';
     import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
-    import { appStore } from '@/stores/appStore.svelte.ts';
     import PreviewPopup from '../PreviewPopup.svelte';
 
     let bookmarks = $state<BookmarkUI[]>([]);

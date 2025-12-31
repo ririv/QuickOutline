@@ -7,7 +7,6 @@
     import TocGeneratorTab from './pages/toc/App.svelte';
     import MarkdownTab from './pages/markdown/App.svelte';
     import ExperimentalTab from './pages/experimental/App.svelte';
-    import RpcProvider from './components/RpcProvider.svelte';
     import MessageContainer from './components/common/MessageContainer.svelte';
     import FileHeader from './components/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
@@ -115,7 +114,6 @@
     <div class="app-body">
         <LeftPane />
         <div class="content-area">
-            <RpcProvider>
                 <div style="display: {activeTab === FnTab.bookmark ? 'block' : 'none'}; height: 100%;">
                     <BookmarkTab />
                 </div>
@@ -148,7 +146,6 @@
                         </div>
                     {/if}
                 </div>
-            </RpcProvider>
         </div>
     </div>
 </main>
