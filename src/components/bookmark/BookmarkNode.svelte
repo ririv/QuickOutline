@@ -157,7 +157,7 @@
                     <div class="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-3 bg-[#409eff] rounded-full"></div>
                     <input 
                         type="text" 
-                        class="w-full outline-none px-1.5 py-0.5 text-sm leading-tight bg-transparent text-center rounded font-normal {isOutOfRange ? 'text-[rgba(255,0,0,0.7)]' : 'text-gray-900'} font-sans"
+                        class="w-full outline-none px-1.5 py-0.5 text-sm leading-tight text-center rounded-lg font-normal {isOutOfRange ? 'bg-[rgba(255,0,0,0.15)] text-gray-900' : 'bg-transparent text-gray-900'} font-sans border border-transparent"
                         bind:value={bookmark.pageNum}
                         bind:this={pageInput}
                         onblur={() => isEditingPage = false}
@@ -165,7 +165,7 @@
                 </div>
             {:else}
                 <div 
-                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-center cursor-text w-full truncate hover:bg-gray-200 rounded-full transition-colors font-sans whitespace-pre {isOutOfRange ? 'text-[rgba(255,0,0,0.7)] font-medium' : 'text-gray-500'}"
+                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-center cursor-text w-full truncate hover:bg-gray-200 rounded-lg transition-colors font-sans whitespace-pre border border-transparent {isOutOfRange ? 'bg-[rgba(255,0,0,0.15)]' : ''} {offsetContext.show ? 'text-[#409eff] font-medium' : 'text-gray-500'}"
                     onclick={editPage}
                     onmouseenter={handlePageMouseEnter}
                     onmouseleave={handlePageMouseLeave}

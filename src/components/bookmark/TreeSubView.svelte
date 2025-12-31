@@ -6,6 +6,8 @@
     import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
     import PreviewPopup from '../PreviewPopup.svelte';
+    import offsetIconRaw from '@/assets/icons/offset.svg?raw';
+    import Icon from '../Icon.svelte';
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
@@ -138,26 +140,14 @@
         </div>
         <div class="tree-column-page flex items-center justify-center gap-1">
             <span>Page</span>
-            <button 
-                class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer border-none bg-transparent p-0" 
-                onclick={() => showOffsetPage = !showOffsetPage}
-                title={showOffsetPage ? "Show Original Page Numbers" : "Show Offset Page Numbers"}
-            >
-                {#if showOffsetPage}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hash">
-                        <line x1="4" x2="20" y1="9" y2="9" />
-                        <line x1="4" x2="20" y1="15" y2="15" />
-                        <line x1="10" x2="8" y1="3" y2="21" />
-                        <line x1="16" x2="14" y1="3" y2="21" />
-                    </svg>
-                {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-digit">
-                        <path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4" />
-                        <path d="M14 2v6h6" />
-                        <path d="M5 12h3a2 2 0 1 1 0 4H5v4" />
-                    </svg>
-                {/if}
-            </button>
+                <button 
+                    class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer border-none bg-transparent p-0 transition-colors group relative"
+                    class:!text-[#409eff]={showOffsetPage}
+                    onclick={() => showOffsetPage = !showOffsetPage}
+                    title={showOffsetPage ? "当前显示偏移后的页码" : "当前显示原始页码"}
+                >
+                    <Icon data={offsetIconRaw} width={16} height={16} />
+                </button>
         </div>
     </div>
     <div class="tree-body">
