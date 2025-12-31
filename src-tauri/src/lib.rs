@@ -7,6 +7,7 @@ mod static_server;
 mod pdf;
 mod pdf_outline;
 mod external_editor;
+mod pdf_analysis;
 
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager, Runtime};
@@ -148,6 +149,17 @@ async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, St
 }
 
 #[tauri::command]
+async fn extract_toc(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    state.0.send(pdf::manager::PdfRequest::ExtractToc {
+        path,
+        response_tx: tx,
+    }).await.map_err(|e| e.to_string())?;
+
+    rx.await.map_err(|e| e.to_string())?.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
@@ -253,6 +265,7 @@ pub fn run() {
             set_page_labels,
             get_static_server_port,
             pdf::toc::generate_toc_page,
+            extract_toc,
             external_editor::open_external_editor
         ])
         .build(tauri::generate_context!())

@@ -25,6 +25,10 @@ pub enum PdfRequest {
         dest_path: Option<String>,
         response_tx: oneshot::Sender<Result<String, String>>,
     },
+    ExtractToc {
+        path: String,
+        response_tx: oneshot::Sender<Result<Vec<String>>>,
+    },
 }
 
 // The Sender type to be stored in Tauri State
@@ -44,13 +48,8 @@ impl PdfWorkerInternalState {
     fn new() -> Result<Self> {
         println!("[PDF Worker] Init. CWD: {:?}", std::env::current_dir());
         
-        let pdfium_bind = Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
-            .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("src-tauri/")))
-            .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("../src-tauri/")))
-            .or_else(|_| Pdfium::bind_to_system_library())
-            .map_err(|e| format_err!("[PDF Worker] Failed to bind Pdfium: {}", e))?;
-        
-        let pdfium = Pdfium::new(pdfium_bind);
+        let pdfium = crate::pdf::init_pdfium()
+            .map_err(|e| format_err!("[PDF Worker] {}", e))?;
         
         Ok(Self {
             pdfium,
@@ -131,6 +130,10 @@ pub fn init_pdf_worker() -> PdfWorker {
                 },
                 PdfRequest::GenerateToc { src_path, config, dest_path, response_tx } => {
                     let result = process_toc_generation(&worker_state.pdfium, src_path, config, dest_path);
+                    let _ = response_tx.send(result);
+                },
+                PdfRequest::ExtractToc { path, response_tx } => {
+                    let result = crate::pdf_analysis::TocExtractor::extract_toc(&worker_state.pdfium, &path);
                     let _ = response_tx.send(result);
                 }
             }

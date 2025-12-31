@@ -289,8 +289,8 @@ fn build_outline_level(
             me.set("First", cf);
             me.set("Last", child_last.unwrap());
             // Count: Positive if open, negative if closed.
-            // iText/User requirement: Default open?
-            // "expanded" in frontend. Java: "bookmarkToOutlines" -> addOutline. iText defaults to open.
+            // Reference implementation/User requirement: Default open?
+            // "expanded" in frontend. Java: "bookmarkToOutlines" -> addOutline. Reference implementation defaults to open.
             // Let's assume Open.
             me.set("Count", child_count); // Positive = Open
             
