@@ -254,9 +254,9 @@ impl PdfBlock {
 
                     let gap = curr.x - (prev.x + prev.width);
 
-                    if gap > space_width * 5.0 {
+                    if gap > space_width * 6.0 {
                         text_builder.push_str("     ");
-                    } else if gap > space_width * 0.3 {
+                    } else if gap > space_width * 0.5 {
                         text_builder.push_str(" ");
                     }
                     text_builder.push_str(&curr.text);

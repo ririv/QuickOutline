@@ -14,15 +14,15 @@ module: src-tauri/src/pdf_analysis
 
 ### 1.1 设计目标
 *   **纯视觉分析**：不依赖 PDF 内部已有的 Outline/Bookmark 结构，完全通过分析页面上的文本布局（位置、字体、间距）来重构语义块。
-*   **高性能并发**：利用 Rust 的 `rayon` 库实现多核并行处理，大幅缩短大文件的分析时间。
-*   **线程安全**：通过资源隔离策略，规避底层 PDF 库（PDFium）的线程安全限制。
+*   **高性能并发**：利用手动线程池实现多核并行处理，大幅缩短大文件的分析时间。
+*   **线程安全与稳定**：通过全局单例和串行化加载策略，彻底规避底层 PDF 库（PDFium）的线程安全限制及 `dlopen` 死锁风险。
 *   **Unicode 完备**：完整支持 Unicode 数学符号、全角标点及特殊的 TitleCase 字符判定。
 
 ### 1.2 核心组件
 *   **`TocExtractor`**: 流程控制器，负责任务分发和并行调度。
-*   **`PdfProcessor`**: 页面级处理器，负责字符流到文本行（Line）再到文本块（Block）的转换。
+*   **`PdfProcessor`**: 页面级处理器，负责字符流到文本行（Line）再到文本块（Block）的转换，以及高精度的排版参数推导。
 *   **`TocAnalyser`**: 语义级分析器，负责识别正文样式并筛选目录条目。
-*   **`TextMetrics`**: 排版度量工具，负责计算字符宽度和空格逻辑。
+*   **`TextMetrics`**: （已废弃）排版度量工具，原用于计算字符宽度，现已由 `PdfProcessor` 的全页推导逻辑取代。
 
 ---
 
@@ -30,15 +30,17 @@ module: src-tauri/src/pdf_analysis
 
 ### 2.1 阶段一：并行文本块提取 (Parallel Block Extraction)
 
-由于 PDF 解析是计算密集型与 I/O 密集型混合任务，且底层 PDF 引擎不支持多线程共享文档句柄，我们采用了 **分块并行 (Chunk-based Parallelism)** 架构。
+为了在保证绝对稳定性的前提下复刻 Java 版的高并发性能，我们采用了 **手动线程池 + 全局单例 + 串行加载** 的架构。这是为了解决 Rust FFI 与 PDFium 在多线程环境下的复杂交互问题（如 `!Send` 约束和 `dlopen` 锁竞争）。
 
-1.  **初始化**: 主线程加载文档，仅获取总页数 `num_pages`。
+1.  **初始化**: 主线程初始化 **全局单例 PDFium 绑定** (`crate::pdf::get_pdfium()`)。确保动态库只加载一次，避免重复 `dlopen` 导致的死锁。
 2.  **分块 (Chunking)**: 将页码范围 `0..num_pages` 划分为 $N$ 个 Chunk（$N$ 为 CPU 逻辑核心数）。
-3.  **并行执行**:
-    *   使用 `rayon::par_iter` 并行处理每个 Chunk。
-    *   **资源隔离**: 每个线程内部调用 `crate::pdf::init_pdfium()` 初始化独立的 PDFium 绑定，并加载独立的文档实例。
-    *   **提取**: 对 Chunk 内的每一页调用 `PdfProcessor::extract_blocks_from_page`。
-4.  **结果合并**: 所有线程的结果被收集并展平为 `Vec<PdfBlock>`。
+3.  **手动线程池**: 使用 `std::thread::spawn` 启动 $N$ 个 Worker 线程。
+4.  **资源隔离与串行化**:
+    *   每个 Worker 线程获取全局 PDFium 单例。
+    *   在调用 `load_pdf_from_file` 加载文档时，使用全局互斥锁 **`PDF_LOAD_MUTEX`** 进行串行化保护。这是为了规避 PDFium 某些底层实现可能存在的非重入风险。
+    *   一旦文档加载完成（得到线程独立的 `PdfDocument`），互斥锁立即释放。
+    *   后续的 **页面提取 (`extract_blocks_from_page`)** 是完全并行执行的，互不干扰。
+5.  **结果合并**: 主线程等待所有 Worker 完成 (`join`)，并合并结果。
 
 ### 2.2 阶段二：页面级处理 (Page Processing)
 
@@ -50,14 +52,28 @@ module: src-tauri/src/pdf_analysis
     1.  **Y 轴 (Top to Bottom)**: 只有当两字符基线 Y 坐标完全一致时，才比较 X 轴。
     2.  **X 轴 (Left to Right)**: 标准阅读顺序。
 
-#### B. 物理行构建 (Line Construction)
+#### B. 排版参数全页推导 (Page-Level Metrics Inference)
+为了解决 `tight_bounds`（墨水宽度）无法准确反映排版间距（Advance Width）的问题，我们实现了一套 **数据驱动的推导算法**：
+
+1.  **Advance Width 推导**:
+    *   对于页面上的每一个字符 $C_i$，检查其下一个字符 $C_{i+1}$。
+    *   如果两者位于同一行（基线 Y 差值 < 1.0pt）且水平距离合理（$< 1.5 	imes FontSize$），则推导 $C_i$ 的 **逻辑宽度 (Advance Width)** 为 $X_{i+1} - X_i$。这自动包含了字间距。
+    *   如果不满足条件（如行尾），则回退到 $LooseBounds$ 宽度。
+    *   **结果**: 所有 `TextChunk` 的 `width` 字段都填充为这个推导出的逻辑宽度，而非视觉宽度。
+
+2.  **全局空格宽度推导 ($S_{page}$)**:
+    *   **优先法**: 如果页面上存在真实的空格字符 `' '`，取其推导宽度。
+    *   **兜底法**: 如果无空格，计算全页所有字符推导宽度的 **平均值 (AvgWidth)**。
+    *   这完美复刻了 iText 的逻辑（优先用空格宽，否则用字体平均宽），但在无法直接访问字体元数据的情况下，使用了更准确的实测统计值。
+
+#### C. 物理行构建 (Line Construction)
 *   **分行阈值**: 遍历排序后的字符，计算 `abs(当前字符.BaselineY - 上一字符.BaselineY)`。
     *   如果差值 `> 1.0 pt`，判定为新的一行。
 *   **元数据记录**:
     *   对于每一行，记录其 `BoundingBox` (包围盒)、`BaselineY` (基线位置)、`AvgFontSize` (平均字号)、`Style` (字体名与大小)。
     *   **TextChunks**: 完整保留行内每个字符/词元的原始位置信息，用于后续的精确空格重构。
 
-#### C. 语义块合并 (Block Aggregation)
+#### D. 语义块合并 (Block Aggregation)
 将物理行合并为逻辑段落（Block）。对于相邻的两行（Line A 和 Line B），只有满足**所有**以下条件才进行合并：
 
 1.  **同页**: 必须位于同一页。
@@ -75,9 +91,14 @@ module: src-tauri/src/pdf_analysis
 *   频率最高的样式被定义为 **Dominant Style**（正文样式）。这是识别“异常”目录项（如字号加大的章标题）的基准。
 
 #### B. 目录项筛选 (Filtering)
-再次并行扫描每一页的 Block，筛选符合目录特征的候选者：
+再次并行扫描每一页的 Block（此阶段使用 `rayon`），筛选符合目录特征的候选者：
 
-*   **特征 1 (引导符)**: 包含目录常见的点线引导符 (Dot Leaders)，正则：`.*([.]\s*|\s{2,}){4,}\s*\d+\s*$`。
+*   **特征 1 (引导符)**: 包含目录常见的点线引导符 (Dot Leaders)，正则：`.*([.]
+	*|
+	{2,}){4,}
+	*
+	+
+	*$`。
 *   **特征 2 (数字结尾)**: 以数字结尾，且字体大小显著大于正文样式 (`> DominantSize + 0.5pt`)，且长度适中 (`< 80` 字符)。
 *   **长度过滤**: 剔除过短 (`< 3`) 或过长 (`> 150`) 的文本块。
 
@@ -90,26 +111,29 @@ module: src-tauri/src/pdf_analysis
 ### 3.1 文本重构 (Text Reconstruction)
 在输出最终文本时，我们不使用简单的字符串拼接，而是基于 `TextChunk` 的位置进行**视觉重构**：
 
-*   **空格计算**:
-    *   优先读取字体文件中的空格宽度。
-    *   **兜底策略**: 如果字体未提供（返回 0），则使用 `FontSize * 0.25` 作为估算值。
-*   **插入逻辑**:
-    *   如果是大间隙 (`Gap > 5 * SpaceWidth`)：插入 5 个空格（模拟 Tab/对齐）。
-    *   如果是小间隙 (`Gap > 0.3 * SpaceWidth`)：插入 1 个空格。
+*   **空格计算**: 使用前述推导出的 $S_{page}$ 作为基准。
+*   **阈值判定**:
+    *   计算 Gap: `Next.X - (Curr.X + Curr.AdvanceWidth)`。由于使用了 Advance Width，紧邻字符的 Gap 接近 0。
+    *   **插入逻辑**:
+        *   `Gap > 6.0 * SpaceWidth`: 插入 5 个空格（大间隙）。
+        *   `Gap > 0.5 * SpaceWidth`: 插入 1 个空格（小间隙）。
 
 ### 3.2 Unicode 深度支持
-*   **数学符号**: 使用正则 `\p{Sm}` 精确匹配 Unicode 数学符号类别，确保公式中的符号不会干扰分词或样式统计。
-*   **TitleCase**: 使用正则 `\p{Lt}` 支持 Unicode Titlecase 字母（如连字 `ǅ`），将其视为大写字母处理，确保样式统计的准确性。
+*   **数学符号**: 使用正则 `
+	{Sm}` 精确匹配 Unicode 数学符号类别，确保公式中的符号不会干扰分词或样式统计。
+*   **TitleCase**: 使用正则 `
+	{Lt}` 支持 Unicode Titlecase 字母（如连字 `ǅ`），将其视为大写字母处理，确保样式统计的准确性。
 
 ### 3.3 视觉坐标系统
-*   **宽度计算**: 采用 `BoundingBox.Right - BoundingBox.Left` 计算行宽，而非字符宽度的简单累加。这在处理分散对齐（Justified Alignment）或存在字间距调整（Kerning/Tracking）的文本时更加准确。
+*   **宽度计算**: 采用 `LooseBounds` 作为回退，并优先使用位置推导。
 *   **基线对齐**: 所有垂直间距计算均基于 **Baseline Y**，而非包围盒底部。这符合排版学原理，避免了因字符下伸部（Descenders，如 g, p, y）导致的行距抖动。
 
 ---
 
 ## 4. 依赖项
 
-*   `rayon`: 并行迭代器。
+*   `rayon`: 用于第二阶段（纯计算）的并行迭代。
+*   `std::thread`: 用于第一阶段（IO/FFI 混合）的手动并行控制。
 *   `pdfium-render`: PDF 解析引擎绑定。
 *   `regex`: 正则表达式（含 Unicode 支持）。
 *   `serde`: 数据序列化。

@@ -1,8 +1,8 @@
 use pdfium_render::prelude::*;
 
 /**
- * The "100% Replica" Text Analysis Engine.
- * Replicates reference implementation's behavior by querying the font's actual layout metrics.
+ * Text Analysis Metrics Helper.
+ * Handles font metric calculations and coordinate transformations.
  */
 pub struct TextMetrics;
 
@@ -18,23 +18,22 @@ impl TextMetrics {
 
     /**
      * Queries PDFium for the font's design-space width of a space.
+     * 
+     * NOTE: This function is currently UNIMPLEMENTED / DEPRECATED.
+     * 
+     * Reason: The previous implementation incorrectly used `text_obj.width()`, which returns the width 
+     * of the *current character* (e.g., 'A', '1', '.'), not the width of the space glyph for that font.
+     * This caused severe over-segmentation when narrow characters were encountered.
+     * 
+     * Since `pdfium-render` does not expose an easy API to query the Font Dictionary for the specific width of the 'space' glyph,
+     * we have moved the space width calculation logic to `processor.rs`. 
+     * There, we use a robust "Page-Global Advance Width Inference" strategy, which statistically derives the 
+     * space width from the actual character layout on the page.
+     * 
+     * This function now returns 0.0 to ensure any legacy callers fallback to the heuristic default.
      */
-    fn get_actual_font_space_width(char_info: &PdfPageTextChar) -> f32 {
-        // PDFium's PdfPageTextChar can provide its underlying TextObject.
-        if let Ok(text_obj) = char_info.text_object() {
-            // width() returns the actual physical width of the text object (the char).
-            // unscaled_font_size() returns the font size before matrix transformation.
-            if let Ok(width) = text_obj.width() {
-                let font_size = text_obj.unscaled_font_size().value;
-                if font_size > 0.0 {
-                    // Ratio equivalent to reference implementation's font width calculation.
-                    return width.value / font_size;
-                }
-            }
-        }
-        
-        // Final fallback if metrics are unreadable
-        0.278
+    fn get_actual_font_space_width(_char_info: &PdfPageTextChar) -> f32 {
+        0.0
     }
 
     /**
