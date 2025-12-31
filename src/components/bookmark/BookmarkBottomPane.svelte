@@ -17,7 +17,7 @@
     import { ripple } from '@/lib/actions/ripple';
     
     import { outlineService } from '@/lib/services/OutlineService';
-    import { saveOutline } from '@/lib/api/rust_pdf';
+    import { saveOutline, extractToc } from '@/lib/api/rust_pdf';
     import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte.ts';
@@ -50,7 +50,10 @@
         if (path && path !== lastLoadedPath) {
             untrack(() => {
                 lastLoadedPath = path;
-                handleGetContentsClick();
+                // Only auto-load if mode is bookmark, TOC extraction is heavy and manual
+                if (getContentsMode === 'bookmark') {
+                    handleGetContentsClick();
+                }
             });
         } else if (!path) {
             lastLoadedPath = null;
@@ -108,8 +111,6 @@
     }
 
     async function handleGetContentsClick() {
-        console.log('Get contents from:', getContentsMode);
-        
         try {
             const path = docStore.currentFilePath;
             if (!path) {
@@ -117,20 +118,49 @@
                 return;
             }
 
-            // 1. Get Bookmark DTO via unified service
-            const bookmarkDto: BookmarkUI = await outlineService.fetchBookmarks(path);
-            console.log('[Bookmark] Loaded data:', bookmarkDto);
-            
-            // 2. Sync text locally
-            const text = serializeBookmarkTree(bookmarkDto); 
+            if (getContentsMode === 'bookmark') {
+                // 1. Get Bookmark DTO via unified service
+                const bookmarkDto: BookmarkUI = await outlineService.fetchBookmarks(path);
+                
+                // 2. Sync text locally
+                const text = serializeBookmarkTree(bookmarkDto); 
 
-            // 3. Update frontend store
-            bookmarkStore.setText(text);
-            bookmarkStore.setTree(bookmarkDto.children || []);
-            
-            messageStore.add('Outline loaded successfully', 'SUCCESS');
+                // 3. Update frontend store
+                bookmarkStore.setText(text);
+                bookmarkStore.setTree(bookmarkDto.children || []);
+                
+                messageStore.add('Outline loaded successfully', 'SUCCESS');
+            } else {
+                // TOC Extraction Mode
+                messageStore.add('Extracting TOC... This may take a moment.', 'INFO');
+                
+                const lines = await extractToc(path);
+                
+                if (!lines || lines.length === 0) {
+                    messageStore.add('No TOC structure found in document.', 'WARNING');
+                    return;
+                }
+
+                let text = lines.join('\n');
+                
+                // Pre-normalize text to prevent CodeMirror from triggering "auto-fix" updates
+                // which can cause infinite loops with Svelte 5 effects.
+                text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+                bookmarkStore.setText(text);
+
+                // Try to parse tree for preview
+                try {
+                    const tree = processText(text);
+                    bookmarkStore.setTree(tree.children || []);
+                } catch (e) {
+                    console.warn('Auto-parse extracted TOC failed:', e);
+                }
+
+                messageStore.add(`Extracted ${lines.length} TOC lines.`, 'SUCCESS');
+            }
         } catch (e: any) {
-            messageStore.add('Failed to load outline: ' + (e.message || String(e)), 'ERROR');
+            messageStore.add('Failed to load content: ' + (e.message || String(e)), 'ERROR');
         }
     }
 
@@ -141,7 +171,6 @@
     }
 
     async function handleSetContentsClick() {
-        console.log('Set contents click with view scale:', viewMode);
         try {
             const path = docStore.currentFilePath;
             if (!path) {

@@ -48,6 +48,7 @@ module: src-tauri/src/pdf_analysis
 
 #### A. 字符排序与清洗
 *   获取页面所有字符对象。
+*   **内容清洗**: 移除 `char_info.unicode_string()` 中自带的 `\r` 或 `\n` 字符，确保输出的换行逻辑完全由后续的几何坐标差驱动，防止产生双倍空行。
 *   **排序规则**:
     1.  **Y 轴 (Top to Bottom)**: 只有当两字符基线 Y 坐标完全一致时，才比较 X 轴。
     2.  **X 轴 (Left to Right)**: 标准阅读顺序。
@@ -117,6 +118,10 @@ module: src-tauri/src/pdf_analysis
     *   **插入逻辑**:
         *   `Gap > 6.0 * SpaceWidth`: 插入 5 个空格（大间隙）。
         *   `Gap > 0.5 * SpaceWidth`: 插入 1 个空格（小间隙）。
+*   **换行符规范化 (Normalization)**:
+    *   **现象**: PDF 内部文本流可能包含来自源文档的 `\r` (CR) 或 `\r\n` (CRLF) 字符（常见于 Windows 平台生成的 PDF）。
+    *   **处理**: 在输出前，所有文本块均统一规范化为 `\n` (LF)。
+    *   **目的**: 防止前端编辑器 (CodeMirror) 接收到“脏”文本后自动执行内部清洗，从而避免与 Svelte 5 的响应式状态产生死循环冲突（Effect Update Depth Exceeded）。
 
 ### 3.2 Unicode 深度支持
 *   **数学符号**: 使用正则 `

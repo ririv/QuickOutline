@@ -93,7 +93,7 @@
         if (newText === bookmarkStore.text) return;
         
         if (isUpdatingFromStore) {
-            console.log(`[TextSubView] Loop prevented. Store len: ${bookmarkStore.text.length}, Editor len: ${newText.length}`);
+            // console.log(`[TextSubView] Loop prevented. Store len: ${bookmarkStore.text.length}, Editor len: ${newText.length}`);
             return;
         }
 

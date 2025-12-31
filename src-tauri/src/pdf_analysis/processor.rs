@@ -45,8 +45,13 @@ impl PdfProcessor {
         let mut last_char_right: f32 = 0.0;
 
         for (i, char_info) in sorted_chars.into_iter().enumerate() {
-            let text = char_info.unicode_string().unwrap_or_default();
-            // Use loose_bounds for layout consistency as it approximates the glyph box
+            let mut text = char_info.unicode_string().unwrap_or_default();
+            // Sanitize text: remove control characters that might cause double newlines
+            if text.contains('\r') || text.contains('\n') {
+                text = text.replace('\r', "").replace('\n', "");
+            }
+            
+            // Use loose_bounds for layout consistency
             let bounds = char_info.loose_bounds()
                 .or_else(|_| char_info.tight_bounds())
                 .unwrap_or_else(|_| PdfRect::new(PdfPoints::ZERO, PdfPoints::ZERO, PdfPoints::ZERO, PdfPoints::ZERO));

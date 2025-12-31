@@ -268,7 +268,8 @@ impl PdfBlock {
             }
         }
         
-        text_builder
+        // Normalize line endings to LF to prevent frontend issues (e.g. CodeMirror auto-fix loops)
+        text_builder.replace("\r\n", "\n").replace('\r', "\n")
     }
 
     pub fn get_char_pattern(&mut self) -> &CharacterPattern {
