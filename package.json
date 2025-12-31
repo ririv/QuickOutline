@@ -15,9 +15,7 @@
     "copy:pagedjs": "node scripts/copy-pagedjs.mjs",
     "copy:pdfjs": "node scripts/copy-pdfjs.mjs",
     "copy:assets": "npm run copy:katex && npm run copy:pagedjs && npm run copy:pdfjs",
-    "build:unocss": "node scripts/build-unocss-runtime.mjs",
-    "sign:sidecar": "node scripts/sign-sidecar.cjs",
-    "update:sidecar": "node scripts/update-sidecar.cjs"
+    "build:unocss": "node scripts/build-unocss-runtime.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.0",

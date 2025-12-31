@@ -17,23 +17,6 @@
         }
       ]
     },
-    {
-      "identifier": "shell:allow-execute",
-      "allow": [
-        {
-          "args": [
-            "arg1",
-            "-a",
-            "--arg2",
-            {
-              "validator": "\\S+"
-            }
-          ],
-          "name": "binaries/my-sidecar",
-          "sidecar": true
-        }
-      ]
-    },
     "shell:default",
     "dialog:default",
     "fs:default",

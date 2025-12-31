@@ -34,11 +34,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": [
-      "binaries/app-sidecar"
-    ],
     "resources": {
-      "resources/java-runtime/": "resources/java-runtime/",
       "../build/libs/": "resources/libs/",
       "libpdfium.dylib": "libpdfium.dylib"
     }
@@ -46,20 +42,7 @@
   "plugins": {
     "cli": {
       "description": "QuickOutline CLI",
-      "args": [
-        {
-          "name": "port",
-          "description": "Port for the Java sidecar",
-          "short": "p",
-          "takesValue": true
-        },
-        {
-          "name": "external-sidecar",
-          "description": "Do not start sidecar, connect to external instance",
-          "short": "e",
-          "takesValue": false
-        }
-      ]
+      "args": []
     }
   }
 }

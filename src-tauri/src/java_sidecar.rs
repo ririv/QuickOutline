@@ -37,6 +37,7 @@ pub fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let mut use_external_sidecar = false;
 
     // 使用 CLI 插件解析参数
+    // 如需要使用，需要在 tauri.conf.json 中 plugins 的 cli 配置 args
     match app.cli().matches() {
         Ok(matches) => {
             if let Some(arg_data) = matches.args.get("port") {
