@@ -9,6 +9,7 @@ use crate::pdf::manager::{PdfWorker, PdfRequest};
 use crate::pdf::page_label::{PageLabelProcessor, PageLabel, PageLabelNumberingStyle};
 use crate::pdf::merge::merge_pdfs;
 use tokio::sync::oneshot;
+use log::{info, warn, error};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -61,7 +62,7 @@ pub fn process_toc_generation(
     config: TocConfig,
     dest_path: Option<String>
 ) -> Result<String, String> {
-    println!("Processing TOC generation via shared PdfWorker (ID Mapping Strategy)");
+    info!("Processing TOC generation via shared PdfWorker (ID Mapping Strategy)");
     let toc_pdf_path = config.toc_pdf_path.as_ref().ok_or("No TOC PDF path provided")?.clone();
     let final_dest = resolve_dest_path(&src_path, dest_path);
     let insert_pos = config.insert_pos as u16;
@@ -104,7 +105,8 @@ pub fn process_toc_generation(
             config.toc_page_label.as_ref()
         );
     
-        doc.save(&final_dest).map_err(|e| e.to_string())?;    println!("TOC generation complete: {}", final_dest);
+        doc.save(&final_dest).map_err(|e| e.to_string())?;
+        info!("TOC generation complete: {}", final_dest);
     Ok(final_dest)
 }
 

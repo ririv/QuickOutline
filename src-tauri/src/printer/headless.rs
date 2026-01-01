@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::fs;
 use std::io::Cursor;
+use log::{info, warn, error};
 
 #[cfg(target_os = "windows")]
 pub async fn print_with_html_windows(html: String, output_path: PathBuf) -> Result<String, String> {
@@ -128,7 +129,7 @@ async fn execute_headless_print_target(browser: &str, target: &str, output_path:
     let output = cmd.output().map_err(|e| e.to_string())?;
 
     if output.status.success() {
-        println!("PDF generated successfully at: {}", output_str);
+        info!("PDF generated successfully at: {}", output_str);
         Ok(output_str)
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -153,7 +154,7 @@ pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, o
     // 1. Use explicitly provided path
     if let Some(path) = browser_path {
         if path_exists(&path) {
-             println!("Using custom browser: {}", path);
+             info!("Using custom browser: {}", path);
              return execute_headless_print_with_html(&path, html, &output_path).await;
         } else {
              return Err(format!("Custom browser path not found: {}", path));
@@ -166,7 +167,7 @@ pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, o
             if local_browser.exists() {
                 let exec_path = local_browser.join("Contents/MacOS/Chromium");
                 if exec_path.exists() {
-                     println!("Using local Chromium: {:?}", exec_path);
+                     info!("Using local Chromium: {:?}", exec_path);
                      return execute_headless_print_with_html(exec_path.to_str().unwrap(), html, &output_path).await;
                 }
             }
@@ -183,14 +184,14 @@ pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, o
 
         for browser in browsers {
             if std::path::Path::new(browser).exists() {
-                println!("Using system browser: {}", browser);
+                info!("Using system browser: {}", browser);
                 return execute_headless_print_with_html(browser, html, &output_path).await;
             }
         }
     }
     
     // 4. Download Chromium if forced or nothing else found
-    println!("No suitable browser found. Downloading Chromium...");
+    info!("No suitable browser found. Downloading Chromium...");
     match download_chromium(app).await {
         Ok(path) => {
              let exec_path = path.join("Contents/MacOS/Chromium");
@@ -205,7 +206,7 @@ pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, out
     // 1. Use explicitly provided path
     if let Some(path) = browser_path {
         if path_exists(&path) {
-             println!("Using custom browser: {}", path);
+             info!("Using custom browser: {}", path);
              return execute_headless_print_target(&path, &url, &output_path).await;
         } else {
              return Err(format!("Custom browser path not found: {}", path));
@@ -218,7 +219,7 @@ pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, out
             if local_browser.exists() {
                 let exec_path = local_browser.join("Contents/MacOS/Chromium");
                 if exec_path.exists() {
-                     println!("Using local Chromium: {:?}", exec_path);
+                     info!("Using local Chromium: {:?}", exec_path);
                      return execute_headless_print_target(exec_path.to_str().unwrap(), &url, &output_path).await;
                 }
             }
@@ -235,14 +236,14 @@ pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, out
 
         for browser in browsers {
             if std::path::Path::new(browser).exists() {
-                println!("Using system browser: {}", browser);
+                info!("Using system browser: {}", browser);
                 return execute_headless_print_target(browser, &url, &output_path).await;
             }
         }
     }
     
     // 4. Download Chromium if forced or nothing else found
-    println!("No suitable browser found. Downloading Chromium...");
+    info!("No suitable browser found. Downloading Chromium...");
     match download_chromium(app).await {
         Ok(path) => {
              let exec_path = path.join("Contents/MacOS/Chromium");
@@ -333,7 +334,7 @@ async fn download_chromium<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, St
         
     let download_url = format!("https://storage.googleapis.com/chromium-browser-snapshots/{platform_key}/{version}/chrome-mac.zip");
     
-    println!("Downloading Chromium from: {}", download_url);
+    info!("Downloading Chromium from: {}", download_url);
     
     let response = reqwest::get(&download_url).await.map_err(|e| e.to_string())?;
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
@@ -345,7 +346,7 @@ async fn download_chromium<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, St
     
     let app_path = install_dir.join("chrome-mac").join("Chromium.app");
     
-    println!("Removing quarantine attribute...");
+    info!("Removing quarantine attribute...");
     let _ = Command::new("xattr")
         .arg("-d")
         .arg("com.apple.quarantine")

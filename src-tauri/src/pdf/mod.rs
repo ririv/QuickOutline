@@ -9,6 +9,7 @@ use pdfium_render::prelude::*;
 use anyhow::{Result, format_err};
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
+use log::{info, error};
 
 // Wrapper to allow Pdfium to be stored in a static global.
 struct GlobalPdfium(Pdfium);
@@ -17,7 +18,7 @@ unsafe impl Sync for GlobalPdfium {}
 
 // Global singleton to avoid repeated dlopen calls which cause deadlocks.
 static PDFIUM_SINGLETON: Lazy<Result<GlobalPdfium, String>> = Lazy::new(|| {
-    println!("[PdfInit] Initializing Global Pdfium Singleton...");
+    info!("[PdfInit] Initializing Global Pdfium Singleton...");
     let result = Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
         .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("src-tauri/")))
         .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("src-tauri/libs/")))
@@ -29,7 +30,10 @@ static PDFIUM_SINGLETON: Lazy<Result<GlobalPdfium, String>> = Lazy::new(|| {
         .map(GlobalPdfium)
         .map_err(|e| e.to_string());
     
-    println!("[PdfInit] Global Init Result: {}", if result.is_ok() { "OK" } else { "ERR" });
+    match &result {
+        Ok(_) => info!("[PdfInit] Global Init Result: OK"),
+        Err(e) => error!("[PdfInit] Global Init Result: ERR - {}", e),
+    }
     result
 });
 

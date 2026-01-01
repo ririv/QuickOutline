@@ -2,6 +2,7 @@ use lopdf::{Document, Object, ObjectId, Dictionary, Stream};
 use crate::pdf_outline::model::{Bookmark, ViewScaleType};
 use anyhow::{Result, anyhow, Context};
 use std::collections::BTreeMap;
+use log::{info, warn, error};
 
 pub fn get_outline(path: &str, offset: i32) -> Result<Bookmark> {
     let doc = Document::load(path).map_err(|e| anyhow!("Failed to load PDF: {}", e))?;
@@ -63,7 +64,7 @@ fn parse_outline_chain(
             Object::String(bytes, _) => decode_pdf_string(bytes),
             _ => {
                 // If it's still not a string after resolution, log warning
-                eprintln!("Warning: Title is not a string after resolution. Type: {:?}", title_obj.type_name());
+                warn!("Warning: Title is not a string after resolution. Type: {:?}", title_obj.type_name());
                 "Untitled (Type Error)".to_string()
             }
         };
@@ -128,7 +129,7 @@ fn resolve_dest_page(doc: &Document, dest_obj: &Object, page_map: &BTreeMap<Obje
             // This is non-trivial in lopdf as it requires traversing Name trees.
             // For now, let's assume explicit destinations are used mostly.
             // If needed, we can implement Named Destination lookup.
-            eprintln!("Named destinations not fully supported yet: {:?}", String::from_utf8_lossy(name));
+            warn!("Named destinations not fully supported yet: {:?}", String::from_utf8_lossy(name));
         }
         _ => {}
     }
@@ -266,7 +267,7 @@ fn build_outline_level(
                 let dest_array = create_destination(doc, *page_id, scale_type)?;
                 dict.set("Dest", Object::Array(dest_array));
             } else {
-                eprintln!("Page not found: {}", target_page_num);
+                warn!("Page not found: {}", target_page_num);
             }
         }
 

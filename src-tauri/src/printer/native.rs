@@ -1,7 +1,7 @@
 use tauri::{AppHandle, Manager, Runtime, WebviewWindow}; // Import WebviewWindow
 use std::path::PathBuf;
 use std::fs;
-
+use log::{info, warn, error};
 
 #[tauri::command]
 pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
@@ -38,7 +38,7 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
         match print_native_with_html_mac_op(window.clone(), html.clone(), output_path.clone()).await {
             Ok(path) => Ok(path),
             Err(e) => {
-                println!("Native print (OP) failed: {}", e);
+                error!("Native print (OP) failed: {}", e);
                 Err(e)
             }
         }
@@ -61,7 +61,7 @@ pub async fn print_to_pdf_with_url_native<R: Runtime>(
         match print_native_with_url_mac_wkpdf(window, url, output_path).await {
              Ok(path) => Ok(path),
              Err(e) => {
-                 println!("Native print (WKPDF) failed: {}. No fallback configured.", e);
+                 error!("Native print (WKPDF) failed: {}. No fallback configured.", e);
                  Err(e)
              }
         }
@@ -112,9 +112,11 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R
                 let _: () = msg_send![&sv, addSubview: &*new_view];
                 let _: () = msg_send![&*new_view, setAlphaValue: 0.0f64];
             } else {
-                println!("Warning: Could not find superview to attach print webview.");
+                warn!("Warning: Could not find superview to attach print webview.");
             }
             
+            // Load Request
+
             // Load Request
             let url_ns = NSString::from_str(&url_clone);
             let ns_url = NSURL::URLWithString(&url_ns).expect("Invalid URL");
@@ -177,7 +179,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R
 
                 match std::fs::write(&output_path_clone, data_slice) {
                     Ok(_) => {
-                        println!("Native PDF generated at: {:?}", output_path_clone);
+                        info!("Native PDF generated at: {:?}", output_path_clone);
                         let _ = result_tx.send(Ok(path_str_clone.clone()));
                     },
                     Err(e) => {
@@ -449,7 +451,7 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>,
                  let _: () = msg_send![&print_info, setPrinter: &*p];
             } else {
                  // 如果找不到 "Generic"，尝试其他名称或者忽略
-                 println!("Warning: Could not create 'Generic' printer.");
+                 warn!("Warning: Could not create 'Generic' printer.");
             }
 
             // 显式设置缩放比例，防止查询默认缩放
@@ -564,9 +566,11 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<
                 let _: () = msg_send![&sv, addSubview: &*new_view];
                 let _: () = msg_send![&*new_view, setAlphaValue: 0.0f64];
             } else {
-                println!("Warning: Could not find superview to attach print webview.");
+                warn!("Warning: Could not find superview to attach print webview.");
             }
             
+            // Load Request
+
             // Load
             let html_ns = NSString::from_str(&html_clone);
             new_view.loadHTMLString_baseURL(&html_ns, None);
@@ -632,7 +636,7 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<
 
                 match std::fs::write(&output_path_clone, data_slice) {
                     Ok(_) => {
-                        println!("Native PDF generated at: {:?}", output_path_clone);
+                        info!("Native PDF generated at: {:?}", output_path_clone);
                         let _ = result_tx.send(Ok(path_str_clone.clone()));
                     },
                     Err(e) => {

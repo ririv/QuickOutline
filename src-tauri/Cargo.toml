@@ -32,6 +32,8 @@ tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-cli = "2"
+tauri-plugin-log = "2"
+log = "0.4"
 reqwest = { version = "0.13.1", features = ["blocking", "stream"] } # Use blocking for simplicity in thread or async stream
 zip = "7.0.0"
 headless_chrome = "1.0"

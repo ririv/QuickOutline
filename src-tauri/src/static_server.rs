@@ -5,6 +5,7 @@ use tiny_http::{Server, Response, Header, Method};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use tauri::{AppHandle, Manager, Runtime}; // Import Manager and Runtime trait
+use log::{info, warn, error, debug};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ActiveDocument {
@@ -43,7 +44,7 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
         let server = match Server::http("127.0.0.1:0") {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("Failed to start local static server: {}", e);
+                error!("Failed to start local static server: {}", e);
                 return;
             }
         };
@@ -52,18 +53,18 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
         let port = match server.server_addr() {
             tiny_http::ListenAddr::IP(addr) => addr.port(),
             _ => {
-                eprintln!("Server started on non-IP address, cannot retrieve port.");
+                error!("Server started on non-IP address, cannot retrieve port.");
                 return;
             }
         };
 
-        println!("Local Static Server listening on http://127.0.0.1:{}", port);
+        info!("Local Static Server listening on http://127.0.0.1:{}", port);
 
         // Update state with the port
         if let Some(state) = app_handle.try_state::<LocalServerState>() {
              *state.port.lock().unwrap() = Some(port);
         } else {
-            eprintln!("Failed to access LocalServerState to set port.");
+            error!("Failed to access LocalServerState to set port.");
         }
 
         for request in server.incoming_requests() {
@@ -120,7 +121,7 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                         if potential_path.exists() {
                             file_path = potential_path;
                             served_from_resources = true;
-                            println!("Serving from resources: {}", file_path.display()); // Log this
+                            debug!("Serving from resources: {}", file_path.display());
                         }
                     }
                 }

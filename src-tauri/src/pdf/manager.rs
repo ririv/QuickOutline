@@ -4,6 +4,7 @@ use tokio::sync::{mpsc, oneshot};
 use std::thread;
 use image::ImageFormat;
 use std::io::Cursor;
+use log::{info, error};
 
 use crate::pdf::toc::{TocConfig, process_toc_generation};
 
@@ -46,7 +47,7 @@ struct PdfWorkerInternalState {
 
 impl PdfWorkerInternalState {
     fn new() -> Result<Self> {
-        println!("[PDF Worker] Init. CWD: {:?}", std::env::current_dir());
+        info!("[PDF Worker] Init. CWD: {:?}", std::env::current_dir());
         
         let pdfium = crate::pdf::get_pdfium()
             .map_err(|e| format_err!("[PDF Worker] {}", e))?;
@@ -62,7 +63,6 @@ impl PdfWorkerInternalState {
         // If the path has changed, update the current_file_path
         if self.current_file_path.as_ref().map_or(true, |p| *p != path) {
             self.current_file_path = Some(path.clone());
-            // println!("[PDF Worker] Updated current file path to: {}", path);
         }
 
         // Always load the document from Pdfium using the current_file_path.
@@ -113,7 +113,7 @@ pub fn init_pdf_worker() -> PdfWorker {
         let mut worker_state = match PdfWorkerInternalState::new() {
             Ok(state) => state,
             Err(e) => {
-                eprintln!("{}", e);
+                error!("{}", e);
                 return;
             }
         };

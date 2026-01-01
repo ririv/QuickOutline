@@ -2,6 +2,7 @@ use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 use std::fs;
 use std::path::PathBuf;
 use serde::Deserialize;
+use log::{info, warn, error};
 
 pub mod native;
 pub mod headless;
@@ -42,7 +43,7 @@ pub async fn print_to_pdf<R: Runtime>(
     let print_mode = mode.unwrap_or(PrintMode::Native);
     let force_dl = force_download.unwrap_or(false);
 
-    println!("Print Request: Mode={:?}, Output={:?}, URL={:?}, HTML len={:?}", 
+    info!("Print Request: Mode={:?}, Output={:?}, URL={:?}, HTML len={:?}", 
              print_mode, output_path, url, html.as_ref().map(|s| s.len()));
 
     // Try to get local server port and workspace path
@@ -62,7 +63,7 @@ pub async fn print_to_pdf<R: Runtime>(
              if let Ok(_) = fs::write(&temp_file_path, html_content) {
                  local_url = Some(format!("http://127.0.0.1:{}/{}", port, temp_filename));
                  temp_file_to_clean = Some(temp_file_path); // Store path for cleanup
-                 println!("Saved HTML to workspace: {:?} -> URL: {:?}", temp_file_to_clean, local_url);
+                 info!("Saved HTML to workspace: {:?} -> URL: {:?}", temp_file_to_clean, local_url);
              }
         }
     }

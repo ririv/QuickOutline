@@ -5,12 +5,13 @@ use crate::pdf_analysis::models::PdfBlock;
 use anyhow::{Result, format_err};
 use std::collections::BTreeMap;
 use rayon::prelude::*; // Phase 2/3 are CPU-bound and safe for Rayon
+use log::{info, debug};
 
 pub struct TocExtractor;
 
 impl TocExtractor {
     pub fn extract_toc(pdfium: &Pdfium, path: &str) -> Result<Vec<String>> {
-        println!("[TocExtractor] Starting extraction for: {}", path);
+        info!("[TocExtractor] Starting extraction for: {}", path);
 
         // 1. Get page count using the passed Pdfium instance
         // No mutex needed if we are running serially (or if we trust the singleton in serial context)
@@ -23,7 +24,7 @@ impl TocExtractor {
                 .map_err(|e| format_err!("Failed to load PDF: {}", e))?;
             doc.pages().len()
         };
-        println!("[TocExtractor] Total pages: {}", num_pages);
+        info!("[TocExtractor] Total pages: {}", num_pages);
 
         if num_pages == 0 {
             return Ok(Vec::new());
@@ -42,7 +43,7 @@ impl TocExtractor {
             })
             .collect();
 
-        println!("[TocExtractor] Processing {} chunks serially...", chunks.len());
+        info!("[TocExtractor] Processing {} chunks serially...", chunks.len());
         
         let mut all_blocks = Vec::new();
 
@@ -56,7 +57,7 @@ impl TocExtractor {
                 .map_err(|e| format_err!("Failed to load PDF loop: {}", e))?;
             
             for (start, end) in chunks {
-                println!("[TocExtractor] Processing chunk {}..{}", start, end);
+                debug!("[TocExtractor] Processing chunk {}..{}", start, end);
                 for i in start..end {
                     if let Ok(page) = doc.pages().get(i) {
                         let page_num = i as i32 + 1;
@@ -67,7 +68,7 @@ impl TocExtractor {
             }
         } // Doc closed, mutex released
 
-        println!("[TocExtractor] Total raw blocks extracted: {}", all_blocks.len());
+        info!("[TocExtractor] Total raw blocks extracted: {}", all_blocks.len());
 
         if all_blocks.is_empty() {
             return Ok(Vec::new());
@@ -75,7 +76,7 @@ impl TocExtractor {
 
         // 3. Phase 2: Global Style Analysis (Safe for Rayon or Serial)
         let dominant_style = TocAnalyser::find_dominant_style(&all_blocks);
-        println!("[TocExtractor] Dominant style: {:?} (Size: {})", dominant_style.font_name, dominant_style.get_size());
+        info!("[TocExtractor] Dominant style: {:?} (Size: {})", dominant_style.font_name, dominant_style.get_size());
 
         // 4. Phase 3: Parallel Analysis per Page (Pure CPU-bound, perfectly safe for Rayon)
         let mut blocks_by_page: BTreeMap<i32, Vec<PdfBlock>> = BTreeMap::new();
@@ -95,7 +96,7 @@ impl TocExtractor {
             .collect();
 
         let toc_lines: Vec<String> = toc_results.into_iter().flatten().collect();
-        println!("[TocExtractor] Final TOC lines: {}", toc_lines.len());
+        info!("[TocExtractor] Final TOC lines: {}", toc_lines.len());
 
         Ok(toc_lines)
     }

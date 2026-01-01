@@ -7,6 +7,7 @@
   ],
   "permissions": [
     "core:default",
+    "log:default",
     "core:webview:allow-print",
     "opener:default",
     {

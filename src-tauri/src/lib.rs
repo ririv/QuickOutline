@@ -11,6 +11,7 @@ use tauri::{AppHandle, Manager, Runtime};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tauri_plugin_cli::CliExt;
+use log::{info, warn, error};
 
 // Helper function to set up print workspace (now only creates directory and cleans old files)
 fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBuf, String> {
@@ -30,9 +31,9 @@ fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBu
                     if (filename.starts_with("print_job_") || filename.starts_with("print_fallback_")) 
                        && filename.ends_with(".html") {
                         if let Err(e) = fs::remove_file(&path) {
-                            eprintln!("Rust Setup: Failed to delete old print job {:?}: {}", path, e);
+                            warn!("Rust Setup: Failed to delete old print job {:?}: {}", path, e);
                         } else {
-                            println!("Rust Setup: Cleaned up old print job: {:?}", filename);
+                            info!("Rust Setup: Cleaned up old print job: {:?}", filename);
                         }
                     }
                 }
@@ -57,9 +58,9 @@ fn cleanup_pdf_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<(), St
                     if let Some(filename) = path.file_name().and_then(|s| s.to_str()) {
                         if filename.starts_with("toc_") && filename.ends_with(".pdf") {
                             if let Err(e) = fs::remove_file(&path) {
-                                eprintln!("Rust Setup: Failed to delete PDF temp file {:?}: {}", path, e);
+                                warn!("Rust Setup: Failed to delete PDF temp file {:?}: {}", path, e);
                             } else {
-                                println!("Rust Setup: Cleaned up PDF temp file: {:?}", filename);
+                                info!("Rust Setup: Cleaned up PDF temp file: {:?}", filename);
                             }
                         }
                     }
@@ -172,6 +173,7 @@ async fn get_print_workspace_path<R: Runtime>(app: AppHandle<R>) -> Result<Strin
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
@@ -189,7 +191,7 @@ pub fn run() {
 
             // Clean up PDF workspace
             if let Err(e) = cleanup_pdf_workspace(app.handle()) {
-                eprintln!("Rust Setup: Failed to cleanup PDF workspace: {}", e);
+                warn!("Rust Setup: Failed to cleanup PDF workspace: {}", e);
             }
 
             // Start local static server
@@ -229,7 +231,7 @@ pub fn run() {
                     if let Ok(mut child_guard) = state.active_child.lock() {
                         if let Some(mut child) = child_guard.take() {
                             let _ = child.kill();
-                            println!("Rust Exit Hook: Killed active external editor.");
+                            info!("Rust Exit Hook: Killed active external editor.");
                         }
                     }
                 }
