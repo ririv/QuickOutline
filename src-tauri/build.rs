@@ -9,29 +9,29 @@ fn main() -> Result<()> {
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
 
-    let (binary_url, binary_name, inner_path) = match (target_os.as_str(), target_arch.as_str()) {
+    let (file_name, binary_name, inner_path) = match (target_os.as_str(), target_arch.as_str()) {
         ("macos", "x86_64") => (
-            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-mac-x64.tgz",
+            "pdfium-mac-x64.tgz",
             "libpdfium.dylib",
             "lib/libpdfium.dylib",
         ),
         ("macos", "aarch64") => (
-            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-mac-arm64.tgz",
+            "pdfium-mac-arm64.tgz",
             "libpdfium.dylib",
             "lib/libpdfium.dylib",
         ),
         ("windows", "x86_64") => (
-            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.zip",
+            "pdfium-win-x64.tgz",
             "pdfium.dll",
             "bin/pdfium.dll",
         ),
         ("windows", "aarch64") => (
-            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-arm64.zip",
+            "pdfium-win-arm64.tgz",
             "pdfium.dll",
             "bin/pdfium.dll",
         ),
         ("linux", "x86_64") => (
-            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-x64.tgz",
+            "pdfium-linux-x64.tgz",
             "libpdfium.so",
             "lib/libpdfium.so",
         ),
@@ -50,8 +50,9 @@ fn main() -> Result<()> {
     let dest_path = libs_dir.join(binary_name);
 
     if !dest_path.exists() {
-        println!("cargo:warning=Downloading PDFium from {}", binary_url);
-        download_and_extract(binary_url, &dest_path, inner_path)
+        let url = format!("https://github.com/bblanchon/pdfium-binaries/releases/latest/download/{}", file_name);
+        println!("cargo:warning=Downloading PDFium from {}", url);
+        download_and_extract(&url, &dest_path, inner_path)
             .context("Failed to download and extract PDFium")?;
     } else {
         println!("cargo:warning=PDFium library already exists at {:?}", dest_path);
