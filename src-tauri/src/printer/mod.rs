@@ -3,9 +3,10 @@ use std::fs;
 use std::path::PathBuf;
 use serde::Deserialize;
 
-use crate::printer_native;
-use crate::printer_headless;
-use crate::printer_headless_chrome;
+pub mod native;
+pub mod headless;
+pub mod headless_chrome;
+
 use crate::static_server::LocalServerState; // Import LocalServerState
 
 #[derive(Debug, Deserialize)]
@@ -73,7 +74,7 @@ pub async fn print_to_pdf<R: Runtime>(
         // URL-based printing (Remote or Localhost)
         match print_mode {
             PrintMode::HeadlessChrome => {
-                printer_headless_chrome::print_to_pdf_with_url(url_str, output_path)
+                headless_chrome::print_to_pdf_with_url(url_str, output_path)
                     .await
                     .map_err(|e| e.to_string())
             },
@@ -81,15 +82,15 @@ pub async fn print_to_pdf<R: Runtime>(
                 let res = {
                     #[cfg(target_os = "macos")]
                     {
-                        printer_headless::print_with_url_mac(&app, url_str, output_path, browser_path, force_dl).await
+                        headless::print_with_url_mac(&app, url_str, output_path, browser_path, force_dl).await
                     }
                     #[cfg(target_os = "windows")]
                     {
-                        printer_headless::print_with_url_windows(url_str, output_path).await
+                        headless::print_with_url_windows(url_str, output_path).await
                     }
                     #[cfg(target_os = "linux")]
                     {
-                        printer_headless::print_with_url_linux(url_str, output_path).await
+                        headless::print_with_url_linux(url_str, output_path).await
                     }
                     #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
                     {
@@ -102,7 +103,7 @@ pub async fn print_to_pdf<R: Runtime>(
                 let res = {
                      #[cfg(target_os = "macos")]
                      {
-                        printer_native::print_to_pdf_with_url_native(app, window, url_str, output_path.clone()).await
+                        native::print_to_pdf_with_url_native(app, window, url_str, output_path.clone()).await
                      }
                      #[cfg(not(target_os = "macos"))]
                      {
@@ -124,7 +125,7 @@ pub async fn print_to_pdf<R: Runtime>(
              
              match print_mode {
                 PrintMode::HeadlessChrome => {
-                    printer_headless_chrome::print_to_pdf_with_url(file_url, output_path)
+                    headless_chrome::print_to_pdf_with_url(file_url, output_path)
                         .await
                         .map_err(|e| e.to_string())
                 },
@@ -132,15 +133,15 @@ pub async fn print_to_pdf<R: Runtime>(
                     let res_inner = {
                         #[cfg(target_os = "macos")]
                         {
-                            printer_headless::print_with_url_mac(&app, file_url, output_path, browser_path, force_dl).await
+                            headless::print_with_url_mac(&app, file_url, output_path, browser_path, force_dl).await
                         }
                         #[cfg(target_os = "windows")]
                         {
-                            printer_headless::print_with_url_windows(file_url, output_path).await
+                            headless::print_with_url_windows(file_url, output_path).await
                         }
                         #[cfg(target_os = "linux")]
                         {
-                            printer_headless::print_with_url_linux(file_url, output_path).await
+                            headless::print_with_url_linux(file_url, output_path).await
                         }
                         #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
                         {
@@ -153,15 +154,15 @@ pub async fn print_to_pdf<R: Runtime>(
                     let res_inner = {
                          #[cfg(target_os = "macos")]
                          {
-                            printer_native::print_native_with_html_mac_wkpdf(window, html_str, output_path).await
+                            native::print_native_with_html_mac_wkpdf(window, html_str, output_path).await
                          }
                          #[cfg(target_os = "windows")]
                          {
-                            printer_native::print_native_windows(html_str, output_path).await
+                            native::print_native_windows(html_str, output_path).await
                          }
                          #[cfg(target_os = "linux")]
                          {
-                            printer_native::print_native_linux(html_str, output_path).await
+                            native::print_native_linux(html_str, output_path).await
                          }
                          #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
                          {

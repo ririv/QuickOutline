@@ -1,7 +1,4 @@
 mod java_sidecar;
-mod printer_native;
-mod printer_headless;
-mod printer_headless_chrome;
 mod printer;
 mod static_server;
 mod pdf;
