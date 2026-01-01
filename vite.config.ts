@@ -23,7 +23,7 @@ export default defineConfig({
       input: {
         test: resolve(__dirname, 'src/test/index.html'),
         main: resolve(__dirname, 'src/index.html'),
-        print: resolve(__dirname, 'src/pages/print/index.html'),
+        print: resolve(__dirname, 'src/windows/print/index.html'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
