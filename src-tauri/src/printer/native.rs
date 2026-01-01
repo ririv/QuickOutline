@@ -673,16 +673,52 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<
         }
     }).map_err(|e| e.to_string())?;
 
-    result_rx.recv().map_err(|e| e.to_string())?
-}
+        result_rx.recv().map_err(|e| e.to_string())?
 
-#[cfg(not(target_os = "windows"))]
-async fn print_windows(_html: String, _output_path: PathBuf) -> Result<String, String> {
-    unimplemented!("Windows native print is not implemented yet.");
-}
+    }
 
-// ================= LINUX (Placeholder) =================
-#[cfg(not(target_os = "linux"))]
-async fn print_linux(_html: String, _output_path: PathBuf) -> Result<String, String> {
-    unimplemented!("Linux native print is not implemented yet.");
-}
+    
+
+    // ================= WINDOWS NATIVE =================
+
+    #[cfg(target_os = "windows")]
+
+    pub async fn print_native_windows(_html: String, _output_path: PathBuf) -> Result<String, String> {
+
+        Err("Windows native print is not implemented yet.".to_string())
+
+    }
+
+    
+
+    #[cfg(not(target_os = "windows"))]
+
+    pub async fn print_native_windows(_html: String, _output_path: PathBuf) -> Result<String, String> {
+
+        unimplemented!("Windows native print called on non-Windows platform.");
+
+    }
+
+    
+
+    // ================= LINUX NATIVE =================
+
+    #[cfg(target_os = "linux")]
+
+    pub async fn print_native_linux(_html: String, _output_path: PathBuf) -> Result<String, String> {
+
+        Err("Linux native print is not implemented yet.".to_string())
+
+    }
+
+    
+
+    #[cfg(not(target_os = "linux"))]
+
+    pub async fn print_native_linux(_html: String, _output_path: PathBuf) -> Result<String, String> {
+
+        unimplemented!("Linux native print called on non-Linux platform.");
+
+    }
+
+    
