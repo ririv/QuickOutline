@@ -3,24 +3,29 @@
     import deleteSvg from '@/assets/icons/delete-item.svg?raw';
     import plusSvg from '@/assets/icons/plus.svg?raw';
     import successSvg from '@/assets/icons/success.svg?raw';
-    import pageOrientationSvg from '@/assets/icons/page-orientation.svg?raw'; // Import new SVG
+    import pageOrientationSvg from '@/assets/icons/page-orientation.svg?raw';
+    import githubSvg from '@/assets/icons/github.svg?raw';
+    import xiaohongshuSvg from '@/assets/icons/xiaohongshu.svg?raw';
 
     interface Props {
         name?: string;
         data?: string; // Support direct raw SVG string
         class?: string;
+        style?: string;
         width?: string | number;
         height?: string | number;
     }
 
-    let { name, data, class: className = "", width, height }: Props = $props();
+    let { name, data, class: className = "", style = "", width, height }: Props = $props();
 
     const icons: Record<string, string> = {
         'trash': trashSvg,
         'delete': deleteSvg,
         'add': plusSvg,
         'check': successSvg,
-        'page-orientation': pageOrientationSvg // Add new SVG to map
+        'page-orientation': pageOrientationSvg,
+        'github': githubSvg,
+        'xiaohongshu': xiaohongshuSvg
     };
 
     const svgContent = $derived.by(() => {
@@ -45,6 +50,12 @@
                 // 2. Handle Width/Height
                 if (width) svg.setAttribute('width', String(width));
                 if (height) svg.setAttribute('height', String(height));
+
+                // 2.1 Handle Style
+                if (style) {
+                    const existingStyle = svg.getAttribute('style');
+                    svg.setAttribute('style', existingStyle ? `${existingStyle}; ${style}` : style);
+                }
 
                 // 3. Handle Color (fill="currentColor")
                 const rootFill = svg.getAttribute('fill');

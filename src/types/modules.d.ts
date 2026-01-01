@@ -1,4 +1,5 @@
 declare module 'markdown-it-texmath';
+declare const __APP_VERSION__: string;
 declare module 'markdown-it-mark';
 declare module 'markdown-it-footnote';
 declare module 'markdown-it-sub';

@@ -3,9 +3,16 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { resolve } from 'path';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import tailwindcss from '@tailwindcss/vite';
+import fs from 'fs';
+
+// Read package.json to get version
+const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 
 const host = process.env.TAURI_DEV_HOST;
 export default defineConfig({
+  define: {
+    '__APP_VERSION__': JSON.stringify(packageJson.version)
+  },
   plugins: [
     svelte(),
     tailwindcss(),
