@@ -31,16 +31,6 @@ mod impl_linux {
         let html_clone = html.clone();
 
         hidden_window.with_webview(move |webview| {
-            // Tauri passes `webkit2gtk::WebView` directly on Linux
-            // No need to unsafe cast if the type matches, but `with_webview` signature is generic F: FnOnce(T).
-            // T is `webkit2gtk::WebView`.
-            
-            // Wait, tauri::WebviewWindow::with_webview<F>(&self, f: F) 
-            // In Tauri v2, for Linux, the argument IS `webkit2gtk::WebView`.
-            // So we can use its methods directly.
-            
-            let webview = webview.clone(); // It's likely a reference or cloneable object
-            
             // Setup Load Handler
             let tx_clone = tx.clone();
             let path = output_path_clone.clone();
