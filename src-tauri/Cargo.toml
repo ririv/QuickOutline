@@ -16,6 +16,11 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+reqwest = { version = "0.13.1", features = ["blocking", "rustls"], default-features = false }
+zip = "7.0.0"
+tar = "0.4"
+flate2 = "1.0"
+anyhow = "1.0"
 
 [dependencies]
 tauri = { version = "2", features = ["macos-private-api"] }
@@ -27,10 +32,10 @@ tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-cli = "2"
-reqwest = { version = "0.11", features = ["blocking", "stream"] } # Use blocking for simplicity in thread or async stream
-zip = "6.0.0"
-headless_chrome = "1.0.18"
-uuid = { version = "1.0", features = ["v4"] }
+reqwest = { version = "0.13.1", features = ["blocking", "stream"] } # Use blocking for simplicity in thread or async stream
+zip = "7.0.0"
+headless_chrome = "1.0"
+uuid = { version = "1.19", features = ["v4"] }
 anyhow = "1.0"
 tiny_http = "0.12.0"
 pdfium-render = { version = "0.8", features = ["image"] }

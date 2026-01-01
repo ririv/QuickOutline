@@ -1,28 +1,95 @@
 use std::env;
 use std::fs;
+use std::io::Cursor;
 use std::path::Path;
+use anyhow::{Context, Result};
 
-#[allow(dead_code)]
-fn clean_res_dir(){
-    // Cargo automatically sets PROFILE to "debug" or "release"
-    if let Ok(profile) = env::var("PROFILE") {
-        let target_resources_path = Path::new("..").join("target").join(&profile).join("resources");
+fn main() -> Result<()> {
+    // Determine the target architecture and OS
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
 
-        // 这个是防止生成的sidecar程序有权限，导致在IDE中生成的文件无法删除
-        // sidecar目前已经不使用
-        if target_resources_path.exists() {
-            // Attempt to remove the directory and print a warning if it fails (e.g. file locked)
-            if let Err(e) = fs::remove_dir_all(&target_resources_path) {
-                println!("cargo:warning=Failed to clean target resources directory: {}", e);
-            }
+    let (binary_url, binary_name, inner_path) = match (target_os.as_str(), target_arch.as_str()) {
+        ("macos", "x86_64") => (
+            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-mac-x64.tgz",
+            "libpdfium.dylib",
+            "lib/libpdfium.dylib",
+        ),
+        ("macos", "aarch64") => (
+            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-mac-arm64.tgz",
+            "libpdfium.dylib",
+            "lib/libpdfium.dylib",
+        ),
+        ("windows", "x86_64") => (
+            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.zip",
+            "pdfium.dll",
+            "bin/pdfium.dll",
+        ),
+        ("windows", "aarch64") => (
+            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-arm64.zip",
+            "pdfium.dll",
+            "bin/pdfium.dll",
+        ),
+        ("linux", "x86_64") => (
+            "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-x64.tgz",
+            "libpdfium.so",
+            "lib/libpdfium.so",
+        ),
+        _ => {
+            println!("cargo:warning=Unsupported platform for pdfium download: {}-{}", target_os, target_arch);
+            tauri_build::build();
+            return Ok(());
         }
-    } else {
-        println!("cargo:warning=PROFILE environment variable not found, skipping cleanup.");
+    };
+
+    let libs_dir = Path::new("libs");
+    if !libs_dir.exists() {
+        fs::create_dir_all(libs_dir).context("Failed to create libs directory")?;
     }
 
+    let dest_path = libs_dir.join(binary_name);
+
+    if !dest_path.exists() {
+        println!("cargo:warning=Downloading PDFium from {}", binary_url);
+        download_and_extract(binary_url, &dest_path, inner_path)
+            .context("Failed to download and extract PDFium")?;
+    } else {
+        println!("cargo:warning=PDFium library already exists at {:?}", dest_path);
+    }
+    
+    // clean_res_dir(); // Optional cleanup if needed from previous logic
+    tauri_build::build();
+    Ok(())
 }
 
-fn main() {
-    // clean_res_dir();
-    tauri_build::build()
+fn download_and_extract(url: &str, dest_path: &Path, inner_path: &str) -> Result<()> {
+    let response = reqwest::blocking::get(url)?.bytes()?;
+    let cursor = Cursor::new(response);
+
+    if url.ends_with(".tgz") {
+        let tar = flate2::read::GzDecoder::new(cursor);
+        let mut archive = tar::Archive::new(tar);
+
+        for entry in archive.entries()? {
+            let mut entry = entry?;
+            let path = entry.path()?;
+            if path.to_str() == Some(inner_path) {
+                let mut outfile = fs::File::create(dest_path)?;
+                std::io::copy(&mut entry, &mut outfile)?;
+                return Ok(());
+            }
+        }
+    } else if url.ends_with(".zip") {
+        let mut archive = zip::ZipArchive::new(cursor)?;
+        
+        // zip crate uses forward slashes in names usually, but let's be careful
+        // The inner_path provided above uses forward slashes which is good for zip match
+        if let Ok(mut file) = archive.by_name(inner_path) {
+             let mut outfile = fs::File::create(dest_path)?;
+             std::io::copy(&mut file, &mut outfile)?;
+             return Ok(());
+        }
+    }
+
+    Err(anyhow::anyhow!("Could not find {} in the downloaded archive", inner_path))
 }
