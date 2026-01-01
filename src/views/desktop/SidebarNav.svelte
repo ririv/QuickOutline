@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { appStore, FnTab } from '../stores/appStore.svelte';
-    import HelpWindow from './HelpWindow.svelte';
+    import { appStore, FnTab } from '../../stores/appStore.svelte.js';
+    import HelpWindow from '../../components/HelpWindow.svelte';
     
     const activeTab = $derived(appStore.activeTab);
     let showHelpModal = $state(false);
@@ -122,11 +122,11 @@
         -webkit-mask-position: center;
     }
 
-    .icon-bookmark { mask-image: url('../assets/icons/bookmark.svg'); -webkit-mask-image: url('../assets/icons/bookmark.svg'); }
-    .icon-label { mask-image: url('../assets/icons/page-label.svg'); -webkit-mask-image: url('../assets/icons/page-label.svg'); }
-    .icon-toc { mask-image: url('../assets/icons/toc.svg'); -webkit-mask-image: url('../assets/icons/toc.svg'); }
-    .icon-markdown { mask-image: url('../assets/icons/markdown.svg'); -webkit-mask-image: url('../assets/icons/markdown.svg'); }
-    .icon-preview { mask-image: url('../assets/icons/preview.svg'); -webkit-mask-image: url('../assets/icons/preview.svg'); }
-    .icon-settings { mask-image: url('../assets/icons/settings.svg'); -webkit-mask-image: url('../assets/icons/settings.svg'); }
-    .icon-help { mask-image: url('../assets/icons/help.svg'); -webkit-mask-image: url('../assets/icons/help.svg'); }
+    .icon-bookmark { mask-image: url('../../assets/icons/bookmark.svg'); -webkit-mask-image: url('../../assets/icons/bookmark.svg'); }
+    .icon-label { mask-image: url('../../assets/icons/page-label.svg'); -webkit-mask-image: url('../../assets/icons/page-label.svg'); }
+    .icon-toc { mask-image: url('../../assets/icons/toc.svg'); -webkit-mask-image: url('../../assets/icons/toc.svg'); }
+    .icon-markdown { mask-image: url('../../assets/icons/markdown.svg'); -webkit-mask-image: url('../../assets/icons/markdown.svg'); }
+    .icon-preview { mask-image: url('../../assets/icons/preview.svg'); -webkit-mask-image: url('../../assets/icons/preview.svg'); }
+    .icon-settings { mask-image: url('../../assets/icons/settings.svg'); -webkit-mask-image: url('../../assets/icons/settings.svg'); }
+    .icon-help { mask-image: url('../../assets/icons/help.svg'); -webkit-mask-image: url('../../assets/icons/help.svg'); }
 </style>

@@ -3,17 +3,10 @@
     import TreeSubView from '../../components/bookmark/TreeSubView.svelte';
     import BookmarkBottomPane from '../../components/bookmark/BookmarkBottomPane.svelte';
     import SplitPane from '../../components/SplitPane.svelte';
-    import { messageStore } from '@/stores/messageStore.svelte.ts';
+    import { useBookmarkActions, type BookmarkViewMode } from '../shared/bookmark.svelte.ts';
     
-    type View = 'text' | 'tree' | 'double';
-    let currentView = $state<View>('text');
-
-    function testMessages() {
-        messageStore.add('This is an info message.', 'INFO');
-        setTimeout(() => messageStore.add('This is a success message!', 'SUCCESS'), 300);
-        setTimeout(() => messageStore.add('This is a warning message, be careful, this is a long message to test wrapping.', 'WARNING'), 600);
-        setTimeout(() => messageStore.add('This is an error message.', 'ERROR'), 900);
-    }
+    let currentView = $state<BookmarkViewMode>('text');
+    const {} = useBookmarkActions();
 
 </script>
 

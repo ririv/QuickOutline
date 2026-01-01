@@ -1,39 +1,7 @@
 <script lang="ts">
-  import { generateMockBlocks, mockMeasure, VirtualPager, type Page } from '@/lib/experimental/virtual-pager.ts';
+  import { useExperimentalActions } from '../shared/experimental.svelte.ts';
 
-  // Demo State
-  let demoPages = $state<Page[]>([]);
-  let demoCurrentPageIndex = $state(0);
-  let demoStats = $state({ totalTime: 0, totalPages: 0 });
-  let isRunning = $state(false);
-
-  function runVirtualPagerDemo() {
-      isRunning = true;
-      // Use setTimeout to allow UI to update (show loading state)
-      setTimeout(() => {
-          const blockCount = 10000;
-          const blocks = generateMockBlocks(blockCount);
-          
-          const pager = new VirtualPager({
-              pageHeight: 800, 
-              marginTop: 40,
-              marginBottom: 40,
-              lineHeight: 20
-          });
-
-          const start = performance.now();
-          const pages = pager.paginate(blocks, mockMeasure);
-          const end = performance.now();
-
-          demoPages = pages;
-          demoCurrentPageIndex = 0;
-          demoStats = {
-              totalTime: end - start,
-              totalPages: pages.length
-          };
-          isRunning = false;
-      }, 50);
-  }
+  const { state, runVirtualPagerDemo } = useExperimentalActions();
 </script>
 
 <div class="experimental-container">
@@ -41,47 +9,47 @@
         <h2>Virtual Pager Demo</h2>
         <p>This demo generates 10,000 text blocks and paginates them purely in memory (no DOM reflow).</p>
         
-        <button class="run-btn" onclick={runVirtualPagerDemo} disabled={isRunning}>
-            {isRunning ? 'Processing...' : 'Run Pagination'}
+        <button class="run-btn" onclick={runVirtualPagerDemo} disabled={state.isRunning}>
+            {state.isRunning ? 'Processing...' : 'Run Pagination'}
         </button>
 
-        {#if demoStats.totalPages > 0}
+        {#if state.demoStats.totalPages > 0}
             <div class="stats">
                 <div class="stat-item">
                     <span class="label">Time:</span>
-                    <span class="value">{demoStats.totalTime.toFixed(2)}ms</span>
+                    <span class="value">{state.demoStats.totalTime.toFixed(2)}ms</span>
                 </div>
                 <div class="stat-item">
                     <span class="label">Pages:</span>
-                    <span class="value">{demoStats.totalPages}</span>
+                    <span class="value">{state.demoStats.totalPages}</span>
                 </div>
                 <div class="stat-item">
                     <span class="label">Avg/Block:</span>
-                    <span class="value">{(demoStats.totalTime / 10000).toFixed(4)}ms</span>
+                    <span class="value">{(state.demoStats.totalTime / 10000).toFixed(4)}ms</span>
                 </div>
             </div>
         {/if}
     </div>
 
     <div class="preview-panel">
-        {#if demoPages.length > 0}
+        {#if state.demoPages.length > 0}
             <div class="page-container">
                 <div class="virtual-page">
                     <div class="page-content">
-                        {#each demoPages[demoCurrentPageIndex].blocks as block}
+                        {#each state.demoPages[state.demoCurrentPageIndex].blocks as block}
                            <div class="virtual-block {block.type}">
                                {block.content}
                            </div>
                         {/each}
                     </div>
-                    <div class="page-footer">Page {demoPages[demoCurrentPageIndex].index + 1}</div>
+                    <div class="page-footer">Page {state.demoPages[state.demoCurrentPageIndex].index + 1}</div>
                 </div>
             </div>
             
             <div class="pagination-controls">
-                <button onclick={() => demoCurrentPageIndex = Math.max(0, demoCurrentPageIndex - 1)} disabled={demoCurrentPageIndex === 0}>Previous</button>
-                <span>Page {demoCurrentPageIndex + 1} of {demoStats.totalPages}</span>
-                <button onclick={() => demoCurrentPageIndex = Math.min(demoPages.length - 1, demoCurrentPageIndex + 1)} disabled={demoCurrentPageIndex === demoPages.length - 1}>Next</button>
+                <button onclick={() => state.demoCurrentPageIndex = Math.max(0, state.demoCurrentPageIndex - 1)} disabled={state.demoCurrentPageIndex === 0}>Previous</button>
+                <span>Page {state.demoCurrentPageIndex + 1} of {state.demoStats.totalPages}</span>
+                <button onclick={() => state.demoCurrentPageIndex = Math.min(state.demoPages.length - 1, state.demoCurrentPageIndex + 1)} disabled={state.demoCurrentPageIndex === state.demoPages.length - 1}>Next</button>
             </div>
         {:else}
             <div class="placeholder">

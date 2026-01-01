@@ -1,14 +1,14 @@
 <script lang="ts">
-    import LeftPane from './components/LeftPane.svelte';
+    import SidebarNav from './views/desktop/SidebarNav.svelte';
     import { appStore, FnTab } from '@/stores/appStore.svelte';
     import { docStore } from '@/stores/docStore.svelte';
-    import BookmarkFn from './pages/bookmarkFn.svelte';
-    import PagelabelFn from './pages/pagelabelFn.svelte';
-    import TocFn from './pages/tocFn.svelte';
-    import MarkDownFn from './pages/markDownFn.svelte';
-    import ExperimentalFn from './pages/experimentalFn.svelte';
+    import BookmarkViewView from './views/desktop/BookmarkView.svelte';
+    import PageLabelview from './views/desktop/PageLabelview.svelte';
+    import TocViewView from './views/desktop/TocView.svelte';
+    import MarkDownView from './views/desktop/MarkDownView.svelte';
+    import ExperimentalViewView from './views/desktop/ExperimentalView.svelte';
     import MessageContainer from './components/common/MessageContainer.svelte';
-    import FileHeader from './components/FileHeader.svelte';
+    import FileHeader from './views/desktop/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
     import ConfirmDialog from './components/ConfirmDialog.svelte';
     import { provideExternalEditor } from '@/lib/bridge/useExternalEditor.svelte';
@@ -112,19 +112,19 @@
     <MessageContainer />
     <FileHeader />
     <div class="app-body">
-        <LeftPane />
+        <SidebarNav />
         <div class="content-area">
                 <div style="display: {activeTab === FnTab.bookmark ? 'block' : 'none'}; height: 100%;">
-                    <BookmarkFn />
+                    <BookmarkViewView />
                 </div>
                 <div style="display: {activeTab === FnTab.label ? 'block' : 'none'}; height: 100%;">
-                    <PagelabelFn />
+                    <PageLabelview />
                 </div>
                 <div style="display: {activeTab === FnTab.tocGenerator ? 'block' : 'none'}; height: 100%;">
-                    <TocFn />
+                    <TocViewView />
                 </div>
                 <div style="display: {activeTab === FnTab.markdown ? 'block' : 'none'}; height: 100%;">
-                    <MarkDownFn />
+                    <MarkDownView />
                 </div>
                 <div style="display: {activeTab === FnTab.preview ? 'block' : 'none'}; height: 100%;">
                     <div class="placeholder">
@@ -138,7 +138,7 @@
                 <!-- Experimental Tab - Only show in DEV mode, otherwise show a default welcome -->
                 <div style="display: {activeTab === FnTab.experimental ? 'block' : 'none'}; height: 100%;">
                     {#if import.meta.env.DEV}
-                        <ExperimentalFn />
+                        <ExperimentalViewView />
                     {:else}
                         <div class="placeholder">
                             <h1>Experimental Features Disabled</h1>
