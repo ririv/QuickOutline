@@ -173,7 +173,7 @@ pub async fn print_to_pdf<R: Runtime>(
                          }
                          #[cfg(target_os = "linux")]
                          {
-                            native::print_native_linux(window.clone(), html_str, output_path).await
+                            native::print_native_linux(app.clone(), window.clone(), html_str, output_path).await
                          }
                          #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
                          {

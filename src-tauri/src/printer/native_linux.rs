@@ -6,16 +6,15 @@ use uuid::Uuid;
 #[cfg(target_os = "linux")]
 mod impl_linux {
     use super::*;
-    use webkit2gtk::{PrintOperation, PrintOperationAction, PrintSettings, WebViewExt};
+    use webkit2gtk::{PrintOperation, WebViewExt, PrintOperationExt};
+    use gtk::{PrintSettings, PrintOperationAction};
     use gtk::prelude::*; 
+    use gtk::glib;
     use std::sync::{Arc, Mutex};
 
     pub async fn execute<R: Runtime>(app: AppHandle<R>, html: String, output_path: PathBuf) -> Result<String, String> {
-        let label = format!("print_hidden_{}", uuid::Uuid::new_v4());
+        let label = format!("print_hidden_{}", Uuid::new_v4());
         
-        // Linux hidden window might need to be visible for WebKit to render?
-        // WebKitGTK sometimes optimizes away non-visible rendering.
-        // Let's try visible=false first.
         let hidden_window = WebviewWindowBuilder::new(
             &app,
             &label,
@@ -31,16 +30,15 @@ mod impl_linux {
         let html_clone = html.clone();
 
         hidden_window.with_webview(move |webview| {
-            // Setup Load Handler
+            // In Tauri v2 Linux, webview is PlatformWebview. 
+            // .inner() returns the webkit2gtk::WebView
+            let webview = webview.inner();
+            
             let tx_clone = tx.clone();
             let path = output_path_clone.clone();
             
-            // We use a shared signal handler id to disconnect later if needed, 
-            // or just rely on window closing.
-            
-            let load_handler_id = webview.connect_load_changed(move |wv, event| {
+            webview.connect_load_changed(move |wv, event| {
                 if event == webkit2gtk::LoadEvent::Finished {
-                    // Start Print
                     let op = PrintOperation::new(wv);
                     let settings = PrintSettings::new();
                     
@@ -49,31 +47,26 @@ mod impl_linux {
                     settings.set(gtk::PRINT_SETTINGS_PRINTER, Some("Print to File"));
                     
                     op.set_print_settings(&settings);
-                    op.set_action(PrintOperationAction::Export);
+                    // op.set_action(PrintOperationAction::Export); // Removed as it might not exist on WebKitPrintOperation
                     
                     let tx_inner = tx_clone.clone();
-                    op.connect_finished(move |_, _| {
+                    op.connect_finished(move |_| {
                         if let Ok(sender) = tx_inner.lock() {
                             let _ = sender.send(Ok(()));
                         }
                     });
                     
                     let tx_inner_err = tx_clone.clone();
-                    op.connect_failed(move |_, error| {
+                    op.connect_failed(move |_, error: &glib::Error| {
                          if let Ok(sender) = tx_inner_err.lock() {
                             let _ = sender.send(Err(error.to_string()));
                         }
                     });
                     
-                    // run_dialog is blocking? No, it's async-like in GTK loop.
-                    // But for Export action, it might not show dialog.
-                    // However, run_dialog requires a parent window. None is fine.
-                    // IMPORTANT: Export action usually writes file directly.
-                    let _ = op.run_dialog(None::<&gtk::Window>);
+                    op.print(); // Use print() for silent printing
                 }
             });
             
-            // Trigger Load
             if html_clone.starts_with("http://") || html_clone.starts_with("https://") || html_clone.starts_with("file://") {
                 webview.load_uri(&html_clone);
             } else {
@@ -82,7 +75,6 @@ mod impl_linux {
             
         }).map_err(|e| e.to_string())?;
 
-        // Wait
         let result = match rx.recv_timeout(std::time::Duration::from_secs(30)) {
             Ok(Ok(())) => Ok(output_path.to_string_lossy().to_string()),
             Ok(Err(e)) => Err(e),
