@@ -179,7 +179,11 @@ async fn get_print_workspace_path<R: Runtime>(app: AppHandle<R>) -> Result<Strin
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::default().build())
+        .plugin(tauri_plugin_log::Builder::default()
+            .level(log::LevelFilter::Warn) // Global default: only Warn/Error
+            .level_for("quickoutline_lib", log::LevelFilter::Debug) // Our lib: Debug
+            .level_for("quickoutline", log::LevelFilter::Debug) // Our bin: Debug
+            .build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
