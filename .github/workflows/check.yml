@@ -35,6 +35,9 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
+      - name: Create dummy libs directory
+        run: mkdir -p build/libs
+
       - name: cargo check
         working-directory: src-tauri
         run: cargo check --verbose
