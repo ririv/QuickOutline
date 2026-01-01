@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { MarkdownEditor, type EditorMode, type StylesConfig } from '@/lib/editor';
+    import { renderMdx } from '@/lib/services/MdxService';
 
     let editorElement: HTMLDivElement;
     let editor: MarkdownEditor;
@@ -13,6 +14,7 @@
     export const insertValue = (val: string) => editor?.insertValue(val);
     export const insertImageMarkdown = (path: string) => editor?.insertImageMarkdown(path);
     export const getRenderedHtml = async (options?: { enableIndentedCodeBlocks?: boolean }) => editor?.getRenderedHtml(options) || '';
+    export const getRenderedMdx = async () => renderMdx(getValue());
     export const setMode = (mode: EditorMode) => editor?.setMode(mode); // Expose setMode
     export const getStylesConfig = () => editor?.getStylesConfig(); // Expose getStylesConfig
 

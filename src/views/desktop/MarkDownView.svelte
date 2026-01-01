@@ -23,9 +23,18 @@
   async function triggerPreview() {
       if (!editorComponent) return;
       
-      const htmlContent = await editorComponent.getRenderedHtml({
-          enableIndentedCodeBlocks: markdownStore.enableIndentedCodeBlocks
-      });
+      let htmlContent = '';
+      try {
+        htmlContent = await editorComponent.getRenderedMdx();
+      } catch (e) {
+        console.warn('MDX Render failed, falling back to standard Markdown:', e);
+      }
+
+      if (!htmlContent) {
+          htmlContent = await editorComponent.getRenderedHtml({
+              enableIndentedCodeBlocks: markdownStore.enableIndentedCodeBlocks
+          });
+      }
       
       const { tableStyle } = editorComponent.getStylesConfig(); 
       await updatePreview(htmlContent, tableStyle);

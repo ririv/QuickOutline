@@ -4,6 +4,7 @@ import { resolve } from 'path';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'fs';
+import mdx from '@mdx-js/rollup';
 
 // Read package.json to get version
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
@@ -14,6 +15,9 @@ export default defineConfig({
     '__APP_VERSION__': JSON.stringify(packageJson.version)
   },
   plugins: [
+    mdx({
+        jsxImportSource: '@/lib/utils',
+    }),
     svelte(),
     tailwindcss(),
   ],

@@ -3,6 +3,7 @@ import { EditorView, keymap, placeholder, showTooltip, drawSelection, dropCursor
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
+import { javascript } from '@codemirror/lang-javascript';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
@@ -117,7 +118,13 @@ export class MarkdownEditor {
 
                 markdown({
                     base: markdownLanguage,
-                    codeLanguages: languages,
+                    codeLanguages: (info) => {
+                        switch (info) {
+                            case "jsx": return javascript({ jsx: true });
+                            case "tsx": return javascript({ jsx: true, typescript: true });
+                            default: return languages(info);
+                        }
+                    },
                     extensions: [GFM, MathExtension]
                 }),
 

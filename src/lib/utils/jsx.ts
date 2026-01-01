@@ -71,3 +71,12 @@ export function Fragment(props: { children?: any }) {
         ? props.children.flat(Infinity).map(child => (child == null || child === false ? '' : String(child))).join('')
         : (props.children == null || props.children === false ? '' : String(props.children));
 }
+
+// 5. 适配 Modern JSX Runtime (Automatic)
+// 这允许像 MDX 这样的工具使用 import { jsx } from ... 语法
+export function jsx(tag: any, props: any) {
+    const { children, ...rest } = props || {};
+    return createElement(tag, rest, children);
+}
+
+export const jsxs = jsx;
