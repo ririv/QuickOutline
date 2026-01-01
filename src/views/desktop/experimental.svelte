@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { generateMockBlocks, mockMeasure, VirtualPager, type Page } from '@/lib/experimental/virtual-pager';
+  import { generateMockBlocks, mockMeasure, VirtualPager, type Page } from '@/lib/experimental/virtual-pager.ts';
 
   // Demo State
   let demoPages = $state<Page[]>([]);

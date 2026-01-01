@@ -11,13 +11,13 @@
 
     import StyledSelect from '../../components/controls/StyledSelect.svelte';
     import StyledInput from "@/components/controls/StyledInput.svelte";
-    import { ripple } from '@/lib/actions/ripple';
+    import { ripple } from '@/lib/actions/ripple.ts';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
-    import { docStore } from '@/stores/docStore.svelte';
-    import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
-    import { PageLabelNumberingStyle, pageLabelStyleMap } from '@/lib/styleMaps';
-    import { simulatePageLabelsLocal, type PageLabel } from '@/lib/pdf-processing/page-label';
-    import { setPageLabels } from '@/lib/api/rust_pdf';
+    import { docStore } from '@/stores/docStore.svelte.js';
+    import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
+    import { PageLabelNumberingStyle, pageLabelStyleMap } from '@/lib/styleMaps.ts';
+    import { simulatePageLabelsLocal, type PageLabel } from '@/lib/pdf-processing/page-label.ts';
+    import { setPageLabels } from '@/lib/api/rust_pdf.ts';
     import GraphButton from "@/components/controls/GraphButton.svelte";
 
     const styles = pageLabelStyleMap.getAllStyles();

@@ -5,19 +5,19 @@
   import StatusBar from '../../components/StatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import ConfirmDialog from '../../components/ConfirmDialog.svelte'; // Import ConfirmDialog
-  import { confirm } from '@/stores/confirm.svelte'; // Import confirm helper
+  import { confirm } from '@/stores/confirm.svelte.js'; // Import confirm helper
   import '../../assets/global.css';
   import { onMount, onDestroy } from 'svelte';
-  import { markdownStore } from '@/stores/markdownStore.svelte';
+  import { markdownStore } from '@/stores/markdownStore.svelte.js';
   import { messageStore } from '@/stores/messageStore.svelte.ts'; // Import messageStore
-  import { printStore } from '@/stores/printStore.svelte'; // Import printStore
+  import { printStore } from '@/stores/printStore.svelte.js'; // Import printStore
   import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
   import { invoke } from '@tauri-apps/api/core'; // Import invoke
   import { appDataDir, join } from '@tauri-apps/api/path'; // Import path utils
-  import { getEditorPreviewCss } from '@/lib/editor/style-converter';
+  import { getEditorPreviewCss } from '@/lib/editor/style-converter.ts';
   import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline';
   import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
-  import { generatePageCss } from '@/lib/preview-engine/css-generator';
+  import { generatePageCss } from '@/lib/preview-engine/css-generator.ts';
   import { MarkdownPrintTemplate } from '@/lib/templates/MarkdownPrintTemplate.tsx'; // Import the new template
   
   let editorComponent: MdEditor;

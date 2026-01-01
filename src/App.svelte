@@ -2,11 +2,11 @@
     import LeftPane from './components/LeftPane.svelte';
     import { appStore, FnTab } from '@/stores/appStore.svelte';
     import { docStore } from '@/stores/docStore.svelte';
-    import BookmarkTab from './pages/bookmark/App.svelte';
-    import PageLabelTab from './pages/pagelabel/App.svelte';
-    import TocGeneratorTab from './pages/toc/App.svelte';
-    import MarkdownTab from './pages/markdown/App.svelte';
-    import ExperimentalTab from './pages/experimental/App.svelte';
+    import BookmarkFn from './pages/bookmarkFn.svelte';
+    import PagelabelFn from './pages/pagelabelFn.svelte';
+    import TocFn from './pages/tocFn.svelte';
+    import MarkDownFn from './pages/markDownFn.svelte';
+    import ExperimentalFn from './pages/experimentalFn.svelte';
     import MessageContainer from './components/common/MessageContainer.svelte';
     import FileHeader from './components/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
@@ -115,16 +115,16 @@
         <LeftPane />
         <div class="content-area">
                 <div style="display: {activeTab === FnTab.bookmark ? 'block' : 'none'}; height: 100%;">
-                    <BookmarkTab />
+                    <BookmarkFn />
                 </div>
                 <div style="display: {activeTab === FnTab.label ? 'block' : 'none'}; height: 100%;">
-                    <PageLabelTab />
+                    <PagelabelFn />
                 </div>
                 <div style="display: {activeTab === FnTab.tocGenerator ? 'block' : 'none'}; height: 100%;">
-                    <TocGeneratorTab />
+                    <TocFn />
                 </div>
                 <div style="display: {activeTab === FnTab.markdown ? 'block' : 'none'}; height: 100%;">
-                    <MarkdownTab />
+                    <MarkDownFn />
                 </div>
                 <div style="display: {activeTab === FnTab.preview ? 'block' : 'none'}; height: 100%;">
                     <div class="placeholder">
@@ -138,7 +138,7 @@
                 <!-- Experimental Tab - Only show in DEV mode, otherwise show a default welcome -->
                 <div style="display: {activeTab === FnTab.experimental ? 'block' : 'none'}; height: 100%;">
                     {#if import.meta.env.DEV}
-                        <ExperimentalTab />
+                        <ExperimentalFn />
                     {:else}
                         <div class="placeholder">
                             <h1>Experimental Features Disabled</h1>
