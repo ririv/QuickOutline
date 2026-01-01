@@ -119,7 +119,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R
 
             // Load Request
             let url_ns = NSString::from_str(&url_clone);
-            let ns_url = NSURL::URLWithString(&url_ns).expect("Invalid URL");
+            let ns_url = if let Some(u) = NSURL::URLWithString(&url_ns) { u } else { return; };
             let request = NSURLRequest::requestWithURL(&ns_url);
             
             new_view.loadRequest(&request);
@@ -147,7 +147,13 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R
             
             // Reconstruct Retained
             let ptr = addr as *mut WKWebView;
-            let target_webview: Retained<WKWebView> = Retained::from_raw(ptr).expect("Invalid webview pointer");
+            let target_webview: Retained<WKWebView> = match Retained::from_raw(ptr) {
+                Some(w) => w,
+                None => {
+                    error!("Invalid webview pointer");
+                    return;
+                }
+            };
 
             let pdf_config = WKPDFConfiguration::new(mtm);
             let webview_for_block = target_webview.clone();
@@ -238,7 +244,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, 
             // Load Request
             let url_ns = NSString::from_str(&url_clone);
             // Create NSURL
-            let ns_url = NSURL::URLWithString(&url_ns).expect("Invalid URL");
+            let ns_url = if let Some(u) = NSURL::URLWithString(&url_ns) { u } else { return; };
             // Create NSURLRequest
             let request = NSURLRequest::requestWithURL(&ns_url);
             
@@ -266,7 +272,13 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, 
             let mtm = MainThreadMarker::new_unchecked();
 
             let ptr = addr as *mut WKWebView;
-            let target_webview: Retained<WKWebView> = Retained::from_raw(ptr).expect("Invalid webview pointer");
+            let target_webview: Retained<WKWebView> = match Retained::from_raw(ptr) {
+                Some(w) => w,
+                None => {
+                    error!("Invalid webview pointer");
+                    return;
+                }
+            };
 
             // ========== Create Independent NSPrintInfo ==========
             let alloc_print_info = mtm.alloc::<NSPrintInfo>();
@@ -287,8 +299,8 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, 
 
             // Set Generic Printer
             let k_printer_name = NSString::from_str("Generic");
-            let cls_name = CStr::from_bytes_with_nul(b"NSPrinter\0").unwrap();
-            let printer_class = AnyClass::get(cls_name).expect("NSPrinter class not found");
+            let cls_name = if let Ok(c) = CStr::from_bytes_with_nul(b"NSPrinter\0") { c } else { return; };
+            let printer_class = if let Some(c) = AnyClass::get(cls_name) { c } else { return; };
             let printer: Option<Retained<NSPrinter>> = msg_send![printer_class, printerWithName: &*k_printer_name];
             
             if let Some(p) = printer {
@@ -410,7 +422,13 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>,
             let mtm = MainThreadMarker::new_unchecked();
 
             let ptr = addr as *mut WKWebView;
-            let target_webview: Retained<WKWebView> = Retained::from_raw(ptr).expect("Invalid webview pointer");
+            let target_webview: Retained<WKWebView> = match Retained::from_raw(ptr) {
+                Some(w) => w,
+                None => {
+                    error!("Invalid webview pointer");
+                    return;
+                }
+            };
 
             // ========== 关键修改开始：创建并配置独立的 NSPrintInfo ==========
             // 创建全新的 NSPrintInfo 实例，而不是使用共享实例
@@ -440,8 +458,8 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>,
             use std::ffi::CStr;
             
             // 获取 NSPrinter 类
-            let cls_name = CStr::from_bytes_with_nul(b"NSPrinter\0").unwrap();
-            let printer_class = AnyClass::get(cls_name).expect("NSPrinter class not found");
+            let cls_name = if let Ok(c) = CStr::from_bytes_with_nul(b"NSPrinter\0") { c } else { return; };
+            let printer_class = if let Some(c) = AnyClass::get(cls_name) { c } else { return; };
             
             // 尝试创建 NSPrinter 对象
             // 注意：printerWithName 返回 Option<Retained<NSPrinter>>
@@ -600,7 +618,13 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<
             // Reconstruct Retained
             // Fix: Pass raw ptr and explicit type
             let ptr = addr as *mut WKWebView;
-            let target_webview: Retained<WKWebView> = Retained::from_raw(ptr).expect("Invalid webview pointer");
+            let target_webview: Retained<WKWebView> = match Retained::from_raw(ptr) {
+                Some(w) => w,
+                None => {
+                    error!("Invalid webview pointer");
+                    return;
+                }
+            };
 
             let pdf_config = WKPDFConfiguration::new(mtm);
             let webview_for_block = target_webview.clone();

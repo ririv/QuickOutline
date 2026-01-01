@@ -4,6 +4,7 @@ use tauri::{App, AppHandle, Builder, Emitter, Manager, Runtime, State};
 use tauri_plugin_cli::CliExt;
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_shell::process::CommandEvent;
+use log::{info, warn, error};
 
 // 1. 定义全局状态结构体
 pub struct JavaState {
@@ -13,7 +14,7 @@ pub struct JavaState {
 // 2. 定义给前端调用的命令
 #[tauri::command]
 pub fn get_java_port(state: State<'_, JavaState>) -> Option<u16> {
-    *state.port.lock().unwrap()
+    state.port.lock().ok().and_then(|p| *p)
 }
 
 // 消息结构体
@@ -54,7 +55,7 @@ pub fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         Err(e) => {
-            eprintln!("Rust (Java Sidecar): Failed to match CLI args: {}", e);
+            warn!("Rust (Java Sidecar): Failed to match CLI args: {}", e);
         }
     }
 
@@ -62,7 +63,7 @@ pub fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(port) = custom_port {
             connect_external(app.handle(), port);
         } else {
-            eprintln!("Rust Error: --external-sidecar requires --port to be specified.");
+            error!("Rust Error: --external-sidecar requires --port to be specified.");
         }
     } else {
         start(app.handle(), custom_port);
@@ -75,25 +76,35 @@ pub fn start(app: &AppHandle, custom_port: Option<u16>) {
     let app_handle = app.clone();
 
     tauri::async_runtime::spawn(async move {
-        let mut sidecar_command = app_handle.shell().sidecar("app-sidecar").unwrap();
+        let mut sidecar_command = match app_handle.shell().sidecar("app-sidecar") {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Failed to initialize Java Sidecar: {}", e);
+                return;
+            }
+        };
 
         // If a custom port is provided, add it as an argument
         if let Some(port) = custom_port {
             sidecar_command = sidecar_command.args(&["--port", &port.to_string()]);
-            println!("Rust: Passing custom port {} to Java Sidecar.", port);
+            info!("Rust: Passing custom port {} to Java Sidecar.", port);
         }
         
-        let (mut rx, _child) = sidecar_command
-            .spawn()
-            .expect("Failed to spawn java sidecar");
+        let (mut rx, _child) = match sidecar_command.spawn() {
+            Ok(res) => res,
+            Err(e) => {
+                error!("Failed to spawn Java Sidecar: {}", e);
+                return;
+            }
+        };
 
-        println!("Rust: Java Sidecar 启动指令已发送...");
+        info!("Rust: Java Sidecar 启动指令已发送...");
 
         while let Some(event) = rx.recv().await {
             match event {
                 CommandEvent::Stdout(data) => {
                     let line = String::from_utf8_lossy(&data).into_owned();
-                    println!("[Java]: {}", line);
+                    info!("[Java]: {}", line);
 
                     if line.contains("port") {
                         // 3. 解析并保存端口到全局状态
@@ -103,8 +114,10 @@ pub fn start(app: &AppHandle, custom_port: Option<u16>) {
 
                                 // === 更新全局状态 ===
                                 if let Some(state) = app_handle.try_state::<JavaState>() {
-                                    *state.port.lock().unwrap() = Some(port);
-                                    println!("Rust: 端口 {} 已保存到全局状态", port);
+                                    if let Ok(mut port_guard) = state.port.lock() {
+                                        *port_guard = Some(port);
+                                        info!("Rust: 端口 {} 已保存到全局状态", port);
+                                    }
                                 }
 
                                 // 发送事件 (Push)
@@ -133,19 +146,21 @@ pub fn connect_external(app: &AppHandle, port: u16) {
 
     // Update global state
     if let Some(state) = app_handle.try_state::<JavaState>() {
-        *state.port.lock().unwrap() = Some(port);
-        println!("Rust: Configured for external Java Sidecar on port {}", port);
+        if let Ok(mut port_guard) = state.port.lock() {
+            *port_guard = Some(port);
+            info!("Rust: Configured for external Java Sidecar on port {}", port);
+        }
     }
 
     // Use a standard thread to poll for the external service
     std::thread::spawn(move || {
-        println!("Rust: Waiting for external Sidecar at 127.0.0.1:{}...", port);
+        info!("Rust: Waiting for external Sidecar at 127.0.0.1:{}...", port);
         let address = format!("127.0.0.1:{}", port);
         
         loop {
             // Try to connect to the TCP port
             if std::net::TcpStream::connect(&address).is_ok() {
-                println!("Rust: External Sidecar is reachable!");
+                info!("Rust: External Sidecar is reachable!");
                 
                 // Wait a brief moment to ensure the server is fully ready to accept requests
                 std::thread::sleep(std::time::Duration::from_millis(500));

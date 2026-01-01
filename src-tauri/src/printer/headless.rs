@@ -146,7 +146,7 @@ async fn execute_headless_print_with_html(browser: &str, html: String, output_pa
     let temp_html = temp_dir.join("temp_print.html");
     fs::write(&temp_html, html).map_err(|e| e.to_string())?;
     
-    execute_headless_print_target(browser, temp_html.to_str().unwrap(), output_path).await
+    execute_headless_print_target(browser, &temp_html.to_string_lossy(), output_path).await
 }
 
 #[cfg(target_os = "macos")]
@@ -168,7 +168,7 @@ pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, o
                 let exec_path = local_browser.join("Contents/MacOS/Chromium");
                 if exec_path.exists() {
                      info!("Using local Chromium: {:?}", exec_path);
-                     return execute_headless_print_with_html(exec_path.to_str().unwrap(), html, &output_path).await;
+                     return execute_headless_print_with_html(&exec_path.to_string_lossy(), html, &output_path).await;
                 }
             }
         }
@@ -195,7 +195,7 @@ pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, o
     match download_chromium(app).await {
         Ok(path) => {
              let exec_path = path.join("Contents/MacOS/Chromium");
-             return execute_headless_print_with_html(exec_path.to_str().unwrap(), html, &output_path).await;
+             return execute_headless_print_with_html(&exec_path.to_string_lossy(), html, &output_path).await;
         }
         Err(e) => return Err(format!("Failed to download Chromium: {}", e))
     }
@@ -220,7 +220,7 @@ pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, out
                 let exec_path = local_browser.join("Contents/MacOS/Chromium");
                 if exec_path.exists() {
                      info!("Using local Chromium: {:?}", exec_path);
-                     return execute_headless_print_target(exec_path.to_str().unwrap(), &url, &output_path).await;
+                     return execute_headless_print_target(&exec_path.to_string_lossy(), &url, &output_path).await;
                 }
             }
         }
@@ -247,7 +247,7 @@ pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, out
     match download_chromium(app).await {
         Ok(path) => {
              let exec_path = path.join("Contents/MacOS/Chromium");
-             return execute_headless_print_target(exec_path.to_str().unwrap(), &url, &output_path).await;
+             return execute_headless_print_target(&exec_path.to_string_lossy(), &url, &output_path).await;
         }
         Err(e) => return Err(format!("Failed to download Chromium: {}", e))
     }

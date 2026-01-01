@@ -288,7 +288,9 @@ fn build_outline_level(
         if let Some(cf) = child_first {
             let me = doc.get_object_mut(current_id)?.as_dict_mut()?;
             me.set("First", cf);
-            me.set("Last", child_last.unwrap());
+            if let Some(l) = child_last {
+                me.set("Last", l);
+            }
             // Count: Positive if open, negative if closed.
             // Reference implementation/User requirement: Default open?
             // "expanded" in frontend. Java: "bookmarkToOutlines" -> addOutline. Reference implementation defaults to open.

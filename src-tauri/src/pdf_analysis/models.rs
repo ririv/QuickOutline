@@ -1,13 +1,15 @@
-use serde::{Serialize, Deserialize};
-use pdfium_render::prelude::*;
-use regex::Regex;
-use once_cell::sync::Lazy;
+use std::sync::Arc;
 use std::collections::HashMap;
+use once_cell::sync::Lazy;
+use regex::Regex;
+use serde::{Serialize, Deserialize};
+use pdfium_render::prelude::PdfRect;
 
+#[allow(clippy::expect_used)]
 static MATH_SYMBOL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\p{Sm}").expect("Invalid Regex"));
+#[allow(clippy::expect_used)]
 static TITLE_CASE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\p{Lt}").expect("Invalid Regex"));
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentStats {
     pub dominant_text_style: PdfStyle,
     pub median_line_height: f64,
@@ -277,7 +279,11 @@ impl PdfBlock {
             let text = self.get_text_plain().to_string();
             self.char_pattern = Some(CharacterPattern::new(&text));
         }
-        self.char_pattern.as_ref().unwrap()
+        self.char_pattern.as_ref().unwrap_or_else(|| {
+            // This should be logically impossible given the check above, but we handle it safely
+            static EMPTY_PATTERN: CharacterPattern = CharacterPattern { counts: [0; 12], total: 0 };
+            &EMPTY_PATTERN
+        })
     }
 
     pub fn get_primary_style(&self) -> &PdfStyle {
@@ -311,9 +317,12 @@ impl PdfBlock {
     pub fn get_height(&self) -> f32 {
         if self.lines.is_empty() { return 0.0; }
         let top = self.lines[0].y;
-        let last = self.lines.last().unwrap();
-        let bottom = last.y - last.style.get_size();
-        top - bottom
+        if let Some(last) = self.lines.last() {
+            let bottom = last.y - last.style.get_size();
+            top - bottom
+        } else {
+            0.0
+        }
     }
 
     pub fn get_skew(&self) -> f64 {

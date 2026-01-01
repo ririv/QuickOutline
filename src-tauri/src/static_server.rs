@@ -35,8 +35,14 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
     let state = app_handle.state::<LocalServerState>();
     
     // Store workspace and resources path
-    *state.workspace.lock().unwrap() = workspace_path.clone();
-    *state.resources.lock().unwrap() = resources_path.clone();
+    match state.workspace.lock() {
+        Ok(mut w) => *w = workspace_path.clone(),
+        Err(e) => error!("Failed to lock workspace state: {}", e),
+    }
+    match state.resources.lock() {
+        Ok(mut r) => *r = resources_path.clone(),
+        Err(e) => error!("Failed to lock resources state: {}", e),
+    }
 
     // Spawn server in a separate thread
     thread::spawn(move || {
@@ -62,7 +68,10 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
 
         // Update state with the port
         if let Some(state) = app_handle.try_state::<LocalServerState>() {
-             *state.port.lock().unwrap() = Some(port);
+             match state.port.lock() {
+                 Ok(mut p) => *p = Some(port),
+                 Err(e) => error!("Failed to lock port state: {}", e),
+             }
         } else {
             error!("Failed to access LocalServerState to set port.");
         }
@@ -147,12 +156,14 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                             _ => "application/octet-stream",
                         };
                         
-                        let header = Header::from_bytes(&b"Content-Type"[..], mime_type.as_bytes()).unwrap();
-                        response.add_header(header);
+                        if let Ok(header) = Header::from_bytes(&b"Content-Type"[..], mime_type.as_bytes()) {
+                            response.add_header(header);
+                        }
 
                         // Add CORS headers just in case
-                        let cors = Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap();
-                        response.add_header(cors);
+                        if let Ok(cors) = Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]) {
+                            response.add_header(cors);
+                        }
 
                         let _ = request.respond(response);
                     } else {
@@ -221,8 +232,9 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                     html.push_str("</table></body></html>");
                     
                     let mut response = Response::from_string(html);
-                    let header = Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]).unwrap();
-                    response.add_header(header);
+                    if let Ok(header) = Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]) {
+                        response.add_header(header);
+                    }
                     let _ = request.respond(response);
                 } else {
                      // Directory listing disabled for resources or failed
@@ -281,19 +293,23 @@ fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
 
     let mut response = Response::new(
         if is_range { tiny_http::StatusCode(206) } else { tiny_http::StatusCode(200) },
-        vec![
-            Header::from_bytes(&b"Content-Type"[..], &b"application/pdf"[..]).unwrap(),
-            Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap(),
-            Header::from_bytes(&b"Accept-Ranges"[..], &b"bytes"[..]).unwrap(),
-            Header::from_bytes(&b"Content-Length"[..], format!("{}", len).as_bytes()).unwrap(),
-        ],
+        {
+            let mut headers = Vec::new();
+            if let Ok(h) = Header::from_bytes(&b"Content-Type"[..], &b"application/pdf"[..]) { headers.push(h); }
+            if let Ok(h) = Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]) { headers.push(h); }
+            if let Ok(h) = Header::from_bytes(&b"Accept-Ranges"[..], &b"bytes"[..]) { headers.push(h); }
+            if let Ok(h) = Header::from_bytes(&b"Content-Length"[..], format!("{}", len).as_bytes()) { headers.push(h); }
+            headers
+        },
         reader,
         Some(len as usize),
         None,
     );
 
     if is_range {
-        response.add_header(Header::from_bytes(&b"Content-Range"[..], format!("bytes {}-{}/{}", start, end, file_len).as_bytes()).unwrap());
+        if let Ok(h) = Header::from_bytes(&b"Content-Range"[..], format!("bytes {}-{}/{}", start, end, file_len).as_bytes()) {
+            response.add_header(h);
+        }
     }
 
     let _ = request.respond(response);

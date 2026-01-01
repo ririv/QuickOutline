@@ -4,10 +4,12 @@ use crate::pdf_analysis::text_metrics::TextMetrics;
 use regex::Regex;
 use std::sync::LazyLock;
 
+#[allow(clippy::expect_used)]
 static NUMBERING_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^\s*([\d.]+|[A-Za-z][.]|[IVXLCDM]+[.)]).*\s*$")
         .expect("Invalid NUMBERING_REGEX pattern")
 });
+#[allow(clippy::expect_used)]
 static PUNCTUATION_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"[.!?:：。！？．]$")
         .expect("Invalid PUNCTUATION_REGEX pattern")
