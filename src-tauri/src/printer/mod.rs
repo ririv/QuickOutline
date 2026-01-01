@@ -5,6 +5,8 @@ use serde::Deserialize;
 use log::{info, warn, error};
 
 pub mod native;
+pub mod native_windows;
+pub mod native_linux;
 pub mod headless;
 pub mod headless_chrome;
 
@@ -106,9 +108,17 @@ pub async fn print_to_pdf<R: Runtime>(
                      {
                         native::print_to_pdf_with_url_native(app, window, url_str, output_path.clone()).await
                      }
-                     #[cfg(not(target_os = "macos"))]
+                     #[cfg(target_os = "windows")]
                      {
-                        Err("Native URL printing is only implemented for macOS currently.".to_string())
+                        native::print_native_windows(app.clone(), window.clone(), url_str, output_path).await
+                     }
+                     #[cfg(target_os = "linux")]
+                     {
+                        native::print_native_linux(app.clone(), window.clone(), url_str, output_path).await
+                     }
+                     #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+                     {
+                        Err("Native URL printing is only implemented for supported platforms.".to_string())
                      }
                 };
                 res
@@ -159,11 +169,11 @@ pub async fn print_to_pdf<R: Runtime>(
                          }
                          #[cfg(target_os = "windows")]
                          {
-                            native::print_native_windows(html_str, output_path).await
+                            native::print_native_windows(app.clone(), window.clone(), html_str, output_path).await
                          }
                          #[cfg(target_os = "linux")]
                          {
-                            native::print_native_linux(html_str, output_path).await
+                            native::print_native_linux(window.clone(), html_str, output_path).await
                          }
                          #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
                          {

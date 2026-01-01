@@ -3,6 +3,12 @@ use std::path::PathBuf;
 use std::fs;
 use log::{info, warn, error};
 
+#[cfg(target_os = "windows")]
+pub use super::native_windows::print_native_windows;
+
+#[cfg(target_os = "linux")]
+pub use super::native_linux::print_native_linux;
+
 #[tauri::command]
 pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
     app: AppHandle<R>,
@@ -21,14 +27,24 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
     // Platform specific implementations
     #[cfg(target_os = "windows")]
     {
-        // TODO: Implement Windows Native PrintToPdf using WebView2 API
-        Err("Windows Native PrintToPdf not implemented yet.".to_string())
+        match print_native_windows(app, window, html, output_path).await {
+            Ok(path) => Ok(path),
+            Err(e) => {
+                error!("Native print (Windows) failed: {}", e);
+                Err(e)
+            }
+        }
     }
 
     #[cfg(target_os = "linux")]
     {
-        // TODO: Implement Linux Native PrintToPdf using WebKitGTK PrintOperation API
-        Err("Linux Native PrintToPdf not implemented yet.".to_string())
+        match print_native_linux(app, window, html, output_path).await {
+            Ok(path) => Ok(path),
+            Err(e) => {
+                error!("Native print (Linux) failed: {}", e);
+                Err(e)
+            }
+        }
     }
 
     #[cfg(target_os = "macos")]
@@ -673,52 +689,5 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<
         }
     }).map_err(|e| e.to_string())?;
 
-        result_rx.recv().map_err(|e| e.to_string())?
-
-    }
-
-    
-
-    // ================= WINDOWS NATIVE =================
-
-    #[cfg(target_os = "windows")]
-
-    pub async fn print_native_windows(_html: String, _output_path: PathBuf) -> Result<String, String> {
-
-        Err("Windows native print is not implemented yet.".to_string())
-
-    }
-
-    
-
-    #[cfg(not(target_os = "windows"))]
-
-    pub async fn print_native_windows(_html: String, _output_path: PathBuf) -> Result<String, String> {
-
-        unimplemented!("Windows native print called on non-Windows platform.");
-
-    }
-
-    
-
-    // ================= LINUX NATIVE =================
-
-    #[cfg(target_os = "linux")]
-
-    pub async fn print_native_linux(_html: String, _output_path: PathBuf) -> Result<String, String> {
-
-        Err("Linux native print is not implemented yet.".to_string())
-
-    }
-
-    
-
-    #[cfg(not(target_os = "linux"))]
-
-    pub async fn print_native_linux(_html: String, _output_path: PathBuf) -> Result<String, String> {
-
-        unimplemented!("Linux native print called on non-Linux platform.");
-
-    }
-
-    
+    result_rx.recv().map_err(|e| e.to_string())?
+}

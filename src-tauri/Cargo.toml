@@ -58,6 +58,7 @@ windows = { version = "0.52", features = [
     "Win32_System_Com",
     "Win32_UI_WindowsAndMessaging",
     "Win32_System_WinRT",
+    "implement",
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
