@@ -1,45 +1,42 @@
 <script lang="ts">
   import ArrowPopup from '../controls/ArrowPopup.svelte';
   import StyledInput from '../controls/StyledInput.svelte';
-  import PreviewPopup from '../PreviewPopup.svelte'; // Import PreviewPopup
+  import PreviewPopup from '../PreviewPopup.svelte'; 
+  import VirtualList from '../common/VirtualList.svelte';
   import { docStore } from '@/stores/docStore.svelte';
   import { pdfRenderService } from '@/lib/services/PdfRenderService';
-  import { onMount, untrack } from 'svelte';
+  import { onMount, untrack, onDestroy } from 'svelte';
 
   interface Props {
     offset?: number;
     onchange?: () => void;
     triggerEl: HTMLElement | undefined;
-    [key: string]: any; // Allow passing extra props like mouse events
+    [key: string]: any; 
   }
 
   let { 
     offset = $bindable(0),
     onchange,
     triggerEl,
-    ...rest // Capture onmouseenter, onmouseleave etc.
+    ...rest 
   }: Props = $props();
 
-  let pages = $state<{index: number, label: string, url: string | null}[]>([]);
-  let isLoading = $state(false);
-  let listContainer: HTMLDivElement;
-  
-  // Local input state to allow flexible typing (e.g. '-')
+  // Updated Item Height: 12px padding top + 12px padding bottom + 85px img height ~ 110px
+  const ITEM_HEIGHT = 110; 
+  let virtualList: any; 
+
   let localOffset = $state('');
 
-  // Sync: Store -> Local (Only when store changes externally or init)
+  const thumbnailCache = new Map<number, string>();
+  const previewCache = new Map<number, string>();
+
   $effect(() => {
-      const current = offset; // Dependency
+      const current = offset; 
       untrack(() => {
-          // If user is typing a minus sign, don't overwrite it
           if (localOffset === '-') return;
-          
           const strVal = current === 0 ? '' : String(current);
-          if (localOffset !== strVal) {
-               // Only update if conceptually different to avoid cursor jumps
-               if (parseInt(localOffset || '0') !== current) {
-                   localOffset = strVal;
-               }
+          if (parseInt(localOffset || '0') !== current) {
+              localOffset = strVal;
           }
       });
   });
@@ -47,7 +44,6 @@
   function handleInput(e: Event) {
       const target = e.target as HTMLInputElement;
       localOffset = target.value;
-      
       const val = parseInt(localOffset, 10);
       if (!isNaN(val)) {
           offset = val;
@@ -58,96 +54,72 @@
       }
   }
   
-  // Hover Preview State
   let hoveredPage = $state<{ src: string, y: number, anchorX: number } | null>(null);
-  let previewCache = new Map<number, string>(); // Cache for high-res previews
 
-  // How many pages to load initially. Usually offset is found within the first few pages (front matter).
-  const INITIAL_LOAD_COUNT = 30; 
-  const LOAD_INCREMENT = 20;
-  let loadedCount = 0;
+  function lazyImage(node: HTMLImageElement, index: number) {
+      let active = true;
+      let currentIdx = index;
 
-  async function loadMorePages() {
-      if (!docStore.currentFilePath || isLoading || loadedCount >= docStore.pageCount) return;
-      
-      isLoading = true;
-      const start = loadedCount;
-      const end = Math.min(loadedCount + LOAD_INCREMENT, docStore.pageCount);
-      
-      // Create placeholders
-      const newItems = [];
-      for (let i = start; i < end; i++) {
-          newItems.push({
-              index: i,
-              label: docStore.originalPageLabels?.[i] ?? '',
-              url: null
-          });
-      }
-      pages = [...pages, ...newItems]; // Append to list
-      loadedCount = end;
+      function load(idx: number) {
+          node.classList.remove('loaded');
+          node.style.opacity = '0';
 
-      // Fetch thumbnails concurrently
-      processThumbnails(newItems);
-      
-      isLoading = false;
-  }
+          if (thumbnailCache.has(idx)) {
+              node.src = thumbnailCache.get(idx)!;
+              node.classList.add('loaded');
+              node.style.opacity = '1';
+              return;
+          }
 
-  async function processThumbnails(items: typeof pages) {
-      const filePath = docStore.currentFilePath;
-      if (!filePath) return;
-
-      for (const item of items) {
-          try {
-              // 'thumbnail' scale is usually 0.5 or small
-              const url = await pdfRenderService.renderPage(filePath, item.index, 'thumbnail');
-              const found = pages.find(p => p.index === item.index);
-              if (found) found.url = url;
-          } catch (e) {
-              console.error(`Failed to load thumb for page ${item.index}`, e);
+          const path = docStore.currentFilePath;
+          if (path) {
+              pdfRenderService.renderPage(path, idx, 'thumbnail')
+                  .then(url => {
+                      if (active && currentIdx === idx) {
+                          thumbnailCache.set(idx, url);
+                          node.src = url;
+                          node.classList.add('loaded');
+                          node.style.opacity = '1';
+                      }
+                  })
+                  .catch(console.error);
           }
       }
+
+      load(index);
+
+      return {
+          update(newIndex: number) {
+              if (newIndex !== currentIdx) {
+                  currentIdx = newIndex;
+                  load(newIndex);
+              }
+          },
+          destroy() { active = false; }
+      };
   }
-  
-  async function handleMouseEnter(e: MouseEvent, page: {index: number, url: string | null}) {
+
+  async function handleMouseEnter(e: MouseEvent, index: number) {
       const target = e.currentTarget as HTMLElement;
       const rect = target.getBoundingClientRect();
-      
-      // Calculate anchor position (center right of the thumbnail)
       const anchorX = rect.right; 
       const y = rect.top + rect.height / 2;
 
-      // Determine initial source (cache > thumbnail > placeholder)
-      let src = previewCache.get(page.index) || page.url || '';
-      
-      if (!src) return; // Should not happen if thumb loaded, but just in case
+      let src = previewCache.get(index) || thumbnailCache.get(index);
+      if (!src) return;
 
       hoveredPage = { src, y, anchorX };
 
-      // If not cached, fetch high-res
-      if (!previewCache.has(page.index) && docStore.currentFilePath) {
+      if (!previewCache.has(index) && docStore.currentFilePath) {
           try {
-              const highResUrl = await pdfRenderService.renderPage(docStore.currentFilePath, page.index, 'preview');
-              previewCache.set(page.index, highResUrl);
-              // Update if still hovering the same position (simple check)
-              if (hoveredPage && Math.abs(hoveredPage.y - y) < 1) { 
-                   hoveredPage = { ...hoveredPage, src: highResUrl };
-               }
-          } catch (e) {
-              console.error("Failed to load high-res preview", e);
-          }
+              const highResUrl = await pdfRenderService.renderPage(docStore.currentFilePath, index, 'preview');
+              previewCache.set(index, highResUrl);
+              if (hoveredPage && Math.abs(hoveredPage.y - y) < 1) hoveredPage = { ...hoveredPage, src: highResUrl };
+          } catch (e) { console.error(e); }
       }
   }
 
-  function handleMouseLeave() {
-      hoveredPage = null;
-  }
-
-  function handleScroll(e: UIEvent) {
-      const target = e.target as HTMLDivElement;
-      if (target.scrollHeight - target.scrollTop - target.clientHeight < 100) {
-          loadMorePages();
-      }
-  }
+  function handleMouseLeave() { hoveredPage = null; }
 
   function setAsLogicOne(idx: number) {
       offset = idx;
@@ -155,16 +127,14 @@
   }
 
   onMount(() => {
-      // Initial load
-      loadMorePages().then(() => {
-          // Auto-scroll to offset after initial load
-          if (offset > 0 && listContainer) {
-              const targetRow = listContainer.children[offset] as HTMLElement;
-              if (targetRow) {
-                  targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }
-          }
-      });
+      if (offset > 0 && virtualList) {
+          setTimeout(() => virtualList.scrollTo(offset, 'smooth'), 100);
+      }
+  });
+
+  onDestroy(() => {
+      thumbnailCache.forEach(url => URL.revokeObjectURL(url));
+      previewCache.forEach(url => URL.revokeObjectURL(url));
   });
 
   const hasLabels = $derived(docStore.originalPageLabels && docStore.originalPageLabels.length > 0);
@@ -214,33 +184,36 @@
           <span class="sub-text">Scroll to find start of content</span>
       </div>
 
-      <div class="page-list" onscroll={handleScroll} bind:this={listContainer}>
-          {#each pages as page (page.index)}
-              <div class="page-row" class:active={page.index === offset}>
+      <VirtualList 
+        totalCount={docStore.pageCount} 
+        itemHeight={ITEM_HEIGHT}
+        bind:this={virtualList}
+        className="page-list-container"
+      >
+          {#snippet children(i)}
+              {@const label = docStore.originalPageLabels?.[i] ?? ''}
+              <div class="page-row" class:active={i === offset} style="height: {ITEM_HEIGHT}px;">
                   <!-- svelte-ignore a11y_mouse_events_have_key_events -->
                   <div 
                     class="thumb-col"
-                    onmouseenter={(e) => handleMouseEnter(e, page)}
+                    onmouseenter={(e) => handleMouseEnter(e, i)}
                     onmouseleave={handleMouseLeave}
                     role="img" 
                   >
-                      {#if page.url}
-                          <img src={page.url} alt="p{page.index}" class="fade-in"/>
-                      {:else}
-                          <div class="thumb-skeleton"></div>
-                      {/if}
+                      <img use:lazyImage={i} alt="p{i}" class="fade-in"/>
+                      <div class="thumb-skeleton absolute inset-0 -z-10"></div>
                   </div>
                   
                   <div class="info-col">
-                      <div class="phys-idx">#{page.index + 1}</div>
+                      <div class="phys-idx">#{i + 1}</div>
                       <div class="logic-row">
                           <span class="label">Logic:</span>
-                          <span class="value logic">{page.index - offset + 1}</span>
+                          <span class="value logic">{i - offset + 1}</span>
                       </div>
                       {#if hasLabels}
                         <div class="meta-row">
                             <span class="label">Label@</span>
-                            <span class="value label-text">{page.label}</span>
+                            <span class="value label-text">{label}</span>
                         </div>
                       {/if}
                   </div>
@@ -248,11 +221,11 @@
                   <div class="action-col">
                       <button 
                           class="action-btn" 
-                          class:is-active={page.index === offset}
-                          onclick={() => page.index !== offset && setAsLogicOne(page.index)}
-                          title={page.index === offset ? "Current Logic Page 1" : "Set this page as Logic Page 1"}
+                          class:is-active={i === offset}
+                          onclick={() => i !== offset && setAsLogicOne(i)}
+                          title={i === offset ? "Current Logic Page 1" : "Set this page as Logic Page 1"}
                       >
-                          {#if page.index === offset}
+                          {#if i === offset}
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                               <span>Logic P1</span>
                           {:else}
@@ -261,13 +234,8 @@
                       </button>
                   </div>
               </div>
-          {/each}
-          {#if isLoading}
-              <div class="loading-row">
-                  <span class="spinner"></span> Loading pages...
-              </div>
-          {/if}
-      </div>
+          {/snippet}
+      </VirtualList>
   </div>
 </ArrowPopup>
 
@@ -340,12 +308,10 @@
   
   .sub-text { font-weight: normal; color: #9ca3af; font-size: 11px; }
 
-  .page-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0;
+  /* Virtual List container overrides */
+  :global(.page-list-container) {
+      height: 350px !important; 
       min-height: 250px;
-      position: relative;
   }
 
   .page-row {
@@ -356,54 +322,42 @@
       border-bottom: 1px solid #f3f4f6;
       transition: background 0.15s ease;
       align-items: center;
+      box-sizing: border-box;
   }
   
-  .page-row:hover {
-      background: #f9fafb;
-  }
-  
-  .page-row.active {
-      background: #eff6ff;
-  }
+  .page-row:hover { background: #f9fafb; }
+  .page-row.active { background: #eff6ff; }
 
   .thumb-col {
       display: flex;
       flex-direction: column;
       align-items: center;
-      cursor: zoom-in; /* Indicate zoom interaction */
+      cursor: zoom-in;
+      position: relative;
+      width: 60px;
+      height: 85px; /* A4 Ratio (60 * 1.414) */
   }
 
   .thumb-col img {
-      width: 60px; /* Increased size */
-      height: auto;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
       border: 1px solid #e5e7eb;
       border-radius: 4px;
       background: #fff;
       display: block;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      opacity: 0;
+      transition: opacity 0.2s;
   }
+  
+  .thumb-col img.loaded { opacity: 1; }
   
   .thumb-skeleton {
-      width: 60px;
-      height: 84px; /* Approx A4 aspect ratio */
+      width: 100%;
+      height: 100%;
       background: #f3f4f6;
       border-radius: 4px;
-      animation: pulse 1.5s infinite;
-  }
-  
-  @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
-  }
-  
-  .fade-in {
-      animation: fadeIn 0.3s ease-in;
-  }
-  
-  @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
   }
 
   .phys-idx {
@@ -438,7 +392,7 @@
       color: #9ca3af; 
       text-transform: uppercase; 
       font-family: 'Consolas', monospace;
-      width: 45px; /* Fixed width for alignment */
+      width: 45px; 
       display: inline-block;
       flex-shrink: 0;
   }
@@ -471,7 +425,6 @@
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       
-      /* Default State (Inactive) */
       background: white;
       border: 1px solid #d1d5db;
       color: #374151;
@@ -490,43 +443,16 @@
       background: #eff6ff;
   }
 
-  /* Active State (Selected) */
   .action-btn.is-active {
-      opacity: 1; /* Always visible */
+      opacity: 1; 
       transform: none;
       background: #dbeafe;
       color: #2563eb;
       border-color: transparent;
       font-weight: 600;
-      cursor: default; /* Indicate non-clickable */
+      cursor: default;
   }
 
-  /* Mobile/Touch support */
-  @media (hover: none) {
-      .action-btn { opacity: 1; transform: none; }
-  }
-
-  .loading-row {
-      padding: 16px;
-      text-align: center;
-      font-size: 12px;
-      color: #9ca3af;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-  }
-  
-  .spinner {
-      width: 12px;
-      height: 12px;
-      border: 2px solid #e5e7eb;
-      border-top-color: #6b7280;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-      to { transform: rotate(360deg); }
-  }
+  .fade-in { animation: fadeIn 0.3s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>

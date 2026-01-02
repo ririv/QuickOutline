@@ -2,8 +2,9 @@
     import { docStore } from '@/stores/docStore.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
-    import { onDestroy, onMount } from 'svelte';
+    import { onDestroy } from 'svelte';
     import PreviewPopup from './PreviewPopup.svelte';
+    import VirtualList from './common/VirtualList.svelte';
 
     interface Props {
         pageCount?: number;
@@ -12,14 +13,6 @@
     let { pageCount = 0 }: Props = $props();
 
     const ITEM_HEIGHT = 180; 
-    const OVERSCAN = 4;
-
-    let container: HTMLDivElement;
-    
-    // Core State
-    let startIndex = $state(0);
-    let endIndex = $state(15); 
-    let viewportHeight = 800; 
 
     // Non-reactive Cache
     const thumbnailCache = new Map<number, string>();
@@ -27,22 +20,16 @@
     
     let hoveredPage = $state<{ src: string, y: number, anchorX: number } | null>(null);
 
-    // Derived Layout
-    const paddingTop = $derived(startIndex * ITEM_HEIGHT);
-    const paddingBottom = $derived(Math.max(0, (pageCount - endIndex) * ITEM_HEIGHT));
-
+    // Derived Data
     const originalLabels = $derived(docStore.originalPageLabels || []);
 
-    // --- Action: Robust Loader ---
+    // --- Action: Loader ---
     function lazyImage(node: HTMLImageElement, index: number) {
         let active = true;
         let currentIdx = index;
 
         function load(idx: number) {
-            // Reset appearance
             node.classList.remove('loaded');
-            // Don't clear src immediately to avoid flickering if we have cache, 
-            // but here we want to show skeleton for new items
             node.style.opacity = '0'; 
 
             if (thumbnailCache.has(idx)) {
@@ -63,11 +50,10 @@
                             node.style.opacity = '1';
                         }
                     })
-                    .catch(e => console.error(`Load failed for ${idx}`, e));
+                    .catch(e => console.error(e));
             }
         }
 
-        // Initial load
         load(index);
 
         return {
@@ -94,51 +80,16 @@
         return currentLabel !== orig;
     }
 
-    // --- Scroll Handler ---
-    let rafId: number | null = null;
-
-    function onScroll(e: UIEvent) {
-        if (rafId) return;
-        const target = e.currentTarget as HTMLDivElement;
-        
-        rafId = requestAnimationFrame(() => {
-            const scrollTop = target.scrollTop;
-            const height = target.clientHeight || viewportHeight;
-
-            const start = Math.floor(scrollTop / ITEM_HEIGHT);
-            const end = Math.ceil((scrollTop + height) / ITEM_HEIGHT);
-
-            const newStart = Math.max(0, start - OVERSCAN);
-            const newEnd = Math.min(pageCount, end + OVERSCAN);
-
-            if (newStart !== startIndex || newEnd !== endIndex) {
-                startIndex = newStart;
-                endIndex = newEnd;
-            }
-            rafId = null;
-        });
-    }
-
-    // --- Lifecycle ---
+    // Reset Cache on file change
     $effect(() => {
         const _v = docStore.version; 
-        
         thumbnailCache.forEach(url => URL.revokeObjectURL(url));
         thumbnailCache.clear();
         previewCache.forEach(url => URL.revokeObjectURL(url));
         previewCache.clear();
-        
-        startIndex = 0;
-        endIndex = 15;
-        if (container) container.scrollTop = 0;
-    });
-
-    onMount(() => {
-        if (container) viewportHeight = container.clientHeight;
     });
 
     onDestroy(() => {
-        if (rafId) cancelAnimationFrame(rafId);
         thumbnailCache.forEach(url => URL.revokeObjectURL(url));
         previewCache.forEach(url => URL.revokeObjectURL(url));
     });
@@ -172,65 +123,54 @@
         <div class="text-xs text-gray-400 font-mono">{pageCount} Pages</div>
     </div>
 
-    <div 
-        class="flex-1 overflow-y-auto relative scrollbar-thin" 
-        bind:this={container} 
-        onscroll={onScroll}
+    <!-- Usage of Generic VirtualList -->
+    <VirtualList 
+        totalCount={pageCount} 
+        itemHeight={ITEM_HEIGHT}
+        className="flex-1"
     >
-        <div style="padding-top: {paddingTop}px; padding-bottom: {paddingBottom}px;">
-            {#each { length: Math.max(0, Math.min(pageCount, endIndex) - startIndex) } as _, idx (startIndex + idx)}
-                {@const i = startIndex + idx}
-                {@const label = getPageLabel(i)}
-                {@const modified = isLabelModified(i, label)}
-                {@const original = originalLabels[i] || String(i + 1)}
+        {#snippet children(i)}
+            {@const label = getPageLabel(i)}
+            {@const modified = isLabelModified(i, label)}
+            {@const original = originalLabels[i] || String(i + 1)}
 
-                <div class="page-row" style="height: {ITEM_HEIGHT}px;" class:is-modified={modified}>
-                    <div class="thumb-section flex flex-col items-center gap-2">
-                        <div 
-                            class="thumb-col relative group"
-                            onmouseenter={(e) => handleMouseEnter(e, i)}
-                            onmouseleave={handleMouseLeave}
-                            role="img"
-                        >
-                            <!-- Use action and ensure key is passed -->
-                            <img alt="p{i+1}" use:lazyImage={i} />
-                            
-                            <div class="thumb-skeleton absolute inset-0 -z-10"></div>
-
-                            <div class="absolute top-0 left-0 bg-black/60 text-white text-[9px] font-mono px-1 py-0.5 backdrop-blur-[1px] opacity-80 group-hover:opacity-100 transition-opacity">
-                                #{i + 1}
-                            </div>
-                        </div>
-                        
-                        <div class="label-value text-xs font-mono font-bold text-center w-full truncate px-1 {modified ? 'text-blue-600' : 'text-gray-700'}" title="Label: {label}">
-                            {label}
+            <div class="page-row" style="height: {ITEM_HEIGHT}px;" class:is-modified={modified}>
+                <div class="thumb-section flex flex-col items-center gap-2">
+                    <div 
+                        class="thumb-col relative group"
+                        onmouseenter={(e) => handleMouseEnter(e, i)}
+                        onmouseleave={handleMouseLeave}
+                        role="img"
+                    >
+                        <img alt="p{i+1}" use:lazyImage={i} />
+                        <div class="thumb-skeleton absolute inset-0 -z-10"></div>
+                        <div class="absolute top-0 left-0 bg-black/60 text-white text-[9px] font-mono px-1 py-0.5 backdrop-blur-[1px] opacity-80 group-hover:opacity-100 transition-opacity">
+                            #{i + 1}
                         </div>
                     </div>
-
-                    <div class="info-col">
-                        {#if modified}
-                            <div class="meta-row">
-                                <span class="label">Orig:</span>
-                                <span class="value orig">{original}</span>
-                            </div>
-                        {/if}
+                    
+                    <div class="label-value text-xs font-mono font-bold text-center w-full truncate px-1 {modified ? 'text-blue-600' : 'text-gray-700'}" title="Label: {label}">
+                        {label}
                     </div>
+                </div>
 
+                <div class="info-col">
                     {#if modified}
-                        <div class="action-col">
-                            <span class="badge modified">Modified</span>
+                        <div class="meta-row">
+                            <span class="label">Orig:</span>
+                            <span class="value orig">{original}</span>
                         </div>
                     {/if}
                 </div>
-            {/each}
-        </div>
-        
-        {#if pageCount === 0}
-             <div class="flex flex-col items-center justify-center h-[200px] text-gray-400 gap-2 absolute top-0 left-0 w-full">
-                <span class="text-sm">No pages loaded</span>
+
+                {#if modified}
+                    <div class="action-col">
+                        <span class="badge modified">Modified</span>
+                    </div>
+                {/if}
             </div>
-        {/if}
-    </div>
+        {/snippet}
+    </VirtualList>
 
     {#if hoveredPage}
         <PreviewPopup 
@@ -270,13 +210,12 @@
       display: block;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       transition: all 0.2s;
-      opacity: 0; /* Hidden by default */
+      opacity: 0;
   }
   
-  /* CSS rule to show image when loaded */
-  .thumb-col img.loaded {
-      opacity: 1;
-  }
+  /* Use :global because styles might be scoped weirdly with snippet projection, 
+     but Svelte 5 snippets usually inherit scope. Safe to keep as is first. */
+  .thumb-col img.loaded { opacity: 1; }
 
   .thumb-col:hover img { border-color: #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
   
@@ -311,9 +250,4 @@
   .action-col { min-width: 80px; display: flex; justify-content: flex-end; }
   .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
   .badge.modified { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
-  
-  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 </style>
