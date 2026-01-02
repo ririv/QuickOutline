@@ -58,15 +58,25 @@
   function lazyImage(node: HTMLImageElement, index: number) {
       let active = true;
       let currentIdx = index;
+      
+      const skeleton = node.nextElementSibling as HTMLElement;
+
+      function showSkeleton() {
+          node.style.display = 'none';
+          if (skeleton) skeleton.style.display = 'block';
+      }
+
+      function hideSkeleton() {
+          node.style.display = 'block';
+          if (skeleton) skeleton.style.display = 'none';
+      }
 
       function load(idx: number) {
-          node.classList.remove('loaded');
-          node.style.opacity = '0';
+          showSkeleton();
 
           if (thumbnailCache.has(idx)) {
               node.src = thumbnailCache.get(idx)!;
-              node.classList.add('loaded');
-              node.style.opacity = '1';
+              hideSkeleton();
               return;
           }
 
@@ -77,8 +87,7 @@
                       if (active && currentIdx === idx) {
                           thumbnailCache.set(idx, url);
                           node.src = url;
-                          node.classList.add('loaded');
-                          node.style.opacity = '1';
+                          hideSkeleton();
                       }
                   })
                   .catch(console.error);
@@ -348,13 +357,10 @@
       border: 1px solid #e5e7eb;
       border-radius: 4px;
       background: #fff;
-      display: block;
+      display: none; /* Initially hidden */
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      opacity: 0;
-      transition: opacity 0.2s;
+      transition: border-color 0.2s;
   }
-  
-  .thumb-col img.loaded { opacity: 1; }
   
   .thumb-skeleton {
       width: 100%;

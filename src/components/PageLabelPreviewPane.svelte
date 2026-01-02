@@ -28,19 +28,17 @@
         let active = true;
         let currentIdx = index;
         
-        // Direct DOM manipulation of sibling skeleton for robustness
+        // Find sibling skeleton
         const skeleton = node.nextElementSibling as HTMLElement;
 
         function showSkeleton() {
-            node.style.opacity = '0';
-            node.classList.remove('loaded');
-            if (skeleton) skeleton.style.display = 'flex';
+            node.style.display = 'none'; // Hide image
+            if (skeleton) skeleton.style.display = 'flex'; // Show skeleton
         }
 
         function hideSkeleton() {
-            node.style.opacity = '1';
-            node.classList.add('loaded');
-            if (skeleton) skeleton.style.display = 'none';
+            node.style.display = 'block'; // Show image
+            if (skeleton) skeleton.style.display = 'none'; // Hide skeleton COMPLETELY from render tree
         }
 
         function load(idx: number) {
@@ -156,8 +154,6 @@
                         onmouseleave={handleMouseLeave}
                         role="img"
                     >
-                        <!-- Image comes BEFORE skeleton for sibling selector to work in fallback, 
-                             but here we use direct DOM manipulation -->
                         <img alt="p{i+1}" use:lazyImage={i} />
                         
                         <div class="thumb-skeleton absolute inset-0 -z-10"></div>
@@ -237,16 +233,11 @@
       
       border: 1px solid #e5e7eb;
       background: #fff;
-      display: block;
+      display: none; /* Initially hidden */
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: all 0.2s;
-      opacity: 0;
+      transition: border-color 0.2s;
   }
   
-  /* We removed the CSS-based skeleton hiding logic in favor of JS control, 
-     but keeping .loaded style doesn't hurt */
-  .thumb-col img.loaded { opacity: 1; }
-
   .thumb-col:hover img { border-color: #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
   
   .thumb-skeleton { 
