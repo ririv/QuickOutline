@@ -27,15 +27,28 @@
     function lazyImage(node: HTMLImageElement, index: number) {
         let active = true;
         let currentIdx = index;
+        
+        // Direct DOM manipulation of sibling skeleton for robustness
+        const skeleton = node.nextElementSibling as HTMLElement;
+
+        function showSkeleton() {
+            node.style.opacity = '0';
+            node.classList.remove('loaded');
+            if (skeleton) skeleton.style.display = 'flex';
+        }
+
+        function hideSkeleton() {
+            node.style.opacity = '1';
+            node.classList.add('loaded');
+            if (skeleton) skeleton.style.display = 'none';
+        }
 
         function load(idx: number) {
-            node.classList.remove('loaded');
-            node.style.opacity = '0'; 
+            showSkeleton();
 
             if (thumbnailCache.has(idx)) {
                 node.src = thumbnailCache.get(idx)!;
-                node.classList.add('loaded');
-                node.style.opacity = '1';
+                hideSkeleton();
                 return;
             }
 
@@ -46,8 +59,7 @@
                         if (active && currentIdx === idx) {
                             thumbnailCache.set(idx, url);
                             node.src = url;
-                            node.classList.add('loaded');
-                            node.style.opacity = '1';
+                            hideSkeleton();
                         }
                     })
                     .catch(e => console.error(e));
@@ -142,9 +154,13 @@
                         onmouseleave={handleMouseLeave}
                         role="img"
                     >
+                        <!-- Image comes BEFORE skeleton for sibling selector to work in fallback, 
+                             but here we use direct DOM manipulation -->
                         <img alt="p{i+1}" use:lazyImage={i} />
+                        
                         <div class="thumb-skeleton absolute inset-0 -z-10"></div>
-                        <div class="absolute top-0 left-0 bg-black/60 text-white text-[9px] font-mono px-1 py-0.5 backdrop-blur-[1px] opacity-80 group-hover:opacity-100 transition-opacity">
+                        
+                        <div class="absolute top-0 left-0 bg-black/60 text-white text-[9px] font-mono px-1 py-0.5 backdrop-blur-[1px] opacity-80 group-hover:opacity-100 transition-opacity z-10">
                             #{i + 1}
                         </div>
                     </div>
@@ -199,12 +215,24 @@
   .page-row.is-modified:hover { background: #e0f2fe; }
 
   .thumb-section { width: 90px; }
-  .thumb-col { display: flex; flex-direction: column; align-items: center; cursor: zoom-in; width: 100%; position: relative; }
+  .thumb-col { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: zoom-in; 
+      width: 90px; 
+      height: 127px; 
+      position: relative; 
+  }
   
   .thumb-col img {
-      width: 90px;
-      height: 127px;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
+      
       border: 1px solid #e5e7eb;
       background: #fff;
       display: block;
@@ -213,15 +241,15 @@
       opacity: 0;
   }
   
-  /* Use :global because styles might be scoped weirdly with snippet projection, 
-     but Svelte 5 snippets usually inherit scope. Safe to keep as is first. */
+  /* We removed the CSS-based skeleton hiding logic in favor of JS control, 
+     but keeping .loaded style doesn't hurt */
   .thumb-col img.loaded { opacity: 1; }
 
   .thumb-col:hover img { border-color: #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
   
   .thumb-skeleton { 
-      width: 90px; 
-      height: 127px; 
+      width: 100%; 
+      height: 100%; 
       background: #f3f4f6; 
       display: flex;
       align-items: center;

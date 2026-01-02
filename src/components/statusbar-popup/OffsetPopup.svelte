@@ -21,7 +21,6 @@
     ...rest 
   }: Props = $props();
 
-  // Updated Item Height: 12px padding top + 12px padding bottom + 85px img height ~ 110px
   const ITEM_HEIGHT = 110; 
   let virtualList: any; 
 
@@ -308,7 +307,6 @@
   
   .sub-text { font-weight: normal; color: #9ca3af; font-size: 11px; }
 
-  /* Virtual List container overrides */
   :global(.page-list-container) {
       height: 350px !important; 
       min-height: 250px;
@@ -332,16 +330,21 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center; /* Center content */
       cursor: zoom-in;
       position: relative;
       width: 60px;
-      height: 85px; /* A4 Ratio (60 * 1.414) */
+      height: 85px; /* Container Size */
   }
 
+  /* Image fits within container, aspect ratio preserved */
   .thumb-col img {
-      width: 100%;
-      height: 100%;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
+      
       border: 1px solid #e5e7eb;
       border-radius: 4px;
       background: #fff;
