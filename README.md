@@ -1,9 +1,9 @@
 # QuickOutline
 
 > [!note] 
-> QuickOutline 3 将在不久后发布，将支持制作TOC、Markdown插入PDF页面等新功能
+> QuickOutline 3.0.0-pre（预览版）已发布，支持制作TOC、Markdown插入PDF页面等新功能
 > 
-> 想提前体验的小伙伴们可以下载nightly构建版本，敬请期待！
+> 想提前体验的小伙伴们可以下载预发布版本！
 
 
 ## 使用方式 Usage
@@ -101,6 +101,15 @@
 ### Mac
 - dmg 安装包
 
+**如果打开应用时提示‘文件已损坏’，请打开终端（Terminal），复制并执行以下命令：**
+
+```bash
+xattr -cr /Applications/QuickOutline.app
+```
+
+*(前提：已经把 App 拖到了“应用程序”文件夹。如果App在下载文件夹里，路径就是 `~/Downloads/QuickOutline.app`，其他路径同理)*
+
+
 ### Linux
 - deb 安装包
 - tar.gz
@@ -189,20 +198,6 @@ VSCode 中的内容会自动同步至软件窗口中（需在 VSCode 中保存�
 
 ---
 
-## 开发
-想要为此项目做贡献继续开发的小伙伴们请参考此[文档](Dev_doc.md)
-
-### 开源软件使用
-
-- iText (AGPL Licence)
-
-
-### TODO
-- TOC插入
-- 页码罗马数字支持
-- AI：OpenAI SDK 支持
-
----
 
 ## ☕ 感谢支持！
 
