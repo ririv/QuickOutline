@@ -173,7 +173,7 @@
         <img src={landscapeIcon} class="block opacity-40 w-3 h-3" alt="Zoom Out" />
         <StyledSlider
             min={0.5}
-            max={3.0}
+            max={5.0}
             step={0.01}
             bind:value={zoom}
         />
@@ -206,10 +206,7 @@
                         <!-- Placeholder/Skeleton Background -->
                         <div class="absolute inset-0 bg-white -z-10"></div>
 
-                        <!-- Badge -->
-                        <div class="absolute top-0 left-0 bg-black/60 text-white text-[10px] font-mono px-1.5 py-0.5 backdrop-blur-[1px] z-10">
-                            {i + 1}
-                        </div>
+
                     </div>
 
                     <div class="w-full flex justify-center">
