@@ -1,7 +1,7 @@
 import {EditorState, Prec, Compartment, type Extension, type StateEffect} from '@codemirror/state';
 import { EditorView, keymap, placeholder, showTooltip, drawSelection, dropCursor } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+import { syntaxHighlighting, defaultHighlightStyle, LanguageDescription } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
 import { javascript } from '@codemirror/lang-javascript';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -120,9 +120,9 @@ export class MarkdownEditor {
                     base: markdownLanguage,
                     codeLanguages: (info) => {
                         switch (info) {
-                            case "jsx": return javascript({ jsx: true });
-                            case "tsx": return javascript({ jsx: true, typescript: true });
-                            default: return languages(info);
+                            case "jsx": return javascript({ jsx: true }).language;
+                            case "tsx": return javascript({ jsx: true, typescript: true }).language;
+                            default: return LanguageDescription.matchLanguageName(languages, info);
                         }
                     },
                     extensions: [GFM, MathExtension]

@@ -22,10 +22,8 @@ export async function renderMdx(content: string): Promise<string> {
 
         const { default: Content } = await evaluate(content, {
             ...runtime,
-            createElement, // Pass createElement if fallback needed, though automatic should use jsx
+            // createElement, // Pass createElement if fallback needed, though automatic should use jsx
             baseUrl: import.meta.url,
-            jsxRuntime: 'automatic',
-            development: false, 
         });
 
         // Content returns string in our custom runtime
