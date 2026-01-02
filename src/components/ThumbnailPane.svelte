@@ -79,9 +79,8 @@
                 // Fetch thumbnail
                 if (docStore.currentFilePath && !thumbnailUrls[index]) {
                     const path = docStore.currentFilePath;
-                    const pageIndex = index; // 0-based
-                    
-                    pdfRenderService.renderPage(path, pageIndex, 'thumbnail')
+                     // 0-based
+                    pdfRenderService.renderPage(path, index, 'thumbnail')
                         .then(url => {
                             // console.log(`[ThumbnailPane] Thumbnail URL for page ${index}: ${url}`);
                             thumbnailUrls[index] = url;
@@ -135,7 +134,6 @@
 
 <div class="flex flex-col h-full bg-[#f5f5f5] border-l border-[#ddd]">
     <div class="flex items-center p-2.5 gap-2.5 border-b border-[#eee] bg-white">
-        <span class="text-xs text-gray-500 mr-2">Pages: {docStore.pageCount}</span>
         <img src={landscapeIcon} class="block opacity-60 w-3 h-3" alt="Zoom Out" />
         <StyledSlider
             min={0.5}
@@ -156,7 +154,7 @@
                     role="group"
                 >
                     <div 
-                        class="w-full shadow-[0_2px_5px_rgba(0,0,0,0.1)] bg-white p-1.5 box-border overflow-hidden relative"
+                        class="w-full shadow-[0_2px_8px_rgba(0,0,0,0.2)] bg-white p-1.5 box-border overflow-hidden relative transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
                         onmouseenter={(e) => handleMouseEnter(e, i)}
                         onmouseleave={handleMouseLeave}
                         role="img"

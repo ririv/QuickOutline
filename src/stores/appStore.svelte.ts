@@ -2,7 +2,7 @@ export enum FnTab {
     bookmark = 'bookmark',
     tocGenerator = 'tocGenerator',
     label = 'label',
-    preview = 'preview',
+    viewer = 'viewer',
     markdown = 'markdown',
     settings = 'settings',
     experimental = 'experimental'

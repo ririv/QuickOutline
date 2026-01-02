@@ -6,6 +6,7 @@
     import PageLabelview from './views/desktop/PageLabelview.svelte';
     import TocViewView from './views/desktop/TocView.svelte';
     import MarkDownView from './views/desktop/MarkDownView.svelte';
+    import ViewerView from './views/desktop/ViewerView.svelte';
     import ExperimentalViewView from './views/desktop/ExperimentalView.svelte';
     import MessageContainer from './components/common/MessageContainer.svelte';
     import FileHeader from './views/desktop/FileHeader.svelte';
@@ -126,11 +127,8 @@
                 <div style="display: {activeTab === FnTab.markdown ? 'block' : 'none'}; height: 100%;">
                     <MarkDownView />
                 </div>
-                <div style="display: {activeTab === FnTab.preview ? 'block' : 'none'}; height: 100%;">
-                    <div class="placeholder">
-                        <h1>Preview Content</h1>
-                        <p>This is the content for the Preview tab.</p>
-                    </div>
+                <div style="display: {activeTab === FnTab.viewer ? 'block' : 'none'}; height: 100%;">
+                    <ViewerView />
                 </div>
                 <div style="display: {activeTab === FnTab.settings ? 'block' : 'none'}; height: 100%;">
                     <Settings />
