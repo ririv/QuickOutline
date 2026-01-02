@@ -109,7 +109,9 @@
     async function handleMouseEnter(e: MouseEvent, index: number) {
         const target = e.currentTarget as HTMLElement;
         const rect = target.getBoundingClientRect();
-        const anchorX = rect.right; 
+        
+        // Calculate anchor position (left side)
+        const anchorX = rect.left; 
         const y = rect.top + rect.height / 2;
 
         let src = previewCache.get(index) || thumbnailCache.get(index);
@@ -193,7 +195,7 @@
             src={hoveredPage.src} 
             y={hoveredPage.y} 
             anchorX={hoveredPage.anchorX} 
-            placement="right"
+            placement="left"
         />
     {/if}
 </div>

@@ -43,7 +43,7 @@
                 top: {arrowTop}px; 
                 right: -9px;
                 transform: translateY(-50%) rotate(45deg);
-                z-index: 10;
+                z-index: -1;
             "
         ></div>
     {:else}
@@ -54,7 +54,7 @@
                 top: {arrowTop}px; 
                 left: -9px;
                 transform: translateY(-50%) rotate(45deg);
-                z-index: 10;
+                z-index: -1;
             "
         ></div>
     {/if}
