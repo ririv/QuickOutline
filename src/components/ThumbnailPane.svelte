@@ -8,7 +8,7 @@
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
 
-    const DEFAULT_ASPECT_RATIO = 297 / 210; // A4 Portrait
+    const DEFAULT_ASPECT_RATIO = 1.414; // Fallback to A4
 
     interface Props {
         pageCount?: number;
@@ -16,176 +16,218 @@
     }
 
     let { pageCount = 0, zoom = $bindable(1.0) }: Props = $props();
-    let loadedState = $state<boolean[]>(new Array(pageCount).fill(false));
-    let aspectRatios = $state<number[]>(new Array(pageCount).fill(DEFAULT_ASPECT_RATIO)); // Default A4 ratio
-    let thumbnailUrls = $state<Record<number, string>>({}); // Store blob URLs
-    let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
-    let closeTimer: number | undefined;
 
-    // Clean up Blob URLs on destroy
-    onDestroy(() => {
-        Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
-        pdfRenderService.clearCache();
-    });
-    onDestroy(() => {
-        console.log('[ThumbnailPane] Destroying component, cleaning up URLs');
-        // Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
-    });
-
-    // Derived state for displayed page labels
-    // Use backend simulated labels if available, otherwise fallback to simple numbering
-    const displayedPageLabels = $derived(
-        (pageLabelStore.simulatedLabels && pageLabelStore.simulatedLabels.length > 0)
-            ? pageLabelStore.simulatedLabels
-            : Array.from({ length: docStore.pageCount }, (_, i) => String(i + 1))
-    );
+    // --- State ---
+    // Cache for aspect ratios to maintain layout stability when images are unloaded
+    let aspectRatios = $state<number[]>([]);
     
-    const originalLabels = $derived(docStore.originalPageLabels || []);
+    // Cache for URLs (Non-reactive to avoid loops)
+    const thumbnailCache = new Map<number, string>();
+    const previewCache = new Map<number, string>();
+    
+    let hoveredImage = $state<{src: string, y: number, x: number} | null>(null);
 
-    function isLabelModified(index: number, currentLabel: string) {
-        if (!originalLabels || originalLabels.length <= index) return false;
-        return currentLabel !== originalLabels[index];
-    }
+    // --- Layout Constants ---
+    const CARD_BASE_WIDTH = 120;
 
-    // Listener for pageCount changes
-    $effect(() => {
-        if (loadedState.length !== docStore.pageCount) {
-            console.log('PageCount changed:', docStore.pageCount);
-            loadedState = new Array(docStore.pageCount).fill(false);
-            aspectRatios = new Array(docStore.pageCount).fill(DEFAULT_ASPECT_RATIO);
-            // Revoke old URLs when page count (file) changes
-            Object.values(thumbnailUrls).forEach(url => URL.revokeObjectURL(url));
-            thumbnailUrls = {};
-        }
-    });
+    // --- Action: Smart Visibility Loader ---
+    function smartImage(node: HTMLElement, index: number) {
+        let imgElement: HTMLImageElement | null = null;
+        let observer: IntersectionObserver;
 
-    function onImageLoad(e: Event, index: number) {
-        const img = e.target as HTMLImageElement;
-        if (img.naturalWidth && img.naturalHeight) {
-            const ratio = img.naturalHeight / img.naturalWidth;
-            if (Math.abs(aspectRatios[index] - ratio) > 0.01) {
-                aspectRatios[index] = ratio;
+        const load = () => {
+            if (imgElement) return; // Already loaded
+
+            const path = docStore.currentFilePath;
+            if (!path) return;
+
+            // Check cache first
+            if (thumbnailCache.has(index)) {
+                createImg(thumbnailCache.get(index)!);
+                return;
             }
-        }
-    }
 
-    // Action for lazy loading
-    function lazyLoad(node: HTMLElement, index: number) {
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) {
-                loadedState[index] = true;
-                observer.disconnect();
-                
-                // Fetch thumbnail
-                if (docStore.currentFilePath && !thumbnailUrls[index]) {
-                    const path = docStore.currentFilePath;
-                     // 0-based
-                    pdfRenderService.renderPage(path, index, 'thumbnail')
-                        .then(url => {
-                            // console.log(`[ThumbnailPane] Thumbnail URL for page ${index}: ${url}`);
-                            thumbnailUrls[index] = url;
-                        })
-                        .catch(err => console.error(`[ThumbnailPane] Failed to load thumbnail for page ${index}`, err));
+            pdfRenderService.renderPage(path, index, 'thumbnail')
+                .then(url => {
+                    thumbnailCache.set(index, url);
+                    createImg(url);
+                })
+                .catch(console.error);
+        };
+
+        const createImg = (url: string) => {
+            if (!node) return;
+            // Create img tag
+            imgElement = document.createElement('img');
+            imgElement.src = url;
+            imgElement.alt = `Page ${index + 1}`;
+            imgElement.className = "absolute top-0 left-0 w-full h-full object-contain transition-opacity duration-200 opacity-0";
+            
+            imgElement.onload = () => {
+                if (imgElement) {
+                    imgElement.style.opacity = '1';
+                    // Update aspect ratio cache from natural dimensions
+                    if (imgElement.naturalWidth) {
+                        const ratio = imgElement.naturalHeight / imgElement.naturalWidth;
+                        // Only update if significantly different to avoid layout trashing loops
+                        if (!aspectRatios[index] || Math.abs(aspectRatios[index] - ratio) > 0.01) {
+                            aspectRatios[index] = ratio;
+                        }
+                    }
                 }
-            }
-        }, {
-            rootMargin: "200px" // Load 200px early
-        });
+            };
+            
+            node.appendChild(imgElement);
+        };
 
+        const unload = () => {
+            if (imgElement) {
+                imgElement.remove();
+                imgElement = null;
+            }
+        };
+
+        // Setup Observer with large margin to preload/keep images
+        observer = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            if (entry.isIntersecting) {
+                load();
+            } else {
+                // Unload when out of view (Memory Virtualization)
+                unload();
+            }
+        }, { 
+            rootMargin: "600px 0px" // Keep ~3 screens of images
+        });
+        
         observer.observe(node);
 
         return {
             destroy() {
                 observer.disconnect();
+                unload();
             }
         };
     }
 
-    // Removed getThumbnailUrl and getNormalImageUrl (replaced by async logic)
+    // --- Lifecycle ---
+    $effect(() => {
+        const _v = docStore.version; 
+        const _p = pageCount; // Dependency to reset
+        
+        // Reset everything on file change
+        thumbnailCache.forEach(url => URL.revokeObjectURL(url));
+        thumbnailCache.clear();
+        previewCache.forEach(url => URL.revokeObjectURL(url));
+        previewCache.clear();
+        
+        // Reset ratios
+        aspectRatios = new Array(pageCount).fill(DEFAULT_ASPECT_RATIO);
+    });
 
-    function handleMouseEnter(e: MouseEvent, index: number) {
-        clearTimeout(closeTimer);
+    onDestroy(() => {
+        thumbnailCache.forEach(url => URL.revokeObjectURL(url));
+        previewCache.forEach(url => URL.revokeObjectURL(url));
+    });
+
+    // --- Helpers ---
+    function isLabelModified(index: number, currentLabel: string) {
+        const orig = docStore.originalPageLabels?.[index];
+        if (orig === undefined) return currentLabel !== String(index + 1);
+        return currentLabel !== orig;
+    }
+
+    const displayedPageLabels = $derived(
+        (pageLabelStore.simulatedLabels && pageLabelStore.simulatedLabels.length > 0)
+            ? pageLabelStore.simulatedLabels
+            : Array.from({ length: docStore.pageCount }, (_, i) => String(i + 1))
+    );
+
+    async function handleMouseEnter(e: MouseEvent, index: number) {
         const target = e.currentTarget as HTMLElement;
         const rect = target.getBoundingClientRect();
         
-        // For now, we'll try to load the full image (scale 1.0 or similar)
-        if (docStore.currentFilePath) {
-            const path = docStore.currentFilePath;
-            
-            pdfRenderService.renderPage(path, index, 'preview')
-                .then(url => {
-                    hoveredImage = {
-                        src: url,
-                        y: rect.top + rect.height / 2,
-                        x: rect.left
-                    };
-                })
-                .catch(e => console.error(`[ThumbnailPane] Failed to load preview for page ${index}`, e));
+        let src = previewCache.get(index) || thumbnailCache.get(index);
+        if (!src && docStore.currentFilePath) {
+             try {
+                src = await pdfRenderService.renderPage(docStore.currentFilePath, index, 'preview');
+                previewCache.set(index, src);
+             } catch(e) { console.error(e); }
+        }
+
+        if (src) {
+            hoveredImage = {
+                src,
+                y: rect.top + rect.height / 2,
+                x: rect.left
+            };
         }
     }
 
-    function handleMouseLeave() {
-        if (hoveredImage && hoveredImage.src.startsWith('blob:')) {
-            URL.revokeObjectURL(hoveredImage.src); // Clean up tooltip image immediately
-        }
-        hoveredImage = null;
-    }
+    function handleMouseLeave() { hoveredImage = null; }
 </script>
 
-<div class="flex flex-col h-full bg-[#f5f5f5] border-l border-[#ddd]">
-    <div class="flex items-center p-2.5 gap-2.5 border-b border-[#eee] bg-white">
-        <img src={landscapeIcon} class="block opacity-60 w-3 h-3" alt="Zoom Out" />
+<div class="flex flex-col h-full bg-[#f3f4f6] border-l border-[#e5e7eb] font-sans">
+    <!-- Toolbar -->
+    <div class="flex items-center p-3 gap-3 border-b border-[#e5e7eb] bg-white shadow-sm z-10">
+        <img src={landscapeIcon} class="block opacity-40 w-3 h-3" alt="Zoom Out" />
         <StyledSlider
             min={0.5}
             max={3.0}
             step={0.01}
             bind:value={zoom}
         />
-        <img src={landscapeIcon} class="block opacity-60 w-5 h-5" alt="Zoom In" />
+        <img src={landscapeIcon} class="block opacity-40 w-5 h-5" alt="Zoom In" />
     </div>
-    <div class="flex-1 overflow-y-auto p-2.5">
-        {#key docStore.version}
-        <div class="flex flex-wrap gap-2.5 justify-center" style="--zoom: {zoom}">
 
-            {#each loadedState as isLoaded, i}
+    <!-- Scroll Container -->
+    <div class="flex-1 overflow-y-auto p-5 scrollbar-thin">
+        <!-- Flex Grid Container -->
+        <div class="flex flex-wrap justify-center gap-5">
+            {#each { length: pageCount } as _, i (i)}
+                {@const label = displayedPageLabels[i] || String(i + 1)}
+                {@const ratio = aspectRatios[i] || DEFAULT_ASPECT_RATIO}
+                
                 <div 
-                    class="flex-none w-[calc(100px*var(--zoom,1))] min-w-0 box-border text-center transition-[flex-basis] duration-75 ease-out flex flex-col items-center gap-1.5" 
-                    use:lazyLoad={i}
-                    role="group"
+                    class="flex-none flex flex-col items-center gap-2 group transition-[width] duration-100"
+                    style="width: {CARD_BASE_WIDTH * zoom}px;"
                 >
+                    <!-- Card: Dynamic Height via Padding-Top -->
                     <div 
-                        class="w-full shadow-[0_2px_8px_rgba(0,0,0,0.2)] bg-white p-1.5 box-border overflow-hidden relative transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+                        class="w-full bg-white relative transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+                        style="padding-top: {ratio * 100}%;"
+                        use:smartImage={i}
                         onmouseenter={(e) => handleMouseEnter(e, i)}
                         onmouseleave={handleMouseLeave}
                         role="img"
-                        aria-label="Page {i + 1} thumbnail"
+                        aria-label="Page {i + 1}"
                     >
-                        <div class="w-full bg-[#eee] relative transition-[padding] duration-200" style="padding-top: {aspectRatios[i] * 100}%">
-                            {#if isLoaded && thumbnailUrls[i]}
-                                <img 
-                                    src={thumbnailUrls[i]} 
-                                    class="absolute top-0 left-0 w-full h-full object-contain" 
-                                    alt="Page {i + 1}"
-                                    onload={(e) => onImageLoad(e, i)}
-                                />
-                            {/if}
+                        <!-- Image injected by action -->
+                        <!-- Placeholder/Skeleton Background -->
+                        <div class="absolute inset-0 bg-white -z-10"></div>
+
+                        <!-- Badge -->
+                        <div class="absolute top-0 left-0 bg-black/60 text-white text-[10px] font-mono px-1.5 py-0.5 backdrop-blur-[1px] z-10">
+                            {i + 1}
                         </div>
                     </div>
-                    <div class="w-full flex justify-center mt-1.5">
-                        <Tooltip content="{i + 1} / {docStore.pageCount}" position="top">
+
+                    <div class="w-full flex justify-center">
+                        <Tooltip content="{i + 1} / {pageCount}" position="top">
                              <div 
-                                class="text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-full {isLabelModified(i, displayedPageLabels[i] || '') ? 'text-[#666] font-bold' : 'text-[#666]'}"
+                                class="text-xs font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-full px-2 py-0.5 rounded text-gray-700 {isLabelModified(i, label) ? 'text-blue-600 bg-blue-50' : ''}"
                             >
-                                {displayedPageLabels[i] || (i + 1)}
+                                {label}
                             </div>
                         </Tooltip>
                     </div>
                 </div>
-            {:else}
-                <div class="w-full text-center text-[#999] mt-5">No thumbnails available</div>
             {/each}
+            
+            {#if pageCount === 0}
+                <div class="w-full text-center text-gray-400 mt-10">No thumbnails available</div>
+            {/if}
         </div>
-        {/key}
     </div>
     
     {#if hoveredImage}
@@ -196,3 +238,10 @@
         />
     {/if}
 </div>
+
+<style>
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+</style>
