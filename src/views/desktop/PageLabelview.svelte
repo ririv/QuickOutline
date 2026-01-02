@@ -1,9 +1,8 @@
 <script lang="ts">
     import '@/assets/global.css';
     import SplitPane from '../../components/SplitPane.svelte';
-    import ThumbnailPane from '../../components/ThumbnailPane.svelte';
+    import PageLabelPreviewPane from '../../components/PageLabelPreviewPane.svelte';
     import Icon from "@/components/Icon.svelte";
-    
     import deleteIcon from '../../assets/icons/delete-item.svg?raw';
     import trashIcon from '../../assets/icons/trash.svg';
     import addIcon from '../../assets/icons/plus.svg?raw';
@@ -16,33 +15,33 @@
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
     import { pageLabelStyleMap } from '@/lib/styleMaps.ts';
     import GraphButton from "@/components/controls/GraphButton.svelte";
-    
+
     import { usePageLabelActions } from '../shared/pagelabel.svelte.ts';
 
     const styles = pageLabelStyleMap.getAllStyles();
-    
+
     const { addRule, deleteRule, clearRules, apply } = usePageLabelActions();
 
 </script>
 
 <main class="h-full w-full overflow-hidden">
-    <SplitPane initialSplit={30}>
+    <SplitPane initialSplit={67}>
         {#snippet left()}
         <div class="flex flex-col h-full p-4 bg-white box-border overflow-y-auto">
             <div class="flex flex-col gap-4">
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
                     <div class="w-full">
-                        <StyledSelect 
-                            options={styles} 
+                        <StyledSelect
+                            options={styles}
                             displayKey="displayText"
                             optionKey="displayText"
                             valueKey="enumName"
-                            bind:value={pageLabelStore.numberingStyle} 
+                            bind:value={pageLabelStore.numberingStyle}
                         />
                     </div>
                 </div>
-                
+
                 <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
                     <label for="prefix" class="text-right text-sm text-[#333]">Prefix</label>
                     <StyledInput id="prefix" type="text" bind:value={pageLabelStore.prefix} placeholder="Optional" />
@@ -59,7 +58,7 @@
                 </div>
 
                 <div class="flex justify-center mt-2.5">
-                    <button 
+                    <button
                         class="inline-flex items-center justify-center w-[110px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100"
                         use:ripple
                         onclick={addRule}
@@ -92,7 +91,7 @@
                                 <span class="bg-el-plain-primary-bg text-el-primary border border-[#d9ecff] rounded px-1.5 py-0.5 text-xs font-semibold min-w-[32px] text-center shrink-0">
                                     P{rule.fromPage}
                                 </span>
-                                
+
                                 <div class="flex flex-col justify-center overflow-hidden">
                                     <div class="flex items-center gap-1 font-medium text-[#303133] whitespace-nowrap overflow-hidden text-ellipsis leading-tight">
                                         {#if rule.prefix}
@@ -120,7 +119,7 @@
             </div>
 
             <div class="mt-4 flex justify-center">
-                 <button 
+                 <button
                     class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-el-primary rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-el-plain-primary-bg border border-el-plain-primary-border hover:bg-el-plain-primary-bg-hover active:bg-el-plain-primary-border"
                     use:ripple={{ color: 'var(--color-el-primary-shadow)' }}
                     onclick={apply}
@@ -134,7 +133,7 @@
 
         {#snippet right()}
         <div class="h-full bg-[#f5f5f5]">
-            <ThumbnailPane pageCount={docStore.pageCount} />
+            <PageLabelPreviewPane pageCount={docStore.pageCount} />
         </div>
         {/snippet}
     </SplitPane>
