@@ -70,7 +70,10 @@ class DocStore {
             const newContext = new DocContext(path, checkResult.doc);
             
             // 4. Load initial metadata
-            const labels = await pageLabelService.getPageLabels(path) || [];
+            // Optimization: Load rules once, then simulate labels to avoid double loading PDF in Rust
+            const rules = await pageLabelService.getRules(path);
+            const labels = await pageLabelService.simulateLabels(rules, newContext.pageCount) || [];
+            
             newContext.originalPageLabels = labels;
 
             // 5. Activate context
@@ -80,8 +83,7 @@ class DocStore {
             offsetStore.autoDetect(labels);
             pageLabelStore.init(labels);
             
-            // Load and set actual rules from Rust
-            const rules = await pageLabelService.getRules(path);
+            // Set rules to store
             pageLabelStore.setRules(rules, newContext.pageCount);
 
             console.log(`Document opened: ${path}`);
