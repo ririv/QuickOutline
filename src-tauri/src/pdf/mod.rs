@@ -4,6 +4,7 @@ pub mod manager;
 pub mod toc;
 pub mod numbering;
 pub mod page_label;
+pub mod commands;
 
 use pdfium_render::prelude::*;
 use anyhow::{Result, format_err};
