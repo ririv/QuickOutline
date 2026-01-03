@@ -31,20 +31,6 @@ pub struct PageLabel {
 pub struct PageLabelProcessor;
 
 impl PageLabelProcessor {
-    
-    /// Sets page labels for a PDF file (Reads, Modifies, Saves).
-    pub fn set_page_labels(src_path: &str, dest_path: &str, rules: Vec<PageLabel>) -> Result<(), Box<dyn std::error::Error>> {
-        let mut doc = Document::load(src_path)?;
-        Self::set_page_labels_in_doc(&mut doc, rules)?;
-        doc.save(dest_path)?;
-        Ok(())
-    }
-
-    /// Gets formatted page labels from a PDF file (Reads file).
-    pub fn get_page_labels(path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        let doc = Document::load(path)?;
-        Self::get_page_labels_from_doc(&doc)
-    }
 
     /// Pure logic to simulate page labels without a PDF file.
     pub fn simulate_page_labels(rules: Vec<PageLabel>, total_pages: u32) -> Vec<String> {

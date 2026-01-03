@@ -147,27 +147,41 @@ async fn save_outline(
 
 #[tauri::command]
 async fn set_page_labels(
+    state: tauri::State<'_, pdf::manager::PdfWorker>,
     src_path: String,
     rules: Vec<PageLabel>,
     dest_path: Option<String>
 ) -> Result<String, String> {
     let actual_dest = resolve_dest_path(&src_path, dest_path);
-    PageLabelProcessor::set_page_labels(&src_path, &actual_dest, rules)
-        .map_err(|e| e.to_string())?;
+    let dest_clone = actual_dest.clone();
+
+    state.call(move |worker| -> Result<(), String> {
+        let session = worker.get_or_load(&src_path).map_err(|e| e.to_string())?;
+        let mut doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
+        PageLabelProcessor::set_page_labels_in_doc(&mut doc, rules)
+            .map_err(|e| e.to_string())?;
+        doc.save(&dest_clone).map(|_| ()).map_err(|e| e.to_string())
+    }).await.map_err(|e| e.to_string())??;
+
     Ok(actual_dest)
 }
 
 #[tauri::command]
-async fn get_page_labels(path: String) -> Result<Vec<String>, String> {
-    PageLabelProcessor::get_page_labels(&path)
-        .map_err(|e| e.to_string())
+async fn get_page_labels(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
+    state.call(move |worker| -> Result<Vec<String>, String> {
+        let session = worker.get_or_load(&path).map_err(|e| e.to_string())?;
+        let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
+        PageLabelProcessor::get_page_labels_from_doc(&doc).map_err(|e| e.to_string())
+    }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-async fn get_page_label_rules(path: String) -> Result<Vec<PageLabel>, String> {
-    let doc = lopdf::Document::load(&path).map_err(|e| e.to_string())?;
-    PageLabelProcessor::get_page_label_rules_from_doc(&doc)
-        .map_err(|e| e.to_string())
+async fn get_page_label_rules(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<PageLabel>, String> {
+    state.call(move |worker| -> Result<Vec<PageLabel>, String> {
+        let session = worker.get_or_load(&path).map_err(|e| e.to_string())?;
+        let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
+        PageLabelProcessor::get_page_label_rules_from_doc(&doc).map_err(|e| e.to_string())
+    }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]

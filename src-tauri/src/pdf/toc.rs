@@ -57,6 +57,7 @@ pub fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
 }
 
 pub fn process_toc_generation(
+    pdfium: &Pdfium,
     session: &PdfSession,
     config: TocConfig,
     dest_path: Option<String>
@@ -80,8 +81,6 @@ pub fn process_toc_generation(
     };
 
     // Step 2: Merge TOC using Pdfium (Safe Rust) via helper
-    let pdfium = crate::pdf::get_pdfium().map_err(|e| e.to_string())?;
-    
     // Load main doc fresh to avoid modifying session doc
     let mut main_doc = match session.mode {
         LoadMode::DirectFile => {
@@ -240,8 +239,9 @@ pub async fn generate_toc_page(
     dest_path: Option<String>
 ) -> Result<String, String> {
     pdf_worker.call(move |worker| {
+        let pdfium = worker.pdfium;
         match worker.get_or_load(&src_path) {
-            Ok(session) => process_toc_generation(session, config, dest_path),
+            Ok(session) => process_toc_generation(pdfium, session, config, dest_path),
             Err(e) => Err(e.to_string()),
         }
     }).await.map_err(|e| e.to_string())?
