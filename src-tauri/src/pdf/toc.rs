@@ -5,7 +5,7 @@ use lopdf::{Document, Object, Dictionary};
 use anyhow::Result;
 
 use tauri::{State};
-use crate::pdf::manager::{PdfWorker, PdfRequest, PdfSession, LoadMode};
+use crate::pdf::manager::{PdfWorker, PdfSession, LoadMode};
 use crate::pdf::page_label::{PageLabelProcessor, PageLabel, PageLabelNumberingStyle};
 use crate::pdf::merge::merge_pdfs;
 use tokio::sync::oneshot;
@@ -239,16 +239,12 @@ pub async fn generate_toc_page(
     config: TocConfig,
     dest_path: Option<String>
 ) -> Result<String, String> {
-    let (tx, rx) = oneshot::channel();
-    
-    pdf_worker.0.send(PdfRequest::GenerateToc {
-        src_path,
-        config,
-        dest_path,
-        response_tx: tx,
-    }).await.map_err(|e| format!("Failed to send request to PDF worker: {}", e))?;
-
-    rx.await.map_err(|e| format!("Failed to receive response from PDF worker: {}", e))?
+    pdf_worker.call(move |worker| {
+        match worker.get_or_load(&src_path) {
+            Ok(session) => process_toc_generation(session, config, dest_path),
+            Err(e) => Err(e.to_string()),
+        }
+    }).await.map_err(|e| e.to_string())?
 }
 
 fn add_links_to_lopdf_doc(

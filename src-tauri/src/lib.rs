@@ -108,12 +108,21 @@ fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
 }
 
 #[tauri::command]
-async fn get_outline_as_bookmark(path: String, offset: i32) -> Result<Bookmark, String> {
-    pdf_outline::processor::get_outline(&path, offset).map_err(|e| e.to_string())
+async fn get_outline_as_bookmark(
+    state: tauri::State<'_, pdf::manager::PdfWorker>, 
+    path: String, 
+    offset: i32
+) -> Result<Bookmark, String> {
+    state.call(move |worker| -> Result<Bookmark, String> {
+        let session = worker.get_or_load(&path).map_err(|e| e.to_string())?;
+        let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
+        crate::pdf_outline::processor::get_outline(&doc, offset).map_err(|e| e.to_string())
+    }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
 async fn save_outline(
+    state: tauri::State<'_, pdf::manager::PdfWorker>,
     src_path: String, 
     bookmark_root: Bookmark, 
     dest_path: Option<String>, 
@@ -123,9 +132,16 @@ async fn save_outline(
     let actual_dest = resolve_dest_path(&src_path, dest_path);
     let scale = view_mode.unwrap_or(ViewScaleType::None);
     
-    pdf_outline::processor::set_outline(&src_path, &actual_dest, bookmark_root, offset, scale)
-        .map_err(|e| e.to_string())?;
-        
+    let dest_path_clone = actual_dest.clone();
+
+    state.call(move |worker| -> Result<(), String> {
+        let session = worker.get_or_load(&src_path).map_err(|e| e.to_string())?;
+        let mut doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
+        crate::pdf_outline::processor::set_outline_in_doc(&mut doc, bookmark_root, offset, scale)
+            .map_err(|e| format!("Failed to set outline: {}", e))?;
+        doc.save(&dest_path_clone).map(|_| ()).map_err(|e| format!("Failed to save PDF: {}", e))
+    }).await.map_err(|e| e.to_string())??;
+    
     Ok(actual_dest)
 }
 
@@ -172,13 +188,11 @@ async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, St
 
 #[tauri::command]
 async fn extract_toc(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
-    let (tx, rx) = tokio::sync::oneshot::channel();
-    state.0.send(pdf::manager::PdfRequest::ExtractToc {
-        path,
-        response_tx: tx,
-    }).await.map_err(|e| e.to_string())?;
-
-    rx.await.map_err(|e| e.to_string())?.map_err(|e| e.to_string())
+    state.call(move |worker| -> Result<Vec<String>, String> {
+        let session = worker.get_or_load(&path).map_err(|e| e.to_string())?;
+        let doc = session.pdfium_doc.as_ref().ok_or_else(|| "Session missing document".to_string())?;
+        pdf_analysis::TocExtractor::extract_toc(doc).map_err(|e| e.to_string())
+    }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]

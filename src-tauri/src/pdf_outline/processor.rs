@@ -4,9 +4,7 @@ use anyhow::{Result, anyhow, Context};
 use std::collections::BTreeMap;
 use log::{info, warn, error};
 
-pub fn get_outline(path: &str, offset: i32) -> Result<Bookmark> {
-    let doc = Document::load(path).map_err(|e| anyhow!("Failed to load PDF: {}", e))?;
-    
+pub fn get_outline(doc: &Document, offset: i32) -> Result<Bookmark> {
     // 1. Build Page Object ID to Page Number (1-based) map for quick lookup
     let pages = doc.get_pages();
     let mut page_id_to_num = BTreeMap::new();
@@ -34,7 +32,7 @@ pub fn get_outline(path: &str, offset: i32) -> Result<Bookmark> {
     let mut root_bookmark = Bookmark::new("Outlines".to_string(), None, 0);
 
     if let Ok(first_ref) = outlines_dict.get(b"First").and_then(|o| o.as_reference()) {
-        let children = parse_outline_chain(&doc, first_ref, &page_id_to_num, offset, 1)?;
+        let children = parse_outline_chain(doc, first_ref, &page_id_to_num, offset, 1)?;
         root_bookmark.children = children;
     }
 
@@ -169,15 +167,12 @@ fn decode_pdf_string(bytes: &[u8]) -> String {
 
 // --- Set Outline Logic ---
 
-pub fn set_outline(
-    src_path: &str, 
-    dest_path: &str, 
+pub fn set_outline_in_doc(
+    doc: &mut Document, 
     root: Bookmark, 
     offset: i32, 
     scale_type: ViewScaleType
 ) -> Result<()> {
-    let mut doc = Document::load(src_path).map_err(|e| anyhow!("Failed to load PDF: {}", e))?;
-    
     // 1. Prepare
     let catalog_id = doc.trailer.get(b"Root")?.as_reference()?;
     let pages = doc.get_pages(); // Map<u32, ObjectId>
@@ -201,7 +196,7 @@ pub fn set_outline(
     let outlines_dict_id = doc.add_object(Dictionary::new());
 
     // 4. Build new items
-    let (first, last, count) = build_outline_level(&mut doc, &root.children, &pages, offset, scale_type)?;
+    let (first, last, count) = build_outline_level(doc, &root.children, &pages, offset, scale_type)?;
 
     // 4.1 Fix Top-level Parent pointers
     if let Some(f) = first {
@@ -223,10 +218,6 @@ pub fn set_outline(
     // 6. Link to Catalog
     let catalog = doc.get_object_mut(catalog_id)?.as_dict_mut()?;
     catalog.set("Outlines", outlines_dict_id);
-
-    // 7. Save
-    // compress: true ensures smaller file size
-    doc.save(dest_path).map_err(|e| anyhow!("Failed to save PDF: {}", e))?;
 
     Ok(())
 }
