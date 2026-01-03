@@ -5,11 +5,76 @@ use std::thread;
 use image::ImageFormat;
 use std::io::Cursor;
 use log::{info, error};
+use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use tauri::State;
 
 use crate::pdf::toc::{TocConfig, process_toc_generation};
 
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum LoadMode {
+    DirectFile,
+    MemoryBuffer,
+}
+
+pub struct PdfSession {
+    pub mode: LoadMode,
+    pub path: String,
+    // Wrapped in Option to control drop order (drop doc before memory)
+    pub pdfium_doc: Option<PdfDocument<'static>>,
+    // For MemoryBuffer mode, we own the leaked memory
+    pub memory_ptr: Option<*mut [u8]>,
+}
+
+impl PdfSession {
+    /// Helper to get a lopdf Document based on the current mode.
+    /// This bridges the gap between Pdfium's state and lopdf's needs.
+    pub fn load_lopdf_doc(&self) -> Result<lopdf::Document> {
+        match self.mode {
+            LoadMode::DirectFile => {
+                lopdf::Document::load(&self.path)
+                    .map_err(|e| format_err!("Lopdf load failed: {}", e))
+            },
+            LoadMode::MemoryBuffer => {
+                if let Some(ptr) = self.memory_ptr {
+                    let slice = unsafe { &*ptr };
+                    lopdf::Document::load_mem(slice)
+                        .map_err(|e| format_err!("Lopdf load mem failed: {}", e))
+                } else {
+                    Err(format_err!("Memory mode but no memory pointer found"))
+                }
+            }
+        }
+    }
+}
+
+impl Drop for PdfSession {
+    fn drop(&mut self) {
+        // 1. Drop the Pdfium Document first to release references to the memory
+        self.pdfium_doc = None;
+        
+        // 2. If we own memory (MemoryBuffer mode), reclaim and drop it
+        if let Some(ptr) = self.memory_ptr {
+            unsafe {
+                // Reconstruct Box to drop it
+                let _ = Box::from_raw(ptr);
+            }
+            info!("[PdfSession] Freed memory buffer for: {}", self.path);
+        }
+    }
+}
+
 // Request types for the PDF Worker
 pub enum PdfRequest {
+    LoadDocument {
+        path: String,
+        mode: LoadMode,
+        response_tx: oneshot::Sender<Result<()>>,
+    },
+    CloseDocument {
+        path: String,
+        response_tx: oneshot::Sender<()>,
+    },
     RenderPage {
         path: String,
         page_index: u16,
@@ -38,11 +103,8 @@ pub struct PdfWorker(pub mpsc::Sender<PdfRequest>);
 // Internal state of the PDF worker thread
 struct PdfWorkerInternalState {
     pdfium: &'static Pdfium,
-    // Store the path of the currently loaded document, if any.
-    // The PdfDocument itself cannot be directly cached here due to lifetime issues with Pdfium.
-    // Instead, we will reload the PdfDocument from the Pdfium instance when needed.
-    // This is still an optimization as Pdfium itself is initialized only once.
-    current_file_path: Option<String>,
+    // Store active sessions mapped by file path
+    sessions: HashMap<String, PdfSession>,
 }
 
 impl PdfWorkerInternalState {
@@ -54,24 +116,74 @@ impl PdfWorkerInternalState {
         
         Ok(Self {
             pdfium,
-            current_file_path: None,
+            sessions: HashMap::new(),
         })
     }
 
-    // This method handles the rendering and document caching
-    fn process_render_request(&mut self, path: String, page_index: u16, scale: f32) -> Result<Vec<u8>> {
-        // If the path has changed, update the current_file_path
-        if self.current_file_path.as_ref().map_or(true, |p| *p != path) {
-            self.current_file_path = Some(path.clone());
+    /// Retrieves an active session or auto-loads in DirectFile mode if missing.
+    fn get_or_load(&mut self, path: &str) -> Result<&PdfSession> {
+        if !self.sessions.contains_key(path) {
+            info!("[PDF Worker] Auto-loading (DirectFile) for: {}", path);
+            self.load_document(path.to_string(), LoadMode::DirectFile)?;
+        }
+        self.sessions.get(path).ok_or_else(|| format_err!("Session not found after load"))
+    }
+
+    fn load_document(&mut self, path: String, mode: LoadMode) -> Result<()> {
+        // If already loaded, close it first (simplified logic: overwrite)
+        if self.sessions.contains_key(&path) {
+            info!("[PDF Worker] Reloading existing session: {}", path);
+            self.sessions.remove(&path);
         }
 
-        // Always load the document from Pdfium using the current_file_path.
-        let current_path = self.current_file_path.as_ref().ok_or_else(|| format_err!("No PDF file path set in worker state"))?;
+        let session = match mode {
+            LoadMode::DirectFile => {
+                let doc = self.pdfium.load_pdf_from_file(&path, None)
+                    .map_err(|e| format_err!("Pdfium load file failed: {}", e))?;
+                PdfSession {
+                    mode,
+                    path: path.clone(),
+                    pdfium_doc: Some(doc),
+                    memory_ptr: None,
+                }
+            },
+            LoadMode::MemoryBuffer => {
+                let data = std::fs::read(&path)
+                    .map_err(|e| format_err!("Read file failed: {}", e))?;
+                
+                // Leak memory to get a static reference for Pdfium
+                let boxed_slice = data.into_boxed_slice();
+                let leaked_ref = Box::leak(boxed_slice);
+                let ptr = leaked_ref as *mut [u8];
 
-        let doc = self.pdfium.load_pdf_from_file(current_path, None)
-            .map_err(|e| format_err!("Failed to load PDF: {}", e))?;
-        
-        // Render logic (reused from previous implementation)
+                // Load from byte slice
+                let doc = self.pdfium.load_pdf_from_byte_slice(leaked_ref, None)
+                    .map_err(|e| format_err!("Pdfium load memory failed: {}", e))?;
+
+                PdfSession {
+                    mode,
+                    path: path.clone(),
+                    pdfium_doc: Some(doc),
+                    memory_ptr: Some(ptr),
+                }
+            }
+        };
+
+        self.sessions.insert(path, session);
+        Ok(())
+    }
+
+    fn close_document(&mut self, path: &str) {
+        if self.sessions.remove(path).is_some() {
+            info!("[PDF Worker] Closed session: {}", path);
+        }
+    }
+
+    // This method handles the rendering using the session
+    fn process_render_request(&mut self, path: String, page_index: u16, scale: f32) -> Result<Vec<u8>> {
+        let session = self.get_or_load(&path)?;
+        let doc = session.pdfium_doc.as_ref().expect("Session missing document");
+
         let page = doc.pages().get(page_index)?;
         
         // Calculate dimensions
@@ -92,15 +204,8 @@ impl PdfWorkerInternalState {
     }
 
     fn process_get_page_count(&mut self, path: String) -> Result<u16> {
-        // Similar caching logic as render
-        if self.current_file_path.as_ref().map_or(true, |p| *p != path) {
-            self.current_file_path = Some(path.clone());
-        }
-
-        let current_path = self.current_file_path.as_ref().ok_or_else(|| format_err!("No PDF file path set in worker state"))?;
-        let doc = self.pdfium.load_pdf_from_file(current_path, None)
-            .map_err(|e| format_err!("Failed to load PDF: {}", e))?;
-        
+        let session = self.get_or_load(&path)?;
+        let doc = session.pdfium_doc.as_ref().expect("Session missing document");
         Ok(doc.pages().len())
     }
 }
@@ -120,6 +225,14 @@ pub fn init_pdf_worker() -> PdfWorker {
 
         while let Some(request) = rx.blocking_recv() {
             match request {
+                PdfRequest::LoadDocument { path, mode, response_tx } => {
+                    let result = worker_state.load_document(path, mode);
+                    let _ = response_tx.send(result);
+                },
+                PdfRequest::CloseDocument { path, response_tx } => {
+                    worker_state.close_document(&path);
+                    let _ = response_tx.send(());
+                },
                 PdfRequest::RenderPage { path, page_index, scale, response_tx } => {
                     let result = worker_state.process_render_request(path, page_index, scale);
                     let _ = response_tx.send(result);
@@ -129,11 +242,21 @@ pub fn init_pdf_worker() -> PdfWorker {
                     let _ = response_tx.send(result);
                 },
                 PdfRequest::GenerateToc { src_path, config, dest_path, response_tx } => {
-                    let result = process_toc_generation(&worker_state.pdfium, src_path, config, dest_path);
+                    let result = match worker_state.get_or_load(&src_path) {
+                        Ok(session) => process_toc_generation(session, config, dest_path),
+                        Err(e) => Err(e.to_string()),
+                    };
                     let _ = response_tx.send(result);
                 },
                 PdfRequest::ExtractToc { path, response_tx } => {
-                    let result = crate::pdf_analysis::TocExtractor::extract_toc(&worker_state.pdfium, &path);
+                    let result = match worker_state.get_or_load(&path) {
+                         Ok(session) => {
+                             let doc = session.pdfium_doc.as_ref().expect("Session missing document");
+                             crate::pdf_analysis::TocExtractor::extract_toc(doc)
+                                .map_err(|e| format_err!("{}", e))
+                         },
+                         Err(e) => Err(e),
+                    };
                     let _ = response_tx.send(result);
                 }
             }
@@ -141,4 +264,39 @@ pub fn init_pdf_worker() -> PdfWorker {
     });
 
     PdfWorker(tx)
+}
+
+#[tauri::command]
+pub async fn load_pdf_document(
+    state: State<'_, PdfWorker>,
+    path: String,
+    mode: Option<LoadMode>
+) -> Result<(), String> {
+    let (tx, rx) = oneshot::channel();
+    let load_mode = mode.unwrap_or(LoadMode::DirectFile);
+
+    state.0.send(PdfRequest::LoadDocument {
+        path,
+        mode: load_mode,
+        response_tx: tx,
+    }).await.map_err(|e| format!("Failed to send request: {}", e))?;
+
+    rx.await
+        .map_err(|_| "Worker dropped channel".to_string())?
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn close_pdf_document(
+    state: State<'_, PdfWorker>,
+    path: String
+) -> Result<(), String> {
+    let (tx, rx) = oneshot::channel();
+
+    state.0.send(PdfRequest::CloseDocument {
+        path,
+        response_tx: tx,
+    }).await.map_err(|e| format!("Failed to send request: {}", e))?;
+
+    rx.await.map_err(|_| "Worker dropped channel".to_string())
 }

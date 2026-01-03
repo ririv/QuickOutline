@@ -240,6 +240,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet, 
             printer::print_to_pdf, 
+            pdf::manager::load_pdf_document,
+            pdf::manager::close_pdf_document,
             pdf::render::render_pdf_page, 
             pdf::render::get_pdf_page_count,
             get_outline_as_bookmark,

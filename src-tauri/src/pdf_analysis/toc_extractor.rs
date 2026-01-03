@@ -10,20 +10,11 @@ use log::{info, debug};
 pub struct TocExtractor;
 
 impl TocExtractor {
-    pub fn extract_toc(pdfium: &Pdfium, path: &str) -> Result<Vec<String>> {
-        info!("[TocExtractor] Starting extraction for: {}", path);
-
-        // 1. Get page count using the passed Pdfium instance
-        // No mutex needed if we are running serially (or if we trust the singleton in serial context)
-        // But let's use the global getter to be consistent with mod.rs changes
-        let global_pdfium = crate::pdf::get_pdfium().map_err(|e| format_err!("Global Pdfium not ready: {}", e))?;
+    pub fn extract_toc(doc: &PdfDocument) -> Result<Vec<String>> {
+        info!("[TocExtractor] Starting extraction (Cached Document)");
         
-        let num_pages = {
-            let _guard = crate::pdf::PDF_LOAD_MUTEX.lock().unwrap();
-            let doc = global_pdfium.load_pdf_from_file(path, None)
-                .map_err(|e| format_err!("Failed to load PDF: {}", e))?;
-            doc.pages().len()
-        };
+        // 1. Get page count directly from the passed document
+        let num_pages = doc.pages().len();
         info!("[TocExtractor] Total pages: {}", num_pages);
 
         if num_pages == 0 {
@@ -48,14 +39,8 @@ impl TocExtractor {
         let mut all_blocks = Vec::new();
 
         // Single Pdfium instance, single thread, serial execution. Safe.
-        // We still use the Mutex to be good citizens in the process.
+        // We assume the caller (PdfWorker) is ensuring thread safety.
         {
-            // We can hold the doc open for the whole loop if we want, or open/close per chunk.
-            // Opening once is faster.
-            let _guard = crate::pdf::PDF_LOAD_MUTEX.lock().unwrap();
-            let doc = global_pdfium.load_pdf_from_file(path, None)
-                .map_err(|e| format_err!("Failed to load PDF loop: {}", e))?;
-            
             for (start, end) in chunks {
                 debug!("[TocExtractor] Processing chunk {}..{}", start, end);
                 for i in start..end {
@@ -66,7 +51,7 @@ impl TocExtractor {
                     }
                 }
             }
-        } // Doc closed, mutex released
+        } 
 
         info!("[TocExtractor] Total raw blocks extracted: {}", all_blocks.len());
 

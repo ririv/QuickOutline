@@ -4,12 +4,16 @@ import type { ViewScaleType } from '@/lib/types/pdf';
 import type { BookmarkData } from '@/lib/types/bookmark';
 import type { HeaderFooterConfig } from '@/lib/types/header-footer';
 
+export type LoadMode = 'DirectFile' | 'MemoryBuffer';
+
 export interface PageLabel {
     pageNum: number;
     numberingStyle: PageLabelNumberingStyle;
     labelPrefix?: string | null;
     firstPage?: number | null;
 }
+
+// ... existing convertForRust/convertFromRust ...
 
 function convertForRust(bookmark: any): any {
     const copy = { ...bookmark };
@@ -60,6 +64,23 @@ export interface TocConfig {
 }
 
 /**
+ * Loads a PDF document into the session cache.
+ * @param path Path to the PDF file.
+ * @param mode Load mode ('DirectFile' or 'MemoryBuffer'). Defaults to 'DirectFile' if omitted by backend, but explicit is better.
+ */
+export async function loadDocument(path: string, mode?: LoadMode): Promise<void> {
+    return invoke('load_pdf_document', { path, mode });
+}
+
+/**
+ * Closes a PDF document session, releasing memory/handles.
+ * @param path Path to the PDF file.
+ */
+export async function closeDocument(path: string): Promise<void> {
+    return invoke('close_pdf_document', { path });
+}
+
+/**
  * Invokes the Rust backend to generate and insert the TOC page into the PDF.
  * @param srcFilePath Path to the source PDF.
  * @param config Configuration for the TOC generation.
@@ -77,6 +98,7 @@ export async function generateTocPage(
         destPath: destFilePath
     });
 }
+// ...
 
 /**
  * Invokes the Rust backend to set page labels for the PDF.

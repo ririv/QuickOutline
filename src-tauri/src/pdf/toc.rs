@@ -5,11 +5,11 @@ use lopdf::{Document, Object, Dictionary};
 use anyhow::Result;
 
 use tauri::{State};
-use crate::pdf::manager::{PdfWorker, PdfRequest};
+use crate::pdf::manager::{PdfWorker, PdfRequest, PdfSession, LoadMode};
 use crate::pdf::page_label::{PageLabelProcessor, PageLabel, PageLabelNumberingStyle};
 use crate::pdf::merge::merge_pdfs;
 use tokio::sync::oneshot;
-use log::{info, warn, error};
+use log::info;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -57,19 +57,18 @@ pub fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
 }
 
 pub fn process_toc_generation(
-    pdfium: &Pdfium,
-    src_path: String,
+    session: &PdfSession,
     config: TocConfig,
     dest_path: Option<String>
 ) -> Result<String, String> {
-    info!("Processing TOC generation via shared PdfWorker (ID Mapping Strategy)");
+    info!("Processing TOC generation via PdfSession (Stateful)");
     let toc_pdf_path = config.toc_pdf_path.as_ref().ok_or("No TOC PDF path provided")?.clone();
-    let final_dest = resolve_dest_path(&src_path, dest_path);
+    let final_dest = resolve_dest_path(&session.path, dest_path);
     let insert_pos = config.insert_pos as u16;
 
-    // Step 1: Capture Original Page IDs (ID Mapping Strategy)
+    // Step 1: Capture Original Page IDs (ID Mapping Strategy) using lopdf
     let original_page_ids = {
-        let doc = Document::load(&src_path).map_err(|e| format!("Failed to load source for ID mapping: {}", e))?;
+        let doc = session.load_lopdf_doc().map_err(|e| format!("Failed to load source for ID mapping: {}", e))?;
         let pages = doc.get_pages();
         let mut ids = vec![];
         let mut sorted_keys: Vec<_> = pages.keys().cloned().collect();
@@ -81,13 +80,33 @@ pub fn process_toc_generation(
     };
 
     // Step 2: Merge TOC using Pdfium (Safe Rust) via helper
-    let main_doc = merge_pdfs(pdfium, &src_path, &toc_pdf_path, insert_pos)
-        .map_err(|e| format!("Pdfium Merge Error: {}", e))?;
+    let pdfium = crate::pdf::get_pdfium().map_err(|e| e.to_string())?;
+    
+    // Load main doc fresh to avoid modifying session doc
+    let mut main_doc = match session.mode {
+        LoadMode::DirectFile => {
+             pdfium.load_pdf_from_file(&session.path, None).map_err(|e| e.to_string())?
+        },
+        LoadMode::MemoryBuffer => {
+            if let Some(ptr) = session.memory_ptr {
+                 let slice = unsafe { &*ptr };
+                 pdfium.load_pdf_from_byte_slice(slice, None).map_err(|e| e.to_string())?
+            } else {
+                return Err("Memory mode but no bytes".to_string());
+            }
+        }
+    };
+    
+    // Load TOC doc (always file for now as it's temp)
+    let toc_doc = pdfium.load_pdf_from_file(&toc_pdf_path, None).map_err(|e| e.to_string())?;
+
+    // Merge
+    merge_pdfs(&mut main_doc, &toc_doc, insert_pos).map_err(|e| format!("Pdfium Merge Error: {}", e))?;
     
     // Save to memory buffer
     let pdf_bytes = main_doc.save_to_bytes().map_err(|e| e.to_string())?;
     
-    // Step 3: Inject Links using lopdf and the captured IDs
+    // Step 3: Inject Links using lopdf and the captured IDs (on the NEW bytes)
     let mut doc = Document::load_mem(&pdf_bytes).map_err(|e| e.to_string())?;
     
     if let Some(links) = config.links {
@@ -96,30 +115,29 @@ pub fn process_toc_generation(
         }
     }
 
-        // Step 4: Correct Page Labels
-        apply_toc_page_labels(
-            &mut doc, 
-            &src_path, 
-            &toc_pdf_path, 
-            config.insert_pos, 
-            config.toc_page_label.as_ref()
-        );
+    // Step 4: Correct Page Labels
+    apply_toc_page_labels(
+        &mut doc, 
+        session, 
+        &toc_pdf_path, 
+        config.insert_pos, 
+        config.toc_page_label.as_ref()
+    );
     
-        doc.save(&final_dest).map_err(|e| e.to_string())?;
-        info!("TOC generation complete: {}", final_dest);
+    doc.save(&final_dest).map_err(|e| e.to_string())?;
+    info!("TOC generation complete: {}", final_dest);
     Ok(final_dest)
 }
 
 fn apply_toc_page_labels(
     doc: &mut Document,
-    src_path: &str,
+    session: &PdfSession,
     toc_path: &str,
     insert_pos: i32,
     toc_label_opt: Option<&PageLabel>
 ) {
-    if let Ok(src_doc) = Document::load(src_path) {
+    if let Ok(src_doc) = session.load_lopdf_doc() {
         if let Ok(rules) = PageLabelProcessor::get_page_label_rules_from_doc(&src_doc) {
-            // Try to load TOC rules
             let (toc_len, toc_rules) = if let Ok(toc_doc) = Document::load(toc_path) {
                 let len = toc_doc.get_pages().len() as i32;
                 let r = PageLabelProcessor::get_page_label_rules_from_doc(&toc_doc).unwrap_or_default();
@@ -129,7 +147,6 @@ fn apply_toc_page_labels(
             };
 
             if toc_len > 0 {
-                // Optimization: If both docs have no PageLabel rules AND no label config requested, do nothing.
                 if rules.is_empty() && toc_rules.is_empty() && toc_label_opt.is_none() {
                     return;
                 }
@@ -151,7 +168,6 @@ fn calculate_merged_rules(
     let insert_idx_1based = insert_pos + 1;
     let resume_idx_1based = insert_idx_1based + toc_len;
 
-    // 1. Identify the "Impact Rule"
     let mut impact_rule_idx = None;
     for (i, rule) in rules.iter().enumerate() {
         if rule.page_num <= insert_idx_1based {
@@ -161,7 +177,6 @@ fn calculate_merged_rules(
         }
     }
 
-    // 2. Prepare Resume Rule
     let mut resume_rule = None;
     let exact_match = rules.iter().any(|r| r.page_num == insert_idx_1based);
     
@@ -182,32 +197,27 @@ fn calculate_merged_rules(
         });
     }
 
-    // 3. Shift existing rules
     for rule in &mut rules {
         if rule.page_num >= insert_idx_1based {
             rule.page_num += toc_len;
         }
     }
 
-    // 4. Insert TOC rules
     if toc_rules.is_empty() {
-        // Use requested label config or fallback to Decimal
         let mut new_rule = if let Some(l) = toc_label_opt {
             l.clone()
         } else {
             PageLabel {
-                page_num: 1, // Placeholder
+                page_num: 1, 
                 numbering_style: PageLabelNumberingStyle::DecimalArabicNumerals,
                 label_prefix: None,
                 first_page: Some(1),
             }
         };
         
-        // Ensure the rule starts at the correct position
         new_rule.page_num = insert_idx_1based;
         rules.push(new_rule);
     } else {
-        // Shift and merge TOC rules
         for tr in &mut toc_rules {
             tr.page_num += insert_pos; 
         }
@@ -218,6 +228,7 @@ fn calculate_merged_rules(
         rules.push(rr);
     }
     
+    rules.sort_by_key(|r| r.page_num);
     rules
 }
 
@@ -259,18 +270,12 @@ fn add_links_to_lopdf_doc(
         if toc_page_idx_in_merged >= merged_pages_list.len() { continue; }
         let source_page_id = merged_pages_list[toc_page_idx_in_merged];
         
-        // Convert 1-based page index to 0-based index
-        // Note: The frontend is now expected to handle the 0-based/1-based logic and pass a clean 0-based index in `target_page_index`.
-        // However, if we want to be safe or if the frontend logic varies, we should clarify.
-        // Assuming frontend sends 0-based index now as per our discussion.
         let target_idx = link.target_page_index as usize;
 
         let target_page_id = if link.target_is_original_doc {
-            // Mapping Strategy: Use original ID to find the page, regardless of where it moved
             if target_idx >= original_page_ids.len() { continue; }
             original_page_ids[target_idx]
         } else {
-            // Absolute Index Strategy: Use the index directly on the merged document
             if target_idx >= merged_pages_list.len() { continue; }
             merged_pages_list[target_idx]
         };
