@@ -1,4 +1,6 @@
-import { PageLabelNumberingStyle } from "@/lib/styleMaps";
+import { PageLabelNumberingStyle, pageLabelStyleMap } from "@/lib/styleMaps";
+import type { PageLabel } from "@/lib/api/rust_pdf";
+import { pageLabelService } from "@/lib/services/PageLabelService";
 
 export interface PageLabelRule {
     id: string;
@@ -26,6 +28,21 @@ class PageLabelStore {
         this.resetForm();
         // 初始状态下，模拟标签就是原始标签
         this.simulatedLabels = originalLabels;
+    }
+
+    async setRules(rustRules: PageLabel[], totalPages: number) {
+        this.rules = rustRules.map(r => ({
+            id: Math.random().toString(36).substring(2, 9),
+            fromPage: r.pageNum,
+            numberingStyleDisplay: pageLabelStyleMap.getDisplayText(r.numberingStyle),
+            prefix: r.labelPrefix || '',
+            start: r.firstPage || 1
+        }));
+
+        if (this.rules.length > 0) {
+            const labels = await pageLabelService.simulateLabels(rustRules, totalPages);
+            this.setSimulatedLabels(labels);
+        }
     }
 
     addRule(rule: PageLabelRule) {

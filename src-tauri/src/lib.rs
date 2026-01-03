@@ -142,6 +142,24 @@ async fn set_page_labels(
 }
 
 #[tauri::command]
+async fn get_page_labels(path: String) -> Result<Vec<String>, String> {
+    PageLabelProcessor::get_page_labels(&path)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_page_label_rules(path: String) -> Result<Vec<PageLabel>, String> {
+    let doc = lopdf::Document::load(&path).map_err(|e| e.to_string())?;
+    PageLabelProcessor::get_page_label_rules_from_doc(&doc)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn simulate_page_labels(rules: Vec<PageLabel>, total_pages: u32) -> Result<Vec<String>, String> {
+    Ok(PageLabelProcessor::simulate_page_labels(rules, total_pages))
+}
+
+#[tauri::command]
 async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, String> {
     if let Some(state) = app.try_state::<static_server::LocalServerState>() {
         state.port.lock()
@@ -227,6 +245,9 @@ pub fn run() {
             get_outline_as_bookmark,
             save_outline,
             set_page_labels,
+            get_page_labels,
+            get_page_label_rules,
+            simulate_page_labels,
             get_static_server_port,
             pdf::toc::generate_toc_page,
             extract_toc,

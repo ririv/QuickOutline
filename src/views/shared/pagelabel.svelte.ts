@@ -2,8 +2,8 @@ import { messageStore } from '@/stores/messageStore.svelte.ts';
 import { docStore } from '@/stores/docStore.svelte.js';
 import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
 import { PageLabelNumberingStyle, pageLabelStyleMap } from '@/lib/styleMaps.ts';
-import { simulatePageLabelsLocal, type PageLabel } from '@/lib/pdf-processing/page-label.ts';
-import { setPageLabels } from '@/lib/api/rust_pdf.ts';
+import { setPageLabels, type PageLabel } from '@/lib/api/rust_pdf.ts';
+import { pageLabelService } from '@/lib/services/PageLabelService';
 
 export function usePageLabelActions() {
     function addRule() {
@@ -36,7 +36,7 @@ export function usePageLabelActions() {
         pageLabelStore.resetForm();
     }
 
-    function simulate() {
+    async function simulate() {
         const rules: PageLabel[] = pageLabelStore.rules.map(r => ({
             pageNum: r.fromPage,
             firstPage: r.start,
@@ -45,7 +45,7 @@ export function usePageLabelActions() {
         }));
 
         try {
-            const labels = simulatePageLabelsLocal(rules, docStore.pageCount);
+            const labels = await pageLabelService.simulateLabels(rules, docStore.pageCount);
             pageLabelStore.setSimulatedLabels(labels);
         } catch (e) {
             console.error("Simulation failed", e);

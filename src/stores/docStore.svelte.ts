@@ -1,4 +1,4 @@
-import { pdfRenderService } from '@/lib/services/PdfRenderService';
+import { pageLabelService } from '@/lib/services/PageLabelService';
 import { offsetStore } from './offsetStore.svelte';
 import { pageLabelStore } from './pageLabelStore.svelte';
 import { checkPdf } from '@/lib/pdfjs/pdfChecker';
@@ -70,7 +70,7 @@ class DocStore {
             const newContext = new DocContext(path, checkResult.doc);
             
             // 4. Load initial metadata
-            const labels = await pdfRenderService.getPageLabels(path, checkResult.doc) || [];
+            const labels = await pageLabelService.getPageLabels(path) || [];
             newContext.originalPageLabels = labels;
 
             // 5. Activate context
@@ -79,6 +79,10 @@ class DocStore {
             // 6. Init side stores
             offsetStore.autoDetect(labels);
             pageLabelStore.init(labels);
+            
+            // Load and set actual rules from Rust
+            const rules = await pageLabelService.getRules(path);
+            pageLabelStore.setRules(rules, newContext.pageCount);
 
             console.log(`Document opened: ${path}`);
 

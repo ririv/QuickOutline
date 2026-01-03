@@ -98,6 +98,34 @@ export async function setPageLabels(
 }
 
 /**
+ * Gets the page label rules from the PDF using Rust backend.
+ * @param path Path to the PDF file.
+ * @returns Promise resolving to a list of PageLabel rules.
+ */
+export async function getPageLabelRules(path: string): Promise<PageLabel[]> {
+    return invoke<PageLabel[]>('get_page_label_rules', { path });
+}
+
+/**
+ * Gets the formatted page labels from the PDF using Rust backend.
+ * @param path Path to the PDF file.
+ * @returns Promise resolving to a list of page label strings.
+ */
+export async function getPageLabels(path: string): Promise<string[]> {
+    return invoke<string[]>('get_page_labels', { path });
+}
+
+/**
+ * Simulates page labels based on the provided rules using Rust backend.
+ * @param rules List of page label rules.
+ * @param totalPages Total number of pages to generate labels for.
+ * @returns Promise resolving to a list of page label strings.
+ */
+export async function simulatePageLabels(rules: PageLabel[], totalPages: number): Promise<string[]> {
+    return invoke<string[]>('simulate_page_labels', { rules, totalPages });
+}
+
+/**
  * Fetches the outline as a hierarchical bookmark structure.
  */
 export async function getOutlineAsBookmark(srcFilePath: string, offset: number): Promise<BookmarkData> {

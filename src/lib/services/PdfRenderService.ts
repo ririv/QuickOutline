@@ -1,29 +1,11 @@
 import { renderPdfPageAsUrl } from '@/lib/api/pdf-render';
-import { renderPageToDataUrl, getPageLabels } from '@/lib/pdfjs';
+import { renderPageToDataUrl } from '@/lib/pdfjs';
 import { docStore } from '@/stores/docStore.svelte';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 class PdfRenderService {
     // Engine Switch
-    private engine: 'pdfium' | 'pdfjs' = 'pdfjs';
-
-    /**
-     * Get page labels for the current document
-     * Uses the shared document instance from docStore or provided doc.
-     */
-    async getPageLabels(path: string, providedDoc?: PDFDocumentProxy): Promise<string[] | null> {
-        const doc = providedDoc || this.getDoc(path);
-        if (!doc) return null;
-        return getPageLabels(doc);
-    }
-
-    /**
-     * Get the total page count for the PDF
-     */
-    async getPageCount(path: string): Promise<number> {
-        const doc = this.getDoc(path);
-        return doc ? doc.numPages : 0;
-    }
+    private engine: 'pdfium' | 'pdfjs' = 'pdfium';
     
     /**
      * Render a PDF page to a URL (Blob URL)
@@ -69,13 +51,6 @@ class PdfRenderService {
             return docStore.pdfDoc;
         }
         return null;
-    }
-
-    /**
-     * Legacy Cleanup - DocStore now handles lifecycle
-     */
-    public clearCache() {
-        // No-op: docStore handles destruction
     }
 }
 
