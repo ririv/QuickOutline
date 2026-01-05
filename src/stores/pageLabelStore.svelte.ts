@@ -1,5 +1,5 @@
 import { PageLabelNumberingStyle, pageLabelStyleMap } from "@/lib/styleMaps";
-import type { PageLabel } from "@/lib/api/rust_pdf";
+import type { PageLabel } from "@/lib/pdf-processing/page-label";
 import { pageLabelService } from "@/lib/services/PageLabelService";
 
 export interface PageLabelRule {
@@ -17,16 +17,11 @@ class PageLabelStore {
     startNumber = $state("");
     startPage = $state("");
     
-    // 使用 $state.raw 存储大型数组，性能最优
     simulatedLabels = $state.raw<string[]>([]);
 
-    /**
-     * 当新文件打开时，由 docStore 主动调用
-     */
     init(originalLabels: string[]) {
         this.rules = [];
         this.resetForm();
-        // 初始状态下，模拟标签就是原始标签
         this.simulatedLabels = originalLabels;
     }
 
@@ -40,9 +35,21 @@ class PageLabelStore {
         }));
 
         if (this.rules.length > 0) {
-            const labels = await pageLabelService.simulateLabels(rustRules, totalPages);
+            const labels = await pageLabelService.simulateLabels(this.getFinalRules(), totalPages);
             this.setSimulatedLabels(labels);
         }
+    }
+
+    /**
+     * Converts UI rules back to standard PageLabel format for business logic.
+     */
+    getFinalRules(): PageLabel[] {
+        return this.rules.map(r => ({
+            pageNum: r.fromPage,
+            numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay)!,
+            labelPrefix: r.prefix || null,
+            firstPage: r.start
+        }));
     }
 
     addRule(rule: PageLabelRule) {

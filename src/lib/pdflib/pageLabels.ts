@@ -14,15 +14,23 @@ const PDF_STYLE_TO_ENUM: Record<string, PageLabelNumberingStyle> = {
 };
 
 /**
- * Extract PageLabel rules from a PDF using pdf-lib in the frontend.
- * Optimized to be extremely fast and bypass Rust lopdf bottlenecks.
+ * Inverse mapping: internal enum to PDF style characters.
  */
-export async function getPageLabelRulesFromPdf(arrayBuffer: ArrayBuffer): Promise<PageLabel[]> {
+const ENUM_TO_PDF_STYLE: Record<string, string> = {
+    [PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS]: 'D',
+    [PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS]: 'R',
+    [PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS]: 'r',
+    [PageLabelNumberingStyle.UPPERCASE_LETTERS]: 'A',
+    [PageLabelNumberingStyle.LOWERCASE_LETTERS]: 'a',
+};
+
+/**
+ * Extract PageLabel rules from a PDF using pdf-lib in the frontend.
+ */
+export async function getPageLabelRules(data: Uint8Array | ArrayBuffer): Promise<PageLabel[]> {
     try {
-        const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        const pdfDoc = await PDFDocument.load(data, { ignoreEncryption: true });
         const catalog = pdfDoc.catalog;
-        
-        // Use context.lookup to safely resolve indirect references
         const resolvedPageLabels = pdfDoc.context.lookup(catalog.get(PDFName.of('PageLabels')));
 
         if (!resolvedPageLabels || !(resolvedPageLabels instanceof PDFDict)) {
@@ -30,13 +38,11 @@ export async function getPageLabelRulesFromPdf(arrayBuffer: ArrayBuffer): Promis
         }
 
         const resolvedNums = pdfDoc.context.lookup(resolvedPageLabels.get(PDFName.of('Nums')));
-
         if (!resolvedNums || !(resolvedNums instanceof PDFArray)) {
             return [];
         }
 
         const rules: PageLabel[] = [];
-        
         for (let i = 0; i < resolvedNums.size(); i += 2) {
             const indexObj = pdfDoc.context.lookup(resolvedNums.get(i));
             const labelDict = pdfDoc.context.lookup(resolvedNums.get(i + 1));
@@ -45,27 +51,22 @@ export async function getPageLabelRulesFromPdf(arrayBuffer: ArrayBuffer): Promis
                 continue;
             }
 
-            const pageNum = indexObj.asNumber() + 1; // 0-based to 1-based
+            const pageNum = indexObj.asNumber() + 1;
             
-            // Extract Style (S)
             let numberingStyle = PageLabelNumberingStyle.NONE;
             const s = pdfDoc.context.lookup(labelDict.get(PDFName.of('S')));
             if (s instanceof PDFName) {
                 numberingStyle = PDF_STYLE_TO_ENUM[s.asString()] || PageLabelNumberingStyle.NONE;
             } else {
-                // If S is missing, spec says it's Decimal by default
                 numberingStyle = PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
             }
 
-            // Extract Prefix (P)
-            // Supports both literal strings (PDFString) and hex strings (PDFHexString)
             let labelPrefix: string | null = null;
             const p = pdfDoc.context.lookup(labelDict.get(PDFName.of('P')));
             if (p instanceof PDFString || p instanceof PDFHexString) {
                 labelPrefix = p.decodeText();
             }
 
-            // Extract Start Number (St)
             let firstPage = 1;
             const st = pdfDoc.context.lookup(labelDict.get(PDFName.of('St')));
             if (st instanceof PDFNumber) {
@@ -75,12 +76,61 @@ export async function getPageLabelRulesFromPdf(arrayBuffer: ArrayBuffer): Promis
             rules.push({ pageNum, numberingStyle, labelPrefix, firstPage });
         }
 
-        return rules
-        // Final safety: Ensure rules are sorted by page index
-        // return rules.sort((a, b) => a.pageNum - b.pageNum);
-
+        return rules.sort((a, b) => a.pageNum - b.pageNum);
     } catch (e) {
         console.error("[PdfLib] Failed to parse page labels:", e);
         return [];
     }
+}
+
+/**
+ * Set PageLabel rules in a PDF using pdf-lib and return the modified bytes.
+ */
+export async function setPageLabelRules(data: Uint8Array | ArrayBuffer, rules: PageLabel[]): Promise<Uint8Array> {
+    const pdfDoc = await PDFDocument.load(data, { ignoreEncryption: true });
+    const { context } = pdfDoc;
+
+    // 1. Create the Nums array: [index, dict, index, dict...]
+    const nums = context.obj([]);
+    
+    // Sort rules by pageNum (required by spec)
+    const sortedRules = [...rules].sort((a, b) => a.pageNum - b.pageNum);
+
+    for (const rule of sortedRules) {
+        const pageIndex = Math.max(0, rule.pageNum - 1);
+        const labelDict = context.obj({});
+
+        // Set Style (S)
+        const pdfStyleChar = ENUM_TO_PDF_STYLE[rule.numberingStyle];
+        if (pdfStyleChar) {
+            labelDict.set(PDFName.of('S'), PDFName.of(pdfStyleChar));
+        }
+
+        // Set Prefix (P)
+        if (rule.labelPrefix) {
+            labelDict.set(PDFName.of('P'), PDFString.of(rule.labelPrefix));
+        }
+
+        // Set Start Number (St)
+        if (rule.firstPage !== undefined && rule.firstPage !== 1) {
+            labelDict.set(PDFName.of('St'), PDFNumber.of(rule.firstPage));
+        } else if (rule.firstPage === 1) {
+            // Optional but good for clarity, usually 1 is default
+            labelDict.set(PDFName.of('St'), PDFNumber.of(1));
+        }
+
+        nums.push(PDFNumber.of(pageIndex));
+        nums.push(labelDict);
+    }
+
+    // 2. Create the PageLabels dictionary
+    const pageLabelsDict = context.obj({
+        Nums: nums
+    });
+
+    // 3. Update Catalog
+    pdfDoc.catalog.set(PDFName.of('PageLabels'), pageLabelsDict);
+
+    // 4. Save and return
+    return await pdfDoc.save();
 }

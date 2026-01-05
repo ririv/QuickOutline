@@ -2,8 +2,9 @@ import { messageStore } from '@/stores/messageStore.svelte.ts';
 import { docStore } from '@/stores/docStore.svelte.js';
 import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
 import { PageLabelNumberingStyle, pageLabelStyleMap } from '@/lib/styleMaps.ts';
-import { setPageLabels, type PageLabel } from '@/lib/api/rust_pdf.ts';
+import { type PageLabel } from '@/lib/pdf-processing/page-label';
 import { pageLabelService } from '@/lib/services/PageLabelService';
+import { formatError } from '@/lib/utils/error';
 
 export function usePageLabelActions() {
     function addRule() {
@@ -52,24 +53,19 @@ export function usePageLabelActions() {
         }
     }
 
-    function apply() {
+    async function apply() {
         if (!docStore.currentFilePath) {
             messageStore.add("No file opened.", "ERROR");
             return;
         }
 
-        const rules: PageLabel[] = pageLabelStore.rules.map(r => ({
-            pageNum: r.fromPage,
-            firstPage: r.start,
-            labelPrefix: r.prefix,
-            numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
-        }));
-        
-        setPageLabels(docStore.currentFilePath, rules, null).then(() => {
-             messageStore.add("Page labels applied successfully!", "SUCCESS");
-        }).catch(e => {
-             messageStore.add("Failed to apply page labels: " + e.message, "ERROR");
-        });
+        try {
+            const rules = pageLabelStore.getFinalRules();
+            const destPath = await pageLabelService.saveRulesAsNewFile(docStore.currentFilePath, rules);
+            messageStore.add("Page labels applied and saved to: " + destPath, "SUCCESS");
+        } catch (e: any) {
+            messageStore.add("Failed to apply page labels: " + formatError(e), "ERROR");
+        }
     }
 
     return {

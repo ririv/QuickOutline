@@ -92,7 +92,7 @@ class DocStore {
             // Optimization: Use pdf-lib in frontend to parse rules instead of slow Rust lopdf
             console.time("5. Metadata:PageLabels");
             const fileBytes = await readFile(path);
-            const rules = await pageLabelService.getRulesFromBuffer(fileBytes.buffer);
+            const rules = await pageLabelService.getRulesFromData(fileBytes);
             console.log(rules);
             const labels = await pageLabelService.simulateLabels(rules, newContext.pageCount) || [];
             

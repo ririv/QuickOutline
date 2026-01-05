@@ -1,11 +1,12 @@
-import { getPageLabels as getPageLabelsRust, getPageLabelRules as getPageLabelRulesRust, simulatePageLabels as simulatePageLabelsRust } from '@/lib/api/rust_pdf';
+import { getPageLabels as getPageLabelsRust, simulatePageLabels as simulatePageLabelsRust } from '@/lib/api/rust_pdf';
 import { type PageLabel } from '@/lib/pdf-processing/page-label';
-import { getPageLabelRulesFromPdf } from '@/lib/pdflib/pageLabels';
+import { getPageLabelRules, setPageLabelRules } from '@/lib/pdflib/pageLabels';
+import { readFile, writeFile } from "@tauri-apps/plugin-fs";
+import { addSuffixToPath } from "@/lib/utils/path";
 
 class PageLabelService {
     /**
      * Get page labels for the provided PDF document using Rust backend.
-     * Returns a flattened array of label strings (e.g. ["i", "ii", "1", "2"]).
      */
     async getPageLabels(path: string): Promise<string[] | null> {
         if (!path) return null;
@@ -18,25 +19,36 @@ class PageLabelService {
     }
 
     /**
-     * Gets the structured page label rules from the file using Rust backend.
-     * Deprecated for large files: use getRulesFromBuffer instead.
+     * Extract rules using pdf-lib in the frontend (Fast).
      */
-    async getRules(path: string): Promise<PageLabel[]> {
-        if (!path) return [];
-        try {
-            // Casting because the interfaces are structurally identical but technically different types
-            return await getPageLabelRulesRust(path) as unknown as PageLabel[];
-        } catch (e) {
-            console.error("Failed to get page label rules from Rust:", e);
-            return [];
-        }
+    async getRulesFromData(data: Uint8Array | ArrayBuffer): Promise<PageLabel[]> {
+        return getPageLabelRules(data);
     }
 
     /**
-     * Extract rules using pdf-lib in the frontend (Fast).
+     * Business Logic: Applies the rules to the PDF file and saves as a new file.
+     * @param srcPath The original PDF path.
+     * @param rules The rules to apply.
+     * @returns The path of the newly saved file.
      */
-    async getRulesFromBuffer(buffer: ArrayBuffer): Promise<PageLabel[]> {
-        return getPageLabelRulesFromPdf(buffer);
+    async saveRulesAsNewFile(srcPath: string, rules: PageLabel[]): Promise<string> {
+        const destPath = addSuffixToPath(srcPath);
+        
+        try {
+            // 1. Read original bytes
+            const fileBytes = await readFile(srcPath);
+            
+            // 2. Modify in memory via pdf-lib
+            const newBytes = await setPageLabelRules(fileBytes, rules);
+            
+            // 3. Write new file
+            await writeFile(destPath, newBytes);
+            
+            return destPath;
+        } catch (e) {
+            console.error("Error in saveRulesAsNewFile:", e);
+            throw e; // Re-throw to be caught by the caller's formatError
+        }
     }
 
     /**
@@ -44,6 +56,7 @@ class PageLabelService {
      */
     async simulateLabels(rules: PageLabel[], totalPages: number): Promise<string[]> {
         try {
+            // Note: We cast to any for Rust IPC because the backend expects its own PageLabel structure
             return await simulatePageLabelsRust(rules as any, totalPages);
         } catch (e) {
             console.error("Failed to simulate page labels:", e);

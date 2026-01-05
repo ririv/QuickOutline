@@ -25,6 +25,7 @@
     "fs:allow-open",
     "fs:allow-read",
     "fs:allow-seek",
+    "fs:allow-write-file",
     {
       "identifier": "fs:scope",
       "allow": [
