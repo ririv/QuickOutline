@@ -115,9 +115,10 @@ async fn get_outline_as_bookmark(
     offset: i32
 ) -> Result<Bookmark, String> {
     state.call(move |worker| -> Result<Bookmark, String> {
-        let session = worker.get_session(&path).map_err(|e| e.to_string())?;
-        let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
-        crate::pdf_outline::processor::get_outline(&doc, offset).map_err(|e| e.to_string())
+        let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
+        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+        let adapter = crate::pdf::lopdf::outline_adapter::LopdfOutlineAdapter::new(doc);
+        crate::pdf_outline::processor::PdfOutlineProcessor::get_outline(&adapter, offset).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?
 }
 
@@ -136,11 +137,14 @@ async fn save_outline(
     let dest_path_clone = actual_dest.clone();
 
     state.call(move |worker| -> Result<(), String> {
-        let session = worker.get_session(&src_path).map_err(|e| e.to_string())?;
-        let mut doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
-        crate::pdf_outline::processor::set_outline_in_doc(&mut doc, bookmark_root, offset, scale)
+        let session = worker.get_session_mut(&src_path).map_err(|e| e.to_string())?;
+        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+        
+        let mut adapter = crate::pdf::lopdf::outline_adapter::LopdfOutlineAdapter::new(doc);
+        crate::pdf_outline::processor::PdfOutlineProcessor::set_outline(&mut adapter, bookmark_root, offset, scale)
             .map_err(|e| format!("Failed to set outline: {}", e))?;
-        doc.save(&dest_path_clone).map(|_| ()).map_err(|e| format!("Failed to save PDF: {}", e))
+            
+        adapter.doc.save(&dest_path_clone).map(|_| ()).map_err(|e| format!("Failed to save PDF: {}", e))
     }).await.map_err(|e| e.to_string())??;
     
     Ok(actual_dest)

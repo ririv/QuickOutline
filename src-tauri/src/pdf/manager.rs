@@ -24,14 +24,38 @@ pub struct PdfSession {
     pub mode: LoadMode,
     pub path: String,
     pub pdfium_doc: Option<PdfDocument<'static>>,
+    pub lopdf_doc: Option<lopdf::Document>,
     pub memory_ptr: Option<*mut [u8]>,
     pub render_cache: LruCache<(u16, String), Vec<u8>>,
 }
 
 impl PdfSession {
+    pub fn get_lopdf_doc_mut(&mut self) -> Result<&mut lopdf::Document> {
+        if self.lopdf_doc.is_none() {
+            let start = std::time::Instant::now();
+            let doc = match self.mode {
+                LoadMode::DirectFile => {
+                    lopdf::Document::load(&self.path)
+                        .map_err(|e| format_err!("Lopdf load failed: {}", e))?
+                },
+                LoadMode::MemoryBuffer => {
+                    if let Some(ptr) = self.memory_ptr {
+                        let slice = unsafe { &*ptr };
+                        lopdf::Document::load_mem(slice)
+                            .map_err(|e| format_err!("Lopdf load mem failed: {}", e))?
+                    } else {
+                        return Err(format_err!("Memory mode but no memory pointer found"));
+                    }
+                }
+            };
+            debug!("[PdfSession] First-time lopdf::Document::load took {:?}", start.elapsed());
+            self.lopdf_doc = Some(doc);
+        }
+        Ok(self.lopdf_doc.as_mut().unwrap())
+    }
+
     pub fn load_lopdf_doc(&self) -> Result<lopdf::Document> {
-        let start = std::time::Instant::now();
-        let doc = match self.mode {
+        match self.mode {
             LoadMode::DirectFile => {
                 lopdf::Document::load(&self.path)
                     .map_err(|e| format_err!("Lopdf load failed: {}", e))
@@ -45,15 +69,14 @@ impl PdfSession {
                     Err(format_err!("Memory mode but no memory pointer found"))
                 }
             }
-        };
-        debug!("[PdfSession] lopdf::Document::load took {:?}", start.elapsed());
-        doc
+        }
     }
 }
 
 impl Drop for PdfSession {
     fn drop(&mut self) {
         self.pdfium_doc = None;
+        self.lopdf_doc = None;
         if let Some(ptr) = self.memory_ptr {
             unsafe { let _ = Box::from_raw(ptr); }
             info!("[PdfSession] Freed memory buffer for: {}", self.path);
@@ -99,7 +122,7 @@ pub struct PdfWorkerInternalState {
 impl PdfWorkerInternalState {
     fn new() -> Result<Self> {
         info!("[PDF Worker] Init. CWD: {:?}", std::env::current_dir());
-        let pdfium = crate::pdf::get_pdfium()
+        let pdfium = crate::pdf::pdfium_render::get_pdfium()
             .map_err(|e| format_err!("[PDF Worker] {}", e))?;
         Ok(Self {
             pdfium,
@@ -130,6 +153,7 @@ impl PdfWorkerInternalState {
                     mode,
                     path: path.clone(),
                     pdfium_doc: Some(doc),
+                    lopdf_doc: None,
                     memory_ptr: None,
                     render_cache: LruCache::new(NonZeroUsize::new(50).unwrap()),
                 }
@@ -147,6 +171,7 @@ impl PdfWorkerInternalState {
                     mode,
                     path: path.clone(),
                     pdfium_doc: Some(doc),
+                    lopdf_doc: None,
                     memory_ptr: Some(ptr),
                     render_cache: LruCache::new(NonZeroUsize::new(50).unwrap()),
                 }
@@ -201,9 +226,6 @@ impl PdfWorkerInternalState {
         let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
         
         // Safety: We transmute the lifetime to 'static to satisfy the Trait expectations.
-        // This is safe here because PdfiumDocumentAdapter is created on the stack and 
-        // destroyed before this method returns, and the underlying PdfDocument 
-        // remains valid in the session throughout this call.
         let static_doc: &pdfium_render::prelude::PdfDocument<'static> = unsafe { 
             std::mem::transmute(doc) 
         };
@@ -233,4 +255,3 @@ pub fn init_pdf_worker() -> PdfWorker {
 
     PdfWorker(tx)
 }
-
