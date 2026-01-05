@@ -28,21 +28,24 @@
     }: Props = $props();
 
     let src = $state("");
-    let loading = $state(true); // 只要图片没渲染出来，就认为是 loading 状态
+    let loading = $state(true);
+    let fromCache = $state(false); // 标记是否命中缓存
+    
     let container: HTMLElement | undefined = $state();
     let loadTimeout: number | undefined;
+    
     let observer: IntersectionObserver | undefined;
     let active = true;
     let isIntersecting = $state(false);
 
+    // 核心加载逻辑
     async function load() {
         if (!active) return;
         const path = docStore.currentFilePath;
         if (!path) return;
 
-        // 检查外部缓存
         if (cache?.has(index)) {
-            applySource(cache.get(index)!);
+            applySource(cache.get(index)!, true);
             return;
         }
 
@@ -50,24 +53,25 @@
             const url = await pdfRenderService.renderPage(path, index, scaleOrType);
             if (active) {
                 cache?.set(index, url);
-                applySource(url);
+                applySource(url, false);
             }
         } catch (e) {
             console.error(`[LazyPdfImage] Failed to load page ${index}:`, e);
+            loading = false;
         }
     }
 
-    function applySource(url: string) {
+    function applySource(url: string, cached: boolean) {
         src = url;
-        // 注意：这里不设 loading = false。
-        // loading 只有在 img 标签触发 onload 事件后才变为 false。
-        // 这样可以确保图片数据真正解码并准备好渲染时才显示，避免白屏。
+        fromCache = cached;
+        // 如果是缓存命中，我们甚至可以乐观地认为 loading = false，
+        // 但为了稳妥（等待 onload），我们只用 fromCache 来控制 Spinner 不显示
     }
 
     function handleImgLoad(e: Event) {
         const img = e.currentTarget as HTMLImageElement;
-        // 图片已就绪，开始淡入
         loading = false;
+
         if (onLoad && img.naturalWidth > 0) {
             onLoad({
                 width: img.naturalWidth,
@@ -77,20 +81,19 @@
         }
     }
 
-    // 1. 监听可视区域
+    // 1. Intersection Observer
     $effect(() => {
         if (!container) return;
 
         observer = new IntersectionObserver((entries) => {
             isIntersecting = entries[0].isIntersecting;
-            if (isIntersecting) {
+            
+            if (isIntersecting && !src) {
                 if (loadTimeout) clearTimeout(loadTimeout);
                 loadTimeout = window.setTimeout(load, debounce);
-            } else {
-                if (loadTimeout) {
-                    clearTimeout(loadTimeout);
-                    loadTimeout = undefined;
-                }
+            } else if (!isIntersecting) {
+                if (loadTimeout) clearTimeout(loadTimeout);
+                loadTimeout = undefined;
             }
         }, { rootMargin });
 
@@ -102,26 +105,33 @@
         };
     });
 
-    // 2. 当 index 变化且已经在视口内时，触发重新加载 (用于虚拟列表复用)
+    // 2. Index 变化监听 (Fast Path)
     $effect(() => {
-        // 依赖追踪：index 变化
         const _i = index;
         
-        // 立即重置状态，显示骨架屏
-        loading = true;
-        src = ""; 
+        if (loadTimeout) clearTimeout(loadTimeout);
 
-        if (isIntersecting) {
-            if (loadTimeout) clearTimeout(loadTimeout);
-            loadTimeout = window.setTimeout(load, debounce);
+        // Fast Path: 缓存命中
+        if (cache?.has(index)) {
+            applySource(cache.get(index)!, true);
+        } else {
+            // Slow Path: 缓存未命中
+            src = ""; 
+            loading = true; 
+            fromCache = false;
+            
+            if (isIntersecting) {
+                loadTimeout = window.setTimeout(load, debounce);
+            }
         }
     });
 
-    // 3. 当文档版本变化时，完全重置
+    // 3. 全局重置
     $effect(() => {
         const _v = docStore.version;
         src = "";
         loading = true;
+        fromCache = false;
     });
 
     onDestroy(() => {
@@ -130,17 +140,22 @@
 </script>
 
 <div bind:this={container} class="relative overflow-hidden {className}">
-    <!-- 骨架屏：始终位于底层 (z-0) -->
-    <div class="absolute inset-0 flex items-center justify-center bg-gray-50 transition-opacity duration-300 z-0">
-        <div class="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
-    </div>
+    <!-- 背景：白色 -->
+    <div class="absolute inset-0 bg-white z-0"></div>
 
-    <!-- 图片：位于上层 (z-10)，加载时透明，加载完淡入 -->
+    <!-- Spinner：仅在未命中缓存且正在加载时显示 -->
+    {#if loading && !fromCache}
+        <div class="absolute inset-0 flex items-center justify-center z-10">
+            <div class="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+        </div>
+    {/if}
+
+    <!-- 图片 -->
     {#if src}
         <img 
             {src} 
             {alt} 
-            class="relative z-10 w-full h-full object-contain transition-opacity duration-300 {loading ? 'opacity-0' : 'opacity-100'} {imgClass}"
+            class="relative z-20 w-full h-full object-contain transition-opacity duration-300 {loading ? 'opacity-0' : 'opacity-100'} {imgClass}"
             onload={handleImgLoad}
         />
     {/if}
