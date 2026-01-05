@@ -195,6 +195,22 @@ impl PdfWorkerInternalState {
         let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
         Ok(doc.pages().len())
     }
+
+    pub fn process_extract_toc(&mut self, path: String) -> Result<Vec<String>> {
+        let session = self.get_session(&path)?;
+        let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
+        
+        // Safety: We transmute the lifetime to 'static to satisfy the Trait expectations.
+        // This is safe here because PdfiumDocumentAdapter is created on the stack and 
+        // destroyed before this method returns, and the underlying PdfDocument 
+        // remains valid in the session throughout this call.
+        let static_doc: &pdfium_render::prelude::PdfDocument<'static> = unsafe { 
+            std::mem::transmute(doc) 
+        };
+
+        let adapter = crate::pdf::pdfium_render::adapter::PdfiumDocumentAdapter(static_doc);
+        crate::pdf_analysis::TocExtractor::extract_toc(&adapter)
+    }
 }
 
 pub fn init_pdf_worker() -> PdfWorker {

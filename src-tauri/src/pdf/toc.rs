@@ -7,8 +7,7 @@ use anyhow::Result;
 use tauri::{State};
 use crate::pdf::manager::{PdfWorker, PdfSession, LoadMode};
 use crate::pdf::page_label::{PageLabelProcessor, PageLabel, PageLabelNumberingStyle};
-use crate::pdf::merge::merge_pdfs;
-use tokio::sync::oneshot;
+use crate::pdf::pdfium_render::merge::merge_pdfs;
 use log::info;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -204,9 +204,7 @@ async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, St
 #[tauri::command]
 async fn extract_toc(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
     state.call(move |worker| -> Result<Vec<String>, String> {
-        let session = worker.get_session(&path).map_err(|e| e.to_string())?;
-        let doc = session.pdfium_doc.as_ref().ok_or_else(|| "Session missing document".to_string())?;
-        pdf_analysis::TocExtractor::extract_toc(doc).map_err(|e| e.to_string())
+        worker.process_extract_toc(path).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?
 }
 
@@ -319,8 +317,8 @@ pub fn run() {
             printer::print_to_pdf, 
             pdf::commands::load_pdf_document,
             pdf::commands::close_pdf_document,
-            pdf::render::render_pdf_page, 
-            pdf::render::get_pdf_page_count,
+            pdf::pdfium_render::render::render_pdf_page, 
+            pdf::pdfium_render::render::get_pdf_page_count,
             get_outline_as_bookmark,
             save_outline,
             set_page_labels,

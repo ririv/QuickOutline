@@ -1,14 +1,41 @@
-use std::sync::Arc;
 use std::collections::HashMap;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Serialize, Deserialize};
-use pdfium_render::prelude::PdfRect;
 
 #[allow(clippy::expect_used)]
 static MATH_SYMBOL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\p{Sm}").expect("Invalid Regex"));
 #[allow(clippy::expect_used)]
 static TITLE_CASE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\p{Lt}").expect("Invalid Regex"));
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct PdfRectValue {
+    pub left: f32,
+    pub top: f32,
+    pub right: f32,
+    pub bottom: f32,
+}
+
+impl PdfRectValue {
+    pub fn width(&self) -> f32 { (self.right - self.left).abs() }
+    pub fn height(&self) -> f32 { (self.top - self.bottom).abs() }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnalyzableChar {
+    pub text: String,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub left: f32,
+    pub right: f32,
+    pub top: f32,
+    pub bottom: f32,
+    pub font_name: String,
+    pub font_size: f32,
+    pub skew: f64,
+}
 
 pub struct DocumentStats {
     pub dominant_text_style: PdfStyle,
@@ -118,28 +145,9 @@ impl PdfStyle {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SerializableRect {
-    pub left: f32,
-    pub top: f32,
-    pub right: f32,
-    pub bottom: f32,
-}
-
-impl From<PdfRect> for SerializableRect {
-    fn from(rect: PdfRect) -> Self {
-        Self {
-            left: rect.left.value,
-            top: rect.top.value,
-            right: rect.right.value,
-            bottom: rect.bottom.value,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdfLine {
     pub text: String,
-    pub bounds: SerializableRect,
+    pub bounds: PdfRectValue,
     pub avg_font_size: f32,
     pub page_num: i32,
     pub style: PdfStyle,
@@ -149,11 +157,11 @@ pub struct PdfLine {
 }
 
 impl PdfLine {
-    pub fn new(bounds: PdfRect, page_num: i32, style: PdfStyle, skew: f64, y: f32) -> Self {
+    pub fn new(bounds: PdfRectValue, page_num: i32, style: PdfStyle, skew: f64, y: f32) -> Self {
         let font_size = style.get_size();
         Self {
             text: String::new(),
-            bounds: bounds.into(),
+            bounds,
             avg_font_size: font_size,
             page_num,
             style,
@@ -163,10 +171,10 @@ impl PdfLine {
         }
     }
 
-    pub fn append_char_replica(&mut self, text: &str, bounds: PdfRect, space_width: f32, last_right: f32) {
+    pub fn append_char_replica(&mut self, text: &str, bounds: PdfRectValue, space_width: f32, last_right: f32) {
         if text.trim().is_empty() { return; }
 
-        let h_gap = bounds.left.value - last_right;
+        let h_gap = bounds.left - last_right;
         
         if h_gap > space_width * 5.0 {
             self.text.push_str("     ");
@@ -174,7 +182,7 @@ impl PdfLine {
             self.text.push(' ');
         }
 
-        let char_fs = (bounds.top.value - bounds.bottom.value).abs();
+        let char_fs = (bounds.top - bounds.bottom).abs();
         if self.text.is_empty() {
             self.avg_font_size = char_fs;
         } else {
@@ -190,11 +198,11 @@ impl PdfLine {
         self.chunks.push(chunk);
     }
 
-    pub fn extend_bounds(&mut self, other: PdfRect) {
-        if other.left.value < self.bounds.left { self.bounds.left = other.left.value; }
-        if other.right.value > self.bounds.right { self.bounds.right = other.right.value; }
-        if other.top.value > self.bounds.top { self.bounds.top = other.top.value; }
-        if other.bottom.value < self.bounds.bottom { self.bounds.bottom = other.bottom.value; }
+    pub fn extend_bounds(&mut self, other: PdfRectValue) {
+        if other.left < self.bounds.left { self.bounds.left = other.left; }
+        if other.right > self.bounds.right { self.bounds.right = other.right; }
+        if other.top > self.bounds.top { self.bounds.top = other.top; }
+        if other.bottom < self.bounds.bottom { self.bounds.bottom = other.bottom; }
     }
 }
 
@@ -222,7 +230,6 @@ impl PdfBlock {
 
     pub fn get_text_plain(&mut self) -> &str {
         if self.cached_text.is_none() {
-            // Logic check uses space (100% Replica of Java's getText)
             let text = self.lines.iter()
                 .map(|l| l.text.as_str())
                 .collect::<Vec<_>>()
@@ -233,8 +240,6 @@ impl PdfBlock {
     }
 
     pub fn get_text_reconstructed(&self) -> String {
-        // 100% Replica of Java's reconstructBlockWithSpaces
-        // Uses chunks for precise spacing
         let mut text_builder = String::new();
         
         for (line_idx, line) in self.lines.iter().enumerate() {
@@ -270,7 +275,6 @@ impl PdfBlock {
             }
         }
         
-        // Normalize line endings to LF to prevent frontend issues (e.g. CodeMirror auto-fix loops)
         text_builder.replace("\r\n", "\n").replace('\r', "\n")
     }
 
@@ -280,7 +284,6 @@ impl PdfBlock {
             self.char_pattern = Some(CharacterPattern::new(&text));
         }
         self.char_pattern.as_ref().unwrap_or_else(|| {
-            // This should be logically impossible given the check above, but we handle it safely
             static EMPTY_PATTERN: CharacterPattern = CharacterPattern { counts: [0; 12], total: 0 };
             &EMPTY_PATTERN
         })

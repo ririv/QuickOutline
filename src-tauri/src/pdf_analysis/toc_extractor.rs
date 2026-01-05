@@ -1,31 +1,26 @@
-use pdfium_render::prelude::*;
 use crate::pdf_analysis::processor::PdfProcessor;
 use crate::pdf_analysis::toc_analyser::TocAnalyser;
 use crate::pdf_analysis::models::PdfBlock;
-use anyhow::{Result, format_err};
+use crate::pdf_analysis::traits::PdfDocumentTrait;
+use anyhow::Result;
 use std::collections::BTreeMap;
-use rayon::prelude::*; // Phase 2/3 are CPU-bound and safe for Rayon
+use rayon::prelude::*;
 use log::{info, debug};
 
 pub struct TocExtractor;
 
 impl TocExtractor {
-    pub fn extract_toc(doc: &PdfDocument) -> Result<Vec<String>> {
-        info!("[TocExtractor] Starting extraction (Cached Document)");
+    pub fn extract_toc<D: PdfDocumentTrait + ?Sized>(doc: &D) -> Result<Vec<String>> {
+        info!("[TocExtractor] Starting extraction (Abstract Document)");
         
-        // 1. Get page count directly from the passed document
-        let num_pages = doc.pages().len();
+        let num_pages = doc.page_count();
         info!("[TocExtractor] Total pages: {}", num_pages);
 
         if num_pages == 0 {
             return Ok(Vec::new());
         }
 
-        // 2. Strategy: Serial Extraction (Plan S)
-        // Due to persistent stability issues with multi-threaded PDFium usage (Deadlocks on dlopen, Segfaults on shared handles),
-        // we fallback to serial extraction to guarantee stability. Rust's single-thread performance is still very good.
-        // We still iterate by chunks to keep the logic structure similar and allow future parallelization attempts.
-        let chunk_size = 50; // Reasonable batch size
+        let chunk_size = 50;
         let chunks: Vec<(u16, u16)> = (0..num_pages)
             .step_by(chunk_size)
             .map(|start| {
@@ -38,15 +33,13 @@ impl TocExtractor {
         
         let mut all_blocks = Vec::new();
 
-        // Single Pdfium instance, single thread, serial execution. Safe.
-        // We assume the caller (PdfWorker) is ensuring thread safety.
         {
             for (start, end) in chunks {
                 debug!("[TocExtractor] Processing chunk {}..{}", start, end);
                 for i in start..end {
-                    if let Ok(page) = doc.pages().get(i) {
+                    if let Ok(page) = doc.get_page(i) {
                         let page_num = i as i32 + 1;
-                        let page_blocks = PdfProcessor::extract_blocks_from_page(&page, page_num);
+                        let page_blocks = PdfProcessor::extract_blocks_from_page(page.as_ref(), page_num);
                         all_blocks.extend(page_blocks);
                     }
                 }
@@ -59,11 +52,9 @@ impl TocExtractor {
             return Ok(Vec::new());
         }
 
-        // 3. Phase 2: Global Style Analysis (Safe for Rayon or Serial)
         let dominant_style = TocAnalyser::find_dominant_style(&all_blocks);
         info!("[TocExtractor] Dominant style: {:?} (Size: {})", dominant_style.font_name, dominant_style.get_size());
 
-        // 4. Phase 3: Parallel Analysis per Page (Pure CPU-bound, perfectly safe for Rayon)
         let mut blocks_by_page: BTreeMap<i32, Vec<PdfBlock>> = BTreeMap::new();
         for block in all_blocks {
             blocks_by_page.entry(block.get_page_num()).or_default().push(block);
