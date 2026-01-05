@@ -12,6 +12,7 @@ mod pdf_analysis;
 
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager, Runtime};
+use tauri::http::{Response, StatusCode};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tauri_plugin_cli::CliExt;
@@ -224,6 +225,8 @@ async fn get_print_workspace_path<R: Runtime>(app: AppHandle<R>) -> Result<Strin
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let pdf_worker = pdf::manager::init_pdf_worker();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default()
             .level(log::LevelFilter::Warn) // Global default: only Warn/Error
@@ -237,11 +240,54 @@ pub fn run() {
         .plugin(tauri_plugin_cli::init())
         .manage(external_editor::ExternalEditorState::new())
         .manage(static_server::LocalServerState::new())
-        .setup(move |app| {
-            // Initialize PDF Worker and manage state
-            let pdf_worker = pdf::manager::init_pdf_worker();
-            app.manage(pdf_worker);
+        .manage(pdf_worker.clone())
+        .register_uri_scheme_protocol("pdfstream", move |_app, request| {
+            let uri = request.uri();
+            let url_str = uri.to_string();
+            
+            // Parse query: pdfstream://render?path=...&page=...&scale=...
+            let url = match url::Url::parse(&url_str) {
+                Ok(u) => u,
+                Err(_) => return Response::builder().status(StatusCode::BAD_REQUEST).body(vec![]).unwrap(),
+            };
 
+            let pairs: std::collections::HashMap<_, _> = url.query_pairs().collect();
+            let path = pairs.get("path").map(|v| v.to_string());
+            let page_index = pairs.get("page").and_then(|v| v.parse::<u16>().ok());
+            let scale = pairs.get("scale").and_then(|v| v.parse::<f32>().ok()).unwrap_or(1.0);
+
+            if let (Some(path), Some(page_index)) = (path, page_index) {
+                let state = pdf_worker.clone();
+                
+                // Execute render synchronously
+                let result = tauri::async_runtime::block_on(async {
+                    state.call(move |worker| {
+                        worker.process_render_request(path, page_index, scale)
+                    }).await
+                });
+
+                match result {
+                    Ok(Ok(png_data)) => {
+                        return Response::builder()
+                            .header("Content-Type", "image/png")
+                            .header("Access-Control-Allow-Origin", "*")
+                            .body(png_data)
+                            .unwrap();
+                    },
+                    Ok(Err(e)) => {
+                        error!("Protocol Render Error: {}", e);
+                        return Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body(e.to_string().into_bytes()).unwrap();
+                    },
+                    Err(e) => {
+                        error!("Worker Error: {}", e);
+                        return Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body(e.to_string().into_bytes()).unwrap();
+                    }
+                }
+            }
+
+            Response::builder().status(StatusCode::BAD_REQUEST).body(vec![]).unwrap()
+        })
+        .setup(move |app| {
             // Setup print workspace on app startup
             let workspace_path = setup_print_workspace(app.handle())?;
 

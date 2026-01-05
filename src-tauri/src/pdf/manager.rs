@@ -59,6 +59,7 @@ impl Drop for PdfSession {
 type Job = Box<dyn FnOnce(&mut PdfWorkerInternalState) + Send>;
 
 // The Sender type to be stored in Tauri State
+#[derive(Clone)]
 pub struct PdfWorker(pub mpsc::Sender<Job>);
 
 impl PdfWorker {
