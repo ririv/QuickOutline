@@ -5,6 +5,7 @@
     import { onDestroy } from 'svelte';
     import PreviewPopup from './PreviewPopup.svelte';
     import VirtualList from './common/VirtualList.svelte';
+    import LazyPdfImage from './common/LazyPdfImage.svelte';
 
     interface Props {
         pageCount?: number;
@@ -22,95 +23,6 @@
 
     // Derived Data
     const originalLabels = $derived(docStore.originalPageLabels || []);
-
-    // --- Action: Loader (Smart with IntersectionObserver) ---
-    function lazyImage(node: HTMLImageElement, index: number) {
-        let active = true;
-        let currentIdx = index;
-        let observer: IntersectionObserver;
-        let loadTimeout: number | undefined;
-        
-        // Find sibling skeleton
-        const skeleton = node.nextElementSibling as HTMLElement;
-
-        function showSkeleton() {
-            node.style.display = 'none'; 
-            if (skeleton) skeleton.style.display = 'flex'; 
-        }
-
-        function hideSkeleton() {
-            node.style.display = 'block'; 
-            if (skeleton) skeleton.style.display = 'none'; 
-        }
-
-        function load(idx: number) {
-            if (!active) return;
-            
-            showSkeleton();
-
-            if (thumbnailCache.has(idx)) {
-                node.src = thumbnailCache.get(idx)!;
-                hideSkeleton();
-                return;
-            }
-
-            const path = docStore.currentFilePath;
-            if (path) {
-                pdfRenderService.renderPage(path, idx, 'thumbnail')
-                    .then(url => {
-                        if (active && currentIdx === idx) {
-                            thumbnailCache.set(idx, url);
-                            node.src = url;
-                            hideSkeleton();
-                        }
-                    })
-                    .catch(e => console.error(e));
-            }
-        }
-
-        // Initialize Observer
-        observer = new IntersectionObserver((entries) => {
-            const entry = entries[0];
-            if (entry.isIntersecting) {
-                // Debounce load
-                loadTimeout = window.setTimeout(() => {
-                    load(currentIdx);
-                    loadTimeout = undefined;
-                }, 200);
-            } else {
-                if (loadTimeout) {
-                    clearTimeout(loadTimeout);
-                    loadTimeout = undefined;
-                }
-            }
-        }, {
-             rootMargin: "200px 0px"
-        });
-
-        observer.observe(node.parentElement || node);
-
-        return {
-            update(newIndex: number) {
-                if (newIndex !== currentIdx) {
-                    currentIdx = newIndex;
-                    // Reset state
-                    if (loadTimeout) clearTimeout(loadTimeout);
-                    // Re-trigger observer check naturally or force a check?
-                    // Usually observer will re-fire if element moves, but here only index changes.
-                    // Let's force a reload check if already intersecting? 
-                    // Simpler: Just rely on observer staying active. 
-                    // However, if we reuse the node for a new index, we should probably clear the old image.
-                    node.src = ""; // Clear old
-                    showSkeleton(); 
-                }
-            },
-            destroy() { 
-                active = false; 
-                observer.disconnect();
-                if (loadTimeout) clearTimeout(loadTimeout);
-            }
-        };
-    }
 
     // --- Helpers ---
     function getPageLabel(index: number): string {
@@ -189,9 +101,13 @@
                         onmouseleave={handleMouseLeave}
                         role="img"
                     >
-                        <img alt="p{i+1}" use:lazyImage={i} />
-                        
-                        <div class="thumb-skeleton absolute inset-0 -z-10"></div>
+                        <LazyPdfImage
+                            index={i}
+                            scaleOrType="thumbnail"
+                            className="w-full h-full"
+                            imgClass="shadow-sm border border-gray-200 bg-white"
+                            cache={thumbnailCache}
+                        />
                         
                         <div class="absolute top-0 left-0 bg-black/60 text-white text-[9px] font-mono px-1 py-0.5 backdrop-blur-[1px] opacity-80 group-hover:opacity-100 transition-opacity z-10">
                             #{i + 1}
@@ -258,42 +174,6 @@
       height: 127px; 
       position: relative; 
   }
-  
-  .thumb-col img {
-      width: auto;
-      height: auto;
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      display: none; /* Initially hidden */
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: border-color 0.2s;
-  }
-  
-  .thumb-col:hover img { border-color: #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-  
-  .thumb-skeleton { 
-      width: 100%; 
-      height: 100%; 
-      background: #f3f4f6; 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-  }
-  .thumb-skeleton::after {
-      content: "";
-      width: 16px;
-      height: 16px;
-      border: 2px solid #e5e7eb;
-      border-top-color: #9ca3af;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
   
   .label-value { line-height: 1.2; margin-top: 4px;}
 

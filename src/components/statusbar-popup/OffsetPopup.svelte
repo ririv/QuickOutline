@@ -3,6 +3,7 @@
   import StyledInput from '../controls/StyledInput.svelte';
   import PreviewPopup from '../PreviewPopup.svelte'; 
   import VirtualList from '../common/VirtualList.svelte';
+  import LazyPdfImage from '../common/LazyPdfImage.svelte';
   import { docStore } from '@/stores/docStore.svelte';
   import { pdfRenderService } from '@/lib/services/PdfRenderService';
   import { onMount, untrack, onDestroy } from 'svelte';
@@ -54,86 +55,6 @@
   }
   
   let hoveredPage = $state<{ src: string, y: number, anchorX: number } | null>(null);
-
-  function lazyImage(node: HTMLImageElement, index: number) {
-      let active = true;
-      let currentIdx = index;
-      let observer: IntersectionObserver;
-      let loadTimeout: number | undefined;
-      
-      const skeleton = node.nextElementSibling as HTMLElement;
-
-      function showSkeleton() {
-          node.style.display = 'none';
-          if (skeleton) skeleton.style.display = 'block';
-      }
-
-      function hideSkeleton() {
-          node.style.display = 'block';
-          if (skeleton) skeleton.style.display = 'none';
-      }
-
-      function load(idx: number) {
-          if (!active) return;
-          showSkeleton();
-
-          if (thumbnailCache.has(idx)) {
-              node.src = thumbnailCache.get(idx)!;
-              hideSkeleton();
-              return;
-          }
-
-          const path = docStore.currentFilePath;
-          if (path) {
-              pdfRenderService.renderPage(path, idx, 'thumbnail')
-                  .then(url => {
-                      if (active && currentIdx === idx) {
-                          thumbnailCache.set(idx, url);
-                          node.src = url;
-                          hideSkeleton();
-                      }
-                  })
-                  .catch(console.error);
-          }
-      }
-
-      // Initialize Observer
-      observer = new IntersectionObserver((entries) => {
-          const entry = entries[0];
-          if (entry.isIntersecting) {
-              // Debounce load
-              loadTimeout = window.setTimeout(() => {
-                  load(currentIdx);
-                  loadTimeout = undefined;
-              }, 200);
-          } else {
-              if (loadTimeout) {
-                  clearTimeout(loadTimeout);
-                  loadTimeout = undefined;
-              }
-          }
-      }, {
-           rootMargin: "200px 0px"
-      });
-
-      observer.observe(node.parentElement || node);
-
-      return {
-          update(newIndex: number) {
-              if (newIndex !== currentIdx) {
-                  currentIdx = newIndex;
-                  if (loadTimeout) clearTimeout(loadTimeout);
-                  node.src = "";
-                  showSkeleton();
-              }
-          },
-          destroy() { 
-              active = false;
-              observer.disconnect();
-              if (loadTimeout) clearTimeout(loadTimeout);
-          }
-      };
-  }
 
   async function handleMouseEnter(e: MouseEvent, index: number) {
       const target = e.currentTarget as HTMLElement;
@@ -236,8 +157,13 @@
                     onmouseleave={handleMouseLeave}
                     role="img" 
                   >
-                      <img use:lazyImage={i} alt="p{i}" class="fade-in"/>
-                      <div class="thumb-skeleton absolute inset-0 -z-10"></div>
+                      <LazyPdfImage
+                        index={i}
+                        scaleOrType="thumbnail"
+                        className="w-full h-full"
+                        imgClass="fade-in rounded-[4px] border border-gray-200"
+                        cache={thumbnailCache}
+                      />
                   </div>
                   
                   <div class="info-col">
@@ -374,29 +300,6 @@
       height: 85px; /* Container Size */
   }
 
-  /* Image fits within container, aspect ratio preserved */
-  .thumb-col img {
-      width: auto;
-      height: auto;
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      
-      border: 1px solid #e5e7eb;
-      border-radius: 4px;
-      background: #fff;
-      display: none; /* Initially hidden */
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      transition: border-color 0.2s;
-  }
-  
-  .thumb-skeleton {
-      width: 100%;
-      height: 100%;
-      background: #f3f4f6;
-      border-radius: 4px;
-  }
-
   .phys-idx {
       font-family: 'JetBrains Mono', 'Consolas', monospace;
       font-size: 10px;
@@ -489,7 +392,4 @@
       font-weight: 600;
       cursor: default;
   }
-
-  .fade-in { animation: fadeIn 0.3s ease-in; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
