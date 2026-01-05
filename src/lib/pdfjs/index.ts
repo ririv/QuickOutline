@@ -19,8 +19,8 @@ export async function loadPdfDocument(src: string | ArrayBuffer | Uint8Array | D
     let config: DocumentInitParameters = {};
     if (typeof src === 'string') {
         config = { url: src };
-    } else if (src instanceof ArrayBuffer || src instanceof Uint8Array) {
-        config = { data: src };
+    } else if (src instanceof ArrayBuffer || ArrayBuffer.isView(src)) {
+        config = { data: src as Uint8Array };
     } else {
         config = { ...src };
     }
