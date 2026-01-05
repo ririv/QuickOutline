@@ -1,18 +1,12 @@
-use pdfium_render::prelude::*;
+use pdfium_render::prelude::{PdfDocument, Pdfium};
 use anyhow::{Result, format_err};
 use tokio::sync::{mpsc, oneshot};
 use std::thread;
-use image::ImageFormat;
-use std::io::Cursor;
 use log::{info, error, debug};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use lru::LruCache;
 use std::num::NonZeroUsize;
-
-// Re-export for use in closures
-pub use crate::pdf::toc::{TocConfig, process_toc_generation};
-pub use crate::pdf_outline::model::{Bookmark, ViewScaleType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum LoadMode {
@@ -186,52 +180,6 @@ impl PdfWorkerInternalState {
         if self.sessions.remove(path).is_some() {
             info!("[PDF Worker] Closed session: {}", path);
         }
-    }
-
-    // Helper methods (exposed for closures)
-    pub fn process_render_request(&mut self, path: String, page_index: u16, scale: f32) -> Result<Vec<u8>> {
-        let session = self.get_session_mut(&path)?;
-        
-        // Check cache
-        let scale_key = format!("{:.2}", scale);
-        if let Some(cached) = session.render_cache.get(&(page_index, scale_key.clone())) {
-            info!("[PDF Worker] Cache hit for page {} scale {}", page_index, scale);
-            return Ok(cached.clone());
-        }
-
-        let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
-        let page = doc.pages().get(page_index)?;
-        let width = (page.width().value * scale) as i32;
-        let height = (page.height().value * scale) as i32;
-        let bitmap = page.render(width, height, None)?;
-        let dynamic_image = bitmap.as_image(); 
-        let mut png_data = Vec::new();
-        let mut cursor = Cursor::new(&mut png_data);
-        dynamic_image.write_to(&mut cursor, ImageFormat::Png)?;
-        
-        // Update cache
-        session.render_cache.put((page_index, scale_key), png_data.clone());
-        
-        Ok(png_data)
-    }
-
-    pub fn process_get_page_count(&mut self, path: String) -> Result<u16> {
-        let session = self.get_session(&path)?;
-        let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
-        Ok(doc.pages().len())
-    }
-
-    pub fn process_extract_toc(&mut self, path: String) -> Result<Vec<String>> {
-        let session = self.get_session(&path)?;
-        let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
-        
-        // Safety: We transmute the lifetime to 'static to satisfy the Trait expectations.
-        let static_doc: &pdfium_render::prelude::PdfDocument<'static> = unsafe { 
-            std::mem::transmute(doc) 
-        };
-
-        let adapter = crate::pdf::pdfium_render::adapter::PdfiumDocumentAdapter(static_doc);
-        crate::pdf_analysis::TocExtractor::extract_toc(&adapter)
     }
 }
 

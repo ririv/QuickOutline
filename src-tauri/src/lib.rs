@@ -214,7 +214,7 @@ async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, St
 #[tauri::command]
 async fn extract_toc(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
     state.call(move |worker| -> Result<Vec<String>, String> {
-        worker.process_extract_toc(path).map_err(|e| e.to_string())
+        pdf::pdfium_render::extractor::internal_extract_toc(worker, path).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?
 }
 
@@ -270,7 +270,7 @@ pub fn run() {
                 // Execute render synchronously
                 let result = tauri::async_runtime::block_on(async {
                     state.call(move |worker| {
-                        worker.process_render_request(path, page_index, scale)
+                        pdf::pdfium_render::render::internal_render_page(worker, path, page_index, scale)
                     }).await
                 });
 

@@ -6,7 +6,7 @@ use anyhow::Result;
 pub struct PdfiumPageAdapter<'a>(pub PdfPage<'a>);
 
 impl<'a> PdfPageTrait for PdfiumPageAdapter<'a> {
-    fn get_analyzable_chars(&self) -> Vec<AnalyzableChar> {
+    fn extract_chars(&self) -> Vec<AnalyzableChar> {
         if let Ok(text) = self.0.text() {
             text.chars().iter()
                 .map(|c| {

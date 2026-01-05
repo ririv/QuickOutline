@@ -2,7 +2,7 @@ use anyhow::Result;
 use crate::pdf_analysis::models::AnalyzableChar;
 
 pub trait PdfPageTrait {
-    fn get_analyzable_chars(&self) -> Vec<AnalyzableChar>;
+    fn extract_chars(&self) -> Vec<AnalyzableChar>;
 }
 
 pub trait PdfDocumentTrait {

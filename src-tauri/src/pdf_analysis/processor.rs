@@ -19,7 +19,7 @@ pub struct PdfProcessor;
 impl PdfProcessor {
     pub fn extract_blocks_from_page(page: &dyn PdfPageTrait, page_num: i32) -> Vec<PdfBlock> {
         let mut blocks: Vec<PdfBlock> = Vec::new();
-        let chars_collection = page.get_analyzable_chars();
+        let chars_collection = page.extract_chars();
 
         // 1. Sort characters by reading order (Top-to-Bottom, Left-to-Right)
         let mut sorted_chars = chars_collection;
