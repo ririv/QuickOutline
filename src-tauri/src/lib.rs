@@ -114,7 +114,7 @@ async fn get_outline_as_bookmark(
     offset: i32
 ) -> Result<Bookmark, String> {
     state.call(move |worker| -> Result<Bookmark, String> {
-        let session = worker.get_or_load(&path).map_err(|e| e.to_string())?;
+        let session = worker.get_session(&path).map_err(|e| e.to_string())?;
         let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
         crate::pdf_outline::processor::get_outline(&doc, offset).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?
@@ -135,7 +135,7 @@ async fn save_outline(
     let dest_path_clone = actual_dest.clone();
 
     state.call(move |worker| -> Result<(), String> {
-        let session = worker.get_or_load(&src_path).map_err(|e| e.to_string())?;
+        let session = worker.get_session(&src_path).map_err(|e| e.to_string())?;
         let mut doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
         crate::pdf_outline::processor::set_outline_in_doc(&mut doc, bookmark_root, offset, scale)
             .map_err(|e| format!("Failed to set outline: {}", e))?;
@@ -156,7 +156,7 @@ async fn set_page_labels(
     let dest_clone = actual_dest.clone();
 
     state.call(move |worker| -> Result<(), String> {
-        let session = worker.get_or_load(&src_path).map_err(|e| e.to_string())?;
+        let session = worker.get_session(&src_path).map_err(|e| e.to_string())?;
         let mut doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
         PageLabelProcessor::set_page_labels_in_doc(&mut doc, rules)
             .map_err(|e| e.to_string())?;
@@ -169,7 +169,7 @@ async fn set_page_labels(
 #[tauri::command]
 async fn get_page_labels(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
     state.call(move |worker| -> Result<Vec<String>, String> {
-        let session = worker.get_or_load(&path).map_err(|e| e.to_string())?;
+        let session = worker.get_session(&path).map_err(|e| e.to_string())?;
         let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
         PageLabelProcessor::get_page_labels_from_doc(&doc).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?
@@ -178,7 +178,7 @@ async fn get_page_labels(state: tauri::State<'_, pdf::manager::PdfWorker>, path:
 #[tauri::command]
 async fn get_page_label_rules(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<PageLabel>, String> {
     state.call(move |worker| -> Result<Vec<PageLabel>, String> {
-        let session = worker.get_or_load(&path).map_err(|e| e.to_string())?;
+        let session = worker.get_session(&path).map_err(|e| e.to_string())?;
         let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
         PageLabelProcessor::get_page_label_rules_from_doc(&doc).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?
@@ -203,7 +203,7 @@ async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, St
 #[tauri::command]
 async fn extract_toc(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
     state.call(move |worker| -> Result<Vec<String>, String> {
-        let session = worker.get_or_load(&path).map_err(|e| e.to_string())?;
+        let session = worker.get_session(&path).map_err(|e| e.to_string())?;
         let doc = session.pdfium_doc.as_ref().ok_or_else(|| "Session missing document".to_string())?;
         pdf_analysis::TocExtractor::extract_toc(doc).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?

@@ -4,6 +4,7 @@ import { pageLabelStore } from './pageLabelStore.svelte';
 import { checkPdf } from '@/lib/pdfjs/pdfChecker';
 import { messageStore } from './messageStore.svelte';
 import { formatError } from '@/lib/utils/error';
+import { loadDocument, closeDocument } from '@/lib/api/rust_pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 /**
@@ -29,6 +30,11 @@ export class DocContext {
             await this.pdfDoc.destroy();
             this.pdfDoc = null;
         }
+        try {
+            await closeDocument(this.path);
+        } catch (e) {
+            console.warn("Failed to close document in Rust backend:", e);
+        }
     }
 }
 
@@ -52,7 +58,10 @@ class DocStore {
                 this.activeDoc = null;
             }
 
-            // 2. Pre-check and get instance (stateless backend handled via URL)
+            // 2. Pre-load in Rust backend (MemoryBuffer mode for better performance and no file locks)
+            await loadDocument(path, 'MemoryBuffer');
+
+            // 3. Pre-check and get instance (stateless backend handled via URL)
             const checkResult = await checkPdf(path);
             
             if (!checkResult.isValid || !checkResult.doc) {
@@ -63,23 +72,25 @@ class DocStore {
                 } else {
                     messageStore.add(`Failed to open PDF: ${checkResult.errorName || 'Unknown error'}`, "ERROR");
                 }
+                // Cleanup rust session if frontend loading failed
+                await closeDocument(path);
                 return;
             }
 
-            // 3. Create new context
+            // 4. Create new context
             const newContext = new DocContext(path, checkResult.doc);
             
-            // 4. Load initial metadata
+            // 5. Load initial metadata
             // Optimization: Load rules once, then simulate labels to avoid double loading PDF in Rust
             const rules = await pageLabelService.getRules(path);
             const labels = await pageLabelService.simulateLabels(rules, newContext.pageCount) || [];
             
             newContext.originalPageLabels = labels;
 
-            // 5. Activate context
+            // 6. Activate context
             this.activeDoc = newContext;
 
-            // 6. Init side stores
+            // 7. Init side stores
             offsetStore.autoDetect(labels);
             pageLabelStore.init(labels);
             
@@ -92,6 +103,8 @@ class DocStore {
             console.error("DocStore: Failed to open file", e);
             messageStore.add("Failed to open file: " + formatError(e), "ERROR");
             this.activeDoc = null;
+            // Best effort cleanup
+            try { await closeDocument(path); } catch {}
         }
     }
 

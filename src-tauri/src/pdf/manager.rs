@@ -100,12 +100,8 @@ impl PdfWorkerInternalState {
         })
     }
 
-    pub fn get_or_load(&mut self, path: &str) -> Result<&PdfSession> {
-        if !self.sessions.contains_key(path) {
-            info!("[PDF Worker] Auto-loading (DirectFile) for: {}", path);
-            self.load_document(path.to_string(), LoadMode::DirectFile)?;
-        }
-        self.sessions.get(path).ok_or_else(|| format_err!("Session not found after load"))
+    pub fn get_session(&mut self, path: &str) -> Result<&PdfSession> {
+        self.sessions.get(path).ok_or_else(|| format_err!("Session not found for: {}. Please call load_document first.", path))
     }
 
     pub fn load_document(&mut self, path: String, mode: LoadMode) -> Result<()> {
@@ -155,7 +151,7 @@ impl PdfWorkerInternalState {
 
     // Helper methods (exposed for closures)
     pub fn process_render_request(&mut self, path: String, page_index: u16, scale: f32) -> Result<Vec<u8>> {
-        let session = self.get_or_load(&path)?;
+        let session = self.get_session(&path)?;
         let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
         let page = doc.pages().get(page_index)?;
         let width = (page.width().value * scale) as i32;
@@ -169,7 +165,7 @@ impl PdfWorkerInternalState {
     }
 
     pub fn process_get_page_count(&mut self, path: String) -> Result<u16> {
-        let session = self.get_or_load(&path)?;
+        let session = self.get_session(&path)?;
         let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
         Ok(doc.pages().len())
     }

@@ -238,11 +238,18 @@ pub async fn generate_toc_page(
     config: TocConfig,
     dest_path: Option<String>
 ) -> Result<String, String> {
-    pdf_worker.call(move |worker| {
-        let pdfium = worker.pdfium;
-        match worker.get_or_load(&src_path) {
-            Ok(session) => process_toc_generation(pdfium, session, config, dest_path),
-            Err(e) => Err(e.to_string()),
+    pdf_worker.call(move |state| -> Result<String, String> {
+        let pdfium = state.pdfium;
+        // Use the existing session (via MemoryBuffer mode from load_document)
+        match state.get_session(&src_path) {
+            Ok(session) => {
+                // If we have a session, we can reuse its pdfium document directly if needed
+                if let Some(ref _doc) = session.pdfium_doc {
+                    return process_toc_generation(pdfium, session, config, dest_path);
+                }
+                Err("Session exists but no PDFium document found".to_string())
+            },
+            Err(e) => Err(e.to_string())
         }
     }).await.map_err(|e| e.to_string())?
 }
