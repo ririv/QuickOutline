@@ -34,6 +34,7 @@
     function smartImage(node: HTMLElement, index: number) {
         let imgElement: HTMLImageElement | null = null;
         let observer: IntersectionObserver;
+        let loadTimeout: number | undefined;
 
         const load = () => {
             if (imgElement) return; // Already loaded
@@ -81,6 +82,10 @@
         };
 
         const unload = () => {
+            if (loadTimeout) {
+                clearTimeout(loadTimeout);
+                loadTimeout = undefined;
+            }
             if (imgElement) {
                 imgElement.remove();
                 imgElement = null;
@@ -91,9 +96,15 @@
         observer = new IntersectionObserver((entries) => {
             const entry = entries[0];
             if (entry.isIntersecting) {
-                load();
+                // Debounce load: only load if visible for >150ms
+                // This prevents loading images when fast scrolling
+                loadTimeout = window.setTimeout(() => {
+                    load();
+                    loadTimeout = undefined;
+                }, 150);
             } else {
                 // Unload when out of view (Memory Virtualization)
+                // Also cancels any pending load
                 unload();
             }
         }, { 

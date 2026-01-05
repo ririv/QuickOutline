@@ -23,25 +23,29 @@
     // Derived Data
     const originalLabels = $derived(docStore.originalPageLabels || []);
 
-    // --- Action: Loader ---
+    // --- Action: Loader (Smart with IntersectionObserver) ---
     function lazyImage(node: HTMLImageElement, index: number) {
         let active = true;
         let currentIdx = index;
+        let observer: IntersectionObserver;
+        let loadTimeout: number | undefined;
         
         // Find sibling skeleton
         const skeleton = node.nextElementSibling as HTMLElement;
 
         function showSkeleton() {
-            node.style.display = 'none'; // Hide image
-            if (skeleton) skeleton.style.display = 'flex'; // Show skeleton
+            node.style.display = 'none'; 
+            if (skeleton) skeleton.style.display = 'flex'; 
         }
 
         function hideSkeleton() {
-            node.style.display = 'block'; // Show image
-            if (skeleton) skeleton.style.display = 'none'; // Hide skeleton COMPLETELY from render tree
+            node.style.display = 'block'; 
+            if (skeleton) skeleton.style.display = 'none'; 
         }
 
         function load(idx: number) {
+            if (!active) return;
+            
             showSkeleton();
 
             if (thumbnailCache.has(idx)) {
@@ -64,16 +68,47 @@
             }
         }
 
-        load(index);
+        // Initialize Observer
+        observer = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            if (entry.isIntersecting) {
+                // Debounce load
+                loadTimeout = window.setTimeout(() => {
+                    load(currentIdx);
+                    loadTimeout = undefined;
+                }, 200);
+            } else {
+                if (loadTimeout) {
+                    clearTimeout(loadTimeout);
+                    loadTimeout = undefined;
+                }
+            }
+        }, {
+             rootMargin: "200px 0px"
+        });
+
+        observer.observe(node.parentElement || node);
 
         return {
             update(newIndex: number) {
                 if (newIndex !== currentIdx) {
                     currentIdx = newIndex;
-                    load(newIndex);
+                    // Reset state
+                    if (loadTimeout) clearTimeout(loadTimeout);
+                    // Re-trigger observer check naturally or force a check?
+                    // Usually observer will re-fire if element moves, but here only index changes.
+                    // Let's force a reload check if already intersecting? 
+                    // Simpler: Just rely on observer staying active. 
+                    // However, if we reuse the node for a new index, we should probably clear the old image.
+                    node.src = ""; // Clear old
+                    showSkeleton(); 
                 }
             },
-            destroy() { active = false; }
+            destroy() { 
+                active = false; 
+                observer.disconnect();
+                if (loadTimeout) clearTimeout(loadTimeout);
+            }
         };
     }
 

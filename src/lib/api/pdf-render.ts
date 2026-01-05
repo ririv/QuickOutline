@@ -70,9 +70,9 @@ export async function renderPdfPage(path: string, pageIndex: number, scale: numb
  */
 export async function renderPdfPageAsUrl(path: string, pageIndex: number, scale: number): Promise<string> {
     const bytes = await renderPdfPage(path, pageIndex, scale);
-    console.log(`[PDF Render] Received ${bytes.length} bytes for page ${pageIndex}`);
+    console.debug(`[PDF Render] Received ${bytes.length} bytes for page ${pageIndex}`);
     const blob = new Blob([bytes], { type: 'image/png' });
     const url = URL.createObjectURL(blob);
-    console.log(`[PDF Render] Created Blob URL: ${url}`);
+    console.debug(`[PDF Render] Created Blob URL: ${url}`);
     return url;
 }

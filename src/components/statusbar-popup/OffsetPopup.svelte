@@ -58,6 +58,8 @@
   function lazyImage(node: HTMLImageElement, index: number) {
       let active = true;
       let currentIdx = index;
+      let observer: IntersectionObserver;
+      let loadTimeout: number | undefined;
       
       const skeleton = node.nextElementSibling as HTMLElement;
 
@@ -72,6 +74,7 @@
       }
 
       function load(idx: number) {
+          if (!active) return;
           showSkeleton();
 
           if (thumbnailCache.has(idx)) {
@@ -94,16 +97,41 @@
           }
       }
 
-      load(index);
+      // Initialize Observer
+      observer = new IntersectionObserver((entries) => {
+          const entry = entries[0];
+          if (entry.isIntersecting) {
+              // Debounce load
+              loadTimeout = window.setTimeout(() => {
+                  load(currentIdx);
+                  loadTimeout = undefined;
+              }, 200);
+          } else {
+              if (loadTimeout) {
+                  clearTimeout(loadTimeout);
+                  loadTimeout = undefined;
+              }
+          }
+      }, {
+           rootMargin: "200px 0px"
+      });
+
+      observer.observe(node.parentElement || node);
 
       return {
           update(newIndex: number) {
               if (newIndex !== currentIdx) {
                   currentIdx = newIndex;
-                  load(newIndex);
+                  if (loadTimeout) clearTimeout(loadTimeout);
+                  node.src = "";
+                  showSkeleton();
               }
           },
-          destroy() { active = false; }
+          destroy() { 
+              active = false;
+              observer.disconnect();
+              if (loadTimeout) clearTimeout(loadTimeout);
+          }
       };
   }
 
