@@ -34,7 +34,8 @@ class PdfRenderService {
                 return await renderPageToDataUrl(doc, pageIndex + 1, scale);
             } else {
                 // Rust PDFium uses 0-based page numbers
-                return await renderPdfPageAsUrl(path, pageIndex, scale);
+                // Pass docStore.version to enable aggressive browser caching with proper invalidation
+                return await renderPdfPageAsUrl(path, pageIndex, scale, docStore.version);
             }
         } catch (e) {
             console.error(`[PdfRenderService] Failed to render page ${pageIndex} via ${this.engine}`, e);

@@ -271,6 +271,9 @@ pub fn run() {
                         return Response::builder()
                             .header("Content-Type", "image/png")
                             .header("Access-Control-Allow-Origin", "*")
+                            // Aggressive caching: Cache for 1 year.
+                            // The frontend handles invalidation by appending ?v=... to the URL when file changes.
+                            .header("Cache-Control", "public, max-age=31536000, immutable") 
                             .body(png_data)
                             .unwrap();
                     },

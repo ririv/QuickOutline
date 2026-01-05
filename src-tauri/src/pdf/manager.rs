@@ -7,6 +7,8 @@ use std::io::Cursor;
 use log::{info, error};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use lru::LruCache;
+use std::num::NonZeroUsize;
 
 // Re-export for use in closures
 pub use crate::pdf::toc::{TocConfig, process_toc_generation};
@@ -23,6 +25,7 @@ pub struct PdfSession {
     pub path: String,
     pub pdfium_doc: Option<PdfDocument<'static>>,
     pub memory_ptr: Option<*mut [u8]>,
+    pub render_cache: LruCache<(u16, String), Vec<u8>>,
 }
 
 impl PdfSession {
@@ -105,6 +108,11 @@ impl PdfWorkerInternalState {
         self.sessions.get(path).ok_or_else(|| format_err!("Session not found for: {}. Please call load_document first.", path))
     }
 
+    // Helper to get mutable session
+    pub fn get_session_mut(&mut self, path: &str) -> Result<&mut PdfSession> {
+        self.sessions.get_mut(path).ok_or_else(|| format_err!("Session not found for: {}. Please call load_document first.", path))
+    }
+
     pub fn load_document(&mut self, path: String, mode: LoadMode) -> Result<()> {
         if self.sessions.contains_key(&path) {
             info!("[PDF Worker] Reloading existing session: {}", path);
@@ -120,6 +128,7 @@ impl PdfWorkerInternalState {
                     path: path.clone(),
                     pdfium_doc: Some(doc),
                     memory_ptr: None,
+                    render_cache: LruCache::new(NonZeroUsize::new(50).unwrap()),
                 }
             },
             LoadMode::MemoryBuffer => {
@@ -136,6 +145,7 @@ impl PdfWorkerInternalState {
                     path: path.clone(),
                     pdfium_doc: Some(doc),
                     memory_ptr: Some(ptr),
+                    render_cache: LruCache::new(NonZeroUsize::new(50).unwrap()),
                 }
             }
         };
@@ -152,7 +162,15 @@ impl PdfWorkerInternalState {
 
     // Helper methods (exposed for closures)
     pub fn process_render_request(&mut self, path: String, page_index: u16, scale: f32) -> Result<Vec<u8>> {
-        let session = self.get_session(&path)?;
+        let session = self.get_session_mut(&path)?;
+        
+        // Check cache
+        let scale_key = format!("{:.2}", scale);
+        if let Some(cached) = session.render_cache.get(&(page_index, scale_key.clone())) {
+            info!("[PDF Worker] Cache hit for page {} scale {}", page_index, scale);
+            return Ok(cached.clone());
+        }
+
         let doc = session.pdfium_doc.as_ref().ok_or_else(|| format_err!("Session missing document"))?;
         let page = doc.pages().get(page_index)?;
         let width = (page.width().value * scale) as i32;
@@ -162,6 +180,10 @@ impl PdfWorkerInternalState {
         let mut png_data = Vec::new();
         let mut cursor = Cursor::new(&mut png_data);
         dynamic_image.write_to(&mut cursor, ImageFormat::Png)?;
+        
+        // Update cache
+        session.render_cache.put((page_index, scale_key), png_data.clone());
+        
         Ok(png_data)
     }
 

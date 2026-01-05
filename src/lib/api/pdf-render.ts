@@ -16,11 +16,19 @@ export async function getPageCount(path: string): Promise<number> {
 /**
  * Renders a page and returns a URL directly usable in <img> tags.
  * Uses custom protocol `pdfstream://` for zero-copy streaming from Rust.
+ * @param path Absolute path to the PDF file.
+ * @param pageIndex 0-based page index.
+ * @param scale Scaling factor.
+ * @param version Optional version string/timestamp. If provided, enables aggressive browser caching safe from stale data.
  */
-export async function renderPdfPageAsUrl(path: string, pageIndex: number, scale: number): Promise<string> {
+export async function renderPdfPageAsUrl(path: string, pageIndex: number, scale: number, version?: number | string): Promise<string> {
     // URL Encode the path to ensure special characters are handled
     const encodedPath = encodeURIComponent(path);
     // Construct custom protocol URL
-    // pdfstream://render?path=...&page=...&scale=...
-    return `pdfstream://render?path=${encodedPath}&page=${pageIndex}&scale=${scale}`;
+    // pdfstream://render?path=...&page=...&scale=...&v=...
+    let url = `pdfstream://render?path=${encodedPath}&page=${pageIndex}&scale=${scale}`;
+    if (version !== undefined) {
+        url += `&v=${version}`;
+    }
+    return url;
 }
