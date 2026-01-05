@@ -107,13 +107,16 @@ impl<'a> TocEditor for LopdfTocAdapter<'a> {
     }
 
     fn apply_page_labels(&mut self, pdf_bytes: &[u8], toc_pdf_path: &str, insert_pos: i32, toc_label: Option<&PageLabel>) -> Result<Vec<u8>> {
-        let mut doc = Document::load_mem(pdf_bytes).map_err(|e| format_err!("Lopdf error: {}", e))?;
+        let mut doc = Document::load_mem(pdf_bytes).map_err(|e| format_err!("Lopdf reload error: {}", e))?;
         
-        let src_doc = self.session.get_lopdf_doc_mut()?;
-        if let Ok(rules) = PageLabelProcessor::get_page_label_rules_from_doc(src_doc) {
-            let (toc_len, toc_rules) = if let Ok(toc_doc) = Document::load(toc_pdf_path) {
+        let src_adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(self.session.get_lopdf_doc_mut()?);
+        use crate::pdf::page_label_traits::PageLabelEngine;
+        
+        if let Ok(rules) = src_adapter.get_label_rules() {
+            let (toc_len, toc_rules) = if let Ok(mut toc_doc) = Document::load(toc_pdf_path) {
                 let len = toc_doc.get_pages().len() as i32;
-                let r = PageLabelProcessor::get_page_label_rules_from_doc(&toc_doc).unwrap_or_default();
+                let toc_adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(&mut toc_doc);
+                let r = toc_adapter.get_label_rules().unwrap_or_default();
                 (len, r)
             } else {
                 (0, vec![])
@@ -121,7 +124,8 @@ impl<'a> TocEditor for LopdfTocAdapter<'a> {
 
             if toc_len > 0 {
                 let new_rules = crate::pdf::toc::calculate_merged_rules(rules, insert_pos, toc_len, toc_rules, toc_label);
-                let _ = PageLabelProcessor::set_page_labels_in_doc(&mut doc, new_rules);
+                let mut dest_adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(&mut doc);
+                dest_adapter.set_label_rules(new_rules)?;
             }
         }
         

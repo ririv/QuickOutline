@@ -6,5 +6,6 @@ pub mod toc;
 pub mod lopdf;
 pub mod pdfium_render;
 pub mod toc_traits;
+pub mod page_label_traits;
 
 pub use pdfium_render::{get_pdfium, PDF_LOAD_MUTEX};

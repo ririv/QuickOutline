@@ -78,6 +78,7 @@ fn cleanup_pdf_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<(), St
 
 use crate::pdf_outline::model::{Bookmark, ViewScaleType};
 use crate::pdf::page_label::{PageLabel, PageLabelProcessor};
+use crate::pdf::page_label_traits::PageLabelEngine;
 
 fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
     if let Some(path) = dest_path {
@@ -161,11 +162,14 @@ async fn set_page_labels(
     let dest_clone = actual_dest.clone();
 
     state.call(move |worker| -> Result<(), String> {
-        let session = worker.get_session(&src_path).map_err(|e| e.to_string())?;
-        let mut doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
-        PageLabelProcessor::set_page_labels_in_doc(&mut doc, rules)
+        let session = worker.get_session_mut(&src_path).map_err(|e| e.to_string())?;
+        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+        
+        let mut adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
+        crate::pdf::page_label::PageLabelProcessor::merge_rules(&mut adapter, rules)
             .map_err(|e| e.to_string())?;
-        doc.save(&dest_clone).map(|_| ()).map_err(|e| e.to_string())
+            
+        adapter.doc.save(&dest_clone).map(|_| ()).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())??;
 
     Ok(actual_dest)
@@ -174,18 +178,20 @@ async fn set_page_labels(
 #[tauri::command]
 async fn get_page_labels(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
     state.call(move |worker| -> Result<Vec<String>, String> {
-        let session = worker.get_session(&path).map_err(|e| e.to_string())?;
-        let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
-        PageLabelProcessor::get_page_labels_from_doc(&doc).map_err(|e| e.to_string())
+        let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
+        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+        let adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
+        crate::pdf::page_label::PageLabelProcessor::get_formatted_labels(&adapter).map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
 async fn get_page_label_rules(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<PageLabel>, String> {
     state.call(move |worker| -> Result<Vec<PageLabel>, String> {
-        let session = worker.get_session(&path).map_err(|e| e.to_string())?;
-        let doc = session.load_lopdf_doc().map_err(|e| e.to_string())?;
-        PageLabelProcessor::get_page_label_rules_from_doc(&doc).map_err(|e| e.to_string())
+        let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
+        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+        let adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
+        adapter.get_label_rules().map_err(|e| e.to_string())
     }).await.map_err(|e| e.to_string())?
 }
 
