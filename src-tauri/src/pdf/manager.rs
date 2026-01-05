@@ -4,7 +4,7 @@ use tokio::sync::{mpsc, oneshot};
 use std::thread;
 use image::ImageFormat;
 use std::io::Cursor;
-use log::{info, error};
+use log::{info, error, debug};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use lru::LruCache;
@@ -30,7 +30,8 @@ pub struct PdfSession {
 
 impl PdfSession {
     pub fn load_lopdf_doc(&self) -> Result<lopdf::Document> {
-        match self.mode {
+        let start = std::time::Instant::now();
+        let doc = match self.mode {
             LoadMode::DirectFile => {
                 lopdf::Document::load(&self.path)
                     .map_err(|e| format_err!("Lopdf load failed: {}", e))
@@ -44,7 +45,9 @@ impl PdfSession {
                     Err(format_err!("Memory mode but no memory pointer found"))
                 }
             }
-        }
+        };
+        debug!("[PdfSession] lopdf::Document::load took {:?}", start.elapsed());
+        doc
     }
 }
 
