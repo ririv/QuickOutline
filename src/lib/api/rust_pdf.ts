@@ -10,7 +10,7 @@ export interface PageLabel {
     pageNum: number;
     numberingStyle: PageLabelNumberingStyle;
     labelPrefix?: string | null;
-    firstPage?: number | null;
+    firstPage?: number;
 }
 
 // ... existing convertForRust/convertFromRust ...

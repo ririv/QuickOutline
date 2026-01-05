@@ -1,4 +1,6 @@
-import { getPageLabels as getPageLabelsRust, getPageLabelRules, simulatePageLabels, type PageLabel } from '@/lib/api/rust_pdf';
+import { getPageLabels as getPageLabelsRust, getPageLabelRules as getPageLabelRulesRust, simulatePageLabels as simulatePageLabelsRust } from '@/lib/api/rust_pdf';
+import { type PageLabel } from '@/lib/pdf-processing/page-label';
+import { getPageLabelRulesFromPdf } from '@/lib/pdflib/pageLabels';
 
 class PageLabelService {
     /**
@@ -17,12 +19,13 @@ class PageLabelService {
 
     /**
      * Gets the structured page label rules from the file using Rust backend.
-     * This allows the UI to display and edit existing rules.
+     * Deprecated for large files: use getRulesFromBuffer instead.
      */
     async getRules(path: string): Promise<PageLabel[]> {
         if (!path) return [];
         try {
-            return await getPageLabelRules(path);
+            // Casting because the interfaces are structurally identical but technically different types
+            return await getPageLabelRulesRust(path) as unknown as PageLabel[];
         } catch (e) {
             console.error("Failed to get page label rules from Rust:", e);
             return [];
@@ -30,12 +33,18 @@ class PageLabelService {
     }
 
     /**
+     * Extract rules using pdf-lib in the frontend (Fast).
+     */
+    async getRulesFromBuffer(buffer: ArrayBuffer): Promise<PageLabel[]> {
+        return getPageLabelRulesFromPdf(buffer);
+    }
+
+    /**
      * Simulates labels for preview based on rules using Rust backend logic.
-     * This ensures the preview matches exactly what will be written to the file.
      */
     async simulateLabels(rules: PageLabel[], totalPages: number): Promise<string[]> {
         try {
-            return await simulatePageLabels(rules, totalPages);
+            return await simulatePageLabelsRust(rules as any, totalPages);
         } catch (e) {
             console.error("Failed to simulate page labels:", e);
             return [];

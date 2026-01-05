@@ -5,6 +5,7 @@ import { checkPdf } from '@/lib/pdfjs/pdfChecker';
 import { messageStore } from './messageStore.svelte';
 import { formatError } from '@/lib/utils/error';
 import { loadDocument, closeDocument } from '@/lib/api/rust_pdf';
+import { readFile } from '@tauri-apps/plugin-fs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 /**
@@ -50,19 +51,26 @@ class DocStore {
     version = $derived(this.activeDoc?.version || 0);
 
     async openFile(path: string) {
+        console.time("DocStore:openFile");
         try {
             // 1. Cleanup old document
+            console.time("1. Cleanup");
             if (this.activeDoc) {
                 console.log("Closing existing document...");
                 await this.activeDoc.destroy();
                 this.activeDoc = null;
             }
+            console.timeEnd("1. Cleanup");
 
-            // 2. Pre-load in Rust backend (MemoryBuffer mode for better performance and no file locks)
+            // 2. Pre-load in Rust backend
+            console.time("2. Rust:loadDocument");
             await loadDocument(path, 'MemoryBuffer');
+            console.timeEnd("2. Rust:loadDocument");
 
             // 3. Pre-check and get instance (stateless backend handled via URL)
+            console.time("3. CheckPdf");
             const checkResult = await checkPdf(path);
+            console.timeEnd("3. CheckPdf");
             
             if (!checkResult.isValid || !checkResult.doc) {
                 if (checkResult.isEncrypted) {
@@ -81,21 +89,27 @@ class DocStore {
             const newContext = new DocContext(path, checkResult.doc);
             
             // 5. Load initial metadata
-            // Optimization: Load rules once, then simulate labels to avoid double loading PDF in Rust
-            const rules = await pageLabelService.getRules(path);
+            // Optimization: Use pdf-lib in frontend to parse rules instead of slow Rust lopdf
+            console.time("5. Metadata:PageLabels");
+            const fileBytes = await readFile(path);
+            const rules = await pageLabelService.getRulesFromBuffer(fileBytes.buffer);
+            console.log(rules);
             const labels = await pageLabelService.simulateLabels(rules, newContext.pageCount) || [];
             
             newContext.originalPageLabels = labels;
+            console.timeEnd("5. Metadata:PageLabels");
 
             // 6. Activate context
             this.activeDoc = newContext;
 
             // 7. Init side stores
+            console.time("7. SideStores");
             offsetStore.autoDetect(labels);
             pageLabelStore.init(labels);
             
             // Set rules to store
-            pageLabelStore.setRules(rules, newContext.pageCount);
+            pageLabelStore.setRules(rules as any, newContext.pageCount);
+            console.timeEnd("7. SideStores");
 
             console.log(`Document opened: ${path}`);
 
@@ -105,6 +119,8 @@ class DocStore {
             this.activeDoc = null;
             // Best effort cleanup
             try { await closeDocument(path); } catch {}
+        } finally {
+            console.timeEnd("DocStore:openFile");
         }
     }
 
