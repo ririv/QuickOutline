@@ -22,13 +22,13 @@
         imgClass = "",
         alt = "",
         cache,
-        rootMargin = "600px 0px", // 进一步增大视口预加载范围
+        rootMargin = "600px 0px", 
         debounce = 200,
         onLoad
     }: Props = $props();
 
     let src = $state("");
-    let loading = $state(true);
+    let loading = $state(true); // 只要图片没渲染出来，就认为是 loading 状态
     let container: HTMLElement | undefined = $state();
     let loadTimeout: number | undefined;
     let observer: IntersectionObserver | undefined;
@@ -59,10 +59,14 @@
 
     function applySource(url: string) {
         src = url;
+        // 注意：这里不设 loading = false。
+        // loading 只有在 img 标签触发 onload 事件后才变为 false。
+        // 这样可以确保图片数据真正解码并准备好渲染时才显示，避免白屏。
     }
 
     function handleImgLoad(e: Event) {
         const img = e.currentTarget as HTMLImageElement;
+        // 图片已就绪，开始淡入
         loading = false;
         if (onLoad && img.naturalWidth > 0) {
             onLoad({
@@ -100,9 +104,14 @@
 
     // 2. 当 index 变化且已经在视口内时，触发重新加载 (用于虚拟列表复用)
     $effect(() => {
+        // 依赖追踪：index 变化
+        const _i = index;
+        
+        // 立即重置状态，显示骨架屏
+        loading = true;
+        src = ""; 
+
         if (isIntersecting) {
-            src = "";
-            loading = true;
             if (loadTimeout) clearTimeout(loadTimeout);
             loadTimeout = window.setTimeout(load, debounce);
         }
@@ -120,22 +129,20 @@
     });
 </script>
 
-<!-- 移除强制 relative，允许 className 决定布局 -->
-<div bind:this={container} class="overflow-hidden {className}">
+<div bind:this={container} class="relative overflow-hidden {className}">
+    <!-- 骨架屏：始终位于底层 (z-0) -->
+    <div class="absolute inset-0 flex items-center justify-center bg-gray-50 transition-opacity duration-300 z-0">
+        <div class="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+    </div>
+
+    <!-- 图片：位于上层 (z-10)，加载时透明，加载完淡入 -->
     {#if src}
         <img 
             {src} 
             {alt} 
-            class="w-full h-full object-contain transition-opacity duration-300 {loading ? 'opacity-0' : 'opacity-100'} {imgClass}"
+            class="relative z-10 w-full h-full object-contain transition-opacity duration-300 {loading ? 'opacity-0' : 'opacity-100'} {imgClass}"
             onload={handleImgLoad}
         />
-    {/if}
-    
-    {#if loading}
-        <!-- 仅在 loading 时使用 absolute 覆盖 -->
-        <div class="absolute inset-0 flex items-center justify-center bg-gray-50 transition-opacity duration-300">
-            <div class="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
-        </div>
     {/if}
 </div>
 
