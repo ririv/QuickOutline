@@ -1,7 +1,9 @@
 use lopdf::{Document, Object, Dictionary, StringFormat};
 use serde::{Deserialize, Serialize};
 use crate::pdf::numbering::Numbering;
+use crate::pdf::lopdf::utils::resolve_object;
 use std::path::Path;
+use log::info;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum PageLabelNumberingStyle {
@@ -198,67 +200,67 @@ impl PageLabelProcessor {
 
     /// Gets page label rules from a Document.
     pub fn get_page_label_rules_from_doc(doc: &Document) -> Result<Vec<PageLabel>, Box<dyn std::error::Error>> {
+        let start = std::time::Instant::now();
         let mut rules_list = Vec::new();
 
         let catalog_id = doc.trailer.get(b"Root")?.as_reference()?;
         let catalog = doc.get_object(catalog_id)?.as_dict()?;
         
         if let Ok(page_labels_obj) = catalog.get(b"PageLabels") {
-            let page_labels_dict = match page_labels_obj {
-                Object::Reference(id) => doc.get_object(*id)?.as_dict()?,
-                Object::Dictionary(dict) => dict,
-                _ => return Ok(rules_list),
-            };
+            let page_labels_obj = resolve_object(doc, page_labels_obj).map_err(|e| e.to_string())?;
+            let page_labels_dict = page_labels_obj.as_dict()?;
             
             if let Ok(nums_obj) = page_labels_dict.get(b"Nums") {
-                let nums_array = match nums_obj {
-                    Object::Reference(id) => doc.get_object(*id)?.as_array()?,
-                    Object::Array(arr) => arr,
-                    _ => return Ok(rules_list),
-                };
+                let nums_obj = resolve_object(doc, nums_obj).map_err(|e| e.to_string())?;
+                let nums_array = nums_obj.as_array()?;
 
                 for chunk in nums_array.chunks(2) {
                     if chunk.len() != 2 { break; }
-                    let index = chunk[0].as_i64()? as i32; // 0-based index
-
-                    let dict = match &chunk[1] {
-                        Object::Reference(id) => doc.get_object(*id)?.as_dict()?,
-                        Object::Dictionary(d) => d,
-                        _ => continue,
-                    };
                     
-                    let style = if let Ok(s) = dict.get(b"S") {
-                        Self::map_name_to_style(std::str::from_utf8(s.as_name()?)?)
+                    // 1. Resolve Index
+                    let index_obj = resolve_object(doc, &chunk[0]).map_err(|e| e.to_string())?;
+                    let index = index_obj.as_i64()? as i32;
+
+                    // 2. Resolve Label Dictionary
+                    let dict_obj = resolve_object(doc, &chunk[1]).map_err(|e| e.to_string())?;
+                    let dict = dict_obj.as_dict()?;
+                    
+                    // 3. Resolve Style (S)
+                    let style = if let Ok(s_raw) = dict.get(b"S") {
+                        let s_obj = resolve_object(doc, s_raw).map_err(|e| e.to_string())?;
+                        Self::map_name_to_style(std::str::from_utf8(s_obj.as_name()?)?)
                     } else {
                         PageLabelNumberingStyle::None
                     };
                     
-                    let prefix = if let Ok(p) = dict.get(b"P") {
-                        Some(String::from_utf8_lossy(p.as_str()?).to_string())
+                    // 4. Resolve Prefix (P)
+                    let prefix = if let Ok(p_raw) = dict.get(b"P") {
+                        let p_obj = resolve_object(doc, p_raw).map_err(|e| e.to_string())?;
+                        Some(String::from_utf8_lossy(p_obj.as_str()?).to_string())
                     } else {
                         None
                     };
                     
-                    let start = if let Ok(st) = dict.get(b"St") {
-                        Some(st.as_i64()? as i32)
+                    // 5. Resolve Start (St)
+                    let start_num = if let Ok(st_raw) = dict.get(b"St") {
+                        let st_obj = resolve_object(doc, st_raw).map_err(|e| e.to_string())?;
+                        Some(st_obj.as_i64()? as i32)
                     } else {
                         Some(1)
                     };
                     
-                    // Convert 0-based index to 1-based page_num for PageLabel struct
                     rules_list.push(PageLabel {
                         page_num: index + 1,
                         numbering_style: style,
                         label_prefix: prefix,
-                        first_page: start,
+                        first_page: start_num,
                     });
                 }
             }
         }
         
-        // Sort by page_num to ensure order
         rules_list.sort_by_key(|r| r.page_num);
-        
+        info!("[PageLabel] Parse PageLabels (rules only) took {:?}", start.elapsed());
         Ok(rules_list)
     }
 

@@ -1,6 +1,7 @@
 use lopdf::{Document, Object, ObjectId, Dictionary, Stream};
 use crate::pdf_outline::model::{Bookmark, ViewScaleType};
-use anyhow::{Result, anyhow, Context};
+use crate::pdf::lopdf::utils::{resolve_object, decode_pdf_string};
+use anyhow::{Result, Context};
 use std::collections::BTreeMap;
 use log::{info, warn, error};
 
@@ -132,37 +133,6 @@ fn resolve_dest_page(doc: &Document, dest_obj: &Object, page_map: &BTreeMap<Obje
         _ => {}
     }
     None
-}
-
-fn resolve_object<'a>(doc: &'a Document, mut obj: &'a Object) -> Result<&'a Object> {
-    let mut depth = 0;
-    while let Object::Reference(id) = obj {
-        depth += 1;
-        if depth > 10 {
-            return Err(anyhow!("Reference depth limit exceeded"));
-        }
-        obj = doc.get_object(*id)?;
-    }
-    Ok(obj)
-}
-
-// Simple PDF string decoder
-// lopdf Document::decode_text is available but requires encoding info.
-// Usually strings in dictionaries are PDFDocEncoding or UTF-16BE (with BOM).
-fn decode_pdf_string(bytes: &[u8]) -> String {
-    if bytes.starts_with(b"\xFE\xFF") {
-        // UTF-16BE
-        let u16: Vec<u16> = bytes[2..]
-            .chunks_exact(2)
-            .map(|c| u16::from_be_bytes([c[0], c[1]]))
-            .collect();
-        String::from_utf16_lossy(&u16)
-    } else {
-        // PDFDocEncoding (simplified as Latin1/ASCII for now, lopdf has helpers)
-        // lopdf::Document::decode_text(encoding, bytes)
-        // For simplicity:
-        String::from_utf8_lossy(bytes).to_string()
-    }
 }
 
 // --- Set Outline Logic ---

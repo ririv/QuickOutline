@@ -1,10 +1,11 @@
-pub mod merge;
-pub mod render;
-pub mod manager;
-pub mod toc;
 pub mod numbering;
 pub mod page_label;
+pub mod render;
+pub mod manager;
 pub mod commands;
+pub mod toc;
+pub mod merge;
+pub mod lopdf;
 
 use pdfium_render::prelude::*;
 use anyhow::{Result, format_err};
