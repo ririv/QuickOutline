@@ -1,5 +1,4 @@
-import { PageLabelNumberingStyle, pageLabelStyleMap } from "@/lib/styleMaps";
-import type { PageLabel } from "@/lib/pdf-processing/page-label";
+import { PageLabelNumberingStyle, pageLabelStyleMap, type PageLabel } from "@/lib/styleMaps";
 import { pageLabelService } from "@/lib/services/PageLabelService";
 
 export interface PageLabelRule {

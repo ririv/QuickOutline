@@ -1,4 +1,4 @@
-import { PageLabelNumberingStyle } from './page-label';
+import { PageLabelNumberingStyle } from '../styleMaps';
 
 export class Numbering {
     

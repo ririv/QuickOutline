@@ -1,5 +1,5 @@
 import { PDFDocument, PDFName, PDFDict, PDFArray, PDFNumber, PDFString, PDFHexString } from 'pdf-lib';
-import { PageLabelNumberingStyle, type PageLabel } from '@/lib/pdf-processing/page-label';
+import { PageLabelNumberingStyle, type PageLabel } from '@/lib/styleMaps';
 
 /**
  * Mapping from PDF internal style names (with leading slash as returned by pdf-lib) 

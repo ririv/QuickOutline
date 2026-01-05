@@ -1,5 +1,5 @@
 import { getPageLabels as getPageLabelsRust, simulatePageLabels as simulatePageLabelsRust } from '@/lib/api/rust_pdf';
-import { type PageLabel } from '@/lib/pdf-processing/page-label';
+import { type PageLabel } from '@/lib/styleMaps';
 import { getPageLabelRules, setPageLabelRules } from '@/lib/pdflib/pageLabels';
 import { readFile, writeFile } from "@tauri-apps/plugin-fs";
 import { addSuffixToPath } from "@/lib/utils/path";
