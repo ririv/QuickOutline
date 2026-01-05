@@ -1,14 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use pdfium_render::prelude::*;
-use lopdf::{Document, Object, Dictionary};
 use anyhow::Result;
-
 use tauri::{State};
-use crate::pdf::manager::{PdfWorker, PdfSession, LoadMode};
-use crate::pdf::page_label::{PageLabelProcessor, PageLabel, PageLabelNumberingStyle};
-use crate::pdf::pdfium_render::merge::merge_pdfs;
+use crate::pdf::manager::{PdfWorker};
+use crate::pdf::page_label::{PageLabel, PageLabelNumberingStyle};
 use log::info;
+use crate::pdf::toc_traits::{TocMerger, TocEditor};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -55,108 +52,45 @@ pub fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
     candidate_path.to_string_lossy().to_string()
 }
 
-pub fn process_toc_generation(
-    pdfium: &Pdfium,
-    session: &PdfSession,
+pub fn process_toc_generation<M: TocMerger, E: TocEditor>(
+    merger: &M,
+    editor: &mut E,
     config: TocConfig,
+    src_path: &str,
+    is_memory_mode: bool,
+    memory_ptr: Option<*mut [u8]>,
     dest_path: Option<String>
 ) -> Result<String, String> {
-    info!("Processing TOC generation via PdfSession (Stateful)");
+    info!("Processing TOC generation (Coordinated Flow)");
     let toc_pdf_path = config.toc_pdf_path.as_ref().ok_or("No TOC PDF path provided")?.clone();
-    let final_dest = resolve_dest_path(&session.path, dest_path);
+    let final_dest = resolve_dest_path(src_path, dest_path);
     let insert_pos = config.insert_pos as u16;
 
-    // Step 1: Capture Original Page IDs (ID Mapping Strategy) using lopdf
-    let original_page_ids = {
-        let doc = session.load_lopdf_doc().map_err(|e| format!("Failed to load source for ID mapping: {}", e))?;
-        let pages = doc.get_pages();
-        let mut ids = vec![];
-        let mut sorted_keys: Vec<_> = pages.keys().cloned().collect();
-        sorted_keys.sort();
-        for key in sorted_keys {
-            ids.push(pages[&key]);
-        }
-        ids
-    };
+    // 1. Capture Page Identifiers (lopdf)
+    let original_page_ids = editor.capture_page_identifiers().map_err(|e| e.to_string())?;
 
-    // Step 2: Merge TOC using Pdfium (Safe Rust) via helper
-    // Load main doc fresh to avoid modifying session doc
-    let mut main_doc = match session.mode {
-        LoadMode::DirectFile => {
-             pdfium.load_pdf_from_file(&session.path, None).map_err(|e| e.to_string())?
-        },
-        LoadMode::MemoryBuffer => {
-            if let Some(ptr) = session.memory_ptr {
-                 let slice = unsafe { &*ptr };
-                 pdfium.load_pdf_from_byte_slice(slice, None).map_err(|e| e.to_string())?
-            } else {
-                return Err("Memory mode but no bytes".to_string());
-            }
-        }
-    };
+    // 2. Merge (pdfium)
+    let merged_bytes = merger.merge_toc_pdf(src_path, memory_ptr, is_memory_mode, &toc_pdf_path, insert_pos).map_err(|e| e.to_string())?;
     
-    // Load TOC doc (always file for now as it's temp)
-    let toc_doc = pdfium.load_pdf_from_file(&toc_pdf_path, None).map_err(|e| e.to_string())?;
-
-    // Merge
-    merge_pdfs(&mut main_doc, &toc_doc, insert_pos).map_err(|e| format!("Pdfium Merge Error: {}", e))?;
-    
-    // Save to memory buffer
-    let pdf_bytes = main_doc.save_to_bytes().map_err(|e| e.to_string())?;
-    
-    // Step 3: Inject Links using lopdf and the captured IDs (on the NEW bytes)
-    let mut doc = Document::load_mem(&pdf_bytes).map_err(|e| e.to_string())?;
-    
+    // 3. Links (lopdf)
+    let mut final_bytes = merged_bytes;
     if let Some(links) = config.links {
         if !links.is_empty() {
-            add_links_to_lopdf_doc(&mut doc, links, config.insert_pos as usize, &original_page_ids)?;
+            final_bytes = editor.inject_links(&final_bytes, links, config.insert_pos as usize, &original_page_ids).map_err(|e| e.to_string())?;
         }
     }
 
-    // Step 4: Correct Page Labels
-    apply_toc_page_labels(
-        &mut doc, 
-        session, 
-        &toc_pdf_path, 
-        config.insert_pos, 
-        config.toc_page_label.as_ref()
-    );
+    // 4. Page Labels (lopdf)
+    final_bytes = editor.apply_page_labels(&final_bytes, &toc_pdf_path, config.insert_pos, config.toc_page_label.as_ref()).map_err(|e| e.to_string())?;
     
-    doc.save(&final_dest).map_err(|e| e.to_string())?;
+    // 5. Save
+    std::fs::write(&final_dest, final_bytes).map_err(|e| e.to_string())?;
+
     info!("TOC generation complete: {}", final_dest);
     Ok(final_dest)
 }
 
-fn apply_toc_page_labels(
-    doc: &mut Document,
-    session: &PdfSession,
-    toc_path: &str,
-    insert_pos: i32,
-    toc_label_opt: Option<&PageLabel>
-) {
-    if let Ok(src_doc) = session.load_lopdf_doc() {
-        if let Ok(rules) = PageLabelProcessor::get_page_label_rules_from_doc(&src_doc) {
-            let (toc_len, toc_rules) = if let Ok(toc_doc) = Document::load(toc_path) {
-                let len = toc_doc.get_pages().len() as i32;
-                let r = PageLabelProcessor::get_page_label_rules_from_doc(&toc_doc).unwrap_or_default();
-                (len, r)
-            } else {
-                (0, vec![])
-            };
-
-            if toc_len > 0 {
-                if rules.is_empty() && toc_rules.is_empty() && toc_label_opt.is_none() {
-                    return;
-                }
-
-                let new_rules = calculate_merged_rules(rules, insert_pos, toc_len, toc_rules, toc_label_opt);
-                let _ = PageLabelProcessor::set_page_labels_in_doc(doc, new_rules);
-            }
-        }
-    }
-}
-
-fn calculate_merged_rules(
+pub fn calculate_merged_rules(
     mut rules: Vec<PageLabel>, 
     insert_pos: i32, 
     toc_len: i32,
@@ -239,86 +173,19 @@ pub async fn generate_toc_page(
 ) -> Result<String, String> {
     pdf_worker.call(move |state| -> Result<String, String> {
         let pdfium = state.pdfium;
-        // Use the existing session (via MemoryBuffer mode from load_document)
-        match state.get_session(&src_path) {
+        let src_path_clone = src_path.clone();
+        
+        match state.get_session_mut(&src_path) {
             Ok(session) => {
-                // If we have a session, we can reuse its pdfium document directly if needed
-                if let Some(ref _doc) = session.pdfium_doc {
-                    return process_toc_generation(pdfium, session, config, dest_path);
-                }
-                Err("Session exists but no PDFium document found".to_string())
+                let is_mem = session.mode == crate::pdf::manager::LoadMode::MemoryBuffer;
+                let ptr = session.memory_ptr;
+                
+                let merger = crate::pdf::pdfium_render::toc_merger_adapter::PdfiumTocAdapter::new(pdfium);
+                let mut editor = crate::pdf::lopdf::toc_editor_adapter::LopdfTocAdapter::new(session);
+                
+                process_toc_generation(&merger, &mut editor, config, &src_path_clone, is_mem, ptr, dest_path)
             },
             Err(e) => Err(e.to_string())
         }
     }).await.map_err(|e| e.to_string())?
-}
-
-fn add_links_to_lopdf_doc(
-    doc: &mut Document, 
-    links: Vec<TocLinkDto>, 
-    insert_pos: usize, 
-    original_page_ids: &[lopdf::ObjectId]
-) -> Result<(), String> {
-    let merged_pages_map = doc.get_pages(); 
-    let mut merged_pages_list: Vec<lopdf::ObjectId> = vec![];
-    let mut sorted_keys: Vec<_> = merged_pages_map.keys().cloned().collect();
-    sorted_keys.sort();
-    for key in sorted_keys {
-        merged_pages_list.push(merged_pages_map[&key]);
-    }
-    
-    for link in links {
-        let toc_page_idx_in_merged = insert_pos + link.toc_page_index;
-        if toc_page_idx_in_merged >= merged_pages_list.len() { continue; }
-        let source_page_id = merged_pages_list[toc_page_idx_in_merged];
-        
-        let target_idx = link.target_page_index as usize;
-
-        let target_page_id = if link.target_is_original_doc {
-            if target_idx >= original_page_ids.len() { continue; }
-            original_page_ids[target_idx]
-        } else {
-            if target_idx >= merged_pages_list.len() { continue; }
-            merged_pages_list[target_idx]
-        };
-        
-        let page_height = {
-            let page_dict = doc.get_object(source_page_id).map_err(|e| e.to_string())?.as_dict().map_err(|e| e.to_string())?;
-            
-            let box_array = page_dict.get(b"CropBox")
-                .or_else(|_| page_dict.get(b"MediaBox"))
-                .and_then(|o| o.as_array())
-                .map(|a| a.iter().map(|n| n.as_float().unwrap_or(0.0) as f64).collect::<Vec<f64>>());
-            
-            if let Ok(ba) = box_array {
-                if ba.len() >= 4 { ba[3] } else { 842.0 }
-            } else {
-                842.0 
-            }
-        };
-        
-        let rect = vec![
-            Object::Real(link.x as f32), 
-            Object::Real((page_height - (link.y + link.height)) as f32), 
-            Object::Real((link.x + link.width) as f32), 
-            Object::Real((page_height - link.y) as f32)
-        ];
-        
-        let annotation = Dictionary::from_iter(vec![
-            ("Type", Object::Name(b"Annot".to_vec())), 
-            ("Subtype", Object::Name(b"Link".to_vec())), 
-            ("Rect", Object::Array(rect)), 
-            ("Border", Object::Array(vec![Object::Integer(0), Object::Integer(0), Object::Integer(0)])), 
-            ("Dest", Object::Array(vec![Object::Reference(target_page_id), Object::Name(b"Fit".to_vec())]))
-        ]);
-        let ann_id = doc.add_object(annotation);
-        
-        if let Ok(page) = doc.get_object_mut(source_page_id).and_then(|o| o.as_dict_mut()) {
-             if !page.has(b"Annots") { page.set("Annots", Object::Array(vec![])); }
-             if let Ok(annots) = page.get_mut(b"Annots").and_then(|o| o.as_array_mut()) { 
-                 annots.push(Object::Reference(ann_id)); 
-             }
-        }
-    }
-    Ok(())
 }

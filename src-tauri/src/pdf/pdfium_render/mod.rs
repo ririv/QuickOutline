@@ -1,6 +1,7 @@
 pub mod render;
 pub mod merge;
 pub mod adapter;
+pub mod toc_merger_adapter;
 
 use pdfium_render::prelude::*;
 use anyhow::{Result, format_err};
