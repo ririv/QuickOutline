@@ -1,4 +1,4 @@
-import { PageLabelNumberingStyle } from "@/lib/styleMaps";
+import { PageLabelNumberingStyle } from "@/lib/types/page-label.ts";
 import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout, type SectionConfig } from "@/lib/types/page";
 import { offsetStore } from "./offsetStore.svelte";
 

@@ -1,4 +1,4 @@
-import { PageLabelNumberingStyle } from '../styleMaps';
+import { PageLabelNumberingStyle } from '../types/page-label.ts';
 
 export class Numbering {
     

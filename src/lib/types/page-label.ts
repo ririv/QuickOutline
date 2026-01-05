@@ -1,5 +1,5 @@
 // web/src/lib/styleMaps.ts
-import { Numbering } from './pdf-processing/numbering';
+import { Numbering } from '../pdf-processing/numbering.ts';
 
 export enum PageLabelNumberingStyle {
     /**

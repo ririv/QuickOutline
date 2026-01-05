@@ -5,7 +5,7 @@
   import PageSetupPopup from './statusbar-popup/PageSetupPopup.svelte';
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
   import { onMount } from 'svelte';
-  import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/styleMaps";
+  import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
 
   export interface InsertionSettings {

@@ -1,7 +1,7 @@
 import { messageStore } from '@/stores/messageStore.svelte.ts';
 import { docStore } from '@/stores/docStore.svelte.js';
 import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
-import { PageLabelNumberingStyle, pageLabelStyleMap, type PageLabel } from '@/lib/styleMaps.ts';
+import { PageLabelNumberingStyle, pageLabelStyleMap, type PageLabel } from '@/lib/types/page-label.ts';
 import { pageLabelService } from '@/lib/services/PageLabelService';
 import { formatError } from '@/lib/utils/error';
 

@@ -13,7 +13,7 @@
     import { ripple } from '@/lib/actions/ripple.ts';
     import { docStore } from '@/stores/docStore.svelte.js';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
-    import { pageLabelStyleMap } from '@/lib/styleMaps.ts';
+    import { pageLabelStyleMap } from '@/lib/types/page-label.ts';
     import GraphButton from "@/components/controls/GraphButton.svelte";
 
     import { usePageLabelActions } from '../shared/pagelabel.svelte.ts';

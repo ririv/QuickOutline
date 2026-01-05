@@ -1,5 +1,3 @@
-import {PageLabelNumberingStyle} from "@/lib/styleMaps";
-
 /**
  * RPC 请求结构
  */

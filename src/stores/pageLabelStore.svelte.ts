@@ -1,4 +1,4 @@
-import { PageLabelNumberingStyle, pageLabelStyleMap, type PageLabel } from "@/lib/styleMaps";
+import { PageLabelNumberingStyle, pageLabelStyleMap, type PageLabel } from "@/lib/types/page-label.ts";
 import { pageLabelService } from "@/lib/services/PageLabelService";
 
 export interface PageLabelRule {

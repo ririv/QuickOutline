@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { PageLabelNumberingStyle } from '@/lib/styleMaps';
+import type { PageLabelNumberingStyle } from '@/lib/types/page-label.ts';
 import type { ViewScaleType } from '@/lib/types/pdf';
 import type { BookmarkData } from '@/lib/types/bookmark';
 import type { HeaderFooterConfig } from '@/lib/types/header-footer';

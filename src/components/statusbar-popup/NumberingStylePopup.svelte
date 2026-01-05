@@ -1,7 +1,7 @@
 <script lang="ts">
   import StyleList from '../StyleList.svelte';
   import ArrowPopup from '../controls/ArrowPopup.svelte';
-  import {PageLabelNumberingStyle} from "@/lib/styleMaps";
+  import {PageLabelNumberingStyle} from "@/lib/types/page-label.ts";
 
   interface Props {
     numberingStyle?: PageLabelNumberingStyle;
