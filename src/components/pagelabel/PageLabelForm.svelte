@@ -25,7 +25,7 @@
 
 <div class="flex flex-col gap-4">
     <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-        <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
+        <label for="style" class="text-right text-sm text-[#333]">Style</label>
         <div class="w-full">
             <StyledSelect
                 options={styles}
