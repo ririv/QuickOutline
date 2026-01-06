@@ -130,7 +130,7 @@
             {:else}
                 <span class="badge warning">No Labels</span>
             {/if}
-            <span class="hint-text">Set the physical page that matches "Page 1".</span>
+            <span class="hint-text">Set the logical page that matches "Page 1".</span>
           </div>
       </div>
 
