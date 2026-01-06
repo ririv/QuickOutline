@@ -1,6 +1,7 @@
 import { messageStore } from '@/stores/messageStore.svelte.ts';
 import { docStore } from '@/stores/docStore.svelte.js';
 import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
+import { confirm } from '@/stores/confirm.svelte';
 import { PageLabelNumberingStyle, pageLabelStyleMap, type PageLabel } from '@/lib/types/page-label.ts';
 import { pageLabelService } from '@/lib/services/PageLabelService';
 import { formatError } from '@/lib/utils/error';
@@ -31,6 +32,13 @@ export function usePageLabelActions() {
     }
 
     async function resetToOriginal() {
+        const ok = await confirm(
+            "Are you sure you want to reset all rules to the original settings from the PDF?",
+            "Reset Rules",
+            { type: 'warning', confirmText: 'Reset', cancelText: 'Cancel' }
+        );
+        if (!ok) return;
+
         if (docStore.originalRules && docStore.originalRules.length > 0) {
             await pageLabelStore.setRules(docStore.originalRules, docStore.pageCount);
         } else {
@@ -40,7 +48,14 @@ export function usePageLabelActions() {
         pageLabelStore.resetForm();
     }
 
-    function clearRules() {
+    async function clearRules() {
+        const ok = await confirm(
+            "Are you sure you want to delete ALL rules? This will reset the page numbering to simple sequential numbers (1, 2, 3...).",
+            "Delete All Rules",
+            { type: 'error', confirmText: 'Delete All', cancelText: 'Cancel' }
+        );
+        if (!ok) return;
+
         pageLabelStore.removeAllRules();
         pageLabelStore.resetForm();
         simulate();

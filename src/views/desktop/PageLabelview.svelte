@@ -5,6 +5,7 @@
     import Icon from "@/components/Icon.svelte";
     import deleteIcon from '../../assets/icons/delete-item.svg?raw';
     import trashIcon from '../../assets/icons/trash.svg';
+    import resetIcon from '../../assets/icons/reset.svg';
     import applyIcon from '../../assets/icons/success.svg?raw';
 
     import { ripple } from '@/lib/actions/ripple.ts';
@@ -36,14 +37,18 @@
                         <GraphButton class="graph-button-important group"
                                      onclick={resetToOriginal}
                                      title="Reset to Original">
-                            <svg class="w-4 h-4 text-gray-500 transition-colors group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                            <img
+                                src={resetIcon}
+                                alt="Reset"
+                                class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
+                            />
                         </GraphButton>
                         <GraphButton class="graph-button-important group"
                                      onclick={clearRules}
                                      title="Clear All Rules (Delete)">
                             <img
                                 src={trashIcon}
-                                alt="Delete"
+                                alt="Clear"
                                 class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
                             />
                         </GraphButton>
