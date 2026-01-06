@@ -30,10 +30,20 @@ export function usePageLabelActions() {
         simulate();
     }
 
+    async function resetToOriginal() {
+        if (docStore.originalRules && docStore.originalRules.length > 0) {
+            await pageLabelStore.setRules(docStore.originalRules, docStore.pageCount);
+        } else {
+            pageLabelStore.removeAllRules();
+            pageLabelStore.setSimulatedLabels(docStore.originalPageLabels);
+        }
+        pageLabelStore.resetForm();
+    }
+
     function clearRules() {
         pageLabelStore.removeAllRules();
-        pageLabelStore.setSimulatedLabels(docStore.originalPageLabels);
         pageLabelStore.resetForm();
+        simulate();
     }
 
     async function simulate() {
@@ -70,6 +80,7 @@ export function usePageLabelActions() {
     return {
         addRule,
         deleteRule,
+        resetToOriginal,
         clearRules,
         simulate,
         apply

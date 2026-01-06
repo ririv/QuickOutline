@@ -8,6 +8,8 @@ import { loadDocument, closeDocument } from '@/lib/api/rust_pdf';
 import { readFile } from '@tauri-apps/plugin-fs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
+import { type PageLabel } from '@/lib/types/page-label.ts';
+
 /**
  * Represents the state of a single opened PDF document.
  * This structure makes it easy to transition to multi-tab support later.
@@ -18,6 +20,7 @@ export class DocContext {
     version = $state(0);
     pdfDoc = $state.raw<PDFDocumentProxy | null>(null);
     originalPageLabels = $state.raw<string[]>([]);
+    originalRules = $state.raw<PageLabel[]>([]);
 
     constructor(path: string, doc: PDFDocumentProxy) {
         this.path = path;
@@ -48,6 +51,7 @@ class DocStore {
     pageCount = $derived(this.activeDoc?.pageCount || 0);
     pdfDoc = $derived(this.activeDoc?.pdfDoc || null);
     originalPageLabels = $derived(this.activeDoc?.originalPageLabels || []);
+    originalRules = $derived(this.activeDoc?.originalRules || []);
     version = $derived(this.activeDoc?.version || 0);
 
     async openFile(path: string) {
@@ -89,14 +93,15 @@ class DocStore {
             const newContext = new DocContext(path, checkResult.doc);
             
             // 5. Load initial metadata
-            // Optimization: Use pdf-lib in frontend to parse rules instead of slow Rust lopdf
+            // Optimization: Use pdf-lib in frontend to parse originalRules instead of slow Rust lopdf
             console.time("5. Metadata:PageLabels");
             const fileBytes = await readFile(path);
-            const rules = await pageLabelService.getRulesFromData(fileBytes);
-            console.log(rules);
-            const labels = await pageLabelService.simulateLabels(rules, newContext.pageCount) || [];
+            const originalRules = await pageLabelService.getRulesFromData(fileBytes);
+            console.log(originalRules);
+            const labels = await pageLabelService.simulateLabels(originalRules, newContext.pageCount) || [];
             
             newContext.originalPageLabels = labels;
+            newContext.originalRules = originalRules;
             console.timeEnd("5. Metadata:PageLabels");
 
             // 6. Activate context
@@ -107,8 +112,8 @@ class DocStore {
             offsetStore.autoDetect(labels);
             pageLabelStore.init(labels);
             
-            // Set rules to store
-            pageLabelStore.setRules(rules as any, newContext.pageCount);
+            // Set originalRules to store
+            pageLabelStore.setRules(originalRules, newContext.pageCount);
             console.timeEnd("7. SideStores");
 
             console.log(`Document opened: ${path}`);

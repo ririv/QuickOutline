@@ -15,6 +15,7 @@ class PageLabelStore {
     prefix = $state("");
     startNumber = $state("");
     startPage = $state("");
+    isFormOpen = $state(false);
     
     simulatedLabels = $state.raw<string[]>([]);
 

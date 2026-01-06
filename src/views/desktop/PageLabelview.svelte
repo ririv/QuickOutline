@@ -5,84 +5,49 @@
     import Icon from "@/components/Icon.svelte";
     import deleteIcon from '../../assets/icons/delete-item.svg?raw';
     import trashIcon from '../../assets/icons/trash.svg';
-    import addIcon from '../../assets/icons/plus.svg?raw';
     import applyIcon from '../../assets/icons/success.svg?raw';
 
-    import StyledSelect from '../../components/controls/StyledSelect.svelte';
-    import StyledInput from "@/components/controls/StyledInput.svelte";
     import { ripple } from '@/lib/actions/ripple.ts';
     import { docStore } from '@/stores/docStore.svelte.js';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
-    import { pageLabelStyleMap } from '@/lib/types/page-label.ts';
     import GraphButton from "@/components/controls/GraphButton.svelte";
 
     import { usePageLabelActions } from '../shared/pagelabel.svelte.ts';
+    import PageLabelForm from '@/components/pagelabel/PageLabelForm.svelte';
+    import PageLabelFormModal from '@/components/pagelabel/PageLabelFormModal.svelte';
 
-    const styles = pageLabelStyleMap.getAllStyles();
-
-    const { addRule, deleteRule, clearRules, apply } = usePageLabelActions();
+    const { deleteRule, clearRules, resetToOriginal, apply } = usePageLabelActions();
 
 </script>
 
 <main class="h-full w-full overflow-hidden">
+    <PageLabelFormModal />
     <SplitPane initialSplit={67}>
         {#snippet left()}
         <div class="flex flex-col h-full p-4 bg-white box-border overflow-y-auto">
-            <div class="flex flex-col gap-4">
-                <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-                    <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
-                    <div class="w-full">
-                        <StyledSelect
-                            options={styles}
-                            displayKey="displayText"
-                            optionKey="displayText"
-                            valueKey="enumName"
-                            bind:value={pageLabelStore.numberingStyle}
-                        />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-                    <label for="prefix" class="text-right text-sm text-[#333]">Prefix</label>
-                    <StyledInput id="prefix" type="text" bind:value={pageLabelStore.prefix} placeholder="Optional" />
-                </div>
-
-                <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-                    <label for="startNum" class="text-right text-sm text-[#333]">Start Number</label>
-                    <StyledInput id="startNum" type="number" min="1" step="1" bind:value={pageLabelStore.startNumber} placeholder="1" numericType="unsigned-integer" />
-                </div>
-
-                <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-                    <label for="startPage" class="text-right text-sm text-[#333]">Start Page</label>
-                    <StyledInput id="startPage" type="number" min="1" step="1" bind:value={pageLabelStore.startPage} placeholder="e.g. 1 (Required)" numericType="unsigned-integer" />
-                </div>
-
-                <div class="flex justify-center mt-2.5">
-                    <button
-                        class="inline-flex items-center justify-center w-[110px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100"
-                        use:ripple
-                        onclick={addRule}
-                    >
-                        <Icon data={addIcon} class="w-4 h-4 opacity-70" />
-                        Add Rule
-                    </button>
-                </div>
-            </div>
+            <PageLabelForm />
 
             <div class="h-px bg-gray-200 my-5"></div>
 
             <div class="flex-1 overflow-hidden flex flex-col min-h-[150px]">
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="title m-0">Rule List</h3>
-                    <GraphButton class="graph-button-important group"
-                                 onclick={clearRules}
-                                 title="Clear All Rules">
-                        <img
-                            src={trashIcon}
-                            alt="Delete"
-                            class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
-                        />
-                    </GraphButton>
+                    <div class="flex gap-1">
+                        <GraphButton class="graph-button-important group"
+                                     onclick={resetToOriginal}
+                                     title="Reset to Original">
+                            <svg class="w-4 h-4 text-gray-500 transition-colors group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                        </GraphButton>
+                        <GraphButton class="graph-button-important group"
+                                     onclick={clearRules}
+                                     title="Clear All Rules (Delete)">
+                            <img
+                                src={trashIcon}
+                                alt="Delete"
+                                class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
+                            />
+                        </GraphButton>
+                    </div>
                 </div>
                 <div class="flex-1 overflow-y-auto border border-el-default-border p-2 bg-white rounded-md">
                     {#each pageLabelStore.rules as rule (rule.id)}

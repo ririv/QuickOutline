@@ -1,11 +1,14 @@
 <script lang="ts">
+    import { messageStore } from '@/stores/messageStore.svelte';
     import { docStore } from '@/stores/docStore.svelte';
     import { pageLabelStore, type PageLabelRule } from '@/stores/pageLabelStore.svelte';
+    import { pageLabelStyleMap } from '@/lib/types/page-label.ts';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
     import PreviewPopup from './PreviewPopup.svelte';
     import VirtualList from './common/VirtualList.svelte';
     import LazyPdfImage from './common/LazyPdfImage.svelte';
+    import { usePageLabelActions } from '../views/shared/pagelabel.svelte';
 
     interface Props {
         pageCount?: number;
@@ -14,6 +17,7 @@
     let { pageCount = 0 }: Props = $props();
 
     const ITEM_HEIGHT = 180; 
+    const { deleteRule } = usePageLabelActions();
 
     // Non-reactive Cache
     const thumbnailCache = new Map<number, string>();
@@ -39,6 +43,23 @@
 
     function getRuleForPage(index: number): PageLabelRule | undefined {
         return pageLabelStore.rules.find(r => r.fromPage === index + 1);
+    }
+
+    function handleAdd(pageIndex: number) {
+        pageLabelStore.resetForm();
+        pageLabelStore.startPage = String(pageIndex + 1);
+        pageLabelStore.isFormOpen = true;
+    }
+
+    function handleEdit(rule: PageLabelRule) {
+        pageLabelStore.startPage = String(rule.fromPage);
+        pageLabelStore.startNumber = String(rule.start);
+        pageLabelStore.prefix = rule.prefix;
+        const styleEnum = pageLabelStyleMap.getEnumName(rule.numberingStyleDisplay);
+        if (styleEnum) {
+            pageLabelStore.numberingStyle = styleEnum;
+        }
+        pageLabelStore.isFormOpen = true;
     }
 
     // Reset Cache on file change
@@ -98,7 +119,7 @@
             {@const original = originalLabels[i] || String(i + 1)}
             {@const rule = getRuleForPage(i)}
 
-            <div class="page-row" style="height: {ITEM_HEIGHT}px;" class:is-modified={modified}>
+            <div class="page-row group/row" style="height: {ITEM_HEIGHT}px;" class:is-modified={modified}>
                 <div class="thumb-section flex flex-col items-center gap-2">
                     <div 
                         class="thumb-col relative group"
@@ -137,7 +158,7 @@
                     </div>
                 </div>
 
-                <div class="info-col">
+                <div class="info-col relative h-full flex flex-col justify-center">
                     {#if rule}
                         <div class="rule-inline-container">
                             <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd"></path></svg>
@@ -152,6 +173,22 @@
                             </span>
                         </div>
                     {/if}
+
+                    <!-- Actions Overlay -->
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover/row:opacity-100 transition-opacity z-20">
+                        {#if rule}
+                            <button class="action-btn text-blue-600 hover:bg-blue-50" onclick={() => handleEdit(rule)} title="Edit Rule">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button class="action-btn text-red-500 hover:bg-red-50" onclick={() => deleteRule(rule.id)} title="Delete Rule">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        {:else}
+                            <button class="action-btn text-green-600 hover:bg-green-50" onclick={() => handleAdd(i)} title="Add Rule Here">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </button>
+                        {/if}
+                    </div>
                 </div>
             </div>
         {/snippet}
