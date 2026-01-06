@@ -153,12 +153,6 @@
                         </div>
                     {/if}
                 </div>
-
-                {#if modified}
-                    <div class="action-col">
-                        <span class="badge modified">Modified</span>
-                    </div>
-                {/if}
             </div>
         {/snippet}
     </VirtualList>
@@ -176,18 +170,25 @@
 <style>
   .page-row {
       display: grid;
-      grid-template-columns: 100px 1fr auto;
+      grid-template-columns: 100px 1fr;
       gap: 24px;
       padding: 0 20px; 
       border-bottom: 1px solid #f3f4f6;
       align-items: center;
       box-sizing: border-box;
       contain: content;
+      transition: background-color 0.15s;
   }
   
   .page-row:hover { background: #f9fafb; }
-  .page-row.is-modified { background: #f0f9ff; }
-  .page-row.is-modified:hover { background: #e0f2fe; }
+  
+  .page-row.is-modified { 
+      background: #f0f9ff; /* Blue tint */
+  }
+  
+  .page-row.is-modified:hover { 
+      background: #e0f2fe; 
+  }
 
   .thumb-section { width: 90px; }
   .thumb-col { 
@@ -200,8 +201,6 @@
       height: 127px; 
       position: relative; 
   }
-  
-  .info-col { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 6px; }
   
   /* Minimalistic Inline Rule Style */
   .rule-inline-container {
@@ -216,8 +215,4 @@
       align-items: center;
       white-space: nowrap;
   }
-
-  .action-col { min-width: 80px; display: flex; justify-content: flex-end; }
-  .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-  .badge.modified { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
 </style>
