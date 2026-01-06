@@ -1,7 +1,6 @@
 <script lang="ts">
+    import BaseModal from './common/BaseModal.svelte';
     import { confirmState } from '../stores/confirm.svelte';
-    import { fade, scale } from 'svelte/transition';
-    import { cubicOut } from 'svelte/easing';
 
     function handleConfirm() {
         confirmState.close(true);
@@ -9,13 +8,6 @@
 
     function handleCancel() {
         confirmState.close(false);
-    }
-
-    // Close on backdrop click
-    function handleBackdropClick(e: MouseEvent | KeyboardEvent) {
-        if (e.target === e.currentTarget) {
-            handleCancel();
-        }
     }
 
     // Icons Mapping
@@ -26,68 +18,35 @@
     };
 </script>
 
-{#if confirmState.isOpen}
-    <div 
-        class="confirm-backdrop"
-        onclick={handleBackdropClick}
-        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleBackdropClick(e); }}
-        role="button"        
-        tabindex="0"         
-        transition:fade={{ duration: 150 }}
-    >
-        <div 
-            class="confirm-modal"
-            transition:scale={{ start: 0.96, duration: 150, easing: cubicOut }}
-        >
-            <div class="confirm-content-wrapper">
-                <div class="confirm-icon-area {confirmState.type}">
-                    {@html icons[confirmState.type]}
-                </div>
-                
-                <div class="confirm-text-area">
-                    <div class="confirm-title">{confirmState.title}</div>
-                    <div class="confirm-message">{confirmState.message}</div>
-                </div>
-            </div>
-
-            <div class="confirm-footer">
-                <button class="btn btn-secondary" onclick={handleCancel}>
-                    {confirmState.cancelText}
-                </button>
-                <button class="btn btn-primary {confirmState.type}" onclick={handleConfirm}>
-                    {confirmState.confirmText}
-                </button>
-            </div>
+<BaseModal 
+    isOpen={confirmState.isOpen} 
+    onClose={handleCancel} 
+    blur={true} 
+    width="max-w-[420px]" 
+    zIndex="z-[9999]"
+>
+    <div class="confirm-content-wrapper">
+        <div class="confirm-icon-area {confirmState.type}">
+            {@html icons[confirmState.type]}
+        </div>
+        
+        <div class="confirm-text-area">
+            <div class="confirm-title">{confirmState.title}</div>
+            <div class="confirm-message">{confirmState.message}</div>
         </div>
     </div>
-{/if}
+
+    <div class="confirm-footer">
+        <button class="btn btn-secondary" onclick={handleCancel}>
+            {confirmState.cancelText}
+        </button>
+        <button class="btn btn-primary {confirmState.type}" onclick={handleConfirm}>
+            {confirmState.confirmText}
+        </button>
+    </div>
+</BaseModal>
 
 <style>
-    .confirm-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(2px);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .confirm-modal {
-        background: white;
-        width: 420px;
-        max-width: 90%;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-
     .confirm-content-wrapper {
         padding: 24px 24px 20px 24px;
         display: flex;
@@ -139,6 +98,8 @@
         justify-content: flex-end;
         gap: 8px;
         border-top: 1px solid #f0f0f0;
+        /* Ensure rounded bottom corners match BaseModal if explicitly needed, 
+           but BaseModal has overflow-hidden so it's fine */
     }
 
     .btn {
