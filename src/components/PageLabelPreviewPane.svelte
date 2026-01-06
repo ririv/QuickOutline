@@ -1,6 +1,6 @@
 <script lang="ts">
     import { docStore } from '@/stores/docStore.svelte';
-    import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
+    import { pageLabelStore, type PageLabelRule } from '@/stores/pageLabelStore.svelte';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
     import PreviewPopup from './PreviewPopup.svelte';
@@ -35,6 +35,10 @@
         const orig = originalLabels[index];
         if (orig === undefined) return currentLabel !== String(index + 1);
         return currentLabel !== orig;
+    }
+
+    function getRuleForPage(index: number): PageLabelRule | undefined {
+        return pageLabelStore.rules.find(r => r.fromPage === index + 1);
     }
 
     // Reset Cache on file change
@@ -92,6 +96,7 @@
             {@const label = getPageLabel(i)}
             {@const modified = isLabelModified(i, label)}
             {@const original = originalLabels[i] || String(i + 1)}
+            {@const rule = getRuleForPage(i)}
 
             <div class="page-row" style="height: {ITEM_HEIGHT}px;" class:is-modified={modified}>
                 <div class="thumb-section flex flex-col items-center gap-2">
@@ -114,16 +119,37 @@
                         </div>
                     </div>
                     
-                    <div class="label-value text-xs font-mono font-bold text-center w-full truncate px-1 {modified ? 'text-blue-600' : 'text-gray-700'}" title="Label: {label}">
-                        {label}
+                    <div class="flex items-baseline justify-center w-full px-1">
+                        {#if modified}
+                            <!-- Phantom element to balance the layout and ensure centering -->
+                            <div class="invisible text-[10px] font-mono pr-1 select-none whitespace-nowrap" aria-hidden="true">{original}</div>
+                        {/if}
+                        
+                        <div class="z-10 text-xs font-mono font-bold text-center {modified ? 'text-blue-600' : 'text-gray-700'} whitespace-nowrap" title="Label: {label}">
+                            {label}
+                        </div>
+
+                        {#if modified}
+                            <div class="text-[10px] text-gray-400 line-through font-mono pl-1 whitespace-nowrap" title="Original: {original}">
+                                {original}
+                            </div>
+                        {/if}
                     </div>
                 </div>
 
                 <div class="info-col">
-                    {#if modified}
-                        <div class="meta-row">
-                            <span class="label">Orig:</span>
-                            <span class="value orig">{original}</span>
+                    {#if rule}
+                        <div class="rule-inline-container">
+                            <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd"></path></svg>
+                            <span class="rule-text">
+                                {#if rule.prefix}
+                                    <span class="text-[#606266] bg-[#f4f4f5] px-1.5 rounded-[3px] text-[13px] border border-[#e9e9eb] font-mono mr-1.5" title="Prefix">{rule.prefix}</span>
+                                {/if}
+                                <span class="font-semibold text-gray-700">{rule.numberingStyleDisplay}</span>
+                                {#if rule.start !== 1}
+                                    <span class="text-[#3b82f6] bg-[#eff6ff] px-1.5 rounded-[3px] text-[13px] border border-[#dbeafe] font-mono ml-1.5" title="Start Number">Start {rule.start}</span>
+                                {/if}
+                            </span>
                         </div>
                     {/if}
                 </div>
@@ -175,13 +201,21 @@
       position: relative; 
   }
   
-  .label-value { line-height: 1.2; margin-top: 4px;}
-
-  .info-col { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 4px; }
-  .meta-row { display: flex; align-items: center; gap: 8px; }
-  .label { font-size: 10px; color: #9ca3af; text-transform: uppercase; font-family: 'JetBrains Mono', 'Consolas', monospace; width: 40px; flex-shrink: 0; }
-  .value { color: #374151; font-family: 'JetBrains Mono', 'Consolas', monospace; }
-  .value.orig { color: #9ca3af; text-decoration: line-through; font-size: 11px; }
+  .info-col { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 6px; }
+  
+  /* Minimalistic Inline Rule Style */
+  .rule-inline-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 0;
+  }
+  .rule-text {
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+  }
 
   .action-col { min-width: 80px; display: flex; justify-content: flex-end; }
   .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
