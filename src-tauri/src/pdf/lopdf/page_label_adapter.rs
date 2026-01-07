@@ -84,25 +84,25 @@ impl<'a> PageLabelEngine for LopdfPageLabelAdapter<'a> {
                     };
                     
                     rules_list.push(PageLabel {
-                        page_num: index + 1,
+                        page_index: index + 1,
                         numbering_style: style,
                         label_prefix: prefix,
-                        first_page: start_num,
+                        start_value: start_num,
                     });
                 }
             }
         }
-        rules_list.sort_by_key(|r| r.page_num);
+        rules_list.sort_by_key(|r| r.page_index);
         Ok(rules_list)
     }
 
     fn set_label_rules(&mut self, rules: Vec<PageLabel>) -> Result<()> {
         let mut nums = Vec::new();
         let mut sorted_list = rules;
-        sorted_list.sort_by_key(|l| l.page_num);
+        sorted_list.sort_by_key(|l| l.page_index);
 
         for label in sorted_list {
-            let page_index = label.page_num - 1;
+            let page_index = label.page_index - 1;
             let mut dict = Dictionary::new();
             if let Some(s) = Self::map_style_to_name(&label.numbering_style) {
                 dict.set("S", Object::Name(s.as_bytes().to_vec()));
@@ -110,7 +110,7 @@ impl<'a> PageLabelEngine for LopdfPageLabelAdapter<'a> {
             if let Some(prefix) = &label.label_prefix {
                 dict.set("P", Object::String(prefix.as_bytes().to_vec(), StringFormat::Literal));
             }
-            if let Some(start) = label.first_page {
+            if let Some(start) = label.start_value {
                 dict.set("St", Object::Integer(start as i64));
             }
             nums.push(Object::Integer(page_index as i64));

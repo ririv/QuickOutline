@@ -102,7 +102,7 @@ pub fn calculate_merged_rules(
 
     let mut impact_rule_idx = None;
     for (i, rule) in rules.iter().enumerate() {
-        if rule.page_num <= insert_idx_1based {
+        if rule.page_index <= insert_idx_1based {
             impact_rule_idx = Some(i);
         } else {
             break;
@@ -110,28 +110,28 @@ pub fn calculate_merged_rules(
     }
 
     let mut resume_rule = None;
-    let exact_match = rules.iter().any(|r| r.page_num == insert_idx_1based);
+    let exact_match = rules.iter().any(|r| r.page_index == insert_idx_1based);
     
     if !exact_match {
         let (style, prefix, start_num) = if let Some(idx) = impact_rule_idx {
             let r = &rules[idx];
-            let offset = insert_pos - (r.page_num - 1);
-            (r.numbering_style.clone(), r.label_prefix.clone(), r.first_page.unwrap_or(1) + offset)
+            let offset = insert_pos - (r.page_index - 1);
+            (r.numbering_style.clone(), r.label_prefix.clone(), r.start_value.unwrap_or(1) + offset)
         } else {
             (PageLabelNumberingStyle::DecimalArabicNumerals, None, insert_pos + 1)
         };
 
         resume_rule = Some(PageLabel {
-            page_num: resume_idx_1based,
+            page_index: resume_idx_1based,
             numbering_style: style,
             label_prefix: prefix,
-            first_page: Some(start_num),
+            start_value: Some(start_num),
         });
     }
 
     for rule in &mut rules {
-        if rule.page_num >= insert_idx_1based {
-            rule.page_num += toc_len;
+        if rule.page_index >= insert_idx_1based {
+            rule.page_index += toc_len;
         }
     }
 
@@ -140,18 +140,18 @@ pub fn calculate_merged_rules(
             l.clone()
         } else {
             PageLabel {
-                page_num: 1, 
+                page_index: 1,
                 numbering_style: PageLabelNumberingStyle::DecimalArabicNumerals,
                 label_prefix: None,
-                first_page: Some(1),
+                start_value: Some(1),
             }
         };
         
-        new_rule.page_num = insert_idx_1based;
+        new_rule.page_index = insert_idx_1based;
         rules.push(new_rule);
     } else {
         for tr in &mut toc_rules {
-            tr.page_num += insert_pos; 
+            tr.page_index += insert_pos;
         }
         rules.extend(toc_rules);
     }
@@ -160,7 +160,7 @@ pub fn calculate_merged_rules(
         rules.push(rr);
     }
     
-    rules.sort_by_key(|r| r.page_num);
+    rules.sort_by_key(|r| r.page_index);
     rules
 }
 
