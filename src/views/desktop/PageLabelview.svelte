@@ -7,6 +7,7 @@
     import trashIcon from '../../assets/icons/trash.svg';
     import resetIcon from '../../assets/icons/reset.svg';
     import applyIcon from '../../assets/icons/success.svg?raw';
+    import editIcon from '../../assets/icons/edit.svg?raw';
 
     import { ripple } from '@/lib/actions/ripple.ts';
     import { docStore } from '@/stores/docStore.svelte.js';
@@ -18,7 +19,7 @@
     import PageLabelForm from '@/components/pagelabel/PageLabelForm.svelte';
     import PageLabelFormModal from '@/components/pagelabel/PageLabelFormModal.svelte';
 
-    const { deleteRule, clearRules, resetToOriginal, apply } = usePageLabelActions();
+    const { deleteRule, editRule, clearRules, resetToOriginal, apply } = usePageLabelActions();
 
 </script>
 
@@ -49,7 +50,7 @@
                                      title="Clear All Rules (Delete)">
                             <img
                                 src={trashIcon}
-                                alt="Clear"
+                                alt="Delete"
                                 class="transition-[filter] duration-200 group-hover:[filter:invert(36%)_sepia(82%)_saturate(2268%)_hue-rotate(338deg)_brightness(95%)_contrast(94%)] group-active:[filter:invert(13%)_sepia(95%)_saturate(5686%)_hue-rotate(348deg)_brightness(82%)_contrast(106%)]"
                             />
                         </GraphButton>
@@ -76,9 +77,14 @@
                                 </div>
                             </div>
 
-                            <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.pageIndex)} title="Delete Rule">
-                                <Icon data={deleteIcon} class="w-4 h-4 text-red-500" />
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-blue-100" onclick={() => editRule(rule)} title="Edit Rule">
+                                    <svg class="w-[17px] h-[17px] text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                                <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.pageIndex)} title="Delete Rule">
+                                    <Icon data={deleteIcon} class="w-4 h-4 text-red-500" />
+                                </button>
+                            </div>
                         </div>
                     {/each}
                     {#if pageLabelStore.sortedRules.length === 0}

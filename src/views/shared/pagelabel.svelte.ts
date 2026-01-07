@@ -25,9 +25,24 @@ export function usePageLabelActions() {
         simulate();
     }
 
-    function deleteRule(fromPage: number) {
-        pageLabelStore.deleteRule(fromPage);
-        simulate();
+    async function deleteRule(fromPage: number) {
+        const ok = await confirm(
+            "Are you sure you want to delete this rule?",
+            "Delete Rule",
+            { type: 'warning', confirmText: 'Delete', cancelText: 'Cancel' }
+        );
+        if (ok) {
+            pageLabelStore.deleteRule(fromPage);
+            simulate();
+        }
+    }
+
+    function editRule(rule: PageLabel) {
+        pageLabelStore.startPage = String(rule.pageIndex);
+        pageLabelStore.startNumber = String(rule.startValue ?? 1);
+        pageLabelStore.prefix = rule.labelPrefix || '';
+        pageLabelStore.numberingStyle = rule.numberingStyle;
+        pageLabelStore.isFormOpen = true;
     }
 
     async function resetToOriginal() {
@@ -87,6 +102,7 @@ export function usePageLabelActions() {
 
     return {
         addRule,
+        editRule,
         deleteRule,
         resetToOriginal,
         clearRules,
