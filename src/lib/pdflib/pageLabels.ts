@@ -128,8 +128,9 @@ export async function setPageLabelRules(data: Uint8Array | ArrayBuffer, rules: P
         Nums: nums
     });
 
-    // 3. Update Catalog
-    pdfDoc.catalog.set(PDFName.of('PageLabels'), pageLabelsDict);
+    // 3. Update Catalog (Use Indirect Object for better compatibility)
+    const pageLabelsRef = context.register(pageLabelsDict);
+    pdfDoc.catalog.set(PDFName.of('PageLabels'), pageLabelsRef);
 
     // 4. Save and return
     return await pdfDoc.save();
