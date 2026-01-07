@@ -152,7 +152,26 @@
 
                 <div class="info-col relative h-full flex flex-col justify-center">
                     {#if rule}
-                        <div class="rule-inline-container">
+                        {@const originalRule = docStore.originalRules?.find(r => r.pageIndex === i + 1)}
+                        {@const hasDiff = originalRule && (
+                            originalRule.numberingStyle !== rule.numberingStyle ||
+                            (originalRule.labelPrefix || '') !== (rule.labelPrefix || '') ||
+                            (originalRule.startValue ?? 1) !== (rule.startValue ?? 1)
+                        )}
+
+                        <div class="rule-inline-container relative">
+                            {#if hasDiff}
+                                <div class="absolute bottom-full left-0 mb-1 pl-5 flex items-center whitespace-nowrap opacity-60">
+                                    {#if originalRule.labelPrefix}
+                                        <span class="text-[#606266] bg-[#f4f4f5] px-1.5 rounded-[3px] text-[11px] border border-[#e9e9eb] font-mono mr-1.5 line-through">{originalRule.labelPrefix}</span>
+                                    {/if}
+                                    <span class="font-semibold text-gray-700 text-[12px] line-through">{pageLabelStyleMap.getDisplayText(originalRule.numberingStyle)}</span>
+                                    {#if (originalRule.startValue ?? 1) !== 1}
+                                        <span class="text-gray-600 bg-gray-50 px-1.5 rounded-[3px] text-[11px] border border-gray-200 font-mono ml-1.5 line-through">Start {originalRule.startValue ?? 1}</span>
+                                    {/if}
+                                </div>
+                            {/if}
+
                             <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd"></path></svg>
                             <span class="rule-text">
                                 {#if rule.labelPrefix}
