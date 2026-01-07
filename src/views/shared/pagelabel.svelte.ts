@@ -21,7 +21,7 @@ export function usePageLabelActions() {
             fromPage: parseInt(pageLabelStore.startPage) || 1
         };
 
-        pageLabelStore.addRule(newRule);
+        pageLabelStore.addOrUpdateRule(newRule);
         pageLabelStore.resetForm();
         simulate();
     }

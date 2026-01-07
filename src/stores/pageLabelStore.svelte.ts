@@ -52,8 +52,22 @@ class PageLabelStore {
         }));
     }
 
-    addRule(rule: PageLabelRule) {
-        this.rules.push(rule);
+    addOrUpdateRule(rule: PageLabelRule) {
+        const index = this.rules.findIndex(r => r.fromPage === rule.fromPage);
+        if (index !== -1) {
+            // Overwrite existing rule for this page
+            // We keep the new rule's ID or old? 
+            // If we replace, we use new rule.
+            this.rules[index] = rule;
+        } else {
+            this.rules.push(rule);
+        }
+        // Always keep rules sorted by page number
+        this.rules.sort((a, b) => a.fromPage - b.fromPage);
+    }
+
+    getRuleByPage(page: number): PageLabelRule | undefined {
+        return this.rules.find(r => r.fromPage === page);
     }
 
     deleteRule(ruleId: string) {

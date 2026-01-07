@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@/components/Icon.svelte";
     import addIcon from '@/assets/icons/plus.svg?raw';
+    import updateIcon from '@/assets/icons/edit.svg?raw';
     import StyledSelect from '@/components/controls/StyledSelect.svelte';
     import StyledInput from "@/components/controls/StyledInput.svelte";
     import { ripple } from '@/lib/actions/ripple.ts';
@@ -17,15 +18,17 @@
 
     let { onSuccess }: Props = $props();
 
+    let existingRule = $derived(pageLabelStore.getRuleByPage(parseInt(pageLabelStore.startPage) || 0));
+
     function handleAdd() {
-        addRule();
+        addRule(); // This now calls addOrUpdateRule internally
         if (onSuccess) onSuccess();
     }
 </script>
 
 <div class="flex flex-col gap-4">
     <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-        <label for="style" class="text-right text-sm text-[#333]">Style</label>
+        <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
         <div class="w-full">
             <StyledSelect
                 options={styles}
@@ -54,12 +57,12 @@
 
     <div class="flex justify-center mt-2.5">
         <button
-            class="inline-flex items-center justify-center w-[110px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100"
+            class="inline-flex items-center justify-center min-w-[110px] gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100 {existingRule ? 'text-amber-600 hover:text-amber-700' : 'text-gray-700'}"
             use:ripple
             onclick={handleAdd}
         >
-            <Icon data={addIcon} class="w-4 h-4 opacity-70" />
-            Add Rule
+            <Icon data={existingRule ? updateIcon : addIcon} class="w-4 h-4 opacity-70" />
+            {existingRule ? 'Update Rule' : 'Add Rule'}
         </button>
     </div>
 </div>
