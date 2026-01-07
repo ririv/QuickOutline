@@ -9,6 +9,9 @@
     import applyIcon from '../../assets/icons/success.svg?raw';
     import editIcon from '../../assets/icons/edit.svg?raw';
 
+    // Custom Tag Icon for "Set Page Label"
+    const setLabelIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path><path d="M7 7h.01"></path></svg>`;
+
     import { ripple } from '@/lib/actions/ripple.ts';
     import { docStore } from '@/stores/docStore.svelte.js';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
@@ -97,11 +100,11 @@
 
             <div class="mt-4 flex justify-center">
                  <button
-                    class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-el-primary rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-el-plain-primary-bg border border-el-plain-primary-border hover:bg-el-plain-primary-bg-hover active:bg-el-plain-primary-border"
+                    class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-el-primary rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-el-plain-primary-bg hover:bg-el-plain-primary-bg-hover active:bg-el-plain-primary-border"
                     use:ripple={{ color: 'var(--color-el-primary-shadow)' }}
                     onclick={apply}
                 >
-                    <Icon data={applyIcon} class="w-4 h-4" />
+                    <Icon data={setLabelIcon} class="w-4 h-4" />
                     Set Page Label
                 </button>
             </div>

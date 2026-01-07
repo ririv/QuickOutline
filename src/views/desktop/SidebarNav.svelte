@@ -123,7 +123,7 @@
     }
 
     .icon-bookmark { mask-image: url('../../assets/icons/bookmark.svg'); -webkit-mask-image: url('../../assets/icons/bookmark.svg'); }
-    .icon-label { mask-image: url('../../assets/icons/page-label.svg'); -webkit-mask-image: url('../../assets/icons/page-label.svg'); }
+    .icon-label { mask-image: url('../../assets/icons/pagenum2.svg'); -webkit-mask-image: url('../../assets/icons/pagenum2.svg'); }
     .icon-toc { mask-image: url('../../assets/icons/toc.svg'); -webkit-mask-image: url('../../assets/icons/toc.svg'); }
     .icon-markdown { mask-image: url('../../assets/icons/markdown.svg'); -webkit-mask-image: url('../../assets/icons/markdown.svg'); }
     .icon-viewer { mask-image: url('../../assets/icons/preview.svg'); -webkit-mask-image: url('../../assets/icons/preview.svg'); }
