@@ -1,8 +1,8 @@
 <script lang="ts">
     import { messageStore } from '@/stores/messageStore.svelte';
     import { docStore } from '@/stores/docStore.svelte';
-    import { pageLabelStore, type PageLabelRule } from '@/stores/pageLabelStore.svelte';
-    import { pageLabelStyleMap } from '@/lib/types/page-label.ts';
+    import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
+    import { pageLabelStyleMap, type PageLabel } from '@/lib/types/page-label.ts';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
     import PreviewPopup from './PreviewPopup.svelte';
@@ -41,8 +41,8 @@
         return currentLabel !== orig;
     }
 
-    function getRuleForPage(index: number): PageLabelRule | undefined {
-        return pageLabelStore.rules.find(r => r.fromPage === index + 1);
+    function getRuleForPage(index: number): PageLabel | undefined {
+        return pageLabelStore.getRuleByPage(index + 1);
     }
 
     function handleAdd(pageIndex: number) {
@@ -51,14 +51,11 @@
         pageLabelStore.isFormOpen = true;
     }
 
-    function handleEdit(rule: PageLabelRule) {
-        pageLabelStore.startPage = String(rule.fromPage);
-        pageLabelStore.startNumber = String(rule.start);
-        pageLabelStore.prefix = rule.prefix;
-        const styleEnum = pageLabelStyleMap.getEnumName(rule.numberingStyleDisplay);
-        if (styleEnum) {
-            pageLabelStore.numberingStyle = styleEnum;
-        }
+    function handleEdit(rule: PageLabel) {
+        pageLabelStore.startPage = String(rule.pageNum);
+        pageLabelStore.startNumber = String(rule.firstPage ?? 1);
+        pageLabelStore.prefix = rule.labelPrefix || '';
+        pageLabelStore.numberingStyle = rule.numberingStyle;
         pageLabelStore.isFormOpen = true;
     }
 
@@ -163,12 +160,12 @@
                         <div class="rule-inline-container">
                             <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd"></path></svg>
                             <span class="rule-text">
-                                {#if rule.prefix}
-                                    <span class="text-[#606266] bg-[#f4f4f5] px-1.5 rounded-[3px] text-[13px] border border-[#e9e9eb] font-mono mr-1.5" title="Prefix">{rule.prefix}</span>
+                                {#if rule.labelPrefix}
+                                    <span class="text-[#606266] bg-[#f4f4f5] px-1.5 rounded-[3px] text-[13px] border border-[#e9e9eb] font-mono mr-1.5" title="Prefix">{rule.labelPrefix}</span>
                                 {/if}
-                                <span class="font-semibold text-gray-700">{rule.numberingStyleDisplay}</span>
-                                {#if rule.start !== 1}
-                                    <span class="text-[#3b82f6] bg-[#eff6ff] px-1.5 rounded-[3px] text-[13px] border border-[#dbeafe] font-mono ml-1.5" title="Start Number">Start {rule.start}</span>
+                                <span class="font-semibold text-gray-700">{pageLabelStyleMap.getDisplayText(rule.numberingStyle)}</span>
+                                {#if (rule.firstPage ?? 1) !== 1}
+                                    <span class="text-[#3b82f6] bg-[#eff6ff] px-1.5 rounded-[3px] text-[13px] border border-[#dbeafe] font-mono ml-1.5" title="Start Number">Start {rule.firstPage}</span>
                                 {/if}
                             </span>
                         </div>
@@ -180,7 +177,7 @@
                             <button class="action-btn text-blue-600 hover:bg-blue-50" onclick={() => handleEdit(rule)} title="Edit Rule">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
-                            <button class="action-btn text-red-500 hover:bg-red-50" onclick={() => deleteRule(rule.id)} title="Delete Rule">
+                            <button class="action-btn text-red-500 hover:bg-red-50" onclick={() => deleteRule(rule.pageNum)} title="Delete Rule">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         {:else}

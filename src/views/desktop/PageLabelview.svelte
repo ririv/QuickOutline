@@ -11,6 +11,7 @@
     import { ripple } from '@/lib/actions/ripple.ts';
     import { docStore } from '@/stores/docStore.svelte.js';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
+    import { pageLabelStyleMap } from '@/lib/types/page-label.ts';
     import GraphButton from "@/components/controls/GraphButton.svelte";
 
     import { usePageLabelActions } from '../shared/pagelabel.svelte.ts';
@@ -55,32 +56,32 @@
                     </div>
                 </div>
                 <div class="flex-1 overflow-y-auto border border-el-default-border p-2 bg-white rounded-md">
-                    {#each pageLabelStore.rules as rule (rule.id)}
+                    {#each pageLabelStore.sortedRules as rule (rule.pageNum)}
                         <div class="flex items-center justify-between px-2 py-1 border-b border-[#f0f0f0] text-[13px] bg-transparent rounded mb-0.5 hover:bg-gray-50 transition-colors last:border-0 last:mb-0">
                             <div class="flex items-center gap-2 flex-1 overflow-hidden">
                                 <span class="bg-el-plain-primary-bg text-el-primary border border-[#d9ecff] rounded px-1.5 py-0.5 text-xs font-semibold min-w-[32px] text-center shrink-0">
-                                    P{rule.fromPage}
+                                    P{rule.pageNum}
                                 </span>
 
                                 <div class="flex flex-col justify-center overflow-hidden">
                                     <div class="flex items-center gap-1 font-medium text-[#303133] whitespace-nowrap overflow-hidden text-ellipsis leading-tight">
-                                        {#if rule.prefix}
-                                            <span class="text-[#606266] bg-[#f4f4f5] px-1 rounded-[3px] text-[11px] border border-[#e9e9eb]">{rule.prefix}</span>
+                                        {#if rule.labelPrefix}
+                                            <span class="text-[#606266] bg-[#f4f4f5] px-1 rounded-[3px] text-[11px] border border-[#e9e9eb]">{rule.labelPrefix}</span>
                                         {/if}
-                                        <span class="overflow-hidden text-ellipsis">{rule.numberingStyleDisplay}</span>
+                                        <span class="overflow-hidden text-ellipsis">{pageLabelStyleMap.getDisplayText(rule.numberingStyle)}</span>
                                     </div>
                                     <div class="text-[10px] text-[#909399] leading-tight">
-                                        Start: {rule.start}
+                                        Start: {rule.firstPage ?? 1}
                                     </div>
                                 </div>
                             </div>
 
-                            <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.id)} title="Delete Rule">
+                            <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.pageNum)} title="Delete Rule">
                                 <Icon data={deleteIcon} class="w-4 h-4 text-red-500" />
                             </button>
                         </div>
                     {/each}
-                    {#if pageLabelStore.rules.length === 0}
+                    {#if pageLabelStore.sortedRules.length === 0}
                         <div class="p-4 text-center text-xs text-gray-400 italic">
                             No rules added yet.
                         </div>

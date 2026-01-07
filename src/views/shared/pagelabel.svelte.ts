@@ -13,12 +13,11 @@ export function usePageLabelActions() {
              return;
         }
 
-        const newRule = {
-            id: Date.now().toString(),
-            numberingStyleDisplay: pageLabelStore.numberingStyle == PageLabelNumberingStyle.NONE ? "" : pageLabelStyleMap.getDisplayText(pageLabelStore.numberingStyle),
-            prefix: pageLabelStore.prefix,
-            start: parseInt(pageLabelStore.startNumber) || 1,
-            fromPage: parseInt(pageLabelStore.startPage) || 1
+        const newRule: PageLabel = {
+            pageNum: parseInt(pageLabelStore.startPage) || 1,
+            numberingStyle: pageLabelStore.numberingStyle,
+            labelPrefix: pageLabelStore.prefix || null,
+            firstPage: parseInt(pageLabelStore.startNumber) || 1
         };
 
         pageLabelStore.addOrUpdateRule(newRule);
@@ -26,8 +25,8 @@ export function usePageLabelActions() {
         simulate();
     }
 
-    function deleteRule(ruleId: string) {
-        pageLabelStore.deleteRule(ruleId);
+    function deleteRule(fromPage: number) {
+        pageLabelStore.deleteRule(fromPage);
         simulate();
     }
 
@@ -62,13 +61,7 @@ export function usePageLabelActions() {
     }
 
     async function simulate() {
-        const rules: PageLabel[] = pageLabelStore.rules.map(r => ({
-            pageNum: r.fromPage,
-            firstPage: r.start,
-            labelPrefix: r.prefix,
-            numberingStyle: pageLabelStyleMap.getEnumName(r.numberingStyleDisplay) || PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS
-        }));
-
+        const rules = pageLabelStore.getFinalRules();
         try {
             const labels = await pageLabelService.simulateLabels(rules, docStore.pageCount);
             pageLabelStore.setSimulatedLabels(labels);
