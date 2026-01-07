@@ -8,7 +8,7 @@ class PageLabelStore {
     
     // Derived sorted list for UI rendering
     sortedRules = $derived(
-        Array.from(this.rulesMap.values()).sort((a, b) => a.pageNum - b.pageNum)
+        Array.from(this.rulesMap.values()).sort((a, b) => a.pageIndex - b.pageIndex)
     );
 
     // Alias for backward compatibility (read-only)
@@ -31,7 +31,7 @@ class PageLabelStore {
     async setRules(rustRules: PageLabel[], totalPages: number) {
         this.rulesMap.clear();
         for (const r of rustRules) {
-            this.rulesMap.set(r.pageNum, r);
+            this.rulesMap.set(r.pageIndex, r);
         }
 
         if (this.rulesMap.size > 0) {
@@ -49,7 +49,7 @@ class PageLabelStore {
 
     addOrUpdateRule(rule: PageLabel) {
         // Map automatically handles deduplication/overwrite by key (pageNum)
-        this.rulesMap.set(rule.pageNum, rule);
+        this.rulesMap.set(rule.pageIndex, rule);
     }
 
     getRuleByPage(page: number): PageLabel | undefined {

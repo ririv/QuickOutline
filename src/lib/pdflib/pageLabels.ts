@@ -73,10 +73,10 @@ export async function getPageLabelRules(data: Uint8Array | ArrayBuffer): Promise
                 firstPage = st.asNumber();
             }
 
-            rules.push({ pageNum, numberingStyle, labelPrefix, firstPage });
+            rules.push({ pageIndex: pageNum, numberingStyle, labelPrefix, startValue: firstPage });
         }
 
-        return rules.sort((a, b) => a.pageNum - b.pageNum);
+        return rules.sort((a, b) => a.pageIndex - b.pageIndex);
     } catch (e) {
         console.error("[PdfLib] Failed to parse page labels:", e);
         return [];
@@ -94,10 +94,10 @@ export async function setPageLabelRules(data: Uint8Array | ArrayBuffer, rules: P
     const nums = context.obj([]);
     
     // Sort rules by pageNum (required by spec)
-    const sortedRules = [...rules].sort((a, b) => a.pageNum - b.pageNum);
+    const sortedRules = [...rules].sort((a, b) => a.pageIndex - b.pageIndex);
 
     for (const rule of sortedRules) {
-        const pageIndex = Math.max(0, rule.pageNum - 1);
+        const pageIndex = Math.max(0, rule.pageIndex - 1);
         const labelDict = context.obj({});
 
         // Set Style (S)
@@ -112,9 +112,9 @@ export async function setPageLabelRules(data: Uint8Array | ArrayBuffer, rules: P
         }
 
         // Set Start Number (St)
-        if (rule.firstPage !== undefined && rule.firstPage !== 1) {
-            labelDict.set(PDFName.of('St'), PDFNumber.of(rule.firstPage));
-        } else if (rule.firstPage === 1) {
+        if (rule.startValue !== undefined && rule.startValue !== 1) {
+            labelDict.set(PDFName.of('St'), PDFNumber.of(rule.startValue));
+        } else if (rule.startValue === 1) {
             // Optional but good for clarity, usually 1 is default
             labelDict.set(PDFName.of('St'), PDFNumber.of(1));
         }

@@ -1,19 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { PageLabelNumberingStyle } from '@/lib/types/page-label.ts';
+import type { PageLabel } from '@/lib/types/page-label.ts';
 import type { ViewScaleType } from '@/lib/types/pdf';
 import type { BookmarkData } from '@/lib/types/bookmark';
 import type { HeaderFooterConfig } from '@/lib/types/header-footer';
 
 export type LoadMode = 'DirectFile' | 'MemoryBuffer';
-
-export interface PageLabel {
-    pageNum: number;
-    numberingStyle: PageLabelNumberingStyle;
-    labelPrefix?: string | null;
-    firstPage?: number;
-}
-
-// ... existing convertForRust/convertFromRust ...
 
 function convertForRust(bookmark: any): any {
     const copy = { ...bookmark };

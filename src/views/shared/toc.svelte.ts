@@ -177,10 +177,10 @@ export function useTocActions() {
                 title: tocStore.title,
                 insertPos: parseInt(String(tocStore.insertionConfig.pos), 10),
                 tocPageLabel: {
-                    pageNum: 1, // Will be overwritten by backend based on insertPos
+                    pageIndex: 1, // Will be overwritten by backend based on insertPos
                     numberingStyle: tocStore.numberingStyle,
                     labelPrefix: null,
-                    firstPage: 1
+                    startValue: 1
                 },
                 header: tocStore.headerConfig,
                 footer: tocStore.footerConfig,

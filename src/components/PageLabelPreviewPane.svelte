@@ -52,8 +52,8 @@
     }
 
     function handleEdit(rule: PageLabel) {
-        pageLabelStore.startPage = String(rule.pageNum);
-        pageLabelStore.startNumber = String(rule.firstPage ?? 1);
+        pageLabelStore.startPage = String(rule.pageIndex);
+        pageLabelStore.startNumber = String(rule.startValue ?? 1);
         pageLabelStore.prefix = rule.labelPrefix || '';
         pageLabelStore.numberingStyle = rule.numberingStyle;
         pageLabelStore.isFormOpen = true;
@@ -164,8 +164,8 @@
                                     <span class="text-[#606266] bg-[#f4f4f5] px-1.5 rounded-[3px] text-[13px] border border-[#e9e9eb] font-mono mr-1.5" title="Prefix">{rule.labelPrefix}</span>
                                 {/if}
                                 <span class="font-semibold text-gray-700">{pageLabelStyleMap.getDisplayText(rule.numberingStyle)}</span>
-                                {#if (rule.firstPage ?? 1) !== 1}
-                                    <span class="text-[#3b82f6] bg-[#eff6ff] px-1.5 rounded-[3px] text-[13px] border border-[#dbeafe] font-mono ml-1.5" title="Start Number">Start {rule.firstPage}</span>
+                                {#if (rule.startValue ?? 1) !== 1}
+                                    <span class="text-[#3b82f6] bg-[#eff6ff] px-1.5 rounded-[3px] text-[13px] border border-[#dbeafe] font-mono ml-1.5" title="Start Number">Start {rule.startValue}</span>
                                 {/if}
                             </span>
                         </div>
@@ -177,7 +177,7 @@
                             <button class="action-btn text-blue-600 hover:bg-blue-50" onclick={() => handleEdit(rule)} title="Edit Rule">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
-                            <button class="action-btn text-red-500 hover:bg-red-50" onclick={() => deleteRule(rule.pageNum)} title="Delete Rule">
+                            <button class="action-btn text-red-500 hover:bg-red-50" onclick={() => deleteRule(rule.pageIndex)} title="Delete Rule">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         {:else}

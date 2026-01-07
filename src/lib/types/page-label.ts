@@ -27,10 +27,10 @@ export enum PageLabelNumberingStyle {
 }
 
 export interface PageLabel {
-    pageNum: number; // 1-based page index where the label rule starts
+    pageIndex: number; // 1-based page index where the label rule starts
     numberingStyle: PageLabelNumberingStyle;
     labelPrefix?: string | null;
-    firstPage?: number; // The number to start counting from (e.g. start from 1)
+    startValue?: number; // The number to start counting from (e.g. start from 1)
 }
 
 interface StyleMapEntry {
@@ -60,13 +60,13 @@ export const pageLabelStyleMap = {
 };
 
 export function simulatePageLabelsLocal(rules: PageLabel[], pageCount: number): string[] {
-    const sortedRules = [...rules].sort((a, b) => a.pageNum - b.pageNum);
+    const sortedRules = [...rules].sort((a, b) => a.pageIndex - b.pageIndex);
     const labels: string[] = new Array(pageCount);
 
     for (let i = 1; i <= pageCount; i++) {
         let activeRule: PageLabel | null = null;
         for (const rule of sortedRules) {
-            if (i >= rule.pageNum) {
+            if (i >= rule.pageIndex) {
                 activeRule = rule;
             } else {
                 break;
@@ -74,8 +74,8 @@ export function simulatePageLabelsLocal(rules: PageLabel[], pageCount: number): 
         }
 
         if (activeRule) {
-            const offset = i - activeRule.pageNum;
-            const start = activeRule.firstPage ?? 1;
+            const offset = i - activeRule.pageIndex;
+            const start = activeRule.startValue ?? 1;
             labels[i - 1] = Numbering.formatPageNumber(activeRule.numberingStyle, start + offset, activeRule.labelPrefix || null);
         } else {
             labels[i - 1] = String(i);

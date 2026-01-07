@@ -56,11 +56,11 @@
                     </div>
                 </div>
                 <div class="flex-1 overflow-y-auto border border-el-default-border p-2 bg-white rounded-md">
-                    {#each pageLabelStore.sortedRules as rule (rule.pageNum)}
+                    {#each pageLabelStore.sortedRules as rule (rule.pageIndex)}
                         <div class="flex items-center justify-between px-2 py-1 border-b border-[#f0f0f0] text-[13px] bg-transparent rounded mb-0.5 hover:bg-gray-50 transition-colors last:border-0 last:mb-0">
                             <div class="flex items-center gap-2 flex-1 overflow-hidden">
                                 <span class="bg-el-plain-primary-bg text-el-primary border border-[#d9ecff] rounded px-1.5 py-0.5 text-xs font-semibold min-w-[32px] text-center shrink-0">
-                                    P{rule.pageNum}
+                                    P{rule.pageIndex}
                                 </span>
 
                                 <div class="flex flex-col justify-center overflow-hidden">
@@ -71,12 +71,12 @@
                                         <span class="overflow-hidden text-ellipsis">{pageLabelStyleMap.getDisplayText(rule.numberingStyle)}</span>
                                     </div>
                                     <div class="text-[10px] text-[#909399] leading-tight">
-                                        Start: {rule.firstPage ?? 1}
+                                        Start: {rule.startValue ?? 1}
                                     </div>
                                 </div>
                             </div>
 
-                            <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.pageNum)} title="Delete Rule">
+                            <button class="p-1 inline-flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors rounded hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.pageIndex)} title="Delete Rule">
                                 <Icon data={deleteIcon} class="w-4 h-4 text-red-500" />
                             </button>
                         </div>

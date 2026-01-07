@@ -14,10 +14,10 @@ export function usePageLabelActions() {
         }
 
         const newRule: PageLabel = {
-            pageNum: parseInt(pageLabelStore.startPage) || 1,
+            pageIndex: parseInt(pageLabelStore.startPage) || 1,
             numberingStyle: pageLabelStore.numberingStyle,
             labelPrefix: pageLabelStore.prefix || null,
-            firstPage: parseInt(pageLabelStore.startNumber) || 1
+            startValue: parseInt(pageLabelStore.startNumber) || 1
         };
 
         pageLabelStore.addOrUpdateRule(newRule);
