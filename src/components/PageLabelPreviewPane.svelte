@@ -11,6 +11,7 @@
     import { usePageLabelActions } from '../views/shared/pagelabel.svelte';
     import Icon from "@/components/Icon.svelte";
     import deleteIcon from '@/assets/icons/delete-item.svg?raw';
+    import addIcon from '@/assets/icons/plus.svg?raw';
 
     interface Props {
         pageCount?: number;
@@ -168,15 +169,15 @@
                     <!-- Actions Overlay -->
                     <div class="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover/row:opacity-100 transition-opacity z-20">
                         {#if rule}
-                            <button class="action-btn text-blue-600 hover:bg-blue-100" onclick={() => editRule(rule)} title="Edit Rule">
+                            <button class="p-[2px] rounded action-btn text-amber-600 hover:bg-amber-100" onclick={() => editRule(rule)} title="Edit Rule">
                                 <svg class="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
-                            <button class="action-btn text-red-500 hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.pageIndex)} title="Delete Rule">
-                                <Icon data={deleteIcon} class="w-4 h-4 text-red-500" />
+                            <button class="p-[2px] rounded action-btn text-red-500 hover:bg-el-plain-important-bg-hover" onclick={() => deleteRule(rule.pageIndex)} title="Delete Rule">
+                                <Icon data={deleteIcon} class="w-[1rem] h-[1rem] text-red-500" />
                             </button>
                         {:else}
-                            <button class="action-btn text-green-600 hover:bg-green-50" onclick={() => handleAdd(i)} title="Add Rule Here">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <button class="p-[2px] rounded action-btn text-blue-500 hover:bg-blue-100" onclick={() => handleAdd(i)} title="Add Rule Here">
+                                <Icon data={addIcon} class="w-[1rem] h-[1rem]" />
                             </button>
                         {/if}
                     </div>
