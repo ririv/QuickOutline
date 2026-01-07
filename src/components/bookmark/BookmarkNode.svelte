@@ -6,6 +6,8 @@
     import { docStore } from '@/stores/docStore.svelte';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { resolveLinkTarget, validatePageTarget } from '@/lib/services/PageLinkResolver';
+    import Icon from "@/components/Icon.svelte";
+    import arrowRightSolidIcon from '@/assets/icons/arrow-right-solid.svg?raw';
 
     interface Props {
         bookmark: BookmarkUI;
@@ -121,9 +123,7 @@
                 aria-label={bookmark.expanded ? "Collapse bookmark" : "Expand bookmark"}
             >
                 <span class="inline-block transition-transform duration-200 origin-center {bookmark.expanded ? 'rotate-90' : ''}">
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2.5 1.66667L7.5 5L2.5 8.33333L2.5 1.66667Z" />
-                    </svg>
+                    <Icon data={arrowRightSolidIcon} width={10} height={10} />
                 </span>
             </button>
             

@@ -6,6 +6,8 @@
     import pageOrientationSvg from '@/assets/icons/page-orientation.svg?raw';
     import githubSvg from '@/assets/icons/github.svg?raw';
     import xiaohongshuSvg from '@/assets/icons/xiaohongshu.svg?raw';
+    import refreshSvg from '@/assets/icons/refresh.svg?raw';
+    import folderOpenSvg from '@/assets/icons/folder-open.svg?raw';
 
     interface Props {
         name?: string;
@@ -25,7 +27,9 @@
         'check': successSvg,
         'page-orientation': pageOrientationSvg,
         'github': githubSvg,
-        'xiaohongshu': xiaohongshuSvg
+        'xiaohongshu': xiaohongshuSvg,
+        'refresh': refreshSvg,
+        'folder-open': folderOpenSvg
     };
 
     const svgContent = $derived.by(() => {

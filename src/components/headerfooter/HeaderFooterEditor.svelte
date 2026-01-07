@@ -3,6 +3,14 @@
     import PositionDiagram from '../PositionDiagram.svelte';
     import Tooltip from '../Tooltip.svelte';
     import type { HeaderFooterConfig } from '@/lib/types/header-footer.ts';
+    import Icon from "@/components/Icon.svelte";
+
+    // Icons
+    import alignLeftIcon from '@/assets/icons/align/align-left.svg?raw';
+    import alignCenterIcon from '@/assets/icons/align/align-center.svg?raw';
+    import alignRightIcon from '@/assets/icons/align/align-right.svg?raw';
+    import alignInnerIcon from '@/assets/icons/align/align-inner.svg?raw';
+    import alignOuterIcon from '@/assets/icons/align/align-outer.svg?raw';
 
     interface Props {
         config?: HeaderFooterConfig;
@@ -101,13 +109,7 @@
             onclick={() => setActive('left')}
             title="Left Aligned"
         >
-          <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-               stroke-width="2" viewBox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
-            <line x1="17" x2="3" y1="10" y2="10"></line>
-            <line x1="21" x2="3" y1="6" y2="6"></line>
-            <line x1="21" x2="3" y1="14" y2="14"></line>
-            <line x1="17" x2="3" y1="18" y2="18"></line>
-          </svg>
+          <Icon data={alignLeftIcon} width={14} height={14} />
           {#if hasContent('left')}<span class="dot"></span>{/if}
         </button>
         <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
@@ -123,13 +125,7 @@
             onclick={() => setActive('center')}
             title="Center Aligned"
         >
-          <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-               stroke-width="2" viewBox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
-            <line x1="18" x2="6" y1="10" y2="10"></line>
-            <line x1="21" x2="3" y1="6" y2="6"></line>
-            <line x1="21" x2="3" y1="14" y2="14"></line>
-            <line x1="18" x2="6" y1="18" y2="18"></line>
-          </svg>
+          <Icon data={alignCenterIcon} width={14} height={14} />
           {#if hasContent('center')}<span class="dot"></span>{/if}
         </button>
         <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
@@ -145,13 +141,7 @@
             onclick={() => setActive('right')}
             title="Right Aligned"
         >
-          <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-               stroke-width="2" viewBox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
-            <line x1="21" x2="7" y1="10" y2="10"></line>
-            <line x1="21" x2="3" y1="6" y2="6"></line>
-            <line x1="21" x2="3" y1="14" y2="14"></line>
-            <line x1="21" x2="7" y1="18" y2="18"></line>
-          </svg>
+          <Icon data={alignRightIcon} width={14} height={14} />
           {#if hasContent('right')}<span class="dot"></span>{/if}
         </button>
         <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
@@ -172,16 +162,7 @@
             onclick={() => setActive('inner')}
             title="Inner Side"
         >
-          <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-               stroke-width="2" viewBox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
-            <line stroke-opacity="0.6" x1="12" x2="12" y1="3" y2="21"></line>
-            <line x1="5" x2="10" y1="7" y2="7"></line>
-            <line x1="7" x2="10" y1="12" y2="12"></line>
-            <line x1="5" x2="10" y1="17" y2="17"></line>
-            <line x1="14" x2="19" y1="7" y2="7"></line>
-            <line x1="14" x2="17" y1="12" y2="12"></line>
-            <line x1="14" x2="19" y1="17" y2="17"></line>
-          </svg>
+          <Icon data={alignInnerIcon} width={14} height={14} />
           {#if hasContent('inner')}<span class="dot"></span>{/if}
         </button>
         <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
@@ -197,16 +178,7 @@
             onclick={() => setActive('outer')}
             title="Outer Side"
         >
-          <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-               stroke-width="2" viewBox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
-            <line stroke-opacity="0.6" x1="12" x2="12" y1="3" y2="21"></line>
-            <line x1="2" x2="7" y1="7" y2="7"></line>
-            <line x1="2" x2="5" y1="12" y2="12"></line>
-            <line x1="2" x2="7" y1="17" y2="17"></line>
-            <line x1="17" x2="22" y1="7" y2="7"></line>
-            <line x1="19" x2="22" y1="12" y2="12"></line>
-            <line x1="17" x2="22" y1="17" y2="17"></line>
-          </svg>
+          <Icon data={alignOuterIcon} width={14} height={14} />
           {#if hasContent('outer')}<span class="dot"></span>{/if}
         </button>
         <ArrowPopup usePortal={false} className="hover-popup" placement={type === 'header' ? 'bottom' : 'top'}
