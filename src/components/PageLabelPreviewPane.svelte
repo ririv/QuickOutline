@@ -94,9 +94,9 @@
 </script>
 
 <div class="h-full bg-white border-l border-[#e5e7eb] font-sans flex flex-col overflow-hidden">
-    <div class="px-5 py-3 border-b border-[#e5e7eb] bg-[#f9fafb] flex justify-between items-center flex-none z-10 shadow-sm h-[50px] box-border">
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Page Label Preview</div>
-        <div class="text-xs text-gray-400 font-mono">{pageCount} Pages</div>
+    <div class="px-4 py-1.5 border-b border-[#e5e7eb] bg-[#f9fafb] flex justify-between items-center flex-none z-10 shadow-sm h-[36px] box-border">
+        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Page Label Preview</div>
+        <div class="text-[11px] text-gray-400 font-mono">{pageCount} Pages</div>
     </div>
 
     <!-- Usage of Generic VirtualList -->
