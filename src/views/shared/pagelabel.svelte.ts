@@ -8,16 +8,16 @@ import { formatError } from '@/lib/utils/error';
 
 export function usePageLabelActions() {
     function addRule() {
-        if (!pageLabelStore.startPage) {
+        if (!pageLabelStore.pageIndex) {
              messageStore.add("Please enter Start Page", "WARNING");
              return;
         }
 
         const newRule: PageLabel = {
-            pageIndex: parseInt(pageLabelStore.startPage) || 1,
+            pageIndex: parseInt(pageLabelStore.pageIndex) || 1,
             numberingStyle: pageLabelStore.numberingStyle,
-            labelPrefix: pageLabelStore.prefix || null,
-            startValue: parseInt(pageLabelStore.startNumber) || 1
+            labelPrefix: pageLabelStore.labelPrefix || null,
+            startValue: parseInt(pageLabelStore.startValue) || 1
         };
 
         pageLabelStore.addOrUpdateRule(newRule);
@@ -38,9 +38,9 @@ export function usePageLabelActions() {
     }
 
     function editRule(rule: PageLabel) {
-        pageLabelStore.startPage = String(rule.pageIndex);
-        pageLabelStore.startNumber = String(rule.startValue ?? 1);
-        pageLabelStore.prefix = rule.labelPrefix || '';
+        pageLabelStore.pageIndex = String(rule.pageIndex);
+        pageLabelStore.startValue = String(rule.startValue ?? 1);
+        pageLabelStore.labelPrefix = rule.labelPrefix || '';
         pageLabelStore.numberingStyle = rule.numberingStyle;
         pageLabelStore.isFormOpen = true;
     }

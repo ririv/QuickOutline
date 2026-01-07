@@ -14,10 +14,11 @@ class PageLabelStore {
     // Alias for backward compatibility (read-only)
     get rules() { return this.sortedRules; }
 
+    pageIndex = $state("");
     numberingStyle = $state(PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
-    prefix = $state("");
-    startNumber = $state("");
-    startPage = $state("");
+    labelPrefix = $state("");
+    startValue = $state("");
+
     isFormOpen = $state(false);
     
     simulatedLabels = $state.raw<string[]>([]);
@@ -65,9 +66,9 @@ class PageLabelStore {
     }
 
     resetForm() {
-        this.startPage = "";
-        this.prefix = "";
-        this.startNumber = "";
+        this.pageIndex = "";
+        this.labelPrefix = "";
+        this.startValue = "";
     }
 
     setSimulatedLabels(labels: string[]) {

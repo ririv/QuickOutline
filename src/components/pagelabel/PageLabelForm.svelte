@@ -18,7 +18,7 @@
 
     let { onSuccess }: Props = $props();
 
-    let existingRule = $derived(pageLabelStore.getRuleByPage(parseInt(pageLabelStore.startPage) || 0));
+    let existingRule = $derived(pageLabelStore.getRuleByPage(parseInt(pageLabelStore.pageIndex) || 0));
 
     function handleAdd() {
         addRule(); // This now calls addOrUpdateRule internally
@@ -28,7 +28,12 @@
 
 <div class="flex flex-col gap-4">
     <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-        <label for="style" class="text-right text-sm text-[#333]">Page Number Style</label>
+        <label for="startPage" class="text-right text-sm text-[#333]">Page Index</label>
+        <StyledInput id="pageIndex" type="number" min="1" step="1" bind:value={pageLabelStore.pageIndex} placeholder="e.g. 1 (Required)" numericType="unsigned-integer" />
+    </div>
+
+    <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
+        <label for="style" class="text-right text-sm text-[#333]">Numbering Style</label>
         <div class="w-full">
             <StyledSelect
                 options={styles}
@@ -41,19 +46,16 @@
     </div>
 
     <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-        <label for="prefix" class="text-right text-sm text-[#333]">Prefix</label>
-        <StyledInput id="prefix" type="text" bind:value={pageLabelStore.prefix} placeholder="Optional" />
+        <label for="prefix" class="text-right text-sm text-[#333]">Label Prefix</label>
+        <StyledInput id="prefix" type="text" bind:value={pageLabelStore.labelPrefix} placeholder="Optional" />
     </div>
 
     <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-        <label for="startNum" class="text-right text-sm text-[#333]">Start Number</label>
-        <StyledInput id="startNum" type="number" min="1" step="1" bind:value={pageLabelStore.startNumber} placeholder="1" numericType="unsigned-integer" />
+        <label for="startNum" class="text-right text-sm text-[#333]">Start Value</label>
+        <StyledInput id="startNum" type="number" min="1" step="1" bind:value={pageLabelStore.startValue} placeholder="Optional (default: 1)" numericType="unsigned-integer" />
     </div>
 
-    <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-        <label for="startPage" class="text-right text-sm text-[#333]">Start Page</label>
-        <StyledInput id="startPage" type="number" min="1" step="1" bind:value={pageLabelStore.startPage} placeholder="e.g. 1 (Required)" numericType="unsigned-integer" />
-    </div>
+
 
     <div class="flex justify-center mt-2.5">
         <button

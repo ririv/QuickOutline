@@ -50,7 +50,7 @@
 
     function handleAdd(pageIndex: number) {
         pageLabelStore.resetForm();
-        pageLabelStore.startPage = String(pageIndex + 1);
+        pageLabelStore.pageIndex = String(pageIndex + 1);
         pageLabelStore.isFormOpen = true;
     }
 
