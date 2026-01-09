@@ -7,6 +7,25 @@ export interface LinkResolverConfig {
     insertPos: number;       // Where the TOC is inserted
 }
 
+// Cache for page label lookups to avoid O(N) indexOf calls repeatedly
+const pageLabelsIndexCache = new WeakMap<string[], Map<string, number>>();
+
+function getPageLabelIndex(labels: string[], label: string): number {
+    let map = pageLabelsIndexCache.get(labels);
+    if (!map) {
+        map = new Map();
+        for (let i = 0; i < labels.length; i++) {
+            // Map stores the *first* occurrence index, mirroring indexOf behavior
+            if (!map.has(labels[i])) {
+                map.set(labels[i], i);
+            }
+        }
+        pageLabelsIndexCache.set(labels, map);
+    }
+    const idx = map.get(label);
+    return idx !== undefined ? idx : -1;
+}
+
 /**
  * Resolves a target page string (e.g., "5", "#15", "toc:1") into a target configuration.
  * 
@@ -42,7 +61,7 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
     if (trimmed.startsWith("@")) {
         const labelStr = trimmed.substring(1);
         if (config.pageLabels) {
-            const idx = config.pageLabels.indexOf(labelStr);
+            const idx = getPageLabelIndex(config.pageLabels, labelStr);
             if (idx !== -1) {
                 return { index: idx, isOriginalDoc: true };
             }
@@ -63,7 +82,7 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
 
             // Case B: Offset is 0. Try to be smart (Label First).
             if (config.pageLabels) {
-                const idx = config.pageLabels.indexOf(trimmed);
+                const idx = getPageLabelIndex(config.pageLabels, trimmed);
                 if (idx !== -1) {
                     return { index: idx, isOriginalDoc: true };
                 }
@@ -77,7 +96,7 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
     // 5. Non-Numeric Input: Implicit Label Matching
     // (e.g., "iv", "Appendix")
     if (config.pageLabels) {
-        const idx = config.pageLabels.indexOf(trimmed);
+        const idx = getPageLabelIndex(config.pageLabels, trimmed);
         if (idx !== -1) {
             return { index: idx, isOriginalDoc: true };
         }

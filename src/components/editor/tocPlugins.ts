@@ -181,25 +181,40 @@ export const tocTheme = EditorView.theme({
     }
 });
 
+const flexLineDecoration = Decoration.line({attributes: {class: "cm-flex-line"}});
 
 export const tocPlugin = ViewPlugin.fromClass(class {
     decorations: any;
+    lastCursorLines: Set<number> = new Set();
 
     constructor(view: EditorView) {
-        this.decorations = this.computeDecorations(view);
+        this.lastCursorLines = this.getCursorLines(view);
+        this.decorations = this.computeDecorations(view, this.lastCursorLines);
     }
 
     update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged || update.selectionSet || update.focusChanged) {
-            this.decorations = this.computeDecorations(update.view);
+        const selectionChanged = update.selectionSet;
+        const layoutChanged = update.docChanged || update.viewportChanged || update.focusChanged;
+
+        if (layoutChanged) {
+            this.lastCursorLines = this.getCursorLines(update.view);
+            this.decorations = this.computeDecorations(update.view, this.lastCursorLines);
+        } else if (selectionChanged) {
+            const currentCursorLines = this.getCursorLines(update.view);
+            if (!this.areSetsEqual(this.lastCursorLines, currentCursorLines)) {
+                this.lastCursorLines = currentCursorLines;
+                this.decorations = this.computeDecorations(update.view, currentCursorLines);
+            }
         }
     }
 
-    computeDecorations(view: EditorView) {
-        const builder = new RangeSetBuilder<Decoration>();
+    areSetsEqual(a: Set<number>, b: Set<number>) {
+        if (a.size !== b.size) return false;
+        for (let item of a) if (!b.has(item)) return false;
+        return true;
+    }
 
-        // Get current cursor line(s) to exclude them from formatting
-        // Only exclude if the editor HAS FOCUS. If blurred, show all widgets.
+    getCursorLines(view: EditorView): Set<number> {
         const selection = view.state.selection;
         const hasFocus = view.hasFocus;
         const cursorLines = new Set<number>();
@@ -212,6 +227,11 @@ export const tocPlugin = ViewPlugin.fromClass(class {
                 }
             }
         }
+        return cursorLines;
+    }
+
+    computeDecorations(view: EditorView, cursorLines: Set<number>) {
+        const builder = new RangeSetBuilder<Decoration>();
 
         for (const {from, to} of view.visibleRanges) {
             for (let pos = from; pos <= to;) {
@@ -235,7 +255,7 @@ export const tocPlugin = ViewPlugin.fromClass(class {
                         builder.add(
                             line.from,
                             line.from,
-                            Decoration.line({attributes: {class: "cm-flex-line"}})
+                            flexLineDecoration
                         );
 
                         // 2. Then add the widget replacement (at separator position)

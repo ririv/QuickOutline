@@ -26,14 +26,24 @@ export interface TocLineParsed {
     hasExplicitLink: boolean;
 }
 
+const parseCache = new Map<string, TocLineParsed | null>();
+const CACHE_LIMIT = 10000;
+
 /**
  * Parses a TOC line into its components.
  * @param line The raw text line
  * @returns Parsed object or null if not a valid TOC line
  */
 export function parseTocLine(line: string): TocLineParsed | null {
+    if (parseCache.has(line)) {
+        return parseCache.get(line) || null;
+    }
+
     const match = line.match(TOC_LINE_REGEX);
-    if (!match) return null;
+    if (!match) {
+        if (parseCache.size < CACHE_LIMIT) parseCache.set(line, null);
+        return null;
+    }
 
     const title = match[1];
     const separator = match[2];
@@ -55,7 +65,7 @@ export function parseTocLine(line: string): TocLineParsed | null {
         hasExplicitLink = false;
     }
 
-    return {
+    const result: TocLineParsed = {
         title,
         separator,
         pageInfo,
@@ -63,4 +73,10 @@ export function parseTocLine(line: string): TocLineParsed | null {
         linkTarget,
         hasExplicitLink
     };
+
+    if (parseCache.size < CACHE_LIMIT) {
+        parseCache.set(line, result);
+    }
+    
+    return result;
 }
