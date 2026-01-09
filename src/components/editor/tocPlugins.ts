@@ -1,6 +1,6 @@
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, ViewPlugin, Decoration, type ViewUpdate, WidgetType } from '@codemirror/view';
 import { generateDotLeaderData } from '@/lib/templates/toc/toc-gen/toc-generator.tsx';
-import { parseTocLine } from '@/lib/templates/toc/toc-gen/parser';
+import { parseTocLine, scanMathInString } from '@/lib/templates/toc/toc-gen/parser';
 import { validatePageTarget } from '@/lib/services/PageLinkResolver';
 import { EditorState, RangeSetBuilder, Facet } from '@codemirror/state';
 import katex from 'katex';
@@ -307,65 +307,30 @@ export const tocPlugin = ViewPlugin.fromClass(class {
                         );
 
                         // 2. Scan for math in the title (must come BEFORE LeaderWidget because title is first)
-                        // Note: parsed.title is just the string, we need to map back to document positions.
-                        // We iterate manually to handle escaped dollar signs (\$ vs $).
-                        const title = parsed.title;
-                        const dollarRegex = /\$/g;
-                        let match;
-                        let startMatch: RegExpExecArray | null = null;
+                        // Use shared parser logic
+                        const mathNodes = scanMathInString(parsed.title);
+                        
+                        for (const node of mathNodes) {
+                            const nodeStart = line.from + node.start;
+                            const nodeEnd = line.from + node.end;
 
-                        while ((match = dollarRegex.exec(title)) !== null) {
-                            // Check if escaped: count preceding backslashes
-                            let backslashCount = 0;
-                            let i = match.index - 1;
-                            while (i >= 0 && title[i] === '\\') {
-                                backslashCount++;
-                                i--;
-                            }
-                            
-                            // If odd backslashes, it's escaped (\$ -> literal $).
-                            if (backslashCount % 2 === 1) {
-                                // Only render escape widget if we are NOT inside a math block
-                                if (startMatch === null) {
-                                    const escapeStart = line.from + match.index - 1;
-                                    const escapeEnd = line.from + match.index + 1;
-                                    // Ensure we don't exceed title length or overlap strangely
-                                    if (escapeEnd <= sepStart) {
-                                        builder.add(
-                                            escapeStart, 
-                                            escapeEnd, 
-                                            Decoration.replace({ widget: new EscapeWidget() })
-                                        );
-                                    }
-                                }
-                                continue;
-                            }
-
-                            if (startMatch === null) {
-                                // Potential start of formula
-                                startMatch = match;
-                            } else {
-                                // Found end of formula
-                                const startIdx = startMatch.index;
-                                const endIdx = match.index + 1; // include the closing $
-                                const formulaWithDelimiters = title.substring(startIdx, endIdx);
-                                const formula = formulaWithDelimiters.slice(1, -1); // remove $ delimiters
-
-                                const matchStart = line.from + startIdx;
-                                const matchEnd = line.from + endIdx;
-
-                                // Safety check: ensure we don't exceed the title length (overlap with separator)
-                                if (matchEnd <= sepStart) {
+                            // Safety check: ensure we don't exceed the title length (overlap with separator)
+                            if (nodeEnd <= sepStart) {
+                                if (node.type === 'escape') {
                                     builder.add(
-                                        matchStart,
-                                        matchEnd,
+                                        nodeStart,
+                                        nodeEnd,
+                                        Decoration.replace({ widget: new EscapeWidget() })
+                                    );
+                                } else if (node.type === 'math' && node.content) {
+                                    builder.add(
+                                        nodeStart,
+                                        nodeEnd,
                                         Decoration.replace({
-                                            widget: new MathWidget(formula)
+                                            widget: new MathWidget(node.content)
                                         })
                                     );
                                 }
-                                
-                                startMatch = null;
                             }
                         }
 

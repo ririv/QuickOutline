@@ -78,5 +78,70 @@ export function parseTocLine(line: string): TocLineParsed | null {
         parseCache.set(line, result);
     }
     
-    return result;
+    return {
+        title,
+        separator,
+        pageInfo,
+        displayPage,
+        linkTarget,
+        hasExplicitLink
+    };
+}
+
+export interface MathNode {
+    type: 'math' | 'escape';
+    start: number;
+    end: number;
+    content?: string; // content inside $...$ (excluding delimiters)
+}
+
+/**
+ * Scans a string for math formulas ($...$) and escaped dollar signs (\$).
+ * Handles backslash escaping logic.
+ */
+export function scanMathInString(text: string): MathNode[] {
+    const nodes: MathNode[] = [];
+    const dollarRegex = /\$/g;
+    let match;
+    let startMatch: RegExpExecArray | null = null;
+
+    while ((match = dollarRegex.exec(text)) !== null) {
+        // Count preceding backslashes to check for escape
+        let backslashCount = 0;
+        let i = match.index - 1;
+        while (i >= 0 && text[i] === '\\') {
+            backslashCount++;
+            i--;
+        }
+
+        // Odd backslashes means the dollar sign is escaped (\$ -> literal $)
+        if (backslashCount % 2 === 1) {
+            // Only consider it an escape node if we are NOT currently inside a math block.
+            // (If we are inside math, \$ is just part of the LaTeX content)
+            if (startMatch === null) {
+                nodes.push({
+                    type: 'escape',
+                    start: match.index - 1, // include the backslash
+                    end: match.index + 1
+                });
+            }
+            continue;
+        }
+
+        // Even backslashes (or 0) means it's a real delimiter
+        if (startMatch === null) {
+            // Start of formula
+            startMatch = match;
+        } else {
+            // End of formula
+            nodes.push({
+                type: 'math',
+                start: startMatch.index,
+                end: match.index + 1, // include closing $
+                content: text.substring(startMatch.index + 1, match.index)
+            });
+            startMatch = null;
+        }
+    }
+    return nodes;
 }

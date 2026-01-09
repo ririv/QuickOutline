@@ -2,7 +2,7 @@ import tocStyles from './toc.css?inline';
 import { css } from "@/lib/utils/tags";
 import { type PageLayout, PAGE_SIZES_MM } from '@/lib/types/page';
 import { createElement, Fragment } from '@/lib/utils/jsx';
-import { parseTocLine } from './parser';
+import { parseTocLine, scanMathInString } from './parser';
 import katex from 'katex';
 
 interface DotConfig {
@@ -43,84 +43,32 @@ export const DOT_DIAMETER = 2; // px
 export const DOT_GAP = 6;      // px (Center-to-Center distance)
 
 function renderTitle(text: string): string {
+    const nodes = scanMathInString(text);
     let result = "";
     let lastIndex = 0;
-    const regex = /\$/g;
-    let match;
-    let startMatch: RegExpExecArray | null = null;
 
-    while ((match = regex.exec(text)) !== null) {
-        // Check if escaped: count preceding backslashes
-        let backslashCount = 0;
-        let i = match.index - 1;
-        while (i >= 0 && text[i] === '\\') {
-            backslashCount++;
-            i--;
-        }
-        
-        // If odd backslashes, it's escaped (\$ -> literal $). Skip it.
-        if (backslashCount % 2 === 1) {
-            continue;
-        }
+    for (const node of nodes) {
+        // Append text before this node
+        const gap = text.substring(lastIndex, node.start);
+        result += escapeHtml(gap);
 
-        if (startMatch === null) {
-            // Found potential start
-            // Append text before this as plain text
-            // We need to unescape \$ in the plain text part
-            const plainText = text.substring(lastIndex, match.index);
-            // Replace \$ with $ (and ideally \\$ with \$ but let's stick to simple \$ unescape)
-            // A simple .replace(/\\\$/g, '$') handles simple cases.
-            // For rigorous handling we might want to handle all backslash escapes but Toc parser is simple.
-            result += escapeHtml(plainText.replace(/\\\$/g, '$'));
-            
-            startMatch = match;
-        } else {
-            // Found end
-            const formula = text.substring(startMatch.index + 1, match.index);
-            // Render formula
+        if (node.type === 'escape') {
+            result += "$"; // Render \$ as just $
+        } else if (node.type === 'math' && node.content) {
             try {
-                result += katex.renderToString(formula, { throwOnError: false });
+                result += katex.renderToString(node.content, { throwOnError: false });
             } catch (e) {
-                result += escapeHtml("$" + formula + "$");
+                // Fallback to source
+                result += escapeHtml("$" + node.content + "$");
             }
-            
-            startMatch = null;
-            lastIndex = match.index + 1;
         }
+
+        lastIndex = node.end;
     }
-    
+
     // Append remaining text
-    // If we have a startMatch but no endMatch, the startMatch should be treated as literal text.
-    // However, we already processed text up to startMatch.index.
-    // So we need to rewind or just append from the point we last committed.
-    
-    // Simplest approach: if startMatch is not null, we effectively ignore it as a delimiter
-    // but we need to include it in the final string.
-    // The loop logic above advanced `lastIndex` ONLY when a pair was closed.
-    // So if the loop finished with `startMatch !== null`, `lastIndex` is still pointing
-    // to the end of the *previous* successful pair (or 0).
-    // But we appended `plainText` up to `startMatch.index` into `result`.
-    // Wait, if I appended to `result` inside the `if (startMatch === null)` block,
-    // and then didn't find a closing brace, `result` effectively swallowed the text before `startMatch`.
-    // But it's missing the `startMatch` itself and everything after.
-    
-    // Let's refine the logic to be safer: only append when we are sure.
-    // Actually, simply:
-    // When we find a Start, we append everything before it.
-    // If we don't find an End, we just append everything from the Start index onwards as plain text.
-    
-    if (startMatch !== null) {
-        // We had an open $, but no closing $.
-        // The text BEFORE startMatch was already appended.
-        // We just need to append the rest starting from startMatch.
-        // Note: startMatch is the $ itself.
-        const remaining = text.substring(startMatch.index);
-        result += escapeHtml(remaining.replace(/\\\$/g, '$'));
-    } else {
-        // Normal case: everything was closed or no math at all.
-        const remaining = text.substring(lastIndex);
-        result += escapeHtml(remaining.replace(/\\\$/g, '$'));
-    }
+    const remaining = text.substring(lastIndex);
+    result += escapeHtml(remaining);
     
     return result;
 }
