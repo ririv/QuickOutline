@@ -89,7 +89,6 @@ export const pageValidationExtension = [
 
 export const lineTheme = EditorView.theme({
     ".cm-line": {
-        borderRadius: "4px",
         transition: "background-color 0.1s ease"
     },
     ".cm-line:hover": {
