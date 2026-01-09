@@ -6,6 +6,13 @@
     import offsetIcon from '@/assets/icons/offset.svg';
     import downloadIcon from '@/assets/icons/download.svg';
     import uploadIcon from '@/assets/icons/upload.svg';
+    import inheritIcon from '@/assets/icons/inherit.svg';
+    import settingsIcon from '@/assets/icons/settings.svg';
+    import fitToHeightIcon from '@/assets/icons/fit-to-height.svg';
+    import fitToWidthIcon from '@/assets/icons/fit-to-width.svg';
+    import fitToPageIcon from '@/assets/icons/fit-to-page.svg';
+    import fitToBoxIcon from '@/assets/icons/fit-to-box.svg';
+    import actualSizeIcon from '@/assets/icons/actual-size.svg';
 
     import GetContentsPopup from './GetContentsPopup.svelte';
     import SetContentsPopup from './SetContentsPopup.svelte';
@@ -30,15 +37,27 @@
     }
     let { view = $bindable() }: Props = $props();
 
-    let activePopup = $state<'get' | 'set' | 'offset' | null>(null);
+    let activePopup = $state<'get' | 'set' | 'offset' | 'viewMode' | null>(null);
     let getContentsBtnEl = $state<HTMLButtonElement | undefined>();
     let setContentsBtnEl = $state<HTMLButtonElement | undefined>();
+    let viewModeBtnEl = $state<HTMLButtonElement | undefined>();
     let offsetContainerEl = $state<HTMLElement | undefined>();
     let hideTimer: number | null = null;
     
     // State for Popups
     let getContentsMode = $state<'bookmark' | 'toc'>('bookmark'); 
     let viewMode = $state<ViewScaleType>('NONE'); 
+
+    let viewModeIcon = $derived.by(() => {
+        switch (viewMode) {
+            case 'FIT_TO_PAGE': return fitToPageIcon;
+            case 'FIT_TO_WIDTH': return fitToWidthIcon;
+            case 'FIT_TO_HEIGHT': return fitToHeightIcon;
+            case 'FIT_TO_BOX': return fitToBoxIcon;
+            case 'ACTUAL_SIZE': return actualSizeIcon;
+            default: return inheritIcon;
+        }
+    });
     
     let offsetValue = $state('');
     let debounceTimer: number | undefined;
@@ -93,7 +112,7 @@
         view = newView;
     }
 
-    function showPopup(popup: 'get' | 'set' | 'offset') {
+    function showPopup(popup: 'get' | 'set' | 'offset' | 'viewMode') {
         if (hideTimer) clearTimeout(hideTimer);
         activePopup = popup;
     }
@@ -283,30 +302,22 @@
 
     <div class="flex-1"></div>
     
-    <!-- Center Group: Apply and Offset -->
-    <div class="flex items-center gap-2">
-        <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('set')} onmouseleave={hidePopup}>
-            <button 
-                bind:this={setContentsBtnEl} 
-                onclick={handleSetContentsClick}
-                class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-[#409eff] rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#ecf5ff] border border-[#d9ecff] hover:bg-[#d9ecff] active:bg-[#c6e2ff]"
-                use:ripple={{ color: 'rgba(64,158,255,0.2)' }}
-            >
-                <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 4.5L12.5 9H10V14H6V9H3.5L8 4.5Z" />
-                    <path d="M3 2H13V3.5H3V2Z" />
-                </svg>
-                Apply
-            </button>
-            {#if activePopup === 'set' && setContentsBtnEl}
-                <SetContentsPopup 
-                    triggerEl={setContentsBtnEl} 
-                    selected={viewMode}
-                    onSelect={handleViewModeChange} 
-                />
-            {/if}
-        </div>
+    <!-- Center: Apply (Centered between Left and Right Groups) -->
+    <button 
+        bind:this={setContentsBtnEl} 
+        onclick={handleSetContentsClick}
+        class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-[#409eff] rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#ecf5ff] hover:bg-[#d9ecff] active:bg-[#c6e2ff]"
+        use:ripple={{ color: 'rgba(64,158,255,0.2)' }}
+    >
+        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 4.5L12.5 9H10V14H6V9H3.5L8 4.5Z" />
+            <path d="M3 2H13V3.5H3V2Z" />
+        </svg>
+        Apply
+    </button>
 
+    <!-- Right Spacer Area: Contains Offset and Settings, and pushes Segmented Control to the right -->
+    <div class="flex-1 flex items-center gap-2 pl-4">
         <!-- Offset Input Group -->
         <div class="relative inline-flex" 
              role="group"
@@ -325,14 +336,30 @@
                 <OffsetPopup 
                     bind:offset={bookmarkStore.offset} 
                     triggerEl={offsetContainerEl} 
-                    onmouseenter={() => { if (hideTimer) clearTimeout(hideTimer); }}
+                    onmouseenter={() => { if (hideTimer) clearTimeout(hideTimer); }} 
                     onmouseleave={hidePopup}
                 />
             {/if}
         </div>
-    </div>
 
-    <div class="flex-1"></div>
+        <!-- View Mode Settings -->
+        <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('viewMode')} onmouseleave={hidePopup}>
+            <GraphButton 
+                bind:element={viewModeBtnEl} 
+                title="View Settings"
+                class={viewMode !== 'NONE' ? 'active' : ''}
+            >
+                <img src={viewModeIcon} alt="Settings" />
+            </GraphButton>
+            {#if activePopup === 'viewMode' && viewModeBtnEl}
+                <SetContentsPopup 
+                    triggerEl={viewModeBtnEl} 
+                    selected={viewMode}
+                    onSelect={handleViewModeChange} 
+                />
+            {/if}
+        </div>
+    </div>
 
     <!-- Modern Segmented Control Group -->
     <div class="flex p-1 bg-gray-50 rounded-lg gap-1 select-none">
