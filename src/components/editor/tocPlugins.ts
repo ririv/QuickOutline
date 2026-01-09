@@ -3,6 +3,7 @@ import { generateDotLeaderData } from '@/lib/templates/toc/toc-gen/toc-generator
 import { parseTocLine } from '@/lib/templates/toc/toc-gen/parser';
 import { validatePageTarget } from '@/lib/services/PageLinkResolver';
 import { EditorState, RangeSetBuilder, Facet } from '@codemirror/state';
+import katex from 'katex';
 
 // --- Page Validation Plugin ---
 
@@ -111,6 +112,46 @@ class LeaderWidget extends WidgetType {
     eq(other: LeaderWidget) { return other.page == this.page; }
 }
 
+class MathWidget extends WidgetType {
+    readonly formula: string;
+
+    constructor(formula: string) {
+        super();
+        this.formula = formula;
+    }
+
+    toDOM() {
+        const span = document.createElement("span");
+        span.className = "toc-math-widget";
+        // Use inline display for math in TOC titles
+        span.style.display = "inline-block";
+        try {
+            katex.render(this.formula, span, { 
+                throwOnError: false, 
+                displayMode: false 
+            });
+        } catch (e) {
+            span.textContent = this.formula;
+        }
+        return span;
+    }
+
+    ignoreEvent() { return false; }
+
+    eq(other: MathWidget) { return other.formula == this.formula; }
+}
+
+class EscapeWidget extends WidgetType {
+    toDOM() {
+        const span = document.createElement("span");
+        span.textContent = "$";
+        span.className = "toc-escape-widget";
+        return span;
+    }
+    eq(other: EscapeWidget) { return true; }
+    ignoreEvent() { return false; }
+}
+
 export const lineTheme = EditorView.theme({
     ".cm-line": {
         borderRadius: "4px",
@@ -165,6 +206,13 @@ export const tocTheme = EditorView.theme({
     ".toc-leader-page": {
         fontWeight: "bold",
         flexShrink: "0"
+    },
+    ".toc-math-widget": {
+        verticalAlign: "baseline",
+        padding: "0 2px"
+    },
+    ".toc-escape-widget": {
+        color: "inherit"
     },
     "&.cm-focused": {
         outline: "none"
@@ -258,7 +306,70 @@ export const tocPlugin = ViewPlugin.fromClass(class {
                             flexLineDecoration
                         );
 
-                        // 2. Then add the widget replacement (at separator position)
+                        // 2. Scan for math in the title (must come BEFORE LeaderWidget because title is first)
+                        // Note: parsed.title is just the string, we need to map back to document positions.
+                        // We iterate manually to handle escaped dollar signs (\$ vs $).
+                        const title = parsed.title;
+                        const dollarRegex = /\$/g;
+                        let match;
+                        let startMatch: RegExpExecArray | null = null;
+
+                        while ((match = dollarRegex.exec(title)) !== null) {
+                            // Check if escaped: count preceding backslashes
+                            let backslashCount = 0;
+                            let i = match.index - 1;
+                            while (i >= 0 && title[i] === '\\') {
+                                backslashCount++;
+                                i--;
+                            }
+                            
+                            // If odd backslashes, it's escaped (\$ -> literal $).
+                            if (backslashCount % 2 === 1) {
+                                // Only render escape widget if we are NOT inside a math block
+                                if (startMatch === null) {
+                                    const escapeStart = line.from + match.index - 1;
+                                    const escapeEnd = line.from + match.index + 1;
+                                    // Ensure we don't exceed title length or overlap strangely
+                                    if (escapeEnd <= sepStart) {
+                                        builder.add(
+                                            escapeStart, 
+                                            escapeEnd, 
+                                            Decoration.replace({ widget: new EscapeWidget() })
+                                        );
+                                    }
+                                }
+                                continue;
+                            }
+
+                            if (startMatch === null) {
+                                // Potential start of formula
+                                startMatch = match;
+                            } else {
+                                // Found end of formula
+                                const startIdx = startMatch.index;
+                                const endIdx = match.index + 1; // include the closing $
+                                const formulaWithDelimiters = title.substring(startIdx, endIdx);
+                                const formula = formulaWithDelimiters.slice(1, -1); // remove $ delimiters
+
+                                const matchStart = line.from + startIdx;
+                                const matchEnd = line.from + endIdx;
+
+                                // Safety check: ensure we don't exceed the title length (overlap with separator)
+                                if (matchEnd <= sepStart) {
+                                    builder.add(
+                                        matchStart,
+                                        matchEnd,
+                                        Decoration.replace({
+                                            widget: new MathWidget(formula)
+                                        })
+                                    );
+                                }
+                                
+                                startMatch = null;
+                            }
+                        }
+
+                        // 3. Then add the widget replacement (at separator position)
                         builder.add(
                             sepStart,
                             lineEnd,
