@@ -6,7 +6,7 @@
     import offsetIcon from '@/assets/icons/offset.svg';
     import downloadIcon from '@/assets/icons/download.svg';
     import uploadIcon from '@/assets/icons/upload.svg';
-    import inheritIcon from '@/assets/icons/inherit.svg';
+    import viewModeSvg from '@/assets/icons/view-mode.svg';
     import settingsIcon from '@/assets/icons/settings.svg';
     import fitToHeightIcon from '@/assets/icons/fit-to-height.svg';
     import fitToWidthIcon from '@/assets/icons/fit-to-width.svg';
@@ -55,7 +55,7 @@
             case 'FIT_TO_HEIGHT': return fitToHeightIcon;
             case 'FIT_TO_BOX': return fitToBoxIcon;
             case 'ACTUAL_SIZE': return actualSizeIcon;
-            default: return inheritIcon;
+            default: return viewModeSvg;
         }
     });
     
