@@ -2,7 +2,8 @@
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import PositionDiagram from '../PositionDiagram.svelte';
     import PageNumberHint from './PageNumberHint.svelte';
-    import type { HeaderFooterConfig } from '@/lib/types/header-footer.ts';
+    import { type HeaderFooterConfig } from '@/lib/types/header-footer.ts';
+    import { PageLabelNumberingStyle } from '@/lib/types/page-label.ts';
     import Icon from "@/components/Icon.svelte";
 
     // Icons
@@ -15,13 +16,17 @@
     interface Props {
         config?: HeaderFooterConfig;
         type?: 'header' | 'footer';
+        numberingStyle?: PageLabelNumberingStyle;
         onchange?: () => void;
+        onStyleChange?: (style: PageLabelNumberingStyle) => void;
     }
 
     let {
         config = $bindable({left: '', center: '', right: '', inner: '', outer: '', drawLine: false}),
         type = 'header',
-        onchange
+        numberingStyle = $bindable(),
+        onchange,
+        onStyleChange
     }: Props = $props();
 
     let activePos: 'left' | 'center' | 'right' | 'inner' | 'outer' = $state('center');

@@ -1,28 +1,46 @@
 <script lang="ts">
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import Icon from '@/components/Icon.svelte';
+    import StyledSelect from '@/components/controls/StyledSelect.svelte';
+    import { PageLabelNumberingStyle, pageLabelStyleMap } from '@/lib/types/page-label.ts';
+    import { clickOutside } from '@/lib/actions/clickOutside';
 
     interface Props {
         type?: 'header' | 'footer';
         onInsert?: (text: string) => void;
     }
 
-    let { type = 'header', onInsert }: Props = $props();
+    let { 
+        type = 'header', 
+        onInsert,
+    }: Props = $props();
 
+    let numberingStyle = $state(PageLabelNumberingStyle.DECIMAL);
     let triggerEl = $state<HTMLElement | undefined>();
+    let isOpen = $state(false);
+    
+    const styles = pageLabelStyleMap.getAllStyles();
+
+    function toggle() {
+        isOpen = !isOpen;
+    }
+
+    function close() {
+        isOpen = false;
+    }
 </script>
 
-<div class="btn-wrapper">
-    <button class="trigger-btn" bind:this={triggerEl} title="Page Number Settings">
+<div class="btn-wrapper" use:clickOutside={close}>
+    <button class="trigger-btn" bind:this={triggerEl} onclick={toggle} title="Page Number Settings">
         <Icon name="number-sign" width="13" height="13" />
     </button>
     
     <ArrowPopup 
         usePortal={false} 
-        className="hover-popup" 
+        className="hover-popup {isOpen ? 'visible' : ''}" 
         placement={type === 'header' ? 'bottom' : 'top'}
         triggerEl={triggerEl}
-        minWidth="200px"
+        minWidth="220px"
     >
         <div class="hint-content">
             <div class="hint-row">
@@ -31,11 +49,26 @@
                     Use <code>{'{p}'}</code> for page number
                 </div>
             </div>
+            
+            <div class="style-select-wrapper">
+                <div class="section-title">Numbering Style</div>
+                <StyledSelect 
+                    options={styles}
+                    displayKey="displayText"
+                    optionKey="displayText"
+                    valueKey="enumName"
+                    bind:value={numberingStyle}
+                />
+            </div>
+            
             <button 
                 class="insert-btn"
-                onclick={() => onInsert?.('{p}')}
+                onclick={() => {
+                    onInsert?.('{p}');
+                    close();
+                }}
             >
-                Insert {'{p}'}
+                Insert
             </button>
         </div>
     </ArrowPopup>
@@ -75,7 +108,7 @@
         pointer-events: none;
     }
 
-    .btn-wrapper:hover :global(.hover-popup) {
+    .btn-wrapper :global(.hover-popup.visible) {
         visibility: visible;
         opacity: 1;
         pointer-events: auto;
@@ -85,7 +118,7 @@
     .hint-content {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px; /* Increased gap to maintain breathing room without dividers */
     }
 
     .hint-row {
@@ -126,7 +159,7 @@
     .insert-btn {
         background-color: #f0f7ff;
         color: #1677ff;
-        border: 1px solid #d9d9d9;
+        border: 1px solid #91caff;
         border-radius: 4px;
         padding: 5px 8px;
         cursor: pointer;
@@ -139,5 +172,20 @@
     .insert-btn:hover {
         background-color: #e6f7ff;
         border-color: #1677ff;
+    }
+    
+    .section-title {
+        font-size: 11px;
+        color: #999;
+        margin-bottom: 4px;
+        padding-left: 1px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    
+    .style-select-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
     }
 </style>
