@@ -2,7 +2,7 @@
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import Icon from '@/components/Icon.svelte';
     import StyledSelect from '@/components/controls/StyledSelect.svelte';
-    import { PageLabelNumberingStyle, pageLabelStyleMap } from '@/lib/types/page-label.ts';
+    import { PageLabelNumberingStyle, pageLabelStyleMap, type PageNumberStyle } from '@/lib/types/page-label.ts';
     import { clickOutside } from '@/lib/actions/clickOutside';
 
     interface Props {
@@ -15,11 +15,12 @@
         onInsert,
     }: Props = $props();
 
-    let numberingStyle = $state(PageLabelNumberingStyle.DECIMAL);
+    let numberingStyle = $state<PageNumberStyle>(PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
     let triggerEl = $state<HTMLElement | undefined>();
     let isOpen = $state(false);
     
-    const styles = pageLabelStyleMap.getAllStyles();
+    // Filter out 'None' style
+    const styles = pageLabelStyleMap.getAllStyles().filter(s => s.enumName !== PageLabelNumberingStyle.NONE);
 
     function toggle() {
         isOpen = !isOpen;
@@ -28,6 +29,19 @@
     function close() {
         isOpen = false;
     }
+
+    function getInsertText(style: PageNumberStyle): string {
+        switch (style) {
+             case PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS: return '{p R}';
+             case PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS: return '{p r}';
+             case PageLabelNumberingStyle.UPPERCASE_LETTERS: return '{p A}';
+             case PageLabelNumberingStyle.LOWERCASE_LETTERS: return '{p a}';
+             case PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS:
+             default: return '{p}';
+        }
+    }
+
+    let insertText = $derived(getInsertText(numberingStyle));
 </script>
 
 <div class="btn-wrapper" use:clickOutside={close}>
@@ -43,12 +57,7 @@
         minWidth="220px"
     >
         <div class="hint-content">
-            <div class="hint-row">
-                <span class="hint-icon">?</span>
-                <div class="hint-text">
-                    Use <code>{'{p}'}</code> for page number
-                </div>
-            </div>
+            <div class="popup-title">Page Number</div>
             
             <div class="style-select-wrapper">
                 <div class="section-title">Numbering Style</div>
@@ -60,11 +69,18 @@
                     bind:value={numberingStyle}
                 />
             </div>
+
+            <div class="hint-row">
+                <span class="hint-icon">?</span>
+                <div class="hint-text">
+                    Use <code>{insertText}</code> for page number
+                </div>
+            </div>
             
             <button 
                 class="insert-btn"
                 onclick={() => {
-                    onInsert?.('{p}');
+                    onInsert?.(insertText);
                     close();
                 }}
             >
@@ -118,7 +134,13 @@
     .hint-content {
         display: flex;
         flex-direction: column;
-        gap: 12px; /* Increased gap to maintain breathing room without dividers */
+        gap: 12px;
+    }
+
+    .popup-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
     }
 
     .hint-row {

@@ -26,6 +26,8 @@ export enum PageLabelNumberingStyle {
     NONE = 'NONE'
 }
 
+export type PageNumberStyle = Exclude<PageLabelNumberingStyle, PageLabelNumberingStyle.NONE>;
+
 export interface PageLabel {
     pageIndex: number; // 1-based page index where the label rule starts
     numberingStyle: PageLabelNumberingStyle;
