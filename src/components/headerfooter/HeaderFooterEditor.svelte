@@ -1,7 +1,7 @@
 <script lang="ts">
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import PositionDiagram from '../PositionDiagram.svelte';
-    import Tooltip from '../Tooltip.svelte';
+    import PageNumberHint from './PageNumberHint.svelte';
     import type { HeaderFooterConfig } from '@/lib/types/header-footer.ts';
     import Icon from "@/components/Icon.svelte";
 
@@ -27,13 +27,43 @@
     let activePos: 'left' | 'center' | 'right' | 'inner' | 'outer' = $state('center');
     let isButtonHovered = $state(false); // State for linked hover effect
     let justToggled = $state(false); // State to suppress hover effect immediately after click
+    
+    let inputEl = $state<HTMLInputElement | undefined>();
 
     function setActive(pos: 'left' | 'center' | 'right' | 'inner' | 'outer') {
         activePos = pos;
+        requestAnimationFrame(() => inputEl?.focus());
     }
 
     function handleInput() {
         if (onchange) onchange();
+    }
+    
+    function handleInsertPageNumber(text: string) {
+        const pos = activePos;
+        const currentVal = config[pos] || '';
+        
+        let start = currentVal.length;
+        let end = currentVal.length;
+        
+        if (inputEl) {
+            start = inputEl.selectionStart || 0;
+            end = inputEl.selectionEnd || 0;
+        }
+        
+        const newVal = currentVal.substring(0, start) + text + currentVal.substring(end);
+        config[pos] = newVal;
+        
+        if (onchange) onchange();
+        
+        // Restore focus and move cursor
+        requestAnimationFrame(() => {
+           if(inputEl) {
+               inputEl.focus();
+               const newCursor = start + text.length;
+               inputEl.setSelectionRange(newCursor, newCursor);
+           }
+        });
     }
 
     function handleInputDoubleClick(e: MouseEvent) {
@@ -189,14 +219,7 @@
     </div>
 
     <div class="right-tools">
-      {#if type === 'footer'}
-        <Tooltip position="top" rightAligned={true} className="flex items-center">
-          <span class="hint-icon">?</span>
-          {#snippet popup()}
-            Use <code>{'{p}'}</code> for page number
-          {/snippet}
-        </Tooltip>
-      {/if}
+        <PageNumberHint type={type} onInsert={handleInsertPageNumber} />
       <button
           class="toggle-line-btn" class:active={config.drawLine}
           onclick={toggleDrawLine}
@@ -226,6 +249,7 @@
 
   <div class="input-wrapper">
     <input
+        bind:this={inputEl}
         bind:value={config[activePos]}
         oninput={handleInput}
         ondblclick={handleInputDoubleClick}
@@ -494,26 +518,5 @@
         display: flex;
         align-items: center;
         gap: 8px;
-    }
-
-    .hint-icon {
-        font-size: 12px;
-        color: #999;
-        border: 1px solid #ccc;
-        border-radius: 50%;
-        width: 18px;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: help;
-        user-select: none;
-    }
-
-    code {
-      font-family: monospace;
-      background: rgba(255, 255, 255, 0.2);
-      padding: 0 2px;
-      border-radius: 2px;
     }
 </style>
