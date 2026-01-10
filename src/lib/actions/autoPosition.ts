@@ -1,5 +1,5 @@
 // web/src/lib/actions/autoPosition.ts
-export function autoPosition(node: HTMLElement, { triggerEl, fixed = false }: { triggerEl: HTMLElement | undefined, fixed?: boolean }) {
+export function autoPosition(node: HTMLElement, { triggerEl, fixed = false, offset = 0 }: { triggerEl: HTMLElement | undefined, fixed?: boolean, offset?: number }) {
   
   function robustAdjust() {
       // Check if elements still exist
@@ -18,7 +18,7 @@ export function autoPosition(node: HTMLElement, { triggerEl, fixed = false }: { 
       const triggerRect = triggerEl.getBoundingClientRect();
       const popupRect = node.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
-      const margin = 10;
+      const boundaryMargin = 10;
 
       // --- Horizontal Positioning (Shared) ---
       
@@ -27,9 +27,9 @@ export function autoPosition(node: HTMLElement, { triggerEl, fixed = false }: { 
       let targetViewportLeft = triggerCenter - popupRect.width / 2;
 
       // Constrain (Viewport coords)
-      if (targetViewportLeft < margin) targetViewportLeft = margin;
-      else if (targetViewportLeft + popupRect.width > viewportWidth - margin) {
-          targetViewportLeft = viewportWidth - margin - popupRect.width;
+      if (targetViewportLeft < boundaryMargin) targetViewportLeft = boundaryMargin;
+      else if (targetViewportLeft + popupRect.width > viewportWidth - boundaryMargin) {
+          targetViewportLeft = viewportWidth - boundaryMargin - popupRect.width;
       }
 
       // Arrow Logic
@@ -49,20 +49,14 @@ export function autoPosition(node: HTMLElement, { triggerEl, fixed = false }: { 
           node.style.left = `${targetViewportLeft}px`;
           
           // Vertical Position
-          // Check placement class (top/bottom) to decide
-          // Note: Styles like 'bottom: 100%' in CSS won't work nicely with fixed top/left.
-          // We override top/bottom here.
-          
           if (node.classList.contains('top')) {
               // Popup ABOVE trigger
-              // bottom of popup = top of trigger - margin
-              const top = triggerRect.top - popupRect.height - 10; 
+              const top = triggerRect.top - popupRect.height - offset; 
               node.style.top = `${top}px`;
               node.style.bottom = 'auto';
           } else {
               // Popup BELOW trigger (default)
-              // top of popup = bottom of trigger + margin
-              const top = triggerRect.bottom + 10;
+              const top = triggerRect.bottom + offset;
               node.style.top = `${top}px`;
               node.style.bottom = 'auto';
           }
@@ -90,8 +84,9 @@ export function autoPosition(node: HTMLElement, { triggerEl, fixed = false }: { 
   window.addEventListener('scroll', robustAdjust, true); // Capture scroll for position updates
 
   return {
-    update(newParams: { triggerEl: HTMLElement, fixed?: boolean }) {
+    update(newParams: { triggerEl: HTMLElement, fixed?: boolean, offset?: number }) {
       fixed = newParams.fixed ?? false;
+      offset = newParams.offset ?? 0;
       if (newParams.triggerEl !== triggerEl) {
         if (triggerEl) {
             resizeObserver.unobserve(triggerEl);

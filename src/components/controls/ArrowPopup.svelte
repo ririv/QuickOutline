@@ -11,6 +11,8 @@
     children?: Snippet;
     triggerEl?: HTMLElement; // The element that triggers the popup, for positioning
     usePortal?: boolean;
+    offset?: number;
+    popupElement?: HTMLElement; // Exposed DOM element for clickOutside exclusion
     onmouseenter?: (e: MouseEvent) => void;
     onmouseleave?: (e: MouseEvent) => void;
   }
@@ -23,6 +25,8 @@
     children,
     triggerEl,
     usePortal = true,
+    offset = 10,
+    popupElement = $bindable(),
     onmouseenter,
     onmouseleave
   }: Props = $props();
@@ -37,14 +41,16 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div 
+  bind:this={popupElement}
   class="arrow-popup {placement} {className}" 
+  class:portal={usePortal}
   style:--min-width={minWidth}
   style:--padding={padding}
-  onclick={(e) => e.stopPropagation()}
+  style:--popup-offset="{offset}px"
   {onmouseenter}
   {onmouseleave}
   use:portalAction={usePortal}
-  use:autoPosition={{ triggerEl, fixed: usePortal }}
+  use:autoPosition={{ triggerEl, fixed: usePortal, offset }}
 >
   {@render children?.()}
 </div>
@@ -66,6 +72,12 @@
     animation: popupFade 0.15s ease-out;
   }
 
+  /* When using portal, JS handles the offset calculation via autoPosition. 
+     We reset margins here to avoid double spacing. */
+  .arrow-popup.portal {
+      margin: 0 !important;
+  }
+
   @keyframes popupFade {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
@@ -77,7 +89,7 @@
   */
   .arrow-popup.top {
     bottom: 100%;
-    margin-bottom: 10px; 
+    margin-bottom: var(--popup-offset); 
   }
   .arrow-popup.top::after {
     content: "";
@@ -107,7 +119,7 @@
   */
   .arrow-popup.bottom {
     top: 100%;
-    margin-top: 10px;
+    margin-top: var(--popup-offset);
   }
   .arrow-popup.bottom::after {
     content: "";

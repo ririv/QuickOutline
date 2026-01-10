@@ -18,6 +18,7 @@
     let numberingStyle = $state<PageNumberStyle>(PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
     let triggerEl = $state<HTMLElement | undefined>();
     let isOpen = $state(false);
+    let popupEl = $state<HTMLElement | undefined>();
     
     // Filter out 'None' style
     const styles = pageLabelStyleMap.getAllStyles().filter(s => s.enumName !== PageLabelNumberingStyle.NONE);
@@ -44,50 +45,55 @@
     let insertText = $derived(getInsertText(numberingStyle));
 </script>
 
-<div class="btn-wrapper" use:clickOutside={close}>
+<div class="btn-wrapper" use:clickOutside={{ callback: close, exclude: [popupEl] }}>
     <button class="trigger-btn" bind:this={triggerEl} onclick={toggle} title="Page Number Settings">
-        <Icon name="number-sign" width="13" height="13" />
+        <span class="icon-box">
+            <Icon name="number-sign" width="13" height="13" />
+        </span>
     </button>
     
-    <ArrowPopup 
-        usePortal={false} 
-        className="hover-popup {isOpen ? 'visible' : ''}" 
-        placement={type === 'header' ? 'bottom' : 'top'}
-        triggerEl={triggerEl}
-        minWidth="220px"
-    >
-        <div class="hint-content">
-            <div class="popup-title">Page Number</div>
-            
-            <div class="style-select-wrapper">
-                <div class="section-title">Numbering Style</div>
-                <StyledSelect 
-                    options={styles}
-                    displayKey="displayText"
-                    optionKey="displayText"
-                    valueKey="enumName"
-                    bind:value={numberingStyle}
-                />
-            </div>
-
-            <div class="hint-row">
-                <span class="hint-icon">?</span>
-                <div class="hint-text">
-                    Use <code>{insertText}</code> for page number
+    {#if isOpen}
+        <ArrowPopup 
+            bind:popupElement={popupEl}
+            usePortal={true} 
+            className="hover-popup" 
+            placement={type === 'header' ? 'bottom' : 'top'}
+            triggerEl={triggerEl}
+            minWidth="220px"
+        >
+            <div class="hint-content">
+                <div class="popup-title">Page Number</div>
+                
+                <div class="style-select-wrapper">
+                    <div class="section-title">Numbering Style</div>
+                    <StyledSelect 
+                        options={styles}
+                        displayKey="displayText"
+                        optionKey="displayText"
+                        valueKey="enumName"
+                        bind:value={numberingStyle}
+                    />
                 </div>
+
+                <div class="hint-row">
+                    <span class="hint-icon">?</span>
+                    <div class="hint-text">
+                        Use <code>{insertText}</code> for page number
+                    </div>
+                </div>
+                
+                <button 
+                    class="insert-btn"
+                    onclick={() => {
+                        onInsert?.(insertText);
+                        close();
+                    }}
+                >
+                    Insert
+                </button>
             </div>
-            
-            <button 
-                class="insert-btn"
-                onclick={() => {
-                    onInsert?.(insertText);
-                    close();
-                }}
-            >
-                Insert
-            </button>
-        </div>
-    </ArrowPopup>
+        </ArrowPopup>
+    {/if}
 </div>
 
 <style>
@@ -96,40 +102,34 @@
         display: inline-flex;
     }
 
-    .trigger-btn {
-        background: transparent;
-        border: none;
-        padding: 4px;
-        cursor: pointer;
-        border-radius: 3px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #666;
-        transition: all 0.2s;
-        width: 24px;
-        height: 24px;
-    }
-
-    .trigger-btn:hover {
-        background: #f0f0f0;
-        color: #333;
-    }
-
-    /* Popup Visibility Control */
-    .btn-wrapper :global(.hover-popup) {
-        visibility: hidden;
-        opacity: 0;
-        transition: all 0.2s;
-        pointer-events: none;
-    }
-
-    .btn-wrapper :global(.hover-popup.visible) {
-        visibility: visible;
-        opacity: 1;
-        pointer-events: auto;
-    }
-
+        .trigger-btn {
+            background: transparent;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all 0.2s;
+            /* Width/Height handled by content (icon-box 14px + padding 4px*2 = 22px) */
+        }
+    
+        .trigger-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .icon-box {
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    
+        /* Popup Visibility Control */
     /* Content Styles */
     .hint-content {
         display: flex;
