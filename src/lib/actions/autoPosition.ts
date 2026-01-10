@@ -1,4 +1,19 @@
 // web/src/lib/actions/autoPosition.ts
+function getScrollParent(node: HTMLElement): HTMLElement | null {
+  if (!node) return null;
+  
+  let parent = node.parentElement;
+  while (parent) {
+    const style = getComputedStyle(parent);
+    // Look for overflow that isn't 'visible'
+    if (/(auto|scroll|hidden)/.test(style.overflow + style.overflowY + style.overflowX)) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return document.body; // Default fallback
+}
+
 export function autoPosition(node: HTMLElement, { triggerEl, fixed = false, offset = 0 }: { triggerEl: HTMLElement | undefined, fixed?: boolean, offset?: number }) {
   
   function robustAdjust() {
@@ -20,6 +35,21 @@ export function autoPosition(node: HTMLElement, { triggerEl, fixed = false, offs
       const viewportWidth = window.innerWidth;
       const boundaryMargin = 10;
 
+      // --- Determine Boundaries ---
+      // Default: Viewport
+      let minX = 0;
+      let maxX = viewportWidth;
+
+      // Smart Boundary: Intersection of Viewport and Scroll Parent
+      const scrollParent = getScrollParent(node);
+      if (scrollParent && scrollParent !== document.body) {
+          const parentRect = scrollParent.getBoundingClientRect();
+          // We constrain minX to be at least parentRect.left
+          minX = Math.max(minX, parentRect.left);
+          // We constrain maxX to be at most parentRect.right
+          maxX = Math.min(maxX, parentRect.right);
+      }
+
       // --- Horizontal Positioning (Shared) ---
       
       // Ideal Left (Viewport coords)
@@ -27,9 +57,10 @@ export function autoPosition(node: HTMLElement, { triggerEl, fixed = false, offs
       let targetViewportLeft = triggerCenter - popupRect.width / 2;
 
       // Constrain (Viewport coords)
-      if (targetViewportLeft < boundaryMargin) targetViewportLeft = boundaryMargin;
-      else if (targetViewportLeft + popupRect.width > viewportWidth - boundaryMargin) {
-          targetViewportLeft = viewportWidth - boundaryMargin - popupRect.width;
+      if (targetViewportLeft < minX + boundaryMargin) {
+          targetViewportLeft = minX + boundaryMargin;
+      } else if (targetViewportLeft + popupRect.width > maxX - boundaryMargin) {
+          targetViewportLeft = maxX - boundaryMargin - popupRect.width;
       }
 
       // Arrow Logic
