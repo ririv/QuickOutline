@@ -8,6 +8,15 @@
     import xiaohongshuSvg from '@/assets/icons/xiaohongshu.svg?raw';
     import refreshSvg from '@/assets/icons/refresh.svg?raw';
     import folderOpenSvg from '@/assets/icons/folder-open.svg?raw';
+    import offsetSvg from '@/assets/icons/offset.svg?raw';
+    import insertPositionSvg from '@/assets/icons/insert-position.svg?raw';
+    import pageSetupSvg from '@/assets/icons/page-setup.svg?raw';
+    import headerFooterSvg from '@/assets/icons/header-footer.svg?raw';
+    import numberSignSvg from '@/assets/icons/number-sign.svg?raw';
+    import playSvg from '@/assets/icons/play.svg?raw';
+    import arrowUpSvg from '@/assets/icons/arrow/arrow-up.svg?raw';
+    import arrowDownSvg from '@/assets/icons/arrow/arrow-down.svg?raw';
+    import arrowUpDownSvg from '@/assets/icons/arrow/arrow-up-down.svg?raw';
 
     interface Props {
         name?: string;
@@ -29,7 +38,16 @@
         'github': githubSvg,
         'xiaohongshu': xiaohongshuSvg,
         'refresh': refreshSvg,
-        'folder-open': folderOpenSvg
+        'folder-open': folderOpenSvg,
+        'offset': offsetSvg,
+        'insert-position': insertPositionSvg,
+        'page-setup': pageSetupSvg,
+        'header-footer': headerFooterSvg,
+        'number-sign': numberSignSvg,
+        'play': playSvg,
+        'arrow-up': arrowUpSvg,
+        'arrow-down': arrowDownSvg,
+        'arrow-up-down': arrowUpDownSvg
     };
 
     const svgContent = $derived.by(() => {

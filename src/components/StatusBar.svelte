@@ -4,6 +4,7 @@
   import NumberingStylePopup from './statusbar-popup/NumberingStylePopup.svelte';
   import PageSetupPopup from './statusbar-popup/PageSetupPopup.svelte';
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
+  import Icon from '@/components/Icon.svelte';
   import { onMount } from 'svelte';
   import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
@@ -101,9 +102,6 @@
 
   const removeSuffix = (str:string, suffix:string) => str.endsWith(suffix) ? str.slice(0, -suffix.length) : str;
   
-  const iconUp = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
-  const iconDown = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`;
-  const iconUpDown = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><polyline points="8 6 12 1 16 6"></polyline><polyline points="8 18 12 23 16 18"></polyline></svg>`;
 </script>
 
 <div class="status-bar" bind:this={barElement}>
@@ -118,9 +116,7 @@
             title="Set Page Offset"
           >
               <span class="icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor">
-                  <path d="M356.992 203.9552a51.2 51.2 0 0 0-99.584-23.8976l-153.6 640a51.2 51.2 0 0 0 99.584 23.8976l153.6-640zM358.4 486.4a38.4 38.4 0 1 0 0 76.8h180.3776l-31.168 31.168a38.4 38.4 0 1 0 54.2976 54.2976l126.72-126.7072-126.72-126.72a38.4 38.4 0 1 0-54.2976 54.3104L544.4608 486.4H358.4z m523.9424-344.1792a51.2 51.2 0 0 1 37.8368 61.7344l-19.2 80a51.2 51.2 0 0 1-99.5712-23.8976l19.2-80a51.2 51.2 0 0 1 61.7344-37.8368z m-57.6 240a51.2 51.2 0 0 1 37.8368 61.7344l-38.4 160a51.2 51.2 0 0 1-99.5712-23.8976l38.4-160a51.2 51.2 0 0 1 61.7344-37.8368z m-76.8 320a51.2 51.2 0 0 1 37.8368 61.7344l-19.2 80a51.2 51.2 0 0 1-99.5712-23.8976l19.2-80a51.2 51.2 0 0 1 61.7344-37.8368z"
-                  ></path></svg>
+                <Icon name="offset" width="14" height="14" />
               </span> Offset: {offset}
           </div>
           {#if activePopup === 'pagenum-offset'}
@@ -139,7 +135,7 @@
         title="Set Insert Position"
       >
           <span class="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <Icon name="insert-position" width="14" height="14" />
           </span> Pos: {insertion.pos}
       </div>
       {#if activePopup === 'insert-pos'}
@@ -165,13 +161,7 @@
         title="Page Setup: {pageLayout.size}, {pageLayout.orientation}, Margins..."
       >
           <span class="icon" class:rotated={pageLayout.orientation === 'landscape'}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
+              <Icon name="page-setup" width="16" height="16" />
           </span>
           {layoutSummary}
       </div>
@@ -190,22 +180,18 @@
         title="Header & Footer Position"
       >
           <span class="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="4" y="2" width="16" height="20" rx="2" stroke-opacity="0.5"></rect>
-                  <line x1="7" y1="6" x2="17" y2="6"></line>
-                  <line x1="7" y1="18" x2="17" y2="18"></line>
-              </svg>
+              <Icon name="header-footer" width="14" height="14" />
           </span>
           <span class="hf-summary-content">
             {#if hfLayoutSummary}
                 {#if hfLayoutSummary.type === 'both-equal'}
-                    {@html iconUpDown}{hfLayoutSummary.header}mm
+                    <Icon name="arrow-up-down" width="10" height="10" />{hfLayoutSummary.header}mm
                 {:else if hfLayoutSummary.type === 'both-diff'}
-                    {@html iconUp}{hfLayoutSummary.header} {@html iconDown}{hfLayoutSummary.footer}mm
+                    <Icon name="arrow-up" width="10" height="10" />{hfLayoutSummary.header} <Icon name="arrow-down" width="10" height="10" />{hfLayoutSummary.footer}mm
                 {:else if hfLayoutSummary.type === 'header-only'}
-                    {@html iconUp}{hfLayoutSummary.header}mm
+                    <Icon name="arrow-up" width="10" height="10" />{hfLayoutSummary.header}mm
                 {:else if hfLayoutSummary.type === 'footer-only'}
-                    {@html iconDown}{hfLayoutSummary.footer}mm
+                    <Icon name="arrow-down" width="10" height="10" />{hfLayoutSummary.footer}mm
                 {/if}
             {/if}
           </span>
@@ -225,7 +211,7 @@
                 title="Set Numbering Style"
         >
       <span class="icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+          <Icon name="number-sign" width="14" height="14" />
       </span>{removeSuffix(pageLabelStyleMap.getDisplayText(numberingStyle), ", ...")}
         </div>
         {#if activePopup === 'numbering-style'}
@@ -236,9 +222,7 @@
   <div class="spacer"></div>
   
   <button class="icon-btn generate-btn" onclick={onGenerate} title="Generate PDF">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-        <path d="M8 5v14l11-7z"/>
-      </svg>
+      <Icon name="play" width="20" height="20" />
   </button>
 </div>
 

@@ -1,7 +1,6 @@
 <script lang="ts">
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import Icon from '@/components/Icon.svelte';
-    import pageNumIcon from '@/assets/icons/pagenum.svg?raw';
 
     interface Props {
         type?: 'header' | 'footer';
@@ -15,7 +14,7 @@
 
 <div class="btn-wrapper">
     <button class="trigger-btn" bind:this={triggerEl} title="Page Number Settings">
-        <Icon data={pageNumIcon} width="16" height="16" />
+        <Icon name="number-sign" width="13" height="13" />
     </button>
     
     <ArrowPopup 
