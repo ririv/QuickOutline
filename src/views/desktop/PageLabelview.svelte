@@ -15,7 +15,7 @@
     import { ripple } from '@/lib/actions/ripple.ts';
     import { docStore } from '@/stores/docStore.svelte.js';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
-    import { pageLabelStyleMap } from '@/lib/types/page-label.ts';
+    import { pageLabelStyleMap, generateRulePreview } from '@/lib/types/page-label.ts';
     import GraphButton from "@/components/controls/GraphButton.svelte";
 
     import { usePageLabelActions } from '../shared/pagelabel.svelte.ts';
@@ -68,14 +68,19 @@
                                 </span>
 
                                 <div class="flex flex-col justify-center overflow-hidden">
-                                    <div class="flex items-center gap-1 font-medium text-[#303133] whitespace-nowrap overflow-hidden text-ellipsis leading-tight">
+                                    <div class="flex items-center gap-2 font-medium text-[#303133] whitespace-nowrap overflow-hidden text-ellipsis leading-tight">
                                         {#if rule.labelPrefix}
-                                            <span class="text-[#606266] bg-[#f4f4f5] px-1 rounded-[3px] text-[11px] border border-[#e9e9eb]">{rule.labelPrefix}</span>
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-[3px] text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200 leading-none">{rule.labelPrefix}</span>
                                         {/if}
                                         <span class="overflow-hidden text-ellipsis">{pageLabelStyleMap.getDisplayText(rule.numberingStyle)}</span>
+                                        {#if rule.startValue !== undefined && rule.startValue !== 1}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 text-slate-500 border border-slate-200 leading-none">
+                                                Start {rule.startValue}
+                                            </span>
+                                        {/if}
                                     </div>
-                                    <div class="text-[10px] text-[#909399] leading-tight">
-                                        Start: {rule.startValue ?? 1}
+                                    <div class="text-[10px] text-[#909399] leading-tight mt-0.5">
+                                        {generateRulePreview(rule)}
                                     </div>
                                 </div>
                             </div>

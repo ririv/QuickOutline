@@ -85,3 +85,12 @@ export function simulatePageLabelsLocal(rules: PageLabel[], pageCount: number): 
     }
     return labels;
 }
+
+export function generateRulePreview(rule: PageLabel, count: number = 3): string {
+    const start = rule.startValue ?? 1;
+    const parts: string[] = [];
+    for (let i = 0; i < count; i++) {
+        parts.push(Numbering.formatPageNumber(rule.numberingStyle, start + i, rule.labelPrefix || null));
+    }
+    return parts.join(', ') + '...';
+}

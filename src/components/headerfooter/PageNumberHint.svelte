@@ -177,9 +177,9 @@
     }
 
     .insert-btn {
-        background-color: #f0f7ff;
-        color: #1677ff;
-        border: 1px solid #91caff;
+        background-color: #fff9eb; /* amber-50ish */
+        color: #d97706; /* amber-600 */
+        border: 1px solid #fde68a; /* amber-200 */
         border-radius: 4px;
         padding: 5px 8px;
         cursor: pointer;
@@ -187,11 +187,12 @@
         transition: all 0.2s;
         text-align: center;
         width: 100%;
+        font-weight: 500;
     }
 
     .insert-btn:hover {
-        background-color: #e6f7ff;
-        border-color: #1677ff;
+        background-color: #fef3c7; /* amber-100 */
+        border-color: #d97706; /* amber-600 */
     }
     
     .section-title {
