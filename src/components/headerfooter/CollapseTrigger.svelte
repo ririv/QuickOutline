@@ -102,7 +102,14 @@
   .collapse-trigger.expanded {
       height: 24px; /* Keep height visible when expanded */
       background-color: #f5f5f5;
-      border-color: #e0e0e0;
+  }
+  
+  .collapse-trigger.expanded.top {
+      border-bottom-color: #e0e0e0;
+  }
+  
+  .collapse-trigger.expanded.bottom {
+      border-top-color: #e0e0e0;
   }
 
   .indicator-line {
@@ -115,7 +122,7 @@
   }
   
   .collapse-trigger.hover .indicator-line {
-      background-color: rgba(22, 119, 255, 0.3);
+      background-color: rgba(55, 143, 255, 0.75);
       /* opacity removed to prevent flash */
   }
   .collapse-trigger.top .indicator-line { bottom: 0; }
