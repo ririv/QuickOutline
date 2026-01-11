@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { type Snippet } from 'svelte';
+  import { type Snippet, onMount } from 'svelte';
   import { autoPosition } from '@/lib/actions/autoPosition';
   import { portal } from '@/lib/actions/portal';
+  import { registerPortal } from '@/lib/actions/clickOutside';
 
   interface Props {
     placement?: 'top' | 'bottom'; // top: popup is above trigger (arrow points down); bottom: popup is below trigger (arrow points up)
@@ -12,7 +13,6 @@
     triggerEl?: HTMLElement; // The element that triggers the popup, for positioning
     usePortal?: boolean;
     offset?: number;
-    popupElement?: HTMLElement; // Exposed DOM element for clickOutside exclusion
     onmouseenter?: (e: MouseEvent) => void;
     onmouseleave?: (e: MouseEvent) => void;
   }
@@ -26,10 +26,20 @@
     triggerEl,
     usePortal = true,
     offset = 10,
-    popupElement = $bindable(),
     onmouseenter,
     onmouseleave
   }: Props = $props();
+
+  let popupEl: HTMLElement;
+
+  onMount(() => {
+      if (usePortal && popupEl) {
+          // Automatically register this portal element to the global registry
+          // so clickOutside actions knows to ignore clicks inside it.
+          const unregister = registerPortal(popupEl);
+          return unregister;
+      }
+  });
 
   function portalAction(node: HTMLElement, enabled: boolean) {
       if (enabled) {
@@ -41,7 +51,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div 
-  bind:this={popupElement}
+  bind:this={popupEl}
   class="arrow-popup {placement} {className}" 
   class:portal={usePortal}
   style:--min-width={minWidth}

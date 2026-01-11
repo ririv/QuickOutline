@@ -5,7 +5,7 @@
   import PageSetupPopup from './statusbar-popup/PageSetupPopup.svelte';
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
   import Icon from '@/components/Icon.svelte';
-  import { onMount } from 'svelte';
+  import { clickOutside } from '@/lib/actions/clickOutside';
   import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
 
@@ -89,22 +89,11 @@
       return null;
   });
 
-  onMount(() => {
-      const closePopup = (e: MouseEvent) => {
-          const target = e.target as HTMLElement;
-          if (activePopup && barElement && !barElement.contains(target)) {
-              activePopup = null;
-          }
-      };
-      window.addEventListener('click', closePopup);
-      return () => window.removeEventListener('click', closePopup);
-  });
-
   const removeSuffix = (str:string, suffix:string) => str.endsWith(suffix) ? str.slice(0, -suffix.length) : str;
   
 </script>
 
-<div class="status-bar" bind:this={barElement}>
+<div class="status-bar" bind:this={barElement} use:clickOutside={() => activePopup = null}>
   {#if showOffset}
       <div class="status-item-wrapper">
           <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -144,7 +133,7 @@
             bind:autoCorrect={insertion.autoCorrect} 
             showAutoCorrect={insertion.showAutoCorrect} 
             triggerEl={posBtnEl} 
-            onchange={onParamChange} 
+            onchange={onParamChange}
           />
       {/if}
   </div>

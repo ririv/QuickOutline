@@ -18,7 +18,6 @@
     let numberingStyle = $state<PageNumberStyle>(PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
     let triggerEl = $state<HTMLElement | undefined>();
     let isOpen = $state(false);
-    let popupEl = $state<HTMLElement | undefined>();
     
     // Filter out 'None' style
     const styles = pageLabelStyleMap.getAllStyles().filter(s => s.enumName !== PageLabelNumberingStyle.NONE);
@@ -45,7 +44,7 @@
     let insertText = $derived(getInsertText(numberingStyle));
 </script>
 
-<div class="btn-wrapper" use:clickOutside={{ callback: close, exclude: [popupEl] }}>
+<div class="btn-wrapper" use:clickOutside={close}>
     <button class="trigger-btn" bind:this={triggerEl} onclick={toggle} title="Page Number Settings">
         <span class="icon-box">
             <Icon name="number-sign" width="13" height="13" />
@@ -54,7 +53,6 @@
     
     {#if isOpen}
         <ArrowPopup 
-            bind:popupElement={popupEl}
             usePortal={true} 
             className="hover-popup" 
             placement={type === 'header' ? 'bottom' : 'top'}

@@ -1,3 +1,21 @@
+/**
+ * Global registry for elements that are portalled to the body.
+ * clickOutside actions will check against this set to avoid 
+ * closing when clicking inside a portal element.
+ */
+export const portalElements = new Set<HTMLElement>();
+
+/**
+ * Registers an element as a portal element.
+ * @returns an unregister function.
+ */
+export function registerPortal(el: HTMLElement) {
+    portalElements.add(el);
+    return () => {
+        portalElements.delete(el);
+    };
+}
+
 export interface ClickOutsideOptions {
   callback: (event: MouseEvent) => void;
   enabled?: boolean;
@@ -33,9 +51,16 @@ export function clickOutside(node: HTMLElement, params: ClickOutsideParameter) {
     if (!enabled) return;
     const target = event.target as Node;
     
+    // 1. Check if click is inside the node itself
     if (node.contains(target)) return;
     
+    // 2. Check explicit exclude list
     if (exclude.some(el => el && el.contains(target))) return;
+
+    // 3. Check global portal registry (Automatic Portal Protection)
+    for (const portalEl of portalElements) {
+        if (portalEl && portalEl.contains(target)) return;
+    }
 
     callback(event);
   };
@@ -47,7 +72,6 @@ export function clickOutside(node: HTMLElement, params: ClickOutsideParameter) {
 
   return {
     update(newParams: ClickOutsideParameter) {
-      // Check if capture changed, requiring re-binding
       const oldCapture = capture;
       const newCapture = typeof newParams === 'object' ? (newParams.capture ?? true) : true;
       
