@@ -56,7 +56,7 @@ export function useTocActions() {
                     tocStore.content, 
                     tocStore.title, 
                     tocStore.offset, 
-                    tocStore.numberingStyle,
+                    tocStore.pageLabel.numberingStyle,
                     undefined, // Use default indentStep
                     tocStore.pageLayout,
                     pageOffset,
@@ -132,7 +132,7 @@ export function useTocActions() {
                 tocStore.content,
                 tocStore.title,
                 tocStore.offset,
-                tocStore.numberingStyle,
+                tocStore.pageLabel.numberingStyle,
                 undefined, // Use default indentStep
                 tocStore.pageLayout,
                 pageOffset,
@@ -178,9 +178,9 @@ export function useTocActions() {
                 insertPos: parseInt(String(tocStore.insertionConfig.pos), 10),
                 tocPageLabel: {
                     pageIndex: 1, // Will be overwritten by backend based on insertPos
-                    numberingStyle: tocStore.numberingStyle,
-                    labelPrefix: null,
-                    startValue: 1
+                    numberingStyle: tocStore.pageLabel.numberingStyle,
+                    labelPrefix: tocStore.pageLabel.labelPrefix,
+                    startValue: tocStore.pageLabel.startValue
                 },
                 header: tocStore.headerConfig,
                 footer: tocStore.footerConfig,

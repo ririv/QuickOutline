@@ -6,7 +6,7 @@
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
   import Icon from '@/components/Icon.svelte';
   import { clickOutside } from '@/lib/actions/clickOutside';
-  import {PageLabelNumberingStyle, pageLabelStyleMap} from "@/lib/types/page-label.ts";
+  import {PageLabelNumberingStyle, pageLabelStyleMap, type PageLabel} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
 
   export interface InsertionSettings {
@@ -18,7 +18,7 @@
   interface Props {
     offset?: number;
     insertion?: InsertionSettings; // New aggregated prop
-    numberingStyle?: PageLabelNumberingStyle; 
+    pageLabel?: PageLabel; 
     pageLayout?: PageLayout;
     hfLayout?: HeaderFooterLayout;
     showOffset?: boolean;
@@ -29,7 +29,12 @@
   let { 
     offset = $bindable(0),
     insertion = $bindable({ pos: 1, autoCorrect: true, showAutoCorrect: false }),
-    numberingStyle = $bindable(PageLabelNumberingStyle.NONE),
+    pageLabel = $bindable({
+        pageIndex: 1,
+        numberingStyle: PageLabelNumberingStyle.NONE,
+        labelPrefix: '',
+        startValue: 1
+    }),
     pageLayout = $bindable(defaultPageLayout),
     hfLayout = $bindable(defaultHeaderFooterLayout),
     showOffset = true,
@@ -53,7 +58,6 @@
   }
 
   function onPopupChange() {
-      if (activePopup === 'numbering-style') activePopup = null;
       // Setup popup doesn't auto-close on change usually, as multiple fields exist
       onParamChange?.();
   }
@@ -201,10 +205,10 @@
         >
       <span class="icon">
           <Icon name="number-sign" width="14" height="14" />
-      </span>{removeSuffix(pageLabelStyleMap.getDisplayText(numberingStyle), ", ...")}
+      </span>{removeSuffix(pageLabelStyleMap.getDisplayText(pageLabel.numberingStyle), ", ...")}
         </div>
         {#if activePopup === 'numbering-style'}
-            <NumberingStylePopup bind:numberingStyle onchange={onPopupChange} triggerEl={numberingStyleBtnEl} />
+            <NumberingStylePopup bind:pageLabel onchange={onPopupChange} triggerEl={numberingStyleBtnEl} />
         {/if}
     </div>
   

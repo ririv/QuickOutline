@@ -56,7 +56,7 @@
         t: tocStore.title,
         o: tocStore.offset,
         i: JSON.stringify(tocStore.insertionConfig), // Watch insertion object
-        s: tocStore.numberingStyle
+        s: JSON.stringify(tocStore.pageLabel)
     };
 
     // Use a small timeout to let the store update settle before triggering preview
@@ -136,7 +136,7 @@
   <StatusBar 
       bind:offset={tocStore.offset} 
       bind:insertion={tocStore.insertionConfig}
-      bind:numberingStyle={tocStore.numberingStyle}
+      bind:pageLabel={tocStore.pageLabel}
       bind:pageLayout={tocStore.pageLayout}
       bind:hfLayout={tocStore.hfLayout}
       onGenerate={handleGenerate} 

@@ -1,4 +1,4 @@
-import { PageLabelNumberingStyle } from "@/lib/types/page-label.ts";
+import { PageLabelNumberingStyle, type PageLabel } from "@/lib/types/page-label.ts";
 import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout, type SectionConfig } from "@/lib/types/page";
 import { offsetStore } from "./offsetStore.svelte";
 
@@ -27,7 +27,12 @@ export class TocState {
         showAutoCorrect: false
     });
     
-    numberingStyle = $state(PageLabelNumberingStyle.NONE);
+    pageLabel = $state<PageLabel>({
+        pageIndex: 1,
+        numberingStyle: PageLabelNumberingStyle.NONE,
+        labelPrefix: '',
+        startValue: 1
+    });
     pageLayout = $state<PageLayout>({ ...defaultPageLayout });
     hfLayout = $state<HeaderFooterLayout>({ ...defaultHeaderFooterLayout });
     
@@ -63,7 +68,12 @@ export class TocState {
             autoCorrect: false,
             showAutoCorrect: false
         };
-        this.numberingStyle = PageLabelNumberingStyle.NONE;
+        this.pageLabel = {
+            pageIndex: 1,
+            numberingStyle: PageLabelNumberingStyle.NONE,
+            labelPrefix: '',
+            startValue: 1
+        };
         this.pageLayout = { ...defaultPageLayout };
         this.hfLayout = { ...defaultHeaderFooterLayout };
         this.headerConfig = { left: '', center: '', right: '', inner: '', outer: '', drawLine: false };

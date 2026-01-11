@@ -103,7 +103,7 @@
   
   <StatusBar 
       bind:insertion={markdownStore.insertionConfig}
-      bind:numberingStyle={markdownStore.numberingStyle}
+      bind:pageLabel={markdownStore.pageLabel}
       bind:pageLayout={markdownStore.pageLayout}
       bind:hfLayout={markdownStore.hfLayout}
       showOffset={false}
