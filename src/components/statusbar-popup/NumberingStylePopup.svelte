@@ -3,6 +3,7 @@
   import { type PageLabel, PageLabelNumberingStyle, pageLabelStyleMap } from "@/lib/types/page-label.ts";
   import StyledSelect from '@/components/controls/StyledSelect.svelte';
   import StyledInput from '@/components/controls/StyledInput.svelte';
+  import PageLabelPreviewRow from '@/components/pagelabel/PageLabelPreviewRow.svelte';
 
   interface Props {
     pageLabel?: PageLabel;
@@ -46,6 +47,8 @@
                     valueKey="enumName"
                     bind:value={pageLabel.numberingStyle}
                     onchange={handleChange}
+                    placement="top"
+                    maxHeight="220px"
                 />
             </div>
         </div>
@@ -80,5 +83,8 @@
                 oninput={handleChange}
             />
         </div>
+
+        <!-- Preview -->
+        <PageLabelPreviewRow rule={pageLabel} labelWidth="100px" />
     </div>
 </ArrowPopup>

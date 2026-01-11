@@ -6,7 +6,7 @@
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
   import Icon from '@/components/Icon.svelte';
   import { clickOutside } from '@/lib/actions/clickOutside';
-  import {PageLabelNumberingStyle, pageLabelStyleMap, type PageLabel} from "@/lib/types/page-label.ts";
+  import {PageLabelNumberingStyle, pageLabelStyleMap, generateRulePreview, type PageLabel} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
 
   export interface InsertionSettings {
@@ -205,7 +205,12 @@
         >
       <span class="icon">
           <Icon name="number-sign" width="14" height="14" />
-      </span>{removeSuffix(pageLabelStyleMap.getDisplayText(pageLabel.numberingStyle), ", ...")}
+      </span>
+      {#if pageLabel.numberingStyle === PageLabelNumberingStyle.NONE && !pageLabel.labelPrefix}
+          None
+      {:else}
+          {removeSuffix(generateRulePreview(pageLabel, 1), "...")}
+      {/if}
         </div>
         {#if activePopup === 'numbering-style'}
             <NumberingStylePopup bind:pageLabel onchange={onPopupChange} triggerEl={numberingStyleBtnEl} />

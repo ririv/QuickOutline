@@ -6,8 +6,9 @@
     import StyledInput from "@/components/controls/StyledInput.svelte";
     import { ripple } from '@/lib/actions/ripple.ts';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
-    import { pageLabelStyleMap } from '@/lib/types/page-label.ts';
+    import { pageLabelStyleMap, type PageLabel } from '@/lib/types/page-label.ts';
     import { usePageLabelActions } from '@/views/shared/pagelabel.svelte.ts';
+    import PageLabelPreviewRow from './PageLabelPreviewRow.svelte';
 
     const styles = pageLabelStyleMap.getAllStyles();
     const { addRule } = usePageLabelActions();
@@ -19,6 +20,14 @@
     let { onSuccess }: Props = $props();
 
     let existingRule = $derived(pageLabelStore.getRuleByPage(parseInt(pageLabelStore.pageIndex) || 0));
+    
+    // Derived rule object for preview
+    let previewRule = $derived({
+        pageIndex: parseInt(pageLabelStore.pageIndex) || 1,
+        numberingStyle: pageLabelStore.numberingStyle,
+        labelPrefix: pageLabelStore.labelPrefix,
+        startValue: pageLabelStore.startValue || 1
+    } as PageLabel);
 
     function handleAdd() {
         addRule(); // This now calls addOrUpdateRule internally
@@ -41,6 +50,7 @@
                 optionKey="displayText"
                 valueKey="enumName"
                 bind:value={pageLabelStore.numberingStyle}
+                maxHeight="220px"
             />
         </div>
     </div>
@@ -55,9 +65,9 @@
         <StyledInput id="startNum" type="number" min="1" step="1" bind:value={pageLabelStore.startValue} placeholder="Optional (default: 1)" numericType="unsigned-integer" />
     </div>
 
+    <PageLabelPreviewRow rule={previewRule} labelWidth="120px" />
 
-
-    <div class="flex justify-center mt-2.5">
+    <div class="flex justify-center mt-1">
         <button
             class="inline-flex items-center justify-center min-w-[110px] gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100 {existingRule ? 'text-amber-600 hover:text-amber-700' : 'text-gray-700'}"
             use:ripple

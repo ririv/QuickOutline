@@ -11,6 +11,8 @@
     displayKey?: string; // Key for the label shown in the closed state
     optionKey?: string;  // Key for the label shown in the dropdown options
     item?: import('svelte').Snippet<[T]>; // Custom item renderer
+    placement?: 'top' | 'bottom';
+    maxHeight?: string;
   }
 
   let { 
@@ -22,7 +24,9 @@
     valueKey = 'value',
     displayKey = 'display', // New default, assumes options have a 'display' prop
     optionKey = 'display',   // New default
-    item
+    item,
+    placement = 'bottom',
+    maxHeight = '200px'
   }: Props<T> = $props();
 
   let isOpen = $state(false);
@@ -81,7 +85,7 @@
   </div>
   
   {#if isOpen}
-      <div class="select-dropdown">
+      <div class="select-dropdown {placement}" style:max-height={maxHeight}>
           {#each options as opt}
               {@const optVal = getValue(opt)}
               <div 
@@ -169,10 +173,8 @@
 
   .select-dropdown {
       position: absolute;
-      top: 100%;
       left: 0;
       width: 100%;
-      margin-top: 4px;
       background: white;
       border-radius: 4px;
       box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
@@ -182,6 +184,17 @@
       overflow-y: auto;
       padding: 4px 0;
       box-sizing: border-box;
+  }
+
+  .select-dropdown.bottom {
+      top: 100%;
+      margin-top: 4px;
+  }
+
+  .select-dropdown.top {
+      bottom: 100%;
+      margin-bottom: 4px;
+      box-shadow: 0 -2px 12px 0 rgba(0, 0, 0, 0.1); /* Optional: invert shadow for top popover */
   }
 
   .select-option {

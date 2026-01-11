@@ -136,7 +136,12 @@
             // 2. 关键：强制将清洗后的值赋给 value 变量
             // 这样 Svelte (以及绑定的 Store) 才会收到干净的值，防止脏数据进入 Store
             // 并在后续重绘时被错误地显示出来。
-            value = cleanedValue;
+            if (cleanedValue !== '' && cleanedValue !== '-') {
+                const num = Number(cleanedValue);
+                value = isNaN(num) ? cleanedValue : num;
+            } else {
+                value = cleanedValue;
+            }
         }
         // 调用外部传入的 oninput 回调
         if (oninput) oninput(e);
