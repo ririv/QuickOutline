@@ -8,6 +8,7 @@
   import { clickOutside } from '@/lib/actions/clickOutside';
   import {PageLabelNumberingStyle, pageLabelStyleMap, generateRulePreview, type PageLabel} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
+  import labelSimpleIcon from '@/assets/icons/label-simple.svg?raw';
 
   export interface InsertionSettings {
     pos: number;
@@ -204,7 +205,7 @@
                 title="Set Numbering Style"
         >
       <span class="icon">
-          <Icon name="number-sign" width="14" height="14" />
+          <Icon data={labelSimpleIcon} width="14" height="14" />
       </span>
       {#if pageLabel.numberingStyle === PageLabelNumberingStyle.NONE && !pageLabel.labelPrefix}
           None
