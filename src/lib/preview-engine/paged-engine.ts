@@ -1,18 +1,7 @@
 import { Previewer, Handler, registerHandlers } from 'pagedjs';
-import type { PageLayout, HeaderFooterLayout, SectionConfig } from '@/lib/types/page';
-import { generatePageCss } from './css-generator';
-import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
 import { Numbering } from '@/lib/pdf-processing/numbering';
 import { PageLabelNumberingStyle } from '@/lib/types/page-label';
-
-interface PagedPayload {
-    html: string;
-    styles: string;
-    header: SectionConfig;
-    footer: SectionConfig;
-    pageLayout?: PageLayout;
-    hfLayout?: HeaderFooterLayout;
-}
+import { workerClient, type PagedPayload } from './paged-worker-client';
 
 /**
  * A Paged.js Handler to manually fix page numbers in the preview.
@@ -181,22 +170,13 @@ export class PagedEngine {
         targetBuffer!.style.display = 'block'; 
 
         // Prepare Content
-        const { html, styles, header, footer, pageLayout, hfLayout } = payload;
-        const pageCss = generatePageCss(header, footer, pageLayout, hfLayout);
+        // --- Offload preparation to Worker ---
+        const { pageCss, contentWithStyle } = await workerClient.prepare(payload);
+        // -------------------------------------
         
         const pageCssObject = {
             [window.location.href]: pageCss
         };
-
-        const headerHtml = PageSectionTemplate(header);
-        const footerHtml = PageSectionTemplate(footer);
-
-        const contentWithStyle = `
-        <style>${styles}</style>
-        <div class="print-header">${headerHtml}</div>
-        <div class="print-footer">${footerHtml}</div>
-        ${html}
-        `;
 
         const previewer = new Previewer({
             settings: {
