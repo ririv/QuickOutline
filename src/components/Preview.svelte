@@ -24,7 +24,7 @@
         } | null;
     }
 
-    let { 
+    let {
         mode = "paged",
         onrefresh,
         onScroll,
@@ -42,8 +42,11 @@
     let sliderPercent = $state("20%");
     let isRefreshing = $state(false); // Refresh state for animation
     let isDoublePage = false; // Restore Double Page mode state
+    let isHovering = $state(false); // Track mouse hover state for toolbar visibility
 
     let currentPdfFilePath = $derived(docStore.currentFilePath);
+
+    const zoomResetIcon = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 11C3.5 11 4.5 7 8 4.5C11.5 2 17 3.5 20 7.5C23 11.5 21.5 17.5 17.5 20.5C13.5 23.5 7.5 22.5 4.5 18.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 5V11H9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
     // Expose methods for parent to call (SVG/Image Engine)
     // Note: json string still comes from Java part, containing page metadata
@@ -61,7 +64,7 @@
     export const restoreScroll = (top: number) => {
         if (viewport) viewport.scrollTop = top;
     };
-    
+
     function updateSliderBackground(val: number) {
         const min = 0.5;
         const max = 3.0;
@@ -76,7 +79,7 @@
             // Apply zoom to container using CSS zoom property
             // This handles layout and scrollbars automatically in WebKit/Blink
             container.style.zoom = `${currentScale}`;
-            
+
             // Notify svg-engine if mode is svg (it might need to know for internal calculations, 
             // though zoom usually handles it seamlessly)
             if (mode === "svg" && container && viewport) onSvgViewChange(container, viewport);
@@ -101,7 +104,7 @@
         if (onScroll && viewport) {
             onScroll(viewport.scrollTop);
         }
-        
+
         // Only SVG mode needs scroll notification to manage virtual rendering
         if (mode === "svg" && !isScrolling && container && viewport) {
             window.requestAnimationFrame(() => {
@@ -141,7 +144,14 @@
     });
 </script>
 
-<div class="preview-root" data-mode={mode}>
+<div
+    class="preview-root"
+    data-mode={mode}
+    onmouseenter={() => isHovering = true}
+    onmouseleave={() => isHovering = false}
+    role="region"
+    aria-label="Document Preview"
+>
     <div
         id="viewport"
         bind:this={viewport}
@@ -165,7 +175,7 @@
         </div>
     </div>
 
-    <div id="toolbar-container">
+    <div id="toolbar-container" style:opacity={isHovering ? 1 : 0}>
         <div id="toolbar">
             <button
                 class="icon-btn"
@@ -188,9 +198,9 @@
                 title="Zoom In">+</button
             >
             <span id="zoom-label">{Math.round(currentScale * 100)}%</span>
-            <button class="text-btn" onclick={() => setZoom(1.0)} title="Reset"
-                >Reset</button
-            >
+            <button class="icon-btn" onclick={() => setZoom(1.0)} title="Reset to 100%">
+                <Icon data={zoomResetIcon} width="18" height="18" />
+            </button>
         </div>
     </div>
 
@@ -294,7 +304,7 @@
         overflow: auto;
         display: flex;
         /* Center pages horizontally */
-        justify-content: center; 
+        justify-content: center;
         padding: 40px; /* Reduced padding since we are centered */
         /* Force left alignment to override any global center styles */
         text-align: left !important;
@@ -386,33 +396,6 @@
         color: inherit; /* Inherit from parent */
     }
 
-    .text-btn {
-        background: rgba(255, 255, 255, 0.2); /* Neutral default */
-        border: none;
-        color: white;
-        border-radius: 4px;
-        padding: 4px 8px;
-        font-size: 12px;
-        cursor: pointer;
-        margin-left: 5px;
-        font-family: inherit;
-        opacity: 0.9;
-        transition: background-color 0.3s;
-    }
-    
-    #toolbar:hover .text-btn {
-        background: #1677ff; /* Blue when toolbar active */
-    }
-
-    .text-btn:hover {
-        background: #4096ff !important; /* Brighter on direct hover */
-        opacity: 1;
-    }
-
-    .text-btn:active {
-        background: #0958d9 !important;
-    }
-
     input[type="range"] {
         appearance: none;
         width: 120px;
@@ -443,7 +426,7 @@
         );
         transition: background 0.3s;
     }
-    
+
     #toolbar:hover input[type="range"]::-webkit-slider-runnable-track {
         /* Hover: Blue track */
         background: linear-gradient(
@@ -466,7 +449,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         transition: transform 0.1s, border-color 0.3s;
     }
-    
+
     #toolbar:hover input[type="range"]::-webkit-slider-thumb {
         border-color: #1677ff; /* Blue border on hover */
     }
