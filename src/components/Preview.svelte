@@ -209,6 +209,8 @@
             class="refresh-fab {isRefreshing ? 'spinning' : ''}"
             onclick={handleRefreshClick}
             title="Refresh Preview"
+            style:opacity={isHovering ? 1 : 0}
+            style:pointer-events={isHovering ? 'auto' : 'none'}
         >
             <Icon name="refresh" width="20" height="20" />
         </button>
@@ -480,7 +482,7 @@
         justify-content: center;
         z-index: 900;
         color: rgba(0, 0, 0, 0.3);
-        transition: all 0.2s;
+        transition: all 0.3s;
         padding: 0;
     }
 
