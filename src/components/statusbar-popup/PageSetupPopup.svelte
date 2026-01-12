@@ -56,7 +56,7 @@
     }
 </script>
 
-<ArrowPopup triggerEl={triggerEl} placement="top" className="page-setup-popup">
+<ArrowPopup triggerEl={triggerEl} placement="top" className="page-setup-popup" trackTrigger={false}>
     <div class="popup-content">
         <div class="row">
             <span class="row-icon" title="Paper Size">

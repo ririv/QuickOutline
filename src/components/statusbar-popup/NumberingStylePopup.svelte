@@ -34,6 +34,7 @@
   minWidth="280px" 
   padding="12px"
   {triggerEl}
+  trackTrigger={false}
 >
     <div class="flex flex-col gap-4">
         <!-- Numbering Style -->

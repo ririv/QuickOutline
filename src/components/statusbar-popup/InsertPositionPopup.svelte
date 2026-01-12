@@ -20,6 +20,7 @@
   }: Props = $props();
 </script>
 
+<!--没有加 trackTrigger={false}，因为它在最左边，触发位置本就因为防止移除隐藏被偏移了-->
 <ArrowPopup 
   placement="top" 
   minWidth="180px" 

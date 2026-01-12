@@ -15,7 +15,7 @@
     }
 </script>
 
-<ArrowPopup triggerEl={triggerEl} placement="top" className="hf-setup-popup">
+<ArrowPopup triggerEl={triggerEl} placement="top" className="hf-setup-popup" trackTrigger={false}>
     <div class="popup-content">
         <div class="grid-header">
             <span></span>

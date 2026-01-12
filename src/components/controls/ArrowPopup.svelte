@@ -12,6 +12,7 @@
     children?: Snippet;
     triggerEl?: HTMLElement; // The element that triggers the popup, for positioning
     usePortal?: boolean;
+    trackTrigger?: boolean;
     offset?: number;
     onmouseenter?: (e: MouseEvent) => void;
     onmouseleave?: (e: MouseEvent) => void;
@@ -25,6 +26,7 @@
     children,
     triggerEl,
     usePortal = true,
+    trackTrigger = true,
     offset = 10,
     onmouseenter,
     onmouseleave
@@ -60,7 +62,7 @@
   {onmouseenter}
   {onmouseleave}
   use:portalAction={usePortal}
-  use:autoPosition={{ triggerEl, fixed: usePortal, offset }}
+  use:autoPosition={{ triggerEl, fixed: usePortal, offset, trackTrigger }}
 >
   {@render children?.()}
 </div>

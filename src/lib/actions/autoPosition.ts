@@ -14,7 +14,7 @@ function getScrollParent(node: HTMLElement): HTMLElement | null {
   return document.body; // Default fallback
 }
 
-export function autoPosition(node: HTMLElement, { triggerEl, fixed = false, offset = 0 }: { triggerEl: HTMLElement | undefined, fixed?: boolean, offset?: number }) {
+export function autoPosition(node: HTMLElement, { triggerEl, fixed = false, offset = 0, trackTrigger = true }: { triggerEl: HTMLElement | undefined, fixed?: boolean, offset?: number, trackTrigger?: boolean }) {
   
   function robustAdjust() {
       // Check if elements still exist
@@ -108,22 +108,25 @@ export function autoPosition(node: HTMLElement, { triggerEl, fixed = false, offs
 
   const resizeObserver = new ResizeObserver(robustAdjust);
   resizeObserver.observe(node);
-  if (triggerEl) {
+  if (triggerEl && trackTrigger) {
       resizeObserver.observe(triggerEl);
   }
   window.addEventListener('resize', robustAdjust);
   window.addEventListener('scroll', robustAdjust, true); // Capture scroll for position updates
 
   return {
-    update(newParams: { triggerEl: HTMLElement, fixed?: boolean, offset?: number }) {
+    update(newParams: { triggerEl: HTMLElement, fixed?: boolean, offset?: number, trackTrigger?: boolean }) {
+      const oldTrackTrigger = trackTrigger;
       fixed = newParams.fixed ?? false;
       offset = newParams.offset ?? 0;
-      if (newParams.triggerEl !== triggerEl) {
+      trackTrigger = newParams.trackTrigger ?? true;
+
+      if (newParams.triggerEl !== triggerEl || trackTrigger !== oldTrackTrigger) {
         if (triggerEl) {
             resizeObserver.unobserve(triggerEl);
         }
         triggerEl = newParams.triggerEl;
-        if (triggerEl) {
+        if (triggerEl && trackTrigger) {
             resizeObserver.observe(triggerEl);
         }
       }
