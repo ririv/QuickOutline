@@ -4,10 +4,7 @@
     import treeDiagramIcon from '@/assets/icons/tree-diagram.svg';
     import doubleColumnIcon from '@/assets/icons/double-column.svg';
     import offsetIcon from '@/assets/icons/offset.svg';
-    import downloadIcon from '@/assets/icons/download.svg';
-    import uploadIcon from '@/assets/icons/upload.svg';
     import viewModeSvg from '@/assets/icons/view-mode.svg';
-    import settingsIcon from '@/assets/icons/settings.svg';
     import fitToHeightIcon from '@/assets/icons/fit-to-height.svg';
     import fitToWidthIcon from '@/assets/icons/fit-to-width.svg';
     import fitToPageIcon from '@/assets/icons/fit-to-page.svg';
@@ -79,13 +76,6 @@
         }
     });
 
-    // Simple debounce function
-    function debounce(func: Function, delay: number) {
-        return function(...args: any[]) {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => func(...args), delay);
-        };
-    }
 
     function handleOffsetInput(e: Event) {
         const target = e.target as HTMLInputElement;
@@ -313,7 +303,7 @@
             <path d="M8 4.5L12.5 9H10V14H6V9H3.5L8 4.5Z" />
             <path d="M3 2H13V3.5H3V2Z" />
         </svg>
-        Apply
+        Set
     </button>
 
     <!-- Right Spacer Area: Contains Offset and Settings, and pushes Segmented Control to the right -->
