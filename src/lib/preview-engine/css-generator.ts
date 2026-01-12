@@ -67,9 +67,27 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout, h
           ${footerBorder}
       }
       
-      .section-left { text-align: left; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .section-center { text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .section-right { text-align: right; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .section-left, .section-center, .section-right { 
+          flex: 1; 
+          white-space: nowrap; 
+          overflow: hidden; 
+          text-overflow: ellipsis;
+      }
+      
+      .section-left { text-align: left; display: flex; justify-content: flex-start; }
+      .section-center { text-align: center; }
+      .section-right { text-align: right; display: flex; justify-content: flex-end; }
+
+      .section-left > div, .section-right > div { display: none; }
+      .section-left > .content-left, .section-right > .content-right { display: block; }
+
+      /* Left Page (Even): Outer on Left, Inner on Right */
+      .pagedjs_left_page .section-left > .content-outer { display: block; }
+      .pagedjs_left_page .section-right > .content-inner { display: block; }
+
+      /* Right Page (Odd): Inner on Left, Outer on Right */
+      .pagedjs_right_page .section-left > .content-inner { display: block; }
+      .pagedjs_right_page .section-right > .content-outer { display: block; }
       
       /* Page Number Injection */
       .page-num:empty::after { content: counter(page); }

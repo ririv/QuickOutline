@@ -23,9 +23,17 @@ export function PageSectionTemplate(config: SectionConfig) {
 
     return (
         <>
-            <div class="section-left">{processContent(config.left)}</div>
+            <div class="section-left">
+                <div class="content-outer">{processContent(config.outer)}</div>
+                <div class="content-inner">{processContent(config.inner)}</div>
+                <div class="content-left">{processContent(config.left)}</div>
+            </div>
             <div class="section-center">{processContent(config.center)}</div>
-            <div class="section-right">{processContent(config.right)}</div>
+            <div class="section-right">
+                <div class="content-right">{processContent(config.right)}</div>
+                <div class="content-inner">{processContent(config.inner)}</div>
+                <div class="content-outer">{processContent(config.outer)}</div>
+            </div>
         </>
     );
 }
