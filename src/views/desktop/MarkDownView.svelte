@@ -44,14 +44,6 @@
       debouncedTrigger(triggerPreview);
   }
 
-  // Refresh preview when tab becomes active to restore CSS
-  $effect(() => {
-      if (activeTab === FnTab.markdown) {
-          // Use a small timeout to ensure DOM is visible if needed, though not strictly required for CSS injection
-          setTimeout(() => triggerPreview(), 0);
-      }
-  });
-
   onMount(() => {
     initEditor(editorComponent);
   });

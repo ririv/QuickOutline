@@ -22,13 +22,6 @@
   
   let activeTab = $derived(appStore.activeTab);
 
-  // Refresh preview when tab becomes active to restore CSS
-  $effect(() => {
-      if (activeTab === FnTab.tocGenerator) {
-          setTimeout(() => triggerPreview(), 0);
-      }
-  });
-
   // Auto-load TOC when file changes
   $effect(() => {
       const path = docStore.currentFilePath;
