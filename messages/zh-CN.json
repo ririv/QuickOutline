@@ -1,4 +1,26 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "reset_zoom": "重置缩放"
+  "bookmark_delete_pdf_bookmarks": "删除 PDF 书签",
+  "bookmark_load": "加载",
+  "bookmark_set": "应用",
+  "bookmark_offset": "偏移量",
+  "bookmark_view_settings": "视图设置",
+  "bookmark_text_view": "文本视图",
+  "bookmark_tree_view": "树视图",
+  "bookmark_double_view": "双栏视图",
+  "bookmark_extracting_toc": "正在提取目录... 这可能需要一点时间。",
+  "bookmark_no_file_open": "未打开文件。",
+  "bookmark_outline_loaded_success": "大纲加载成功",
+  "bookmark_no_toc_found": "未在文档中发现目录结构。",
+  "bookmark_extracted_toc_lines": "提取了 {count} 行目录。",
+  "bookmark_failed_load_content": "加载内容失败: {error}",
+  "bookmark_no_text_to_save": "没有可保存的大纲文本。请先输入一些文本。",
+  "bookmark_outline_saved_success": "大纲保存成功！",
+  "bookmark_failed_save_outline": "保存大纲失败: {error}",
+  "bookmark_confirm_delete_title": "删除 PDF 书签",
+  "bookmark_confirm_delete_message": "确定要清除此 PDF 的所有书签吗？",
+  "bookmark_confirm_delete_btn": "删除",
+  "bookmark_cancel": "取消",
+  "bookmark_bookmarks_removed_success": "PDF 书签已成功移除。",
+  "bookmark_failed_delete_bookmarks": "删除 PDF 书签失败: {error}"
 }

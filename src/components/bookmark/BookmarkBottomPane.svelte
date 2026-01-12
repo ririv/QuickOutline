@@ -28,6 +28,7 @@
     import { messageStore } from '@/stores/messageStore.svelte.ts';
     import type { BookmarkUI } from '@/lib/types/bookmark.ts';
     import { untrack } from 'svelte';
+    import * as m from '@/lib/paraglide/messages.js';
 
     interface Props {
         view: 'text' | 'tree' | 'double';
@@ -123,7 +124,7 @@
         try {
             const path = docStore.currentFilePath;
             if (!path) {
-                messageStore.add('No file open.', 'WARNING');
+                messageStore.add(m.bookmark_no_file_open(), 'WARNING');
                 return;
             }
 
@@ -138,15 +139,15 @@
                 bookmarkStore.setText(text);
                 bookmarkStore.setTree(bookmarkDto.children || []);
                 
-                messageStore.add('Outline loaded successfully', 'SUCCESS');
+                messageStore.add(m.bookmark_outline_loaded_success(), 'SUCCESS');
             } else {
                 // TOC Extraction Mode
-                messageStore.add('Extracting TOC... This may take a moment.', 'INFO');
+                messageStore.add(m.bookmark_extracting_toc(), 'INFO');
                 
                 const lines = await extractToc(path);
                 
                 if (!lines || lines.length === 0) {
-                    messageStore.add('No TOC structure found in document.', 'WARNING');
+                    messageStore.add(m.bookmark_no_toc_found(), 'WARNING');
                     return;
                 }
 
@@ -166,10 +167,10 @@
                     console.warn('Auto-parse extracted TOC failed:', e);
                 }
 
-                messageStore.add(`Extracted ${lines.length} TOC lines.`, 'SUCCESS');
+                messageStore.add(m.bookmark_extracted_toc_lines({ count: lines.length }), 'SUCCESS');
             }
         } catch (e: any) {
-            messageStore.add('Failed to load content: ' + (e.message || String(e)), 'ERROR');
+            messageStore.add(m.bookmark_failed_load_content({ error: (e.message || String(e)) }), 'ERROR');
         }
     }
 
@@ -183,13 +184,13 @@
         try {
             const path = docStore.currentFilePath;
             if (!path) {
-                messageStore.add('No file open.', 'WARNING');
+                messageStore.add(m.bookmark_no_file_open(), 'WARNING');
                 return;
             }
 
             const text = bookmarkStore.text;
             if (!text || !text.trim()) {
-                messageStore.add('No outline text to save. Please enter some text first.', 'WARNING');
+                messageStore.add(m.bookmark_no_text_to_save(), 'WARNING');
                 return;
             }
             
@@ -199,24 +200,24 @@
             const tree = processText(text);
             await saveOutline(path, tree as any, null, offset, viewMode);
             
-            messageStore.add('Outline saved successfully!', 'SUCCESS');
+            messageStore.add(m.bookmark_outline_saved_success(), 'SUCCESS');
         } catch (e: any) {
-            messageStore.add('Failed to save outline: ' + (e.message || String(e)), 'ERROR');
+            messageStore.add(m.bookmark_failed_save_outline({ error: (e.message || String(e)) }), 'ERROR');
         }
     }
 
     async function handleDeleteClick() {
         if (!docStore.currentFilePath) {
-            messageStore.add('No file open.', 'WARNING');
+            messageStore.add(m.bookmark_no_file_open(), 'WARNING');
             return;
         }
 
         const confirmed = await confirmState.request({
-            title: 'Delete PDF Bookmarks',
-            message: 'Clear all bookmarks from this PDF?',
+            title: m.bookmark_confirm_delete_title(),
+            message: m.bookmark_confirm_delete_message(),
             type: 'warning',
-            confirmText: 'Delete',
-            cancelText: 'Cancel'
+            confirmText: m.bookmark_confirm_delete_btn(),
+            cancelText: m.bookmark_cancel()
         });
 
         if (confirmed) {
@@ -237,9 +238,9 @@
                 
                 // Sync frontend
                 bookmarkStore.reset();
-                messageStore.add('PDF bookmarks removed successfully.', 'SUCCESS');
+                messageStore.add(m.bookmark_bookmarks_removed_success(), 'SUCCESS');
             } catch (e: any) {
-                messageStore.add('Failed to delete PDF bookmarks: ' + (e.message || String(e)), 'ERROR');
+                messageStore.add(m.bookmark_failed_delete_bookmarks({ error: (e.message || String(e)) }), 'ERROR');
             }
         }
     }
@@ -256,7 +257,7 @@
 <div class="flex items-center gap-[15px] py-[10px] pl-[15px] pr-[10px] bg-white border-none">
     <!-- Left Group: Delete and Load -->
     <div class="flex items-center gap-2">
-        <GraphButton class="graph-button-important group" title="Delete PDF Bookmarks" onclick={handleDeleteClick}>
+        <GraphButton class="graph-button-important group" title={m.bookmark_delete_pdf_bookmarks()} onclick={handleDeleteClick}>
             <img 
                 src={trashIcon} 
                 alt="Delete" 
@@ -278,7 +279,7 @@
                     <path d="M8 11.5L3.5 7H6V2H10V7H12.5L8 11.5Z" />
                     <path d="M3 13H13V14.5H3V13Z" />
                 </svg>
-                Load
+                {m.bookmark_load()}
             </button>
             {#if activePopup === 'get' && getContentsBtnEl}
                 <GetContentsPopup 
@@ -303,7 +304,7 @@
             <path d="M8 4.5L12.5 9H10V14H6V9H3.5L8 4.5Z" />
             <path d="M3 2H13V3.5H3V2Z" />
         </svg>
-        Set
+        {m.bookmark_set()}
     </button>
 
     <!-- Right Spacer Area: Contains Offset and Settings, and pushes Segmented Control to the right -->
@@ -316,7 +317,7 @@
              onmouseleave={hidePopup}>
             <StyledInput 
                 icon={offsetIcon}
-                placeholder="Offset"
+                placeholder={m.bookmark_offset()}
                 bind:value={offsetValue}
                 oninput={handleOffsetInput}
                 width="100px"
@@ -336,7 +337,7 @@
         <div class="relative inline-flex" role="group" onmouseenter={() => showPopup('viewMode')} onmouseleave={hidePopup}>
             <GraphButton 
                 bind:element={viewModeBtnEl} 
-                title="View Settings"
+                title={m.bookmark_view_settings()}
                 class={viewMode !== 'NONE' ? 'active' : ''}
             >
                 <img src={viewModeIcon} alt="Settings" />
@@ -356,21 +357,21 @@
         <button 
             class={getButtonClass(view === 'text')}
             onclick={() => setView('text')} 
-            title="文本视图"
+            title={m.bookmark_text_view()}
         >
             <img src={textEditIcon} alt="Text View" class="w-4 h-4" />
         </button>
         <button 
             class={getButtonClass(view === 'tree')}
             onclick={() => setView('tree')} 
-            title="树视图"
+            title={m.bookmark_tree_view()}
         >
             <img src={treeDiagramIcon} alt="Tree View" class="w-4 h-4" />
         </button>
         <button 
             class={getButtonClass(view === 'double')}
             onclick={() => setView('double')} 
-            title="双栏视图"
+            title={m.bookmark_double_view()}
         >
             <img src={doubleColumnIcon} alt="Double Column View" class="w-4 h-4" />
         </button>

@@ -1,4 +1,26 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "reset_zoom": "Reset to 100%"
+  "bookmark_delete_pdf_bookmarks": "Delete PDF Bookmarks",
+  "bookmark_load": "Load",
+  "bookmark_set": "Set",
+  "bookmark_offset": "Offset",
+  "bookmark_view_settings": "View Settings",
+  "bookmark_text_view": "Text View",
+  "bookmark_tree_view": "Tree View",
+  "bookmark_double_view": "Double Column View",
+  "bookmark_extracting_toc": "Extracting TOC... This may take a moment.",
+  "bookmark_no_file_open": "No file open.",
+  "bookmark_outline_loaded_success": "Outline loaded successfully",
+  "bookmark_no_toc_found": "No TOC structure found in document.",
+  "bookmark_extracted_toc_lines": "Extracted {count} TOC lines.",
+  "bookmark_failed_load_content": "Failed to load content: {error}",
+  "bookmark_no_text_to_save": "No outline text to save. Please enter some text first.",
+  "bookmark_outline_saved_success": "Outline saved successfully!",
+  "bookmark_failed_save_outline": "Failed to save outline: {error}",
+  "bookmark_confirm_delete_title": "Delete PDF Bookmarks",
+  "bookmark_confirm_delete_message": "Clear all bookmarks from this PDF?",
+  "bookmark_confirm_delete_btn": "Delete",
+  "bookmark_cancel": "Cancel",
+  "bookmark_bookmarks_removed_success": "PDF bookmarks removed successfully.",
+  "bookmark_failed_delete_bookmarks": "Failed to delete PDF bookmarks: {error}"
 }
