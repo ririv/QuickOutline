@@ -91,7 +91,7 @@ export function generateRulePreview(rule: PageLabel, count: number = 3): string 
     // Handle number, string number, empty string, null, undefined
     // Defense: If input is cleared, it might be an empty string at runtime despite the TS type.
     // Use Number() to ensure it's a number and default to 1 if empty/null/undefined to avoid string concatenation.
-    const start = (val !== undefined && val !== null && val !== '') ? Number(val) : 1;
+    const start = (val !== undefined && val !== null && (val as unknown) !== '') ? Number(val) : 1;
     
     const parts: string[] = [];
     for (let i = 0; i < count; i++) {
