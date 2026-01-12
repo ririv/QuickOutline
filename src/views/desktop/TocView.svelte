@@ -73,8 +73,6 @@
       }
 
       if (tocStore.previewData) {
-          // Restore cached preview immediately without RPC call
-          previewComponent?.renderSvg(tocStore.previewData);
           // Restore scroll position after render (timeout to ensure DOM updated)
           setTimeout(() => {
               previewComponent?.restoreScroll(tocStore.scrollTop);

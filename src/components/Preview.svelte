@@ -1,11 +1,5 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import {
-        handleSvgUpdate,
-        onSvgViewChange,
-        setDoubleBuffering,
-    } from "@/lib/preview-engine/svg-engine";
-    import { handleImageUpdate } from "@/lib/preview-engine/image-engine";
     import PagedRenderer from "./renderers/PagedRenderer.svelte";
     import { docStore } from '@/stores/docStore.svelte'; // Import docStore
     import Icon from "@/components/Icon.svelte";
@@ -48,19 +42,6 @@
 
     const zoomResetIcon = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 11C3.5 11 4.5 7 8 4.5C11.5 2 17 3.5 20 7.5C23 11.5 21.5 17.5 17.5 20.5C13.5 23.5 7.5 22.5 4.5 18.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 5V11H9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-    // Expose methods for parent to call (SVG/Image Engine)
-    // Note: json string still comes from Java part, containing page metadata
-    export const renderSvg = (json: string) => {
-        if (mode === "svg" && container && viewport)
-            handleSvgUpdate(json, container, viewport);
-    };
-
-    export const renderImage = (json: string, pdfFilePath: string, scale: number) => {
-        if (mode === "image" && container) handleImageUpdate(json, container, pdfFilePath, scale); // Pass pdfFilePath and scale
-    };
-    export const setDoubleBuffer = (enable: boolean) => {
-        setDoubleBuffering(enable);
-    };
     export const restoreScroll = (top: number) => {
         if (viewport) viewport.scrollTop = top;
     };
@@ -79,10 +60,6 @@
             // Apply zoom to container using CSS zoom property
             // This handles layout and scrollbars automatically in WebKit/Blink
             container.style.zoom = `${currentScale}`;
-
-            // Notify svg-engine if mode is svg (it might need to know for internal calculations, 
-            // though zoom usually handles it seamlessly)
-            if (mode === "svg" && container && viewport) onSvgViewChange(container, viewport);
         }
         updateSliderBackground(currentScale);
     }
@@ -103,17 +80,6 @@
     function handleScroll() {
         if (onScroll && viewport) {
             onScroll(viewport.scrollTop);
-        }
-
-        // Only SVG mode needs scroll notification to manage virtual rendering
-        if (mode === "svg" && !isScrolling && container && viewport) {
-            window.requestAnimationFrame(() => {
-                if (container && viewport) {
-                    onSvgViewChange(container, viewport);
-                }
-                isScrolling = false;
-            });
-            isScrolling = true;
         }
     }
 
@@ -138,7 +104,6 @@
 
     onMount(() => {
         updateSliderBackground(currentScale);
-        setDoubleBuffer(true);
         // Apply initial zoom
         setZoom(currentScale);
     });
@@ -159,18 +124,14 @@
         onscroll={handleScroll}
     >
         <div id="pages-container" bind:this={container}>
-            {#if mode === "paged"}
-                {#if pagedPayload}
-                    <PagedRenderer
-                        payload={pagedPayload}
-                        isActive={isActive}
-                        onRenderComplete={(duration) => {
-                            if (onRenderStats) onRenderStats({ duration });
-                        }}
-                    />
-                {/if}
-            {:else if mode === "svg" || mode === "image"}
-                <!-- SVG/Image engines render directly into container -->
+            {#if pagedPayload}
+                <PagedRenderer
+                    payload={pagedPayload}
+                    isActive={isActive}
+                    onRenderComplete={(duration) => {
+                        if (onRenderStats) onRenderStats({ duration });
+                    }}
+                />
             {/if}
         </div>
     </div>
@@ -251,43 +212,6 @@
     :global(.page-wrapper) {
         width: 595pt;
         height: 842pt;
-    }
-
-    /* SVG/Image Engine Specific Styles - Restored */
-    :global(.page-wrapper svg) {
-        display: block;
-        width: 100%;
-        height: 100%;
-        position: absolute; /* Ensure overlap for double buffering */
-        top: 0;
-        left: 0;
-        pointer-events: auto;
-        shape-rendering: auto;
-        text-rendering: geometricPrecision;
-        mix-blend-mode: normal;
-    }
-
-    :global(.page-wrapper img) {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        position: absolute;
-        top: 0;
-        left: 0;
-        image-rendering: auto;
-    }
-
-    /* Double Buffering Animation States */
-    :global(.page-wrapper .current) {
-        opacity: 1;
-        transition: opacity 0.3s ease-out;
-        z-index: 2;
-    }
-
-    :global(.page-wrapper .preload) {
-        opacity: 0;
-        z-index: 3; /* New content loads on top */
     }
 
     /* Container Styles */
