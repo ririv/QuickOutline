@@ -1,4 +1,4 @@
-<script lang="ts">
+<script module lang="ts">
     import trashSvg from '@/assets/icons/trash.svg?raw';
     import deleteSvg from '@/assets/icons/delete-item.svg?raw';
     import plusSvg from '@/assets/icons/plus.svg?raw';
@@ -18,18 +18,7 @@
     import arrowDownSvg from '@/assets/icons/arrow/arrow-down.svg?raw';
     import arrowUpDownSvg from '@/assets/icons/arrow/arrow-up-down.svg?raw';
 
-    interface Props {
-        name?: string;
-        data?: string; // Support direct raw SVG string
-        class?: string;
-        style?: string;
-        width?: string | number;
-        height?: string | number;
-    }
-
-    let { name, data, class: className = "", style = "", width, height }: Props = $props();
-
-    const icons: Record<string, string> = {
+    const icons = {
         'trash': trashSvg,
         'delete': deleteSvg,
         'add': plusSvg,
@@ -49,6 +38,22 @@
         'arrow-down': arrowDownSvg,
         'arrow-up-down': arrowUpDownSvg
     };
+
+    export type IconName = keyof typeof icons;
+</script>
+
+<script lang="ts">
+    interface Props {
+        name?: IconName;
+        data?: string; // Support direct raw SVG string
+        class?: string;
+        style?: string;
+        width?: string | number;
+        height?: string | number;
+        size?: string | number;
+    }
+
+    let { name, data, class: className = "", style = "", width, height, size }: Props = $props();
 
     const svgContent = $derived.by(() => {
         // Prefer 'data' prop, fallback to registry lookup by 'name'
@@ -70,8 +75,11 @@
                 }
 
                 // 2. Handle Width/Height
-                if (width) svg.setAttribute('width', String(width));
-                if (height) svg.setAttribute('height', String(height));
+                const finalWidth = width ?? size;
+                const finalHeight = height ?? size;
+                
+                if (finalWidth) svg.setAttribute('width', String(finalWidth));
+                if (finalHeight) svg.setAttribute('height', String(finalHeight));
 
                 // 2.1 Handle Style
                 if (style) {
