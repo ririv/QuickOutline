@@ -93,7 +93,16 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         }
     }
 
-    // 5. Non-Numeric Input: Implicit Label Matching
+    // 5. Page Number Placeholders (e.g. {p}, {p R})
+    // Treat as valid target (resolving to current/first page for validation context)
+    if (/^\{p( [RrAa])?\}$/.test(trimmed)) {
+        // We return 0 (first page) as a dummy valid index. 
+        // In a real link scenario, this would need context of "current page", 
+        // but for validation "is this a valid format?", it suffices.
+        return { index: 0, isOriginalDoc: true };
+    }
+
+    // 6. Non-Numeric Input: Implicit Label Matching
     // (e.g., "iv", "Appendix")
     if (config.pageLabels) {
         const idx = getPageLabelIndex(config.pageLabels, trimmed);

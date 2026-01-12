@@ -72,7 +72,11 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout, h
       .section-right { text-align: right; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       
       /* Page Number Injection */
-      .page-num::after { content: counter(page); }
+      .page-num:empty::after { content: counter(page); }
+      .page-num-upper-roman:empty::after { content: counter(page, upper-roman); }
+      .page-num-lower-roman:empty::after { content: counter(page, lower-roman); }
+      .page-num-upper-alpha:empty::after { content: counter(page, upper-alpha); }
+      .page-num-lower-alpha:empty::after { content: counter(page, lower-alpha); }
 
       @page {
           size: ${width} ${height};

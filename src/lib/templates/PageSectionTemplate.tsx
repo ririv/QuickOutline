@@ -4,9 +4,21 @@ import type { SectionConfig } from '@/lib/types/page';
 export function PageSectionTemplate(config: SectionConfig) {
     const processContent = (text: string) => {
         if (!text) return '';
-        // Replace {p} with span for CSS counter injection
-        // Using replaceAll or regex with g flag
-        return text.replace(/\{p\}/g, '<span class="page-num"></span>');
+        
+        // Split by regex capturing the placeholder to keep it in the array
+        // Matches: {p}, {p R}, {p r}, {p A}, {p a}
+        const parts = text.split(/(\{p(?: [RrAa])?\})/g);
+        
+        return parts.map((part) => {
+            switch (part) {
+                case '{p}': return <span class="page-num"></span>;
+                case '{p R}': return <span class="page-num-upper-roman"></span>;
+                case '{p r}': return <span class="page-num-lower-roman"></span>;
+                case '{p A}': return <span class="page-num-upper-alpha"></span>;
+                case '{p a}': return <span class="page-num-lower-alpha"></span>;
+                default: return part;
+            }
+        });
     };
 
     return (

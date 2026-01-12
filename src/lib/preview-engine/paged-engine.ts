@@ -1,7 +1,9 @@
-import { Previewer } from 'pagedjs';
+import { Previewer, Handler, registerHandlers } from 'pagedjs';
 import type { PageLayout, HeaderFooterLayout, SectionConfig } from '@/lib/types/page';
 import { generatePageCss } from './css-generator';
 import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
+import { Numbering } from '@/lib/pdf-processing/numbering';
+import { PageLabelNumberingStyle } from '@/lib/types/page-label';
 
 interface PagedPayload {
     html: string;
@@ -11,6 +13,53 @@ interface PagedPayload {
     pageLayout?: PageLayout;
     hfLayout?: HeaderFooterLayout;
 }
+
+/**
+ * A Paged.js Handler to manually fix page numbers in the preview.
+ * 
+ * Problem:
+ * In some browsers (specifically Safari/WebKit) and contexts (like dynamic previewing),
+ * CSS counters (e.g. `content: counter(page)`) used within "running elements"
+ * (elements moved to margin boxes via `position: running()`) fail to update correctly
+ * and often display as 0 or the initial value.
+ * 
+ * Solution:
+ * This handler hooks into the `afterPageLayout` event, retrieves the correct page number
+ * from the page element's dataset (`data-page-number`), and manually sets the text content
+ * of the page number placeholders.
+ * 
+ * This works in conjunction with CSS selectors like `.page-num:empty::after`, ensuring that
+ * if this JS fix works, the CSS counter is hidden/overridden, but if JS fails, CSS acts as a fallback.
+ */
+class PageNumberHandler extends Handler {
+    constructor(chunker: any, polisher: any, caller: any) {
+        super(chunker, polisher, caller);
+    }
+
+    afterPageLayout(pageElement: HTMLElement, page: any, breakToken: any) {
+        const pageNumStr = pageElement.dataset.pageNumber;
+        if (!pageNumStr) return;
+        
+        const pageNum = parseInt(pageNumStr, 10);
+        if (isNaN(pageNum)) return;
+
+        const replaceContent = (selector: string, style: PageLabelNumberingStyle) => {
+            const elements = pageElement.querySelectorAll(selector);
+            elements.forEach(el => {
+                // Manually set the content for Safari compatibility where CSS counters in running elements fail
+                (el as HTMLElement).innerText = Numbering.formatPageNumber(style, pageNum, null);
+            });
+        };
+
+        replaceContent('.page-num', PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
+        replaceContent('.page-num-upper-roman', PageLabelNumberingStyle.UPPERCASE_ROMAN_NUMERALS);
+        replaceContent('.page-num-lower-roman', PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS);
+        replaceContent('.page-num-upper-alpha', PageLabelNumberingStyle.UPPERCASE_LETTERS);
+        replaceContent('.page-num-lower-alpha', PageLabelNumberingStyle.LOWERCASE_LETTERS);
+    }
+}
+
+registerHandlers(PageNumberHandler);
 
 // Global reference for compatibility with external components (e.g. TOC Generator)
 // In a multi-tab environment, this should point to the currently active/focused engine.
