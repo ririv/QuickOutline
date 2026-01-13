@@ -13,6 +13,9 @@ import type { EditorMode, StylesConfig } from '@/lib/editor';
 export interface EditorInterface {
     init(content: string, mode: EditorMode, options?: Partial<StylesConfig>): void;
     getValue(): string;
+    getRenderedHtml(options?: { enableIndentedCodeBlocks?: boolean }): Promise<string>;
+    getRenderedMdx(): Promise<string>;
+    getStylesConfig(): StylesConfig;
 }
 
 export function useMarkdownActions() {
@@ -34,6 +37,26 @@ export function useMarkdownActions() {
         debounceTimer = setTimeout(() => {
             callback();
         }, currentDebounceTime);
+    }
+
+    async function triggerPreview(editor: EditorInterface) {
+        if (!editor) return;
+
+        let htmlContent = '';
+        try {
+            htmlContent = await editor.getRenderedMdx();
+        } catch (e) {
+            console.warn('MDX Render failed, falling back to standard Markdown:', e);
+        }
+
+        if (!htmlContent) {
+            htmlContent = await editor.getRenderedHtml({
+                enableIndentedCodeBlocks: markdownStore.enableIndentedCodeBlocks
+            });
+        }
+
+        const { tableStyle } = editor.getStylesConfig();
+        await updatePreview(htmlContent, tableStyle);
     }
     
     function clearDebounce() {
@@ -125,6 +148,7 @@ export function useMarkdownActions() {
     return {
         handleRenderStats,
         debouncedTrigger,
+        triggerPreview,
         clearDebounce,
         updatePreview,
         handleGenerate,

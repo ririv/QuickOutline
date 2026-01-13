@@ -4,7 +4,6 @@
   import TocEditor from '../../components/editor/TocEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
-  import '../../assets/global.css';
   import { onMount } from 'svelte';
 
   import { docStore } from '@/stores/docStore.svelte.ts';

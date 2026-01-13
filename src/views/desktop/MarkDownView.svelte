@@ -4,44 +4,21 @@
   import Preview from '../../components/Preview.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
-  import ConfirmDialog from '../../components/ConfirmDialog.svelte';
-  import '../../assets/global.css';
   import { onMount, onDestroy } from 'svelte';
   import { markdownStore } from '@/stores/markdownStore.svelte.js';
   import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
   
   import { useMarkdownActions } from '../shared/markdown.svelte.ts';
   
-  const { handleRenderStats, debouncedTrigger, clearDebounce, updatePreview, handleGenerate, initEditor, saveContent } = useMarkdownActions();
+  const { handleRenderStats, debouncedTrigger, triggerPreview, clearDebounce, updatePreview, handleGenerate, initEditor, saveContent } = useMarkdownActions();
   
   let editorComponent: MdEditor;
   let previewComponent: Preview;
   
   let activeTab = $derived(appStore.activeTab);
 
-  // Wrapper for triggerPreview to be used in UI callbacks
-  async function triggerPreview() {
-      if (!editorComponent) return;
-      
-      let htmlContent = '';
-      try {
-        htmlContent = await editorComponent.getRenderedMdx();
-      } catch (e) {
-        console.warn('MDX Render failed, falling back to standard Markdown:', e);
-      }
-
-      if (!htmlContent) {
-          htmlContent = await editorComponent.getRenderedHtml({
-              enableIndentedCodeBlocks: markdownStore.enableIndentedCodeBlocks
-          });
-      }
-      
-      const { tableStyle } = editorComponent.getStylesConfig(); 
-      await updatePreview(htmlContent, tableStyle);
-  }
-
   function debouncedPreview() {
-      debouncedTrigger(triggerPreview);
+      debouncedTrigger(() => triggerPreview(editorComponent));
   }
 
   onMount(() => {
@@ -55,9 +32,6 @@
 
 </script>
 
-<!-- Mount the Global Confirm Dialog -->
-<ConfirmDialog />
-
 <main>
   <div class="content-area">
       <SplitPane initialSplit={50}>
@@ -68,8 +42,8 @@
             bind:footerConfig={markdownStore.footerConfig}
             bind:showHeader={markdownStore.showHeader}
             bind:showFooter={markdownStore.showFooter}
-            onHeaderChange={triggerPreview}
-            onFooterChange={triggerPreview}
+            onHeaderChange={() => triggerPreview(editorComponent)}
+            onFooterChange={() => triggerPreview(editorComponent)}
           >
             <div class="editor-wrapper">
               <MdEditor bind:this={editorComponent} onchange={debouncedPreview} />
@@ -86,7 +60,7 @@
                       mode="paged" 
                       pagedPayload={markdownStore.currentPagedContent}
                       isActive={activeTab === FnTab.markdown}
-                      onrefresh={triggerPreview} 
+                      onrefresh={() => triggerPreview(editorComponent)} 
                       onRenderStats={handleRenderStats}
                     />        </div>
         {/snippet}
