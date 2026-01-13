@@ -1,47 +1,70 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { MarkdownEditor, type EditorMode, type StylesConfig } from '@/lib/editor';
-    import { renderMdx } from '@/lib/services/MdxService';
+
+    interface Props {
+        value?: string;
+        mode?: EditorMode;
+        stylesConfig?: Partial<StylesConfig>;
+        onchange?: (val: string) => void;
+    }
+
+    let {
+        value = $bindable(''),
+        mode = $bindable('live'),
+        stylesConfig = $bindable({ tableStyle: 'grid' }),
+        onchange
+    }: Props = $props();
 
     let editorElement: HTMLDivElement;
-    let editor: MarkdownEditor;
+    let editor: MarkdownEditor | undefined;
 
-    // Props
-    export let onchange: ((val: string) => void) | undefined = undefined;
-
-    export const getValue = () => editor?.getValue() || '';
-    export const setValue = (val: string) => editor?.setValue(val);
+    // Helper methods (kept for toolbar actions)
     export const insertValue = (val: string) => editor?.insertValue(val);
     export const insertImageMarkdown = (path: string) => editor?.insertImageMarkdown(path);
-    export const getRenderedHtml = async (options?: { enableIndentedCodeBlocks?: boolean }) => editor?.getRenderedHtml(options) || '';
-    export const getRenderedMdx = async () => renderMdx(getValue());
-    export const setMode = (mode: EditorMode) => editor?.setMode(mode); // Expose setMode
-    export const getStylesConfig = () => editor?.getStylesConfig(); // Expose getStylesConfig
-
-    // Init function (exposed)
-    export const init = (initialMarkdown: string = '', initialMode: EditorMode = 'live', stylesConfig?: Partial<StylesConfig>) => {
-        if (editor) return;
-        editor = new MarkdownEditor({
-            parent: editorElement,
-            initialValue: initialMarkdown,
-            placeholder: '开始输入...',
-            initialMode: initialMode,
-            stylesConfig: stylesConfig, // Pass the generic config object
-            onChange: (doc) => {
-                if (onchange) onchange(doc);
-            }
-        });
-    };
+    export const getValue = () => value; // Compatibility
 
     onMount(() => {
-        return () => {
-             // Clean up any other manual listeners here if added later.
-        };
+        if (!editorElement) return;
+
+        editor = new MarkdownEditor({
+            parent: editorElement,
+            initialValue: value,
+            initialMode: mode,
+            stylesConfig: stylesConfig,
+            placeholder: '开始输入...', 
+            onChange: (doc) => {
+                if (doc !== value) {
+                    value = doc;
+                    onchange?.(doc);
+                }
+            }
+        });
     });
 
     onDestroy(() => {
         editor?.destroy();
     });
+
+    // React to value changes (External -> Editor)
+    $effect(() => {
+        if (editor && value !== editor.getValue()) {
+            editor.setValue(value);
+        }
+    });
+
+    // React to mode changes
+    $effect(() => {
+        if (editor) {
+            editor.setMode(mode); // Ensure MarkdownEditor has setMode
+        }
+    });
+
+    // React to stylesConfig changes (Currently MdEditor class might need update to support this dynamically, 
+    // but we can at least try if the class supports it, or we might need to extend the class later. 
+    // For now, assume static or handled by re-init if really needed, but let's just watch it)
+    // MarkdownEditor.ts from previous read doesn't have setStylesConfig, so this might be limited.
+    // But since MarkDownView passes it on init, it's mostly fine.
 </script>
 
 <div class="cm-container" bind:this={editorElement}></div>

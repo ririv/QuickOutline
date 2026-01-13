@@ -10,31 +10,21 @@
   
   import { useMarkdownActions } from '../shared/markdown.svelte.ts';
   
-  const { handleRenderStats, debouncedTrigger, triggerPreview, clearDebounce, updatePreview, handleGenerate, initEditor, saveContent } = useMarkdownActions();
+  const { handleRenderStats, debouncedTrigger, triggerPreview, clearDebounce, updatePreview, handleGenerate, saveContent } = useMarkdownActions();
   
   let editorComponent: MdEditor;
   let previewComponent: Preview;
   
   let activeTab = $derived(appStore.activeTab);
 
-  function debouncedPreview(val?: string) {
-      if (typeof val === 'string') {
-          markdownStore.updateContent(val);
-      } else if (editorComponent) {
-          // Fallback if called without args (e.g. from buttons)
-          markdownStore.updateContent(editorComponent.getValue());
-      }
+  function debouncedPreview() {
       debouncedTrigger(triggerPreview);
   }
 
-  onMount(() => {
-    initEditor(editorComponent);
-  });
-
+  // No onMount init needed - MdEditor handles it declaratively
+  
   onDestroy(() => {
       clearDebounce();
-      // saveContent is redundant if we sync on change, but good for safety
-      if (editorComponent) markdownStore.updateContent(editorComponent.getValue());
   });
 
 </script>
@@ -53,7 +43,12 @@
             onFooterChange={triggerPreview}
           >
             <div class="editor-wrapper">
-              <MdEditor bind:this={editorComponent} onchange={debouncedPreview} />
+              <MdEditor 
+                  bind:this={editorComponent} 
+                  bind:value={markdownStore.content}
+                  stylesConfig={{ tableStyle: markdownStore.tableStyle }}
+                  onchange={debouncedPreview} 
+              />
             </div>
           </PageFrame>
         </div>

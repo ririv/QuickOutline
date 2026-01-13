@@ -114,13 +114,6 @@ export function useMarkdownActions() {
         }
     }
 
-    function initEditor(editor: EditorInterface) {
-        if (!editor) return;
-        setTimeout(() => {
-             editor.init(markdownStore.content || '', 'live',  { tableStyle: markdownStore.tableStyle });
-        }, 0);
-    }
-
     function saveContent(editor: EditorInterface) {
         if (!editor) return;
         markdownStore.updateContent(editor.getValue());
@@ -133,7 +126,6 @@ export function useMarkdownActions() {
         clearDebounce,
         updatePreview,
         handleGenerate,
-        initEditor,
         saveContent
     };
 }
