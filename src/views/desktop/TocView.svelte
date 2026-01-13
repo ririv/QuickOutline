@@ -27,8 +27,6 @@
       const path = docStore.currentFilePath;
       
       // Only load if path has changed (new file opened)
-      // If path matches tocStore, we are just remounting (switching tabs), 
-      // so we rely on onMount to restore state from store.
       if (tocStore.filePath !== path) {
           if (path) {
               loadOutline();
@@ -36,25 +34,6 @@
               tocStore.setFile(null);
           }
       }
-  });
-  
-  // React to config changes
-  $effect(() => {
-    // Create dependencies on store properties to trigger updates
-    const _ = { 
-        h: JSON.stringify(tocStore.headerConfig), 
-        f: JSON.stringify(tocStore.footerConfig),
-        pl: JSON.stringify(tocStore.pageLayout),
-        hfl: JSON.stringify(tocStore.hfLayout),
-        t: tocStore.title,
-        o: tocStore.offset,
-        i: JSON.stringify(tocStore.insertionConfig), // Watch insertion object
-        s: JSON.stringify(tocStore.pageLabel)
-    };
-
-    // Use a small timeout to let the store update settle before triggering preview
-    // Note: The actual debouncing is handled inside triggerPreview in logic.ts
-    triggerPreview();
   });
   
   // onMount: just trigger preview if we have content (e.g. switching back to tab)
