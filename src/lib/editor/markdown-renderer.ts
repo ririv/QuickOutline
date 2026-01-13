@@ -111,7 +111,7 @@ export function createMdParser(options: MarkdownParserOptions = {}): MarkdownIt 
         .use(texmath, {
             engine: katex,
             delimiters: 'dollars',
-            katexOptions: { macros: { "\RR": "\\mathbb{R}" } }
+            // katexOptions: { macros: { "\\RR": "\\mathbb{R}" } }
         })
         .use(customTaskListPlugin)
         .use(mdMark)

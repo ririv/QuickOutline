@@ -29,6 +29,10 @@ export class ExternalEditorBridge {
     async _init() {
         if (this.unlistenFns.length > 0) return;
 
+        // @ts-ignore
+        const isTauri = !!(window.__TAURI_INTERNALS__ || window.__TAURI__);
+        if (!isTauri) return;
+
         this.unlistenFns.push(await listen<string>('external-editor-sync', (event) => {
             console.log('ExternalEditorBridge: Received sync');
             bookmarkStore.setText(event.payload);

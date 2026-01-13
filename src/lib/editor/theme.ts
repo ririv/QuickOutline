@@ -38,8 +38,8 @@ export const themeVariables = EditorView.theme({
 });
 
 export const myHighlightStyle = HighlightStyle.define([
-    { tag: tags.heading1, fontSize: "2em", fontWeight: "bold", borderBottom: "1px solid #eee", display: "inline-block", width: "100%", paddingBottom: "0.3em", marginBottom: "0.5em" },
-    { tag: tags.heading2, fontSize: "1.5em", fontWeight: "bold", borderBottom: "1px solid #eee", display: "inline-block", width: "100%", paddingBottom: "0.3em" },
+    { tag: tags.heading1, fontSize: "2em", fontWeight: "bold", borderBottom: "1px solid #eee", paddingBottom: "0.3em", marginBottom: "0.5em", display: "inline-block" },
+    { tag: tags.heading2, fontSize: "1.5em", fontWeight: "bold", borderBottom: "1px solid #eee", paddingBottom: "0.3em", display: "inline-block" },
     { tag: tags.heading3, fontSize: "1.25em", fontWeight: "bold" },
     { tag: tags.heading, fontWeight: "bold" },
     { tag: tags.strong, fontWeight: "bold" },
