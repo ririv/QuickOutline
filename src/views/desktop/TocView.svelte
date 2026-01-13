@@ -4,7 +4,7 @@
   import TocEditor from '../../components/editor/TocEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
 
   import { docStore } from '@/stores/docStore.svelte.ts';
   import { tocStore } from '@/stores/tocStore.svelte.js';
@@ -12,7 +12,7 @@
   
   import { useTocActions } from '../shared/toc.svelte.ts';
 
-  const { loadOutline, handleContentChange, triggerPreview, handleGenerate, handleRenderStats } = useTocActions();
+  const { loadOutline, handleContentChange, triggerPreview, handleGenerate, handleRenderStats, clearDebounce } = useTocActions();
 
   let previewComponent: Preview;
   
@@ -51,6 +51,10 @@
       } else if (tocStore.content) {
           triggerPreview();
       }
+  });
+
+  onDestroy(() => {
+      clearDebounce();
   });
 
 </script>

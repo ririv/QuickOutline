@@ -14,7 +14,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useAdaptiveDebounce } from '@/lib/composables/useAdaptiveDebounce.ts';
 
 export function useTocActions() {
-    const { handleRenderStats, debouncedTrigger } = useAdaptiveDebounce({
+    const { handleRenderStats, debouncedTrigger, clearDebounce } = useAdaptiveDebounce({
         initialTime: 50, // Fast start for TOC
         minTime: 50,
         maxTime: 800,
@@ -207,6 +207,7 @@ export function useTocActions() {
         loadOutline,
         handleContentChange,
         debouncedTrigger,
+        clearDebounce,
         triggerPreview,
         handleGenerate,
         handleRenderStats

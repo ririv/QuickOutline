@@ -26,6 +26,9 @@ export function useAdaptiveDebounce(config: DebounceConfig = {}) {
             // Adaptive: If render takes X ms, wait X + penalty ms before next try
             currentDebounceTime = Math.min(max, stats.duration + penalty);
         }
+        // Optional: Debug logging
+        console.debug(`[Adaptive Debounce] Render: ${Math.round(stats.duration)}ms. Next delay: ${currentDebounceTime}ms`);
+
     }
 
     function invoke(callback: () => void) {
