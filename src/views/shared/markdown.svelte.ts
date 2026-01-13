@@ -25,7 +25,8 @@ export function useMarkdownActions() {
         initialTime: 10,
         minTime: 10,
         maxTime: 1000,
-        penaltyTime: 300
+        penaltyTime: 300,
+        maxWait: 3000 // Force refresh every 3s during continuous typing
     });
 
     async function triggerPreview(editor: EditorInterface) {

@@ -18,7 +18,8 @@ export function useTocActions() {
         initialTime: 50, // Fast start for TOC
         minTime: 50,
         maxTime: 800,
-        penaltyTime: 200
+        penaltyTime: 200,
+        maxWait: 3000 // Force refresh every 3s during continuous typing
     });
 
     async function loadOutline() {

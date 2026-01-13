@@ -57,11 +57,13 @@ let activeEngineInstance: PagedEngine | null = null;
 export class PagedEngine {
     private currentPreviewer: Previewer | null = null;
     private isRendering = false;
-    private pendingPayload: PagedPayload | null = null;
     private bufferA: HTMLDivElement | null = null;
     private bufferB: HTMLDivElement | null = null;
     private activeBuffer: 'A' | 'B' = 'B'; 
     private generatedStyles: HTMLStyleElement[] = [];
+    
+    // Cancellation Token
+    private latestRenderToken = 0;
 
     constructor() {
         // Register self as active when created (simplified logic for now)
@@ -73,8 +75,8 @@ export class PagedEngine {
     }
 
     public destroy() {
+        this.latestRenderToken++; // Invalidate any running tasks
         this.isRendering = false;
-        this.pendingPayload = null;
         this.currentPreviewer = null;
         this.generatedStyles.forEach(s => s.remove());
         this.generatedStyles = [];
@@ -102,41 +104,44 @@ export class PagedEngine {
         // Mark as active on update
         activeEngineInstance = this;
 
-        // 1. Queue handling (Simple Debounce/Lock)
-        if (this.isRendering) {
-            this.pendingPayload = payload;
-            return;
-        }
-
+        // Generate new token for this request
+        const token = ++this.latestRenderToken;
+        
+        // We don't block/queue anymore. We just start a new race.
+        // The "Soft Cancellation" logic inside renderToBuffer will ensure
+        // that only the latest winner applies its result.
+        
         this.isRendering = true;
         const startTime = performance.now();
         
         try {
-            await this.renderToBuffer(payload, container, postProcess);
-            const endTime = performance.now();
-            onRenderComplete?.(endTime - startTime);
-
-            // Process queue
-            while (this.pendingPayload) {
-                const next = this.pendingPayload;
-                this.pendingPayload = null;
-                const queueStart = performance.now();
-                await this.renderToBuffer(next, container, postProcess);
-                const queueEnd = performance.now();
-                onRenderComplete?.(queueEnd - queueStart);
+            await this.renderToBuffer(payload, container, token, postProcess);
+            
+            // Only report completion if WE are still the winner
+            if (token === this.latestRenderToken) {
+                const endTime = performance.now();
+                onRenderComplete?.(endTime - startTime);
             }
         } catch (e) {
-            console.error("Paged Engine Render Error:", e);
+            if ((e as any)?.message !== 'RenderCancelled') {
+                console.error("Paged Engine Render Error:", e);
+            }
         } finally {
-            this.isRendering = false;
+            if (token === this.latestRenderToken) {
+                this.isRendering = false;
+            }
         }
     }
 
     private async renderToBuffer(
         payload: PagedPayload, 
         container: HTMLElement,
+        token: number,
         postProcess?: (buffer: HTMLElement) => Promise<void>
     ) {
+        // Check Cancellation: Start
+        if (token !== this.latestRenderToken) return;
+
         // Initialize buffers if needed
         if (!this.bufferA || !this.bufferB) {
             this.bufferA = this.createBuffer();
@@ -149,7 +154,6 @@ export class PagedEngine {
             container.appendChild(this.bufferB);
         } else {
              // Ensure buffers are still attached to the current container
-             // This handles cases where container might have changed (though usually Engine is recreated)
              if (!container.contains(this.bufferA)) container.appendChild(this.bufferA);
              if (!container.contains(this.bufferB)) container.appendChild(this.bufferB);
         }
@@ -172,6 +176,9 @@ export class PagedEngine {
         // Prepare Content
         // --- Offload preparation to Worker ---
         const { pageCss, contentWithStyle } = await workerClient.prepare(payload);
+        
+        // Check Cancellation: After Worker
+        if (token !== this.latestRenderToken) return;
         // -------------------------------------
         
         const pageCssObject = {
@@ -184,7 +191,7 @@ export class PagedEngine {
             }
         });
         
-        console.log('[PagedEngine] Starting preview...');
+        console.log(`[PagedEngine] Starting preview... (Token: ${token})`);
         
         // Capture styles before
         const head = document.head;
@@ -192,13 +199,22 @@ export class PagedEngine {
 
         try {
             await previewer.preview(contentWithStyle, [pageCssObject], targetBuffer);
-            console.log('[PagedEngine] Preview finished.');
+            
+            // Check Cancellation: After Paged.js (Most expensive part)
+            if (token !== this.latestRenderToken) {
+                console.log(`[PagedEngine] Render cancelled (Token: ${token} < ${this.latestRenderToken})`);
+                return;
+            }
+            
+            console.log(`[PagedEngine] Preview finished. (Token: ${token})`);
             
             // Execute Post Process (e.g. fix dots) BEFORE swapping buffers
-            // This ensures user sees the finalized content without flickering
             if (postProcess) {
                 await postProcess(targetBuffer!);
             }
+            
+            // Check Cancellation: After PostProcess
+            if (token !== this.latestRenderToken) return;
 
             // Capture styles after
             const stylesAfter = Array.from(head.querySelectorAll('style'));
