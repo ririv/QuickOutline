@@ -78,7 +78,7 @@
     .resizer {
         width: 0;
         position: relative;
-        z-index: 100;
+        z-index: 10;
         flex-shrink: 0;
         user-select: none;
     }
