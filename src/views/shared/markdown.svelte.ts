@@ -9,6 +9,8 @@ import { generatePageCss } from '@/lib/preview-engine/css-generator.ts';
 import { MarkdownPrintTemplate } from '@/lib/templates/MarkdownPrintTemplate.tsx';
 import type { EditorMode, StylesConfig } from '@/lib/editor';
 
+import { useAdaptiveDebounce } from '@/lib/composables/useAdaptiveDebounce.ts';
+
 // Define an interface for the editor interaction to avoid direct component dependency
 export interface EditorInterface {
     init(content: string, mode: EditorMode, options?: Partial<StylesConfig>): void;
@@ -19,25 +21,12 @@ export interface EditorInterface {
 }
 
 export function useMarkdownActions() {
-    let debounceTimer: ReturnType<typeof setTimeout>;
-    let currentDebounceTime = 10;
-
-    function handleRenderStats(stats: { duration: number }) {
-        if (stats.duration < 100) {
-            currentDebounceTime = 10;
-        } else {
-            currentDebounceTime = Math.min(1000, stats.duration + 300);
-        }
-        console.log(`[Preview] Render took ${Math.round(stats.duration)}ms. Next debounce: ${currentDebounceTime}ms`);
-    }
-
-    // Returns a cleanup function to clear the timer
-    function debouncedTrigger(callback: () => void) {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            callback();
-        }, currentDebounceTime);
-    }
+    const { handleRenderStats, debouncedTrigger, clearDebounce } = useAdaptiveDebounce({
+        initialTime: 10,
+        minTime: 10,
+        maxTime: 1000,
+        penaltyTime: 300
+    });
 
     async function triggerPreview(editor: EditorInterface) {
         if (!editor) return;
@@ -57,10 +46,6 @@ export function useMarkdownActions() {
 
         const { tableStyle } = editor.getStylesConfig();
         await updatePreview(htmlContent, tableStyle);
-    }
-    
-    function clearDebounce() {
-        clearTimeout(debounceTimer);
     }
 
     async function updatePreview(htmlContent: string, tableStyle: StylesConfig['tableStyle']) {

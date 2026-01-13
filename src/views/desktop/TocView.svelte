@@ -12,7 +12,7 @@
   
   import { useTocActions } from '../shared/toc.svelte.ts';
 
-  const { loadOutline, handleContentChange, triggerPreview, handleGenerate } = useTocActions();
+  const { loadOutline, handleContentChange, triggerPreview, handleGenerate, handleRenderStats } = useTocActions();
 
   let previewComponent: Preview;
   
@@ -96,6 +96,7 @@
             isActive={activeTab === FnTab.tocGenerator}
             onrefresh={triggerPreview} 
             onScroll={(top) => tocStore.scrollTop = top}
+            onRenderStats={handleRenderStats}
           />
         </div>
         {/snippet}

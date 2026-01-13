@@ -11,9 +11,15 @@ import { TocPrintTemplate } from '@/lib/templates/toc/TocPrintTemplate.tsx';
 import { getTocLinkData, getPageCount } from '@/lib/preview-engine/paged-engine.ts';
 import { resolveLinkTarget } from '@/lib/services/PageLinkResolver.ts';
 import { invoke } from '@tauri-apps/api/core';
+import { useAdaptiveDebounce } from '@/lib/composables/useAdaptiveDebounce.ts';
 
 export function useTocActions() {
-    let debounceTimer: ReturnType<typeof setTimeout>;
+    const { handleRenderStats, debouncedTrigger } = useAdaptiveDebounce({
+        initialTime: 50, // Fast start for TOC
+        minTime: 50,
+        maxTime: 800,
+        penaltyTime: 200
+    });
 
     async function loadOutline() {
         try {
@@ -29,54 +35,51 @@ export function useTocActions() {
 
     function handleContentChange(val: string) {
         tocStore.updateContent(val);
-        triggerPreview();
+        debouncedTrigger(triggerPreview);
     }
 
     async function triggerPreview() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(async () => {
-            if (!tocStore.content) {
-                return; 
-            }
-            
-            try {
-                let pageOffset = 0;
-                let threshold = 1;
+        if (!tocStore.content) {
+            return; 
+        }
+        
+        try {
+            let pageOffset = 0;
+            let threshold = 1;
 
-                if (tocStore.insertionConfig.autoCorrect) {
-                    const tocPageCount = getPageCount();
-                    if (tocPageCount > 0) {
-                        pageOffset = tocPageCount;
-                        threshold = Math.max(1, (parseInt(String(tocStore.insertionConfig.pos), 10) || 0) + 1);
-                    }
+            if (tocStore.insertionConfig.autoCorrect) {
+                const tocPageCount = getPageCount();
+                if (tocPageCount > 0) {
+                    pageOffset = tocPageCount;
+                    threshold = Math.max(1, (parseInt(String(tocStore.insertionConfig.pos), 10) || 0) + 1);
                 }
-
-                // Generate HTML locally instead of calling RPC
-                const { html, styles } = generateTocHtml(
-                    tocStore.content, 
-                    tocStore.title, 
-                    tocStore.offset, 
-                    tocStore.pageLabel.numberingStyle,
-                    undefined, // Use default indentStep
-                    tocStore.pageLayout,
-                    pageOffset,
-                    threshold
-                );
-                
-                // Update payload in store, which is passed to Preview component
-                tocStore.previewData = {
-                    html,
-                    styles,
-                    header: tocStore.headerConfig,
-                    footer: tocStore.footerConfig,
-                    pageLayout: tocStore.pageLayout,
-                    hfLayout: tocStore.hfLayout
-                };
-                
-            } catch (e: any) {
-                console.error("Preview generation failed", e);
             }
-        }, 500);
+
+            // Generate HTML locally instead of calling RPC
+            const { html, styles } = generateTocHtml(
+                tocStore.content, 
+                tocStore.title, 
+                tocStore.offset, 
+                tocStore.pageLabel.numberingStyle,
+                undefined, // Use default indentStep
+                tocStore.pageLayout,
+                pageOffset,
+                threshold
+            );
+            
+            // Update payload in store, which is passed to Preview component
+            tocStore.previewData = {
+                html,
+                styles,
+                header: tocStore.headerConfig,
+                footer: tocStore.footerConfig,
+                pageLayout: tocStore.pageLayout,
+                hfLayout: tocStore.hfLayout
+            };
+            
+        } catch (e: any) {
+            console.error("Preview generation failed", e);
+        }
     }
 
     async function handleGenerate() {
@@ -202,7 +205,9 @@ export function useTocActions() {
     return {
         loadOutline,
         handleContentChange,
+        debouncedTrigger,
         triggerPreview,
-        handleGenerate
+        handleGenerate,
+        handleRenderStats
     };
 }
