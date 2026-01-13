@@ -26,7 +26,8 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    // 不要msi，msi对版本号有严格要求，不可以出现 X.X.X-pre 的后缀
+    "targets": ["nsis", "dmg", "app", "rpm", "deb", "appimage"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
