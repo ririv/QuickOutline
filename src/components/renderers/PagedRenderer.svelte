@@ -21,7 +21,10 @@
     // 监听 payload 变化并触发渲染
     // 使用 $effect 或 reactive statement
     $: if (container && payload && engine) {
-        engine.update(payload, container, onRenderComplete, async (buffer) => {
+        engine.update(payload, container, (duration) => {
+            initVirtualization();
+            if (onRenderComplete) onRenderComplete(duration);
+        }, async (buffer) => {
             // Fix dots on the hidden buffer BEFORE it becomes visible
             fixDots(DOT_GAP, buffer);
             
@@ -35,12 +38,107 @@
         });
     }
 
-    // Reactively update visibility when isActive changes
+    // --- Virtualization Logic ---
+    let observer: IntersectionObserver | null = null;
+    
+    // Smart Cache: Stores the dimensions of the "standard" page to avoid reflows
+    let standardVisualSize: { width: number, height: number } | null = null;
+    let standardLogicalSize: string | null = null;
+
+    function initVirtualization() {
+        if (observer) {
+            observer.disconnect();
+            observer = null;
+        }
+        standardVisualSize = null;
+        standardLogicalSize = null;
+
+        const pages = container.querySelectorAll('.paged-buffer:not([style*="display: none"]) .pagedjs_page');
+        if (pages.length === 0) return;
+
+        observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                     const page = entry.target as HTMLElement;
+                     
+                     // 1. Try Inline Styles (Fastest, Zoom-safe)
+                     const inlineW = page.style.width;
+                     const inlineH = page.style.height;
+
+                     if (inlineW && inlineH && page.style.contentVisibility !== 'auto') {
+                         page.style.containIntrinsicSize = `${inlineW} ${inlineH}`;
+                         page.style.contentVisibility = 'auto';
+                     } else if (page.style.contentVisibility !== 'auto') {
+                         
+                         // 2. Smart Hybrid Cache (Zero Reflow for uniform pages)
+                         const rect = entry.boundingClientRect;
+                         const isStandard = standardVisualSize && 
+                                            Math.abs(rect.width - standardVisualSize.width) < 1 &&
+                                            Math.abs(rect.height - standardVisualSize.height) < 1;
+
+                         if (isStandard && standardLogicalSize) {
+                             // Hit Cache: Visual size matches, so logical size must match.
+                             page.style.containIntrinsicSize = standardLogicalSize;
+                             page.style.contentVisibility = 'auto';
+                         } else {
+                             // Miss Cache: Measure (Reflow)
+                             // Either first page, or a different sized page (e.g. A3 mixed with A4)
+                             const w = page.offsetWidth;
+                             const h = page.offsetHeight;
+                             
+                             if (w > 0 && h > 0) {
+                                 const logicalSize = `${w}px ${h}px`;
+                                 
+                                 // Adaptive Strategy: Update cache to the most recent measured size.
+                                 // This fixes the "Cover Page Problem" (where if pg1 is A3 and pg2-100 are A4, 
+                                 // a sticky cache would miss for all 99 pages).
+                                 // Now it adapts when the section changes.
+                                 standardVisualSize = { width: rect.width, height: rect.height };
+                                 standardLogicalSize = logicalSize;
+
+                                 page.style.containIntrinsicSize = logicalSize;
+                                 page.style.contentVisibility = 'auto';
+                             }
+                         }
+                     }
+                }
+            });
+        }, {
+            root: null,
+            // Trigger slightly outside viewport to prepare pages before they completely exit
+            rootMargin: '2000px', 
+            threshold: 0
+        });
+
+        pages.forEach(page => observer?.observe(page));
+    }
+
+    // Reactively update visibility and virtualization when isActive changes
     $: if (engine) {
         engine.setVisible(isActive);
+        
+        if (isActive) {
+            // Re-enable virtualization when tab becomes active
+            // We use a small timeout to let the display:none toggle settle
+            setTimeout(() => {
+                 if (isActive) initVirtualization();
+            }, 0);
+        } else {
+            // Disconnect observer when tab is hidden to save resources
+            if (observer) {
+                observer.disconnect();
+                observer = null;
+            }
+        }
     }
   
     onDestroy(() => {
+        if (observer) {
+            observer.disconnect();
+            observer = null;
+        }
+        standardVisualSize = null;
+        standardLogicalSize = null;
         engine?.destroy();
     });
   </script>
