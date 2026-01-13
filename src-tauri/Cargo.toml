@@ -1,6 +1,6 @@
 [package]
 name = "quickoutline"
-version = "0.1.0"
+version = "3.0.0-pre"
 description = "Not just another PDF editor"
 authors = ["ririv"]
 edition = "2024"
