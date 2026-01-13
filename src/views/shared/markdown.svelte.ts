@@ -10,14 +10,12 @@ import { MarkdownPrintTemplate } from '@/lib/templates/MarkdownPrintTemplate.tsx
 import type { EditorMode, StylesConfig } from '@/lib/editor';
 
 import { useAdaptiveDebounce } from '@/lib/composables/useAdaptiveDebounce.ts';
+import { markdownService } from '@/lib/services/MarkdownService.ts';
 
-// Define an interface for the editor interaction to avoid direct component dependency
+// Define an interface for the editor interaction
 export interface EditorInterface {
     init(content: string, mode: EditorMode, options?: Partial<StylesConfig>): void;
     getValue(): string;
-    getRenderedHtml(options?: { enableIndentedCodeBlocks?: boolean }): Promise<string>;
-    getRenderedMdx(): Promise<string>;
-    getStylesConfig(): StylesConfig;
 }
 
 export function useMarkdownActions() {
@@ -29,23 +27,20 @@ export function useMarkdownActions() {
         maxWait: 3000 // Force refresh every 3s during continuous typing
     });
 
-    async function triggerPreview(editor: EditorInterface) {
-        if (!editor) return;
+    async function triggerPreview() {
+        // Read directly from store (Single Source of Truth)
+        const content = markdownStore.content;
+        const tableStyle = markdownStore.tableStyle;
+        const enableIndentedCodeBlocks = markdownStore.enableIndentedCodeBlocks;
 
-        let htmlContent = '';
-        try {
-            htmlContent = await editor.getRenderedMdx();
-        } catch (e) {
-            console.warn('MDX Render failed, falling back to standard Markdown:', e);
+        if (!content) {
+            // Handle empty content if necessary, or just render empty
         }
 
-        if (!htmlContent) {
-            htmlContent = await editor.getRenderedHtml({
-                enableIndentedCodeBlocks: markdownStore.enableIndentedCodeBlocks
-            });
-        }
+        const htmlContent = markdownService.compileHtml(content, {
+            enableIndentedCodeBlocks
+        });
 
-        const { tableStyle } = editor.getStylesConfig();
         await updatePreview(htmlContent, tableStyle);
     }
 
@@ -122,7 +117,7 @@ export function useMarkdownActions() {
     function initEditor(editor: EditorInterface) {
         if (!editor) return;
         setTimeout(() => {
-             editor.init(markdownStore.content || '', 'live',  { tableStyle: 'grid' });
+             editor.init(markdownStore.content || '', 'live',  { tableStyle: markdownStore.tableStyle });
         }, 0);
     }
 

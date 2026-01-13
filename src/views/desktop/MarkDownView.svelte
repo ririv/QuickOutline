@@ -17,8 +17,14 @@
   
   let activeTab = $derived(appStore.activeTab);
 
-  function debouncedPreview() {
-      debouncedTrigger(() => triggerPreview(editorComponent));
+  function debouncedPreview(val?: string) {
+      if (typeof val === 'string') {
+          markdownStore.updateContent(val);
+      } else if (editorComponent) {
+          // Fallback if called without args (e.g. from buttons)
+          markdownStore.updateContent(editorComponent.getValue());
+      }
+      debouncedTrigger(triggerPreview);
   }
 
   onMount(() => {
@@ -27,7 +33,8 @@
 
   onDestroy(() => {
       clearDebounce();
-      saveContent(editorComponent);
+      // saveContent is redundant if we sync on change, but good for safety
+      if (editorComponent) markdownStore.updateContent(editorComponent.getValue());
   });
 
 </script>
@@ -42,8 +49,8 @@
             bind:footerConfig={markdownStore.footerConfig}
             bind:showHeader={markdownStore.showHeader}
             bind:showFooter={markdownStore.showFooter}
-            onHeaderChange={() => triggerPreview(editorComponent)}
-            onFooterChange={() => triggerPreview(editorComponent)}
+            onHeaderChange={triggerPreview}
+            onFooterChange={triggerPreview}
           >
             <div class="editor-wrapper">
               <MdEditor bind:this={editorComponent} onchange={debouncedPreview} />
@@ -60,7 +67,7 @@
                       mode="paged" 
                       pagedPayload={markdownStore.currentPagedContent}
                       isActive={activeTab === FnTab.markdown}
-                      onrefresh={() => triggerPreview(editorComponent)} 
+                      onrefresh={triggerPreview} 
                       onRenderStats={handleRenderStats}
                     />        </div>
         {/snippet}
