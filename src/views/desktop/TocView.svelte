@@ -43,12 +43,7 @@
           return;
       }
 
-      if (tocStore.previewData) {
-          // Restore scroll position after render (timeout to ensure DOM updated)
-          setTimeout(() => {
-              previewComponent?.restoreScroll(tocStore.scrollTop);
-          }, 0);
-      } else if (tocStore.content) {
+      if (!tocStore.previewData && tocStore.content) {
           triggerPreview();
       }
   });
