@@ -61,8 +61,10 @@
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
                         const newVal = update.state.doc.toString();
-                        value = newVal;
-                        onchange?.(newVal);
+                        if (newVal !== value) {
+                            value = newVal;
+                            onchange?.(newVal);
+                        }
                     }
                 })
             ]
