@@ -2,7 +2,8 @@
   import OffsetPopup from './statusbar-popup/OffsetPopup.svelte';
   import InsertPositionPopup from './statusbar-popup/InsertPositionPopup.svelte';
   import NumberingStylePopup from './statusbar-popup/NumberingStylePopup.svelte';
-  import PageSetupPopup from './statusbar-popup/PageSetupPopup.svelte';
+  import PaperSizePopup from './statusbar-popup/PaperSizePopup.svelte';
+  import PageMarginsPopup from './statusbar-popup/PageMarginsPopup.svelte';
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
   import Icon from '@/components/Icon.svelte';
   import { clickOutside } from '@/lib/actions/clickOutside';
@@ -43,17 +44,18 @@
     onParamChange
   }: Props = $props();
 
-  let activePopup: 'pagenum-offset' | 'insert-pos' | 'numbering-style' | 'page-setup' | 'header-footer' | null = $state(null);
+  let activePopup: 'pagenum-offset' | 'insert-pos' | 'numbering-style' | 'paper-size' | 'page-margins' | 'header-footer' | null = $state(null);
   let barElement: HTMLElement;
   
   // Trigger elements for popups
   let offsetBtnEl = $state<HTMLElement | undefined>();
   let posBtnEl = $state<HTMLElement | undefined>();
   let numberingStyleBtnEl = $state<HTMLElement | undefined>();
-  let setupBtnEl = $state<HTMLElement | undefined>();
+  let sizeBtnEl = $state<HTMLElement | undefined>();
+  let marginBtnEl = $state<HTMLElement | undefined>();
   let hfBtnEl = $state<HTMLElement | undefined>();
 
-  function togglePopup(type: 'pagenum-offset' | 'insert-pos' | 'numbering-style' | 'page-setup' | 'header-footer') {
+  function togglePopup(type: 'pagenum-offset' | 'insert-pos' | 'numbering-style' | 'paper-size' | 'page-margins' | 'header-footer') {
       if (activePopup === type) activePopup = null;
       else activePopup = type;
   }
@@ -63,8 +65,8 @@
       onParamChange?.();
   }
 
-  let layoutSummary = $derived.by(() => {
-      const { size, marginTop, marginBottom, marginLeft, marginRight } = pageLayout;
+  let marginSummary = $derived.by(() => {
+      const { marginTop, marginBottom, marginLeft, marginRight } = pageLayout;
       let marginText = '';
       
       if (marginTop === marginBottom && marginLeft === marginRight && marginTop === marginLeft) {
@@ -75,7 +77,7 @@
           marginText = '*';
       }
       
-      return `${size} ${marginText}`;
+      return `${marginText}`;
   });
 
   let hfLayoutSummary = $derived.by(() => {
@@ -149,18 +151,38 @@
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div 
-        bind:this={setupBtnEl}
-        class="status-item {activePopup === 'page-setup' ? 'active' : ''}"
-        onclick={() => togglePopup('page-setup')}
-        title="Page Setup: {pageLayout.size}, {pageLayout.orientation}, Margins..."
+        bind:this={sizeBtnEl}
+        class="status-item {activePopup === 'paper-size' ? 'active' : ''}"
+        onclick={() => togglePopup('paper-size')}
+        title="Paper Size: {pageLayout.size}, {pageLayout.orientation}"
       >
           <span class="icon" class:rotated={pageLayout.orientation === 'landscape'}>
               <Icon name="page-setup" width="16" height="16" />
           </span>
-          {layoutSummary}
+          {pageLayout.size}
       </div>
-      {#if activePopup === 'page-setup'}
-          <PageSetupPopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={setupBtnEl} />
+      {#if activePopup === 'paper-size'}
+          <PaperSizePopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={sizeBtnEl} />
+      {/if}
+  </div>
+
+  <div class="status-item-wrapper">
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div 
+        bind:this={marginBtnEl}
+        class="status-item {activePopup === 'page-margins' ? 'active' : ''}"
+        onclick={() => togglePopup('page-margins')}
+        title="Margins: {marginSummary}"
+      >
+          <span class="icon">
+              <!-- Using a temporary icon for margins, maybe 'border-outer' or similar if available, or just reuse a generic one -->
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-opacity="0.3"></rect><rect x="7" y="7" width="10" height="10"></rect></svg>
+          </span>
+          {marginSummary}
+      </div>
+      {#if activePopup === 'page-margins'}
+          <PageMarginsPopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={marginBtnEl} />
       {/if}
   </div>
 
