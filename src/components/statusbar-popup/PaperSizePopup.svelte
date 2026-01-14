@@ -19,6 +19,25 @@
         { display: 'Legal', detail: '8.5×14"', value: 'Legal' }
     ];
 
+    let currentDimensions = $derived.by(() => {
+        const opt = sizeOptions.find(o => o.value === layout.size);
+        if (!opt) return '';
+
+        const [w, hPart] = opt.detail.split('×');
+        if (!w || !hPart) return opt.detail;
+
+        const hMatch = hPart.match(/^([\d.]+)(.*)$/);
+        if (!hMatch) return opt.detail;
+
+        const h = hMatch[1];
+        const unit = hMatch[2];
+
+        if (layout.orientation === 'landscape') {
+            return `${h}×${w}${unit}`;
+        }
+        return `${w}×${h}${unit}`;
+    });
+
     function handleChange() {
         onchange?.();
     }
@@ -39,6 +58,7 @@
                     bind:value={layout.size} 
                     onchange={handleChange}
                     displayKey="display"
+                    placement="top"
                 >
                     {#snippet item(opt)}
                         <div class="size-option">
@@ -69,6 +89,19 @@
                 >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2" ry="2"></rect></svg>
                 </button>
+            </div>
+        </div>
+        <div class="row">
+            <span class="row-icon" title="Detailed Size">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="10" rx="2" />
+                    <line x1="7" y1="7" x2="7" y2="11" />
+                    <line x1="12" y1="7" x2="12" y2="13" />
+                    <line x1="17" y1="7" x2="17" y2="11" />
+                </svg>
+            </span>
+            <div class="dimension-text">
+                {currentDimensions}
             </div>
         </div>
     </div>
@@ -151,6 +184,15 @@
     :global(.paper-size-popup .select-option) {
         height: 28px;
         line-height: 28px;
+    }
+
+    .dimension-text {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        height: 28px;
+        font-size: 12px;
+        color: #666;
     }
 
     .size-option {
