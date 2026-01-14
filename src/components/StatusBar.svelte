@@ -106,23 +106,15 @@
 </script>
 
 <div class="status-bar" bind:this={barElement} use:clickOutside={() => activePopup = null}>
+  {#snippet toggleArrow(expanded: boolean)}
+    <div class="toggle-arrow">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d={expanded ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}></path>
+        </svg>
+    </div>
+  {/snippet}
+
   {#if showOffset}
-      <!-- Group 1: Offset -->
-      <!-- Toggle Handle -->
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="divider toggle-divider" 
-        class:collapsed={!g1Expanded}
-        onclick={() => g1Expanded = !g1Expanded}
-        title={g1Expanded ? "Collapse Offset" : "Expand Offset"}
-      >
-        <div class="toggle-arrow">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <path d={g1Expanded ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}></path>
-            </svg>
-        </div>
-      </div>
-      
       <!-- Content -->
       <div class="status-group-wrapper" class:collapsed={!g1Expanded}>
           <div class="status-group-inner">
@@ -145,24 +137,20 @@
               </div>
           </div>
       </div>
+
+      <!-- Toggle Handle -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div class="divider toggle-divider" 
+        class:collapsed={!g1Expanded}
+        onclick={() => g1Expanded = !g1Expanded}
+        title={g1Expanded ? "Collapse Offset" : "Expand Offset"}
+      >
+        {@render toggleArrow(g1Expanded)}
+      </div>
   {/if}
 
   <!-- Group 2: Pos / Size / Margins -->
-  <!-- Toggle Handle -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="divider toggle-divider" 
-    class:collapsed={!g2Expanded}
-    onclick={() => g2Expanded = !g2Expanded}
-    title={g2Expanded ? "Collapse Page Settings" : "Expand Page Settings"}
-  >
-    <div class="toggle-arrow">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d={g2Expanded ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}></path>
-        </svg>
-    </div>
-  </div>
-
   <!-- Content -->
   <div class="status-group-wrapper" class:collapsed={!g2Expanded}>
       <div class="status-group-inner">
@@ -233,22 +221,18 @@
       </div>
   </div>
 
-  <!-- Group 3: HF / Numbering -->
   <!-- Toggle Handle -->
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="divider toggle-divider" 
-    class:collapsed={!g3Expanded}
-    onclick={() => g3Expanded = !g3Expanded}
-    title={g3Expanded ? "Collapse Header/Footer" : "Expand Header/Footer"}
+    class:collapsed={!g2Expanded}
+    onclick={() => g2Expanded = !g2Expanded}
+    title={g2Expanded ? "Collapse Page Settings" : "Expand Page Settings"}
   >
-    <div class="toggle-arrow">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d={g3Expanded ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}></path>
-        </svg>
-    </div>
+    {@render toggleArrow(g2Expanded)}
   </div>
 
+  <!-- Group 3: HF / Numbering -->
   <!-- Content -->
   <div class="status-group-wrapper" class:collapsed={!g3Expanded}>
       <div class="status-group-inner">
@@ -306,6 +290,17 @@
                 {/if}
             </div>
       </div>
+  </div>
+
+  <!-- Toggle Handle -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="divider toggle-divider" 
+    class:collapsed={!g3Expanded}
+    onclick={() => g3Expanded = !g3Expanded}
+    title={g3Expanded ? "Collapse Header/Footer" : "Expand Header/Footer"}
+  >
+    {@render toggleArrow(g3Expanded)}
   </div>
 
   <div class="spacer"></div>
