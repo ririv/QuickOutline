@@ -1,7 +1,7 @@
 <script lang="ts">
   import OffsetPopup from './statusbar-popup/OffsetPopup.svelte';
   import InsertPositionPopup from './statusbar-popup/InsertPositionPopup.svelte';
-  import NumberingStylePopup from './statusbar-popup/NumberingStylePopup.svelte';
+  import PageLabelPopup from './statusbar-popup/PageLabelPopup.svelte';
   import PaperSizePopup from './statusbar-popup/PaperSizePopup.svelte';
   import PageMarginsPopup from './statusbar-popup/PageMarginsPopup.svelte';
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
@@ -44,7 +44,7 @@
     onParamChange
   }: Props = $props();
 
-  let activePopup: 'pagenum-offset' | 'insert-pos' | 'numbering-style' | 'paper-size' | 'page-margins' | 'header-footer' | null = $state(null);
+  let activePopup: 'pagenum-offset' | 'insert-pos' | 'page-label' | 'paper-size' | 'page-margins' | 'header-footer' | null = $state(null);
   
   // Group expansion states
   let g1Expanded = $state(true);
@@ -56,12 +56,12 @@
   // Trigger elements for popups
   let offsetBtnEl = $state<HTMLElement | undefined>();
   let posBtnEl = $state<HTMLElement | undefined>();
-  let numberingStyleBtnEl = $state<HTMLElement | undefined>();
+  let PageLabelBtnEl = $state<HTMLElement | undefined>();
   let sizeBtnEl = $state<HTMLElement | undefined>();
   let marginBtnEl = $state<HTMLElement | undefined>();
   let hfBtnEl = $state<HTMLElement | undefined>();
 
-  function togglePopup(type: 'pagenum-offset' | 'insert-pos' | 'numbering-style' | 'paper-size' | 'page-margins' | 'header-footer') {
+  function togglePopup(type: 'pagenum-offset' | 'insert-pos' | 'page-label' | 'paper-size' | 'page-margins' | 'header-footer') {
       if (activePopup === type) activePopup = null;
       else activePopup = type;
   }
@@ -271,9 +271,9 @@
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
-                        bind:this={numberingStyleBtnEl}
-                        class="status-item {activePopup === 'numbering-style' ? 'active' : ''}"
-                        onclick={() => togglePopup('numbering-style')}
+                        bind:this={PageLabelBtnEl}
+                        class="status-item {activePopup === 'page-label' ? 'active' : ''}"
+                        onclick={() => togglePopup('page-label')}
                         title="Set Numbering Style"
                 >
               <span class="icon">
@@ -285,8 +285,8 @@
                   {removeSuffix(generateRulePreview(pageLabel, 1), "...")}
               {/if}
                 </div>
-                {#if activePopup === 'numbering-style'}
-                    <NumberingStylePopup bind:pageLabel onchange={onPopupChange} triggerEl={numberingStyleBtnEl} />
+                {#if activePopup === 'page-label'}
+                    <PageLabelPopup bind:pageLabel onchange={onPopupChange} triggerEl={PageLabelBtnEl} />
                 {/if}
             </div>
       </div>
