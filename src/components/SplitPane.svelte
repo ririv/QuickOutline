@@ -5,12 +5,16 @@
         initialSplit?: number;
         left: Snippet;
         right: Snippet;
+        hideLeft?: boolean;
+        hideRight?: boolean;
     }
 
     let { 
         initialSplit = $bindable(50),
         left,
-        right
+        right,
+        hideLeft = false,
+        hideRight = false
     }: Props = $props();
 
     let container: HTMLDivElement;
@@ -43,15 +47,15 @@
     }
 </script>
 
-<div class="split-container" bind:this={container}>
-    <div class="pane left" style="width: {initialSplit}%">
+<div class="split-container" bind:this={container} class:hide-left={hideLeft} class:hide-right={hideRight}>
+    <div class="pane left" style="width: {hideLeft ? '0' : hideRight ? '100%' : initialSplit + '%'}">
         {@render left()}
     </div>
     
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="resizer" onmousedown={startResize}></div>
     
-    <div class="pane right" style="width: {100 - initialSplit}%">
+    <div class="pane right" style="width: {hideRight ? '0' : hideLeft ? '100%' : (100 - initialSplit) + '%'}">
         {@render right()}
     </div>
 </div>
@@ -67,6 +71,12 @@
     .pane {
         height: 100%;
         overflow: hidden;
+        transition: width 0.2s ease-in-out; /* 添加平滑过渡 */
+    }
+
+    .split-container.hide-left .resizer,
+    .split-container.hide-right .resizer {
+        display: none;
     }
     
     /* 
