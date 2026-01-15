@@ -81,7 +81,7 @@
 
       let w: number;
       let h: number;
-      let matchedName = pageLayout.size;
+      let matchedName: string = pageLayout.size;
 
       // In Auto mode, the actual detection might differ from the selected size
       if (pageSizeAutoDetect && layoutDetection?.actualDimensions) {

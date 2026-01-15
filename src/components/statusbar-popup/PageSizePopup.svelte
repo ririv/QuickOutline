@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { PageLayout } from '@/lib/types/page';
+    import { PAGE_SIZE_OPTIONS } from '@/lib/types/page';
     import type { LayoutDetectionState } from '@/lib/pdf-processing/usePdfLayoutDetection.svelte';
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import StyledSelect from '../controls/StyledSelect.svelte';
@@ -24,12 +25,7 @@
         detection
     }: Props = $props();
 
-    const sizeOptions = [
-        { display: 'A4', detail: '210×297mm', value: 'A4', w: 210, h: 297 },
-        { display: 'A3', detail: '297×420mm', value: 'A3', w: 297, h: 420 },
-        { display: 'Letter', detail: '8.5×11"', value: 'Letter', w: 215.9, h: 279.4 },
-        { display: 'Legal', detail: '8.5×14"', value: 'Legal', w: 215.9, h: 355.6 }
-    ];
+    const sizeOptions = [...PAGE_SIZE_OPTIONS];
 
     let currentDimensions = $derived.by(() => {
         const format = (num: number) => {
@@ -67,7 +63,7 @@
         if (!matched) return dimStr;
 
         const orientation = w > h ? 'Landscape' : 'Portrait';
-        return `${dimStr} (${matched.display}, ${orientation})`;
+        return `${dimStr} (${matched.label}, ${orientation})`;
     });
 
     function handleChange() {
@@ -171,12 +167,12 @@
                             options={sizeOptions} 
                             bind:value={layout.size} 
                             onchange={handleChange}
-                            displayKey="display"
+                            displayKey="label"
                             placement="top"
                         >
-                            {#snippet item(opt)}
+                            {#snippet item(opt: typeof PAGE_SIZE_OPTIONS[number])}
                                 <div class="size-option">
-                                    <span class="main">{opt.display}</span>
+                                    <span class="main">{opt.label}</span>
                                     <span class="sub">{opt.detail}</span>
                                 </div>
                             {/snippet}

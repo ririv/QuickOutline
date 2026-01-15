@@ -1,5 +1,20 @@
+// Standard page sizes with UI details. Note: w and h are in millimeters (mm)
+export const PAGE_SIZE_OPTIONS = [
+    { label: 'A4', detail: '210×297mm', value: 'A4', w: 210, h: 297 },
+    { label: 'A3', detail: '297×420mm', value: 'A3', w: 297, h: 420 },
+    { label: 'Letter', detail: '8.5×11"', value: 'Letter', w: 215.9, h: 279.4 },
+    { label: 'Legal', detail: '8.5×14"', value: 'Legal', w: 215.9, h: 355.6 }
+] as const;
+
+export type PageSize = typeof PAGE_SIZE_OPTIONS[number]['value'];
+
+// Helper map for quick lookup [width, height]
+export const PAGE_SIZES_MM: Record<string, [number, number]> = Object.fromEntries(
+    PAGE_SIZE_OPTIONS.map(opt => [opt.value, [opt.w, opt.h]])
+);
+
 export interface PageLayout {
-    size: 'A4' | 'A3' | 'Letter' | 'Legal';
+    size: PageSize;
     orientation: 'portrait' | 'landscape';
     marginTop: number;
     marginBottom: number;
@@ -38,11 +53,3 @@ export interface SectionConfig {
     outer: string;
     drawLine: boolean;
 }
-
-// Standard page sizes in millimeters [width, height]
-export const PAGE_SIZES_MM: Record<string, [number, number]> = {
-    'A4': [210, 297],
-    'A3': [297, 420],
-    'Letter': [215.9, 279.4],
-    'Legal': [215.9, 355.6]
-};
