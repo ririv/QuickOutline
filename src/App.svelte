@@ -12,102 +12,16 @@
     import Settings from './components/Settings.svelte';
     import ConfirmDialog from './components/ConfirmDialog.svelte';
     import { provideExternalEditor } from '@/lib/bridge/useExternalEditor.svelte';
-    import { listen } from '@tauri-apps/api/event';
     import { onMount, onDestroy } from 'svelte';
 
     let activeTab = $derived(appStore.activeTab);
 
-    let isDragging = $state(false);
-    let unlistenFns: (() => void)[] = [];
-    let isTauri = false;
-
     // Automatic lifecycle: initialization and destruction are handled internally
     provideExternalEditor();
 
-    onMount(async () => {
-        // @ts-ignore
-        isTauri = !!(window.__TAURI_INTERNALS__ || window.__TAURI__);
-
-        if (isTauri) {
-            // Tauri Strategy
-            try {
-                unlistenFns.push(await listen('tauri://drag-enter', () => {
-                    isDragging = true;
-                }));
-
-                unlistenFns.push(await listen('tauri://drag-leave', () => {
-                    isDragging = false;
-                }));
-
-                unlistenFns.push(await listen<{ paths: string[] }>('tauri://drag-drop', (event) => {
-                    isDragging = false;
-                    const paths = event.payload.paths;
-                    if (paths && paths.length > 0) {
-                        const pdfPath = paths.find(p => p.toLowerCase().endsWith('.pdf'));
-                        if (pdfPath) {
-                            docStore.openFile(pdfPath);
-                        }
-                    }
-                }));
-            } catch (e) {
-                console.warn("Failed to setup Tauri drag events", e);
-            }
-        }
-    });
-
-    onDestroy(() => {
-        unlistenFns.forEach(fn => fn());
-    });
-
-    // HTML5 Fallback Handlers
-    function handleHtmlDragEnter(e: DragEvent) {
-        e.preventDefault();
-        if (!isTauri && e.dataTransfer?.types.includes('Files')) {
-            isDragging = true;
-        }
-    }
-
-    function handleHtmlDragOver(e: DragEvent) {
-        e.preventDefault();
-    }
-
-    function handleHtmlDragLeave(e: DragEvent) {
-        e.preventDefault();
-        if (!isTauri) {
-            isDragging = false;
-        }
-    }
-
-    function handleHtmlDrop(e: DragEvent) {
-        e.preventDefault();
-        if (!isTauri) {
-            isDragging = false;
-            const manualPath = prompt(
-                "Browser Restriction: Cannot access file path from drag-and-drop.\n\n" +
-                "If the Java backend is running locally, please enter the absolute file path manually:"
-            );
-            if (manualPath) {
-                docStore.openFile(manualPath);
-            }
-        }
-    }
 </script>
 
-<main class="app-container" 
-      ondragenter={handleHtmlDragEnter} 
-      ondragover={handleHtmlDragOver} 
-      role="application">
-    {#if isDragging}
-        <!-- Overlay handles events to prevent flickering in HTML5 mode -->
-        <div class="drag-overlay" 
-             ondragleave={handleHtmlDragLeave} 
-             ondrop={handleHtmlDrop}
-             ondragover={handleHtmlDragOver}
-             role="presentation">
-            <div class="drag-message">Drop PDF File Here</div>
-        </div>
-    {/if}
-
+<main class="app-container" role="application">
     <ConfirmDialog />
     <MessageContainer />
     <FileHeader />
@@ -180,27 +94,5 @@
 
     .placeholder {
         padding: 20px;
-    }
-
-    .drag-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.9);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 4px dashed #1677ff;
-        box-sizing: border-box;
-    }
-    
-    .drag-message {
-        font-size: 24px;
-        color: #1677ff;
-        font-weight: 600;
-        pointer-events: none; /* Critical for preventing flickering */
     }
 </style>
