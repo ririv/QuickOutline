@@ -12,6 +12,7 @@
   import {PageLabelNumberingStyle, generateRulePreview, type PageLabel} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
   import labelSimpleIcon from '@/assets/icons/label-simple.svg?raw';
+  import type { LayoutDetectionState } from '@/lib/pdf-processing/usePdfLayoutDetection.svelte';
 
   export interface InsertionSettings {
     pos: number;
@@ -26,6 +27,8 @@
     pageLayout?: PageLayout;
     hfLayout?: HeaderFooterLayout;
     showOffset?: boolean;
+    layoutDetection?: LayoutDetectionState;
+    mode?: 'new' | 'edit';
     onGenerate?: () => void;
     onParamChange?: () => void;
   }
@@ -42,6 +45,8 @@
     pageLayout = $bindable(defaultPageLayout),
     hfLayout = $bindable(defaultHeaderFooterLayout),
     showOffset = true,
+    layoutDetection,
+    mode = 'edit',
     onGenerate,
     onParamChange
   }: Props = $props();
@@ -156,7 +161,13 @@
           {/snippet}
           {pageLayout.size}
           {#snippet popup(triggerEl)}
-              <PageSizePopup bind:layout={pageLayout} onchange={onPopupChange} {triggerEl} />
+              <PageSizePopup 
+                bind:layout={pageLayout} 
+                onchange={onPopupChange} 
+                {triggerEl} 
+                {mode}
+                detection={layoutDetection}
+              />
           {/snippet}
       </StatusBarItem>
 

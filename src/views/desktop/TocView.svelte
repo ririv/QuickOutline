@@ -11,6 +11,7 @@
   import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
   
   import { useTocActions } from '../shared/toc.svelte.ts';
+  import { usePdfLayoutDetection } from '@/lib/pdf-processing/usePdfLayoutDetection.svelte';
 
   const { loadOutline, handleContentChange, triggerPreview, handleGenerate, handleRenderStats, clearDebounce } = useTocActions();
 
@@ -20,6 +21,8 @@
   let showFooter = $state(false);
   
   let activeTab = $derived(appStore.activeTab);
+  
+  const layoutDetection = usePdfLayoutDetection(() => tocStore.insertionConfig.pos);
 
   // Auto-load TOC when file changes
   $effect(() => {
@@ -110,7 +113,8 @@
       bind:pageLayout={tocStore.pageLayout}
       bind:hfLayout={tocStore.hfLayout}
       onGenerate={handleGenerate} 
-      onParamChange={triggerPreview} 
+      onParamChange={triggerPreview}
+      {layoutDetection}
   />
 </main>
 

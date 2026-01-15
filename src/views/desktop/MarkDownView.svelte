@@ -9,8 +9,11 @@
   import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
   
   import { useMarkdownActions } from '../shared/markdown.svelte.ts';
+  import { usePdfLayoutDetection } from '@/lib/pdf-processing/usePdfLayoutDetection.svelte';
   
   const { handleRenderStats, debouncedTrigger, triggerPreview, clearDebounce, updatePreview, handleGenerate, saveContent } = useMarkdownActions();
+  
+  const layoutDetection = usePdfLayoutDetection(() => markdownStore.insertionConfig.pos);
   
   let editorComponent: MdEditor;
   let previewComponent: Preview;
@@ -78,6 +81,7 @@
       showOffset={false}
       onGenerate={handleGenerate} 
       onParamChange={debouncedPreview}
+      {layoutDetection}
   />
 </main>
 

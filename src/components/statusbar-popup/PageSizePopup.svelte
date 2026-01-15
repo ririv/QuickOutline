@@ -1,16 +1,28 @@
 <script lang="ts">
     import type { PageLayout } from '@/lib/types/page';
+    import type { LayoutDetectionState } from '@/lib/pdf-processing/usePdfLayoutDetection.svelte';
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import StyledSelect from '../controls/StyledSelect.svelte';
+    import StyledSwitch from '../controls/StyledSwitch.svelte';
     import Icon from '../Icon.svelte';
 
     interface Props {
         layout: PageLayout;
         triggerEl?: HTMLElement;
         onchange?: () => void;
+        mode?: 'new' | 'edit';
+        autoDetect?: boolean;
+        detection?: LayoutDetectionState;
     }
 
-    let { layout = $bindable(), triggerEl, onchange }: Props = $props();
+    let { 
+        layout = $bindable(), 
+        triggerEl, 
+        onchange,
+        mode = 'edit',
+        autoDetect = $bindable(false),
+        detection
+    }: Props = $props();
 
     const sizeOptions = [
         { display: 'A4', detail: '210×297mm', value: 'A4' },
@@ -20,6 +32,14 @@
     ];
 
     let currentDimensions = $derived.by(() => {
+        // Priority 1: If autoDetect is ON, show exact measurements from detection
+        if (autoDetect && detection?.actualDimensions) {
+            const { width, height } = detection.actualDimensions;
+            // Round to 1 decimal place for readability
+            return `${width.toFixed(1)}×${height.toFixed(1)}mm`;
+        }
+
+        // Priority 2: Standard size lookup based on current layout
         const opt = sizeOptions.find(o => o.value === layout.size);
         if (!opt) return '';
 
@@ -41,10 +61,60 @@
     function handleChange() {
         onchange?.();
     }
+
+    $effect(() => {
+        if (autoDetect && detection?.suggestedLayout && mode === 'edit') {
+            const suggested = detection.suggestedLayout;
+            const isSame = 
+                layout.size === suggested.size &&
+                layout.orientation === suggested.orientation &&
+                layout.marginTop === suggested.marginTop &&
+                layout.marginBottom === suggested.marginBottom &&
+                layout.marginLeft === suggested.marginLeft &&
+                layout.marginRight === suggested.marginRight;
+
+            if (!isSame) {
+                layout = { ...suggested };
+                onchange?.();
+            }
+        }
+    });
+
+    $effect(() => {
+        if (!detection?.suggestedLayout && autoDetect) {
+            autoDetect = false;
+        }
+    });
 </script>
 
 <ArrowPopup triggerEl={triggerEl} placement="top" className="paper-size-popup" trackTrigger={false}>
     <div class="popup-content">
+        {#if mode === 'edit'}
+            <div class="row switch-row" class:disabled={!detection?.suggestedLayout}>
+                <span class="switch-label">Auto-detect Size</span>
+                <StyledSwitch 
+                    bind:checked={autoDetect} 
+                    onchange={handleChange} 
+                    size="small" 
+                    disabled={!detection?.suggestedLayout}
+                />
+            </div>
+            {#if autoDetect && detection?.referencePage !== undefined}
+                <div class="row ref-control">
+                    <span class="ref-label">Ref: Page {detection.referencePage}</span>
+                    <div class="ref-buttons">
+                        <button class="icon-btn small" onclick={() => detection.onReferenceChange?.(detection.referencePage! - 1)} title="Previous Page">
+                            <Icon name="arrow-up" class="rotated-left" width="10" height="10" />
+                        </button>
+                        <button class="icon-btn small" onclick={() => detection.onReferenceChange?.(detection.referencePage! + 1)} title="Next Page">
+                            <Icon name="arrow-up" class="rotated-right" width="10" height="10" />
+                        </button>
+                    </div>
+                </div>
+            {/if}
+            <div class="divider"></div>
+        {/if}
+
         <div class="row label-row" title="Paper Size">
             <span style="font-size: 12px; color: #666;">Paper Size</span>
         </div>
@@ -59,6 +129,7 @@
                     onchange={handleChange}
                     displayKey="display"
                     placement="top"
+                    disabled={autoDetect && mode === 'edit'}
                 >
                     {#snippet item(opt)}
                         <div class="size-option">
@@ -74,18 +145,20 @@
             <span class="row-icon" title="Orientation">
                 <Icon name="page-orientation" width="16" height="16" />
             </span>
-            <div class="radio-group icon-group">
+            <div class="radio-group icon-group {autoDetect && mode === 'edit' ? 'disabled' : ''}">
                 <button 
                     class:active={layout.orientation === 'portrait'} 
-                    onclick={() => { layout.orientation = 'portrait'; handleChange(); }}
+                    onclick={() => { if (!autoDetect || mode !== 'edit') { layout.orientation = 'portrait'; handleChange(); }}}
                     title="Portrait"
+                    disabled={autoDetect && mode === 'edit'}
                 >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="2" ry="2"></rect></svg>
                 </button>
                 <button 
                     class:active={layout.orientation === 'landscape'} 
-                    onclick={() => { layout.orientation = 'landscape'; handleChange(); }}
+                    onclick={() => { if (!autoDetect || mode !== 'edit') { layout.orientation = 'landscape'; handleChange(); }}}
                     title="Landscape"
+                    disabled={autoDetect && mode === 'edit'}
                 >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2" ry="2"></rect></svg>
                 </button>
@@ -168,6 +241,15 @@
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
+    .icon-group.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    
+    .icon-group button:disabled {
+        cursor: not-allowed;
+    }
+
     /* Override StyledSelect height */
     :global(.paper-size-popup .select-trigger) {
         min-height: 28px;
@@ -199,4 +281,69 @@
     }
     .main { font-weight: 500; color: #333; font-size: 12px; }
     .sub { font-size: 10px; color: #999; margin-left: 8px; }
+
+    .switch-row {
+        justify-content: space-between;
+        margin-bottom: 2px;
+    }
+    
+    .switch-row.disabled {
+        opacity: 0.5;
+        /* pointer-events: none; - Let the switch handle pointer events so we can show tooltip if needed */
+    }
+    
+    .switch-label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+    }
+
+    .hint-row {
+        font-size: 11px;
+        color: #888;
+        margin-left: 2px;
+        margin-top: -6px;
+    }
+
+    .ref-control {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: -2px;
+        margin-bottom: 6px;
+        padding-left: 2px;
+    }
+    .ref-label {
+        font-size: 11px;
+        color: #888;
+    }
+    .ref-buttons {
+        display: flex;
+        gap: 4px;
+    }
+    .icon-btn.small {
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: 1px solid #eee;
+        border-radius: 3px;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+    }
+    .icon-btn.small:hover {
+        background: #f5f5f5;
+        color: #333;
+    }
+    :global(.rotated-left) { transform: rotate(-90deg); }
+    :global(.rotated-right) { transform: rotate(90deg); }
+
+    .divider {
+        height: 1px;
+        background-color: #eee;
+        margin: 8px 0 4px 0;
+    }
 </style>
