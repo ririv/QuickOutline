@@ -102,13 +102,27 @@
             {#if autoDetect && detection?.referencePage !== undefined}
                 <div class="row ref-control">
                     <span class="ref-label">Ref: Page {detection.referencePage}</span>
-                    <div class="ref-buttons">
-                        <button class="icon-btn small" onclick={() => detection.onReferenceChange?.(detection.referencePage! - 1)} title="Previous Page">
-                            <Icon name="arrow-up" class="rotated-left" width="10" height="10" />
-                        </button>
-                        <button class="icon-btn small" onclick={() => detection.onReferenceChange?.(detection.referencePage! + 1)} title="Next Page">
-                            <Icon name="arrow-up" class="rotated-right" width="10" height="10" />
-                        </button>
+                    <div class="ref-toggle-group">
+                        {#if detection.options.above}
+                            <button 
+                                class="toggle-btn" 
+                                class:active={detection.currentRefType === 'above'}
+                                onclick={() => detection.setRefType('above')}
+                                title="Above Neighbor (Page {detection.options.above})"
+                            >
+                                <Icon name="arrow-up" width="12" height="12" />
+                            </button>
+                        {/if}
+                        {#if detection.options.below}
+                            <button 
+                                class="toggle-btn" 
+                                class:active={detection.currentRefType === 'below'}
+                                onclick={() => detection.setRefType('below')}
+                                title="Below Neighbor (Page {detection.options.below})"
+                            >
+                                <Icon name="arrow-down" width="12" height="12" />
+                            </button>
+                        {/if}
                     </div>
                 </div>
             {/if}
@@ -289,20 +303,12 @@
     
     .switch-row.disabled {
         opacity: 0.5;
-        /* pointer-events: none; - Let the switch handle pointer events so we can show tooltip if needed */
     }
     
     .switch-label {
         font-weight: 600;
         font-size: 13px;
         color: #333;
-    }
-
-    .hint-row {
-        font-size: 11px;
-        color: #888;
-        margin-left: 2px;
-        margin-top: -6px;
     }
 
     .ref-control {
@@ -317,29 +323,33 @@
         font-size: 11px;
         color: #888;
     }
-    .ref-buttons {
+    .ref-toggle-group {
         display: flex;
-        gap: 4px;
+        gap: 2px;
+        background: #f0f0f0;
+        padding: 2px;
+        border-radius: 4px;
     }
-    .icon-btn.small {
-        width: 20px;
-        height: 20px;
-        padding: 0;
-        border: 1px solid #eee;
+    .toggle-btn {
+        background: transparent;
+        border: none;
+        padding: 2px 6px;
         border-radius: 3px;
-        background: white;
         cursor: pointer;
+        color: #666;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #666;
+        transition: all 0.2s;
     }
-    .icon-btn.small:hover {
-        background: #f5f5f5;
-        color: #333;
+    .toggle-btn:hover {
+        background: rgba(0,0,0,0.05);
     }
-    :global(.rotated-left) { transform: rotate(-90deg); }
-    :global(.rotated-right) { transform: rotate(90deg); }
+    .toggle-btn.active {
+        background: white;
+        color: #1677ff;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
 
     .divider {
         height: 1px;
