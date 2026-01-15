@@ -25,37 +25,32 @@
     }: Props = $props();
 
     const sizeOptions = [
-        { display: 'A4', detail: '210×297mm', value: 'A4' },
-        { display: 'A3', detail: '297×420mm', value: 'A3' },
-        { display: 'Letter', detail: '8.5×11"', value: 'Letter' },
-        { display: 'Legal', detail: '8.5×14"', value: 'Legal' }
+        { display: 'A4', detail: '210×297mm', value: 'A4', w: 210, h: 297 },
+        { display: 'A3', detail: '297×420mm', value: 'A3', w: 297, h: 420 },
+        { display: 'Letter', detail: '8.5×11"', value: 'Letter', w: 215.9, h: 279.4 },
+        { display: 'Legal', detail: '8.5×14"', value: 'Legal', w: 215.9, h: 355.6 }
     ];
 
     let currentDimensions = $derived.by(() => {
+        const format = (num: number) => {
+            const rounded = Math.round(num * 10) / 10;
+            return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(1);
+        };
+
         // Priority 1: If autoDetect is ON, show exact measurements from detection
         if (autoDetect && detection?.actualDimensions) {
             const { width, height } = detection.actualDimensions;
-            // Round to 1 decimal place for readability
-            return `${width.toFixed(1)}×${height.toFixed(1)}mm`;
+            return `${format(width)}×${format(height)}mm`;
         }
 
         // Priority 2: Standard size lookup based on current layout
         const opt = sizeOptions.find(o => o.value === layout.size);
         if (!opt) return '';
 
-        const [w, hPart] = opt.detail.split('×');
-        if (!w || !hPart) return opt.detail;
-
-        const hMatch = hPart.match(/^([\d.]+)(.*)$/);
-        if (!hMatch) return opt.detail;
-
-        const h = hMatch[1];
-        const unit = hMatch[2];
-
         if (layout.orientation === 'landscape') {
-            return `${h}×${w}${unit}`;
+            return `${format(opt.h)}×${format(opt.w)}mm`;
         }
-        return `${w}×${h}${unit}`;
+        return `${format(opt.w)}×${format(opt.h)}mm`;
     });
 
     function handleChange() {
