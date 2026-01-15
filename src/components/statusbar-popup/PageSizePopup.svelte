@@ -37,20 +37,37 @@
             return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(1);
         };
 
-        // Priority 1: If autoDetect is ON, show exact measurements from detection
+        let w: number;
+        let h: number;
+
         if (autoDetect && detection?.actualDimensions) {
-            const { width, height } = detection.actualDimensions;
-            return `${format(width)}×${format(height)}mm`;
+            w = detection.actualDimensions.width;
+            h = detection.actualDimensions.height;
+        } else {
+            const opt = sizeOptions.find(o => o.value === layout.size);
+            if (!opt) return '';
+            if (layout.orientation === 'landscape') {
+                w = opt.h;
+                h = opt.w;
+            } else {
+                w = opt.w;
+                h = opt.h;
+            }
         }
 
-        // Priority 2: Standard size lookup based on current layout
-        const opt = sizeOptions.find(o => o.value === layout.size);
-        if (!opt) return '';
+        const dimStr = `${format(w)}×${format(h)}mm`;
+        
+        // Match standard size name (allow for both orientations)
+        const rw = Math.round(w * 10) / 10;
+        const rh = Math.round(h * 10) / 10;
+        const matched = sizeOptions.find(o => 
+            (rw === o.w && rh === o.h) || (rw === o.h && rh === o.w)
+        );
 
-        if (layout.orientation === 'landscape') {
-            return `${format(opt.h)}×${format(opt.w)}mm`;
-        }
-        return `${format(opt.w)}×${format(opt.h)}mm`;
+        if (!matched) return dimStr;
+
+        const orientation = w > h ? 'Landscape' : 'Portrait';
+        return `${dimStr} (${matched.display}, ${orientation})`;
     });
 
     function handleChange() {
