@@ -2,7 +2,7 @@
   import OffsetPopup from './statusbar-popup/OffsetPopup.svelte';
   import InsertPositionPopup from './statusbar-popup/InsertPositionPopup.svelte';
   import PageLabelPopup from './statusbar-popup/PageLabelPopup.svelte';
-  import PaperSizePopup from './statusbar-popup/PaperSizePopup.svelte';
+  import PageSizePopup from './statusbar-popup/PageSizePopup.svelte';
   import PageMarginsPopup from './statusbar-popup/PageMarginsPopup.svelte';
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
   import StatusBarGroup from './StatusBarGroup.svelte';
@@ -46,7 +46,7 @@
     onParamChange
   }: Props = $props();
 
-  type PopupType = 'pagenum-offset' | 'insert-pos' | 'page-label' | 'paper-size' | 'page-margins' | 'header-footer';
+  type PopupType = 'pagenum-offset' | 'insert-pos' | 'page-label' | 'page-size' | 'page-margins' | 'header-footer';
   let activePopup = $state<PopupType | null>(null);
   
   // Group expansion states
@@ -144,9 +144,9 @@
       </StatusBarItem>
 
       <StatusBarItem
-          active={activePopup === 'paper-size'}
-          title="Paper Size: {pageLayout.size}, {pageLayout.orientation}"
-          onclick={() => togglePopup('paper-size')}
+          active={activePopup === 'page-size'}
+          title="Page Size: {pageLayout.size}, {pageLayout.orientation}"
+          onclick={() => togglePopup('page-size')}
       >
           {#snippet icon()}
               <!-- svelte-ignore css_unused_selector -->
@@ -156,7 +156,7 @@
           {/snippet}
           {pageLayout.size}
           {#snippet popup(triggerEl)}
-              <PaperSizePopup bind:layout={pageLayout} onchange={onPopupChange} {triggerEl} />
+              <PageSizePopup bind:layout={pageLayout} onchange={onPopupChange} {triggerEl} />
           {/snippet}
       </StatusBarItem>
 

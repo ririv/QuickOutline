@@ -17,6 +17,7 @@
     import arrowUpSvg from '@/assets/icons/arrow/arrow-up.svg?raw';
     import arrowDownSvg from '@/assets/icons/arrow/arrow-down.svg?raw';
     import arrowUpDownSvg from '@/assets/icons/arrow/arrow-up-down.svg?raw';
+    import rulerSvg from '@/assets/icons/ruler.svg?raw';
 
     const icons = {
         'trash': trashSvg,
@@ -36,7 +37,8 @@
         'play': playSvg,
         'arrow-up': arrowUpSvg,
         'arrow-down': arrowDownSvg,
-        'arrow-up-down': arrowUpDownSvg
+        'arrow-up-down': arrowUpDownSvg,
+        'ruler': rulerSvg
     };
 
     export type IconName = keyof typeof icons;
