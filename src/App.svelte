@@ -7,7 +7,6 @@
     import TocViewView from './views/desktop/TocView.svelte';
     import MarkDownView from './views/desktop/MarkDownView.svelte';
     import ViewerView from './views/desktop/ViewerView.svelte';
-    import ExperimentalViewView from './views/desktop/ExperimentalView.svelte';
     import MessageContainer from './components/common/MessageContainer.svelte';
     import FileHeader from './views/desktop/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
@@ -135,14 +134,10 @@
                 </div>
                 <!-- Experimental Tab - Only show in DEV mode, otherwise show a default welcome -->
                 <div style="display: {activeTab === FnTab.experimental ? 'block' : 'none'}; height: 100%;">
-                    {#if import.meta.env.DEV}
-                        <ExperimentalViewView />
-                    {:else}
-                        <div class="placeholder">
-                            <h1>Experimental Features Disabled</h1>
-                            <p>This feature is only available in development mode.</p>
-                        </div>
-                    {/if}
+                    <div class="placeholder">
+                        <h1>Experimental Features Disabled</h1>
+                        <p>This feature is only available in development mode.</p>
+                    </div>
                 </div>
         </div>
     </div>
