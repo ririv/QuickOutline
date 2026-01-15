@@ -37,6 +37,7 @@
           <PageFrame
             bind:headerConfig={markdownStore.headerConfig}
             bind:footerConfig={markdownStore.footerConfig}
+            bind:hfLayout={markdownStore.hfLayout}
             bind:showHeader={markdownStore.showHeader}
             bind:showFooter={markdownStore.showFooter}
             onHeaderChange={triggerPreview}

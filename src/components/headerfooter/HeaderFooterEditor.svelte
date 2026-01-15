@@ -2,6 +2,7 @@
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import PositionDiagram from '../PositionDiagram.svelte';
     import PageNumberHint from './PageNumberHint.svelte';
+    import DrawLineControl from './DrawLineControl.svelte';
     import { type HeaderFooterConfig } from '@/lib/types/header-footer.ts';
     import { PageLabelNumberingStyle } from '@/lib/types/page-label.ts';
     import Icon from "@/components/Icon.svelte";
@@ -17,6 +18,7 @@
         config?: HeaderFooterConfig;
         type?: 'header' | 'footer';
         numberingStyle?: PageLabelNumberingStyle;
+        padding?: number;
         onchange?: () => void;
         onStyleChange?: (style: PageLabelNumberingStyle) => void;
     }
@@ -25,6 +27,7 @@
         config = $bindable({left: '', center: '', right: '', inner: '', outer: '', drawLine: false}),
         type = 'header',
         numberingStyle = $bindable(),
+        padding = $bindable(0),
         onchange,
         onStyleChange
     }: Props = $props();
@@ -225,30 +228,14 @@
 
     <div class="right-tools">
         <PageNumberHint type={type} onInsert={handleInsertPageNumber} />
-      <button
-          class="toggle-line-btn" class:active={config.drawLine}
-          onclick={toggleDrawLine}
-          onmouseenter={() => isButtonHovered = true}
-          onmouseleave={() => { isButtonHovered = false; justToggled = false; }}
-          title="Show Divider Line"
-      >
-        <svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-             stroke-width="2" viewBox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
-          {#if type === 'header'}
-            <rect x="2" y="4" width="18" height="12" rx="2" stroke-opacity="0.3" stroke-dasharray="2 2"
-                  stroke={config.drawLine ? '#1677ff' : '#999'}></rect>
-            <line x1="2" y1="20" x2="20" y2="20" stroke={config.drawLine ? '#1677ff' : '#999'}
-                  stroke-dasharray={config.drawLine ? '0' : '2 2'}></line>
-          {:else}
-            <rect x="2" y="8" width="18" height="12" rx="2" stroke-opacity="0.3" stroke-dasharray="2 2"
-                  stroke={config.drawLine ? '#1677ff' : '#999'}></rect>
-            <line x1="2" y1="4" x2="20" y2="4" stroke={config.drawLine ? '#1677ff' : '#999'}
-                  stroke-dasharray={config.drawLine ? '0' : '2 2'}></line>
-          {/if}
-        </svg>
-      </button>
-
-
+        <DrawLineControl
+            type={type}
+            bind:drawLine={config.drawLine}
+            bind:padding={padding}
+            bind:isHovered={isButtonHovered}
+            bind:justToggled={justToggled}
+            onChange={onchange}
+        />
     </div>
   </div>
 
@@ -484,38 +471,6 @@
 
     input:hover {
         background-color: rgba(0, 0, 0, 0.02);
-    }
-
-    .toggle-line-btn {
-        background: transparent;
-        border: none;
-        padding: 2px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 3px;
-        color: #999;
-        transition: all 0.2s;
-        width: 24px; /* Fixed width to make clickable area consistent */
-        height: 24px; /* Fixed height */
-    }
-
-    .toggle-line-btn:hover {
-        background-color: #f0f0f0;
-        color: #666;
-    }
-
-    .toggle-line-btn.active {
-        background-color: #e6f7ff;
-        color: #1677ff;
-    }
-
-    /* Specific styling for SVG inside toggle-line-btn */
-    .toggle-line-btn svg {
-        width: 100%;
-        height: 100%;
-        stroke: currentColor; /* Inherit color from parent button */
     }
 
     .right-tools {

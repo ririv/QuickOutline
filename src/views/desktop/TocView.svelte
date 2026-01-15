@@ -62,6 +62,7 @@
           <PageFrame
             bind:headerConfig={tocStore.headerConfig}
             bind:footerConfig={tocStore.footerConfig}
+            bind:hfLayout={tocStore.hfLayout}
             bind:showHeader={showHeader}
             bind:showFooter={showFooter}
             onHeaderChange={triggerPreview}

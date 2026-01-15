@@ -20,19 +20,16 @@
         <div class="grid-header">
             <span></span>
             <span>Dist (mm)</span>
-            <span>Pad (pt)</span>
         </div>
         
         <div class="grid-row">
             <span class="label">Header</span>
             <input type="number" bind:value={layout.headerDist} min="0" oninput={handleChange} />
-            <input type="number" bind:value={layout.headerPadding} min="0" oninput={handleChange} />
         </div>
         
         <div class="grid-row">
             <span class="label">Footer</span>
             <input type="number" bind:value={layout.footerDist} min="0" oninput={handleChange} />
-            <input type="number" bind:value={layout.footerPadding} min="0" oninput={handleChange} />
         </div>
     </div>
 </ArrowPopup>
@@ -40,7 +37,7 @@
 <style>
     .popup-content {
         padding: 12px;
-        width: 200px;
+        width: 140px;
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -50,7 +47,7 @@
     
     .grid-header {
         display: grid;
-        grid-template-columns: 50px 1fr 1fr;
+        grid-template-columns: 50px 1fr;
         gap: 8px;
         font-size: 11px;
         color: #888;
@@ -61,7 +58,7 @@
 
     .grid-row {
         display: grid;
-        grid-template-columns: 50px 1fr 1fr;
+        grid-template-columns: 50px 1fr;
         gap: 8px;
         align-items: center;
         margin-bottom: 4px;

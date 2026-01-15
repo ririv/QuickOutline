@@ -3,10 +3,12 @@
   import CollapseTrigger from './CollapseTrigger.svelte';
   import { slide } from 'svelte/transition';
   import type { HeaderFooterConfig } from '@/lib/types/header-footer.ts';
+  import { type HeaderFooterLayout, defaultHeaderFooterLayout } from '@/lib/types/page';
 
   interface Props {
       headerConfig: HeaderFooterConfig;
       footerConfig: HeaderFooterConfig;
+      hfLayout?: HeaderFooterLayout;
       showHeader: boolean;
       showFooter: boolean;
       onHeaderChange?: () => void;
@@ -17,6 +19,7 @@
   let {
       headerConfig = $bindable(),
       footerConfig = $bindable(),
+      hfLayout = $bindable(defaultHeaderFooterLayout),
       showHeader = $bindable(),
       showFooter = $bindable(),
       onHeaderChange,
@@ -47,6 +50,7 @@
       <HeaderFooterEditor
         type="header"
         bind:config={headerConfig}
+        bind:padding={hfLayout.headerPadding}
         onchange={onHeaderChange}
       />
     </div>
@@ -63,6 +67,7 @@
       <HeaderFooterEditor
         type="footer"
         bind:config={footerConfig}
+        bind:padding={hfLayout.footerPadding}
         onchange={onFooterChange}
       />
     </div>
