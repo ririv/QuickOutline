@@ -97,9 +97,19 @@
             onmouseenter={openPadPopup}
             onmouseleave={closePadPopup}
         >
-            <div class="pad-popup">
-                <span>Pad</span>
-                <input type="number" bind:value={padding} min="0" oninput={handlePaddingInput} />
+            <div class="control-popup">
+                <div class="popup-title">Divider (mm)</div>
+                
+                <div class="control-row">
+                    <span class="label">Spacing</span>
+                    <input 
+                        type="number" 
+                        bind:value={padding} 
+                        min="0" 
+                        step="1"
+                        oninput={handlePaddingInput} 
+                    />
+                </div>
             </div>
         </ArrowPopup>
     {/if}
@@ -141,31 +151,46 @@
         stroke: currentColor;
     }
 
-    .pad-popup {
+    .control-popup {
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        padding: 4px;
-        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        min-width: 140px;
     }
 
-    .pad-popup span {
+    .popup-title {
         font-size: 11px;
-        color: #888;
+        font-weight: 600;
+        color: #999;
+        margin-bottom: 2px;
     }
 
-    .pad-popup input {
-        width: 40px;
-        padding: 2px;
-        text-align: center;
+    .control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .label {
+        font-size: 13px;
+        color: #333;
+    }
+
+    input {
+        width: 60px;
+        padding: 4px 6px;
         border: 1px solid #ddd;
-        border-radius: 3px;
-        font-size: 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        text-align: right;
+        color: #333;
+        background: #fff;
     }
     
-    /* Hide popup by default logic handled by svelte if block + ArrowPopup, 
-       but we keep the hover-popup class logic from HeaderFooterEditor if needed?
-       Wait, in HeaderFooterEditor the .hover-popup class was used for other buttons.
-       Here we manually control showPadPopup, so we don't need CSS hover tricks.
-    */
+    input:focus {
+        border-color: #1677ff;
+        outline: none;
+    }
 </style>
