@@ -60,6 +60,8 @@
   let g3Expanded = $state(true);
   let g4Expanded = $state(true);
 
+  let pageSizeAutoDetect = $state(true);
+
   let barElement: HTMLElement;
 
   function togglePopup(type: PopupType) {
@@ -163,6 +165,7 @@
           {#snippet popup(triggerEl)}
               <PageSizePopup 
                 bind:layout={pageLayout} 
+                bind:autoDetect={pageSizeAutoDetect}
                 onchange={onPopupChange} 
                 {triggerEl} 
                 {mode}

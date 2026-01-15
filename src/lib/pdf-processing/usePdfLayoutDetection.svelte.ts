@@ -6,20 +6,26 @@ export interface LayoutDetectionState {
     suggestedLayout: PageLayout | undefined;
     actualDimensions: { width: number, height: number } | undefined;
     referencePage: number;
+    pageCount: number;
     options: {
         above: number | null;
         below: number | null;
     };
-    currentRefType: 'above' | 'below';
-    setRefType: (type: 'above' | 'below') => void;
+    onReferenceChange: (page: number) => void;
 }
 
 export function usePdfLayoutDetection(getPosition: () => number): LayoutDetectionState {
     let suggestedLayout = $state<PageLayout | undefined>(undefined);
     let actualDimensions = $state<{ width: number, height: number } | undefined>(undefined);
-    let preferredType = $state<'above' | 'below' | null>(null);
+    let manualRefPage = $state<number | null>(null);
 
-    // Calculate available neighbors and active reference
+    // Watch position change to reset manual override
+    $effect(() => {
+        getPosition(); // Track position
+        manualRefPage = null; // Reset when pos changes
+    });
+
+    // Derived default reference page based on insertion position
     const info = $derived.by(() => {
         const pos = getPosition();
         const count = docStore.pageCount;
@@ -28,23 +34,21 @@ export function usePdfLayoutDetection(getPosition: () => number): LayoutDetectio
         const above = (pos > 1 && pos <= count + 1) ? pos - 1 : null;
         const below = (pos >= 1 && pos <= count) ? pos : null;
 
-        let activeType: 'above' | 'below' = 'above';
-        
-        if (preferredType && (preferredType === 'above' ? above : below)) {
-            activeType = preferredType;
-        } else if (!above && below) {
-            activeType = 'below';
-        } else {
-            activeType = 'above';
-        }
+        let activePage: number;
 
-        const activePage = activeType === 'above' ? above : below;
+        if (manualRefPage !== null) {
+            activePage = manualRefPage;
+        } else {
+            // Smart default logic
+            if (count === 0) activePage = 0;
+            else if (pos <= 1) activePage = 1; // Insert at start -> look forward
+            else activePage = pos - 1;       // Insert elsewhere -> look backward
+        }
 
         return {
             above,
             below,
-            activeType,
-            activePage: activePage || 0
+            activePage
         };
     });
 
@@ -52,15 +56,19 @@ export function usePdfLayoutDetection(getPosition: () => number): LayoutDetectio
         const pdfDoc = docStore.pdfDoc;
         const refPage = info.activePage;
         
-        if (pdfDoc && refPage >= 1) {
+        if (pdfDoc && refPage >= 1 && refPage <= docStore.pageCount) {
             let active = true;
+            
             detectPageLayout(pdfDoc, refPage).then(result => {
                 if (active && result) {
                     suggestedLayout = result.layout;
                     actualDimensions = { width: result.actualWidth, height: result.actualHeight };
                 }
             });
-            return () => { active = false; };
+
+            return () => {
+                active = false;
+            };
         } else {
             suggestedLayout = undefined;
             actualDimensions = undefined;
@@ -71,10 +79,15 @@ export function usePdfLayoutDetection(getPosition: () => number): LayoutDetectio
         get suggestedLayout() { return suggestedLayout },
         get actualDimensions() { return actualDimensions },
         get referencePage() { return info.activePage },
+        get pageCount() { return docStore.pageCount },
         get options() { return { above: info.above, below: info.below } },
-        get currentRefType() { return info.activeType },
-        setRefType: (type: 'above' | 'below') => {
-            preferredType = type;
+        onReferenceChange: (p: number) => {
+            const count = docStore.pageCount;
+            // Allow loose input but clamp before setting
+            if (isNaN(p)) return;
+            if (p < 1) p = 1;
+            if (p > count) p = count;
+            manualRefPage = p;
         }
     };
 }

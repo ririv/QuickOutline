@@ -20,7 +20,7 @@
         triggerEl, 
         onchange,
         mode = 'edit',
-        autoDetect = $bindable(false),
+        autoDetect = $bindable(true),
         detection
     }: Props = $props();
 
@@ -89,26 +89,46 @@
 
 <ArrowPopup triggerEl={triggerEl} placement="top" className="paper-size-popup" trackTrigger={false}>
     <div class="popup-content">
-        {#if mode === 'edit'}
-            <div class="row switch-row" class:disabled={!detection?.suggestedLayout}>
-                <span class="switch-label">Auto-detect Size</span>
-                <StyledSwitch 
-                    bind:checked={autoDetect} 
-                    onchange={handleChange} 
-                    size="small" 
-                    disabled={!detection?.suggestedLayout}
-                />
-            </div>
-            {#if autoDetect && detection?.referencePage !== undefined}
-                <div class="row ref-control">
-                    <span class="ref-label">Ref: Page {detection.referencePage}</span>
+        <div class="header-row">
+            <span class="title">Page Size</span>
+            {#if mode === 'edit'}
+                <div class="auto-switch" class:disabled={!detection?.suggestedLayout}>
+                    <span class="switch-label">Auto</span>
+                    <StyledSwitch 
+                        bind:checked={autoDetect} 
+                        onchange={handleChange} 
+                        size="small" 
+                        disabled={!detection?.suggestedLayout}
+                    />
+                </div>
+            {/if}
+        </div>
+
+        {#if autoDetect && detection?.suggestedLayout && mode === 'edit'}
+            <!-- Auto Mode Area -->
+            <div class="mode-content">
+                <div class="row">
+                    <div class="ref-selector">
+                        <span class="ref-label">Ref: Page</span>
+                        <input 
+                            type="number" 
+                            class="ref-input"
+                            value={detection.referencePage}
+                            onchange={(e) => detection.onReferenceChange?.(parseInt(e.currentTarget.value))}
+                            min="1"
+                            max={detection.pageCount}
+                        />
+                    </div>
+                </div>
+                
+                <div class="row">
                     <div class="ref-toggle-group">
                         {#if detection.options.above}
                             <button 
                                 class="toggle-btn" 
-                                class:active={detection.currentRefType === 'above'}
-                                onclick={() => detection.setRefType('above')}
-                                title="Above Neighbor (Page {detection.options.above})"
+                                class:active={detection.referencePage === detection.options.above}
+                                onclick={() => detection.onReferenceChange?.(detection.options.above!)}
+                                title="Same as Preceding Page ({detection.options.above})"
                             >
                                 <Icon name="arrow-up" width="12" height="12" />
                             </button>
@@ -116,73 +136,71 @@
                         {#if detection.options.below}
                             <button 
                                 class="toggle-btn" 
-                                class:active={detection.currentRefType === 'below'}
-                                onclick={() => detection.setRefType('below')}
-                                title="Below Neighbor (Page {detection.options.below})"
+                                class:active={detection.referencePage === detection.options.below}
+                                onclick={() => detection.onReferenceChange?.(detection.options.below!)}
+                                title="Same as Following Page ({detection.options.below})"
                             >
                                 <Icon name="arrow-down" width="12" height="12" />
                             </button>
                         {/if}
                     </div>
                 </div>
-            {/if}
-            <div class="divider"></div>
+            </div>
+        {:else}
+            <!-- Manual Mode Area -->
+            <div class="mode-content">
+                <div class="row">
+                    <span class="row-icon" title="Paper Size">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </span>
+                    <div style="flex: 1;">
+                        <StyledSelect 
+                            options={sizeOptions} 
+                            bind:value={layout.size} 
+                            onchange={handleChange}
+                            displayKey="display"
+                            placement="top"
+                        >
+                            {#snippet item(opt)}
+                                <div class="size-option">
+                                    <span class="main">{opt.display}</span>
+                                    <span class="sub">{opt.detail}</span>
+                                </div>
+                            {/snippet}
+                        </StyledSelect>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <span class="row-icon" title="Orientation">
+                        <Icon name="page-orientation" width="16" height="16" />
+                    </span>
+                    <div class="radio-group icon-group">
+                        <button 
+                            class:active={layout.orientation === 'portrait'} 
+                            onclick={() => { layout.orientation = 'portrait'; handleChange(); }}
+                            title="Portrait"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="2" ry="2"></rect></svg>
+                        </button>
+                        <button 
+                            class:active={layout.orientation === 'landscape'} 
+                            onclick={() => { layout.orientation = 'landscape'; handleChange(); }}
+                            title="Landscape"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2" ry="2"></rect></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
         {/if}
 
-        <div class="row label-row" title="Paper Size">
-            <span style="font-size: 12px; color: #666;">Paper Size</span>
-        </div>
-        <div class="row">
-            <span class="row-icon" title="Paper Size">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            </span>
-            <div style="flex: 1;">
-                <StyledSelect 
-                    options={sizeOptions} 
-                    bind:value={layout.size} 
-                    onchange={handleChange}
-                    displayKey="display"
-                    placement="top"
-                    disabled={autoDetect && mode === 'edit'}
-                >
-                    {#snippet item(opt)}
-                        <div class="size-option">
-                            <span class="main">{opt.display}</span>
-                            <span class="sub">{opt.detail}</span>
-                        </div>
-                    {/snippet}
-                </StyledSelect>
-            </div>
-        </div>
-        
-        <div class="row">
-            <span class="row-icon" title="Orientation">
-                <Icon name="page-orientation" width="16" height="16" />
-            </span>
-            <div class="radio-group icon-group {autoDetect && mode === 'edit' ? 'disabled' : ''}">
-                <button 
-                    class:active={layout.orientation === 'portrait'} 
-                    onclick={() => { if (!autoDetect || mode !== 'edit') { layout.orientation = 'portrait'; handleChange(); }}}
-                    title="Portrait"
-                    disabled={autoDetect && mode === 'edit'}
-                >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="2" ry="2"></rect></svg>
-                </button>
-                <button 
-                    class:active={layout.orientation === 'landscape'} 
-                    onclick={() => { if (!autoDetect || mode !== 'edit') { layout.orientation = 'landscape'; handleChange(); }}}
-                    title="Landscape"
-                    disabled={autoDetect && mode === 'edit'}
-                >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2" ry="2"></rect></svg>
-                </button>
-            </div>
-        </div>
+        <!-- Common Area (Row 3) -->
         <div class="row">
             <span class="row-icon" title="Detailed Size">
                 <Icon name="ruler" width="16" height="16" />
             </span>
-            <div class="dimension-text">
+            <div class="dimension-text" class:highlight={autoDetect}>
                 {currentDimensions}
             </div>
         </div>
@@ -190,6 +208,31 @@
 </ArrowPopup>
 
 <style>
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+    }
+    .auto-switch {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .auto-switch.disabled {
+        opacity: 0.5;
+    }
+    .switch-label {
+        font-size: 12px;
+        color: #666;
+        font-weight: normal;
+    }
+
     .popup-content {
         padding: 12px;
         width: 240px;
@@ -200,18 +243,21 @@
         color: #333;
     }
 
+    .mode-content {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 66px;
+        justify-content: flex-start;
+    }
+
     .row {
         display: flex;
         align-items: center;
         gap: 12px;
+        min-height: 28px;
     }
     
-    .label-row {
-        margin-bottom: -5px;
-        font-weight: 500;
-        color: #666;
-    }
-
     .row-icon {
         display: flex;
         align-items: center;
@@ -228,6 +274,8 @@
         background: #f0f0f0;
         padding: 2px;
         border-radius: 4px;
+        height: 28px;
+        box-sizing: border-box;
     }
 
     .icon-group button {
@@ -241,7 +289,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 28px;
+        height: 100%;
         width: 36px;
     }
 
@@ -253,11 +301,6 @@
         background: white;
         color: #1677ff;
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    .icon-group.disabled {
-        opacity: 0.6;
-        pointer-events: none;
     }
     
     .icon-group button:disabled {
@@ -296,44 +339,57 @@
     .main { font-weight: 500; color: #333; font-size: 12px; }
     .sub { font-size: 10px; color: #999; margin-left: 8px; }
 
-    .switch-row {
-        justify-content: space-between;
-        margin-bottom: 2px;
-    }
-    
-    .switch-row.disabled {
-        opacity: 0.5;
-    }
-    
-    .switch-label {
-        font-weight: 600;
-        font-size: 13px;
-        color: #333;
-    }
-
-    .ref-control {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: -2px;
-        margin-bottom: 6px;
-        padding-left: 2px;
-    }
     .ref-label {
         font-size: 11px;
         color: #888;
     }
+    .ref-selector {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
+    }
+    .ref-input {
+        width: 44px;
+        height: 28px;
+        padding: 0 4px;
+        border: 1px solid #d9d9d9;
+        border-radius: 3px;
+        font-size: 12px;
+        text-align: center;
+        color: #333;
+        background: white;
+        box-sizing: border-box;
+    }
+    .ref-input:focus {
+        border-color: #409eff;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+    }
+    /* Hide spin buttons */
+    .ref-input::-webkit-outer-spin-button,
+    .ref-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .ref-input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    
     .ref-toggle-group {
         display: flex;
         gap: 2px;
         background: #f0f0f0;
         padding: 2px;
         border-radius: 4px;
+        height: 28px;
+        box-sizing: border-box;
     }
     .toggle-btn {
         background: transparent;
         border: none;
-        padding: 2px 6px;
+        padding: 0 8px; /* Adjusted horizontal padding */
         border-radius: 3px;
         cursor: pointer;
         color: #666;
@@ -341,6 +397,7 @@
         align-items: center;
         justify-content: center;
         transition: all 0.2s;
+        height: 100%; /* Fill parent */
     }
     .toggle-btn:hover {
         background: rgba(0,0,0,0.05);
@@ -349,11 +406,5 @@
         background: white;
         color: #1677ff;
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    .divider {
-        height: 1px;
-        background-color: #eee;
-        margin: 8px 0 4px 0;
     }
 </style>
