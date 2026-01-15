@@ -30,6 +30,84 @@
 
     const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
     const offsetContext = getContext<{ show: boolean }>('offsetContext');
+    const dragContext = getContext<{ 
+        draggedNodeId: string | null, 
+        setDraggedNodeId: (id: string | null) => void,
+        move: (draggedId: string, targetId: string, pos: 'before' | 'after' | 'inside') => void
+    }>('dragContext');
+
+    // Drag & Drop State
+    let dropPosition = $state<'before' | 'after' | 'inside' | null>(null);
+    let isDragging = $state(false);
+    let expandTimer: number | undefined;
+
+    function handleDragStart(e: DragEvent) {
+        e.stopPropagation();
+        if (isEditingTitle || isEditingPage) {
+            e.preventDefault();
+            return;
+        }
+        dragContext.setDraggedNodeId(bookmark.id);
+        isDragging = true;
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', bookmark.id);
+        }
+    }
+
+    function handleDragEnd() {
+        dragContext.setDraggedNodeId(null);
+        isDragging = false;
+        dropPosition = null;
+        clearTimeout(expandTimer);
+    }
+
+    function handleDragOver(e: DragEvent) {
+        e.preventDefault(); // Allow dropping
+        e.stopPropagation();
+
+        if (!dragContext.draggedNodeId || dragContext.draggedNodeId === bookmark.id) {
+             return;
+        }
+        
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const h = rect.height;
+        
+        let newDropPosition: 'before' | 'after' | 'inside';
+
+        // Thresholds for before/inside/after
+        if (y < h * 0.25) newDropPosition = 'before';
+        else if (y > h * 0.75) newDropPosition = 'after';
+        else newDropPosition = 'inside';
+
+        if (dropPosition !== newDropPosition) {
+            dropPosition = newDropPosition;
+            clearTimeout(expandTimer); // Reset timer on position change
+            
+            if (newDropPosition === 'inside' && !bookmark.expanded && bookmark.children.length > 0) {
+                 expandTimer = setTimeout(() => {
+                     bookmark.expanded = true;
+                 }, 600); // Expand after 600ms hover
+            }
+        }
+    }
+
+    function handleDragLeave() {
+        dropPosition = null;
+        clearTimeout(expandTimer);
+    }
+
+    function handleDrop(e: DragEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const draggedId = dragContext.draggedNodeId;
+        if (draggedId && draggedId !== bookmark.id && dropPosition) {
+             dragContext.move(draggedId, bookmark.id, dropPosition);
+        }
+        dropPosition = null;
+    }
 
     async function editTitle() {
         isEditingTitle = true;
@@ -113,7 +191,22 @@
 </script>
 
 <div class="node-container" style="--level: {bookmark.level}">
-    <div class="flex items-center border-b border-transparent hover:bg-[#f5f5f5] transition-colors py-1 min-h-[28px]">
+    <div 
+        class="flex items-center border-b border-transparent transition-colors py-1 min-h-[28px]
+            {dropPosition === 'inside' ? '!bg-[#e6f7ff]' : 'hover:bg-[#f5f5f5]'}
+            {dropPosition === 'before' ? '!border-t-2 !border-t-[#409eff]' : ''}
+            {dropPosition === 'after' ? '!border-b-2 !border-b-[#409eff]' : ''}
+            {isDragging ? 'opacity-50' : ''}"
+        draggable="true"
+        ondragstart={handleDragStart}
+        ondragend={handleDragEnd}
+        ondragover={handleDragOver}
+        ondragleave={handleDragLeave}
+        ondrop={handleDrop}
+        role="treeitem"
+        aria-selected="false"
+        tabindex="-1"
+    >
         <!-- Title Cell -->
         <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * 24 + 4}px;">
             <button 

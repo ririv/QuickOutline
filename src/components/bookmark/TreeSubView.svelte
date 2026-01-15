@@ -5,12 +5,25 @@
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
+    import { moveNode } from '@/lib/utils/treeUtils';
     import PreviewPopup from '../PreviewPopup.svelte';
     import offsetIconRaw from '@/assets/icons/offset.svg?raw';
     import Icon from '../Icon.svelte';
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
+    
+    // Drag & Drop State
+    let draggedNodeId = $state<string | null>(null);
+
+    setContext('dragContext', {
+        get draggedNodeId() { return draggedNodeId; },
+        setDraggedNodeId: (id: string | null) => draggedNodeId = id,
+        move: (draggedId: string, targetId: string, position: 'before' | 'after' | 'inside') => {
+            moveNode(bookmarks, draggedId, targetId, position);
+            bookmarks = [...bookmarks]; // Trigger update
+        }
+    });
     
     // Preview State
     let hoveredPage = $state<{src: string, y: number, x: number} | null>(null);
