@@ -50,6 +50,7 @@
   let g1Expanded = $state(true);
   let g2Expanded = $state(true);
   let g3Expanded = $state(true);
+  let g4Expanded = $state(true);
 
   let barElement: HTMLElement;
   
@@ -232,7 +233,7 @@
     {@render toggleArrow(g2Expanded)}
   </div>
 
-  <!-- Group 3: HF / Numbering -->
+  <!-- Group 3: HF -->
   <!-- Content -->
   <div class="status-group-wrapper" class:collapsed={!g3Expanded}>
       <div class="status-group-inner">
@@ -266,7 +267,24 @@
                   <HeaderFooterPopup bind:layout={hfLayout} onchange={onParamChange} triggerEl={hfBtnEl} />
               {/if}
           </div>
+      </div>
+  </div>
 
+  <!-- Toggle Handle -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="divider toggle-divider" 
+    class:collapsed={!g3Expanded}
+    onclick={() => g3Expanded = !g3Expanded}
+    title={g3Expanded ? "Collapse Header/Footer" : "Expand Header/Footer"}
+  >
+    {@render toggleArrow(g3Expanded)}
+  </div>
+
+  <!-- Group 4: Numbering -->
+  <!-- Content -->
+  <div class="status-group-wrapper" class:collapsed={!g4Expanded}>
+      <div class="status-group-inner">
             <div class="status-item-wrapper">
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -296,11 +314,11 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="divider toggle-divider" 
-    class:collapsed={!g3Expanded}
-    onclick={() => g3Expanded = !g3Expanded}
-    title={g3Expanded ? "Collapse Header/Footer" : "Expand Header/Footer"}
+    class:collapsed={!g4Expanded}
+    onclick={() => g4Expanded = !g4Expanded}
+    title={g4Expanded ? "Collapse Numbering" : "Expand Numbering"}
   >
-    {@render toggleArrow(g3Expanded)}
+    {@render toggleArrow(g4Expanded)}
   </div>
 
   <div class="spacer"></div>
