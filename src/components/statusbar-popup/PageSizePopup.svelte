@@ -107,52 +107,44 @@
         {#if autoDetect && detection?.suggestedLayout && mode === 'edit'}
             <!-- Auto Mode Area -->
             <div class="mode-content">
-                <div class="row">
-                    <div class="ref-selector">
-                        <span class="ref-label">Ref: Page</span>
-                        <input 
-                            type="number" 
-                            class="ref-input"
-                            value={detection.referencePage}
-                            onchange={(e) => detection.onReferenceChange?.(parseInt(e.currentTarget.value))}
-                            min="1"
-                            max={detection.pageCount}
-                        />
-                    </div>
+                <div class="neighbor-grid">
+                    {#if detection.options.above}
+                        <button 
+                            class="neighbor-btn" 
+                            class:active={detection.referencePage === detection.options.above}
+                            onclick={() => detection.onReferenceChange?.(detection.options.above!)}
+                        >
+                            <span class="n-label">Previous</span>
+                            <span class="n-pg">P{detection.options.above}</span>
+                        </button>
+                    {:else}
+                         <div class="neighbor-placeholder">Start</div>
+                    {/if}
+
+                    {#if detection.options.below}
+                        <button 
+                            class="neighbor-btn" 
+                            class:active={detection.referencePage === detection.options.below}
+                            onclick={() => detection.onReferenceChange?.(detection.options.below!)}
+                        >
+                            <span class="n-label">Following</span>
+                            <span class="n-pg">P{detection.options.below}</span>
+                        </button>
+                    {:else}
+                         <div class="neighbor-placeholder">End</div>
+                    {/if}
                 </div>
-                
-                <div class="row">
-                    <div class="ref-toggle-group">
-                        {#if detection.options.above}
-                            <button 
-                                class="toggle-btn" 
-                                class:active={detection.referencePage === detection.options.above}
-                                onclick={() => detection.onReferenceChange?.(detection.options.above!)}
-                                title="Same as Preceding Page ({detection.options.above})"
-                            >
-                                <Icon name="arrow-up" width="12" height="12" />
-                            </button>
-                        {/if}
-                        {#if detection.options.below}
-                            <button 
-                                class="toggle-btn" 
-                                class:active={detection.referencePage === detection.options.below}
-                                onclick={() => detection.onReferenceChange?.(detection.options.below!)}
-                                title="Same as Following Page ({detection.options.below})"
-                            >
-                                <Icon name="arrow-down" width="12" height="12" />
-                            </button>
-                        {/if}
-                    </div>
-                    <span class="ref-hint">
-                        {#if detection.referencePage === detection.options.above}
-                            Preceding (Page {detection.options.above})
-                        {:else if detection.referencePage === detection.options.below}
-                            Following (Page {detection.options.below})
-                        {:else}
-                            Page {detection.referencePage}
-                        {/if}
-                    </span>
+
+                <div class="manual-ref-row">
+                    <span class="ref-label">Or specific page:</span>
+                    <input 
+                        type="number" 
+                        class="ref-input"
+                        value={detection.referencePage}
+                        onchange={(e) => detection.onReferenceChange?.(parseInt(e.currentTarget.value))}
+                        min="1"
+                        max={detection.pageCount}
+                    />
                 </div>
             </div>
         {:else}
@@ -260,6 +252,7 @@
         justify-content: flex-start;
     }
 
+    /* Manual Mode & Common Styles */
     .row {
         display: flex;
         align-items: center;
@@ -267,6 +260,68 @@
         min-height: 28px;
     }
     
+    /* New Auto Mode Styles */
+    .neighbor-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 0; /* Removed margin */
+    }
+    
+    .neighbor-btn, .neighbor-placeholder {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 8px;
+        border-radius: 4px;
+        border: 1px solid #e1e4e8;
+        background: #fafafa;
+        cursor: pointer;
+        transition: all 0.2s;
+        height: 32px;
+    }
+    .neighbor-placeholder {
+        background: #f5f5f5;
+        border: 1px dashed #ddd;
+        color: #bbb;
+        font-size: 11px;
+        cursor: default;
+    }
+
+    .neighbor-btn:hover {
+        background: white;
+        border-color: #4096ff;
+        color: #4096ff;
+    }
+
+    .neighbor-btn.active {
+        background: #e6f4ff;
+        border-color: #1677ff;
+        color: #1677ff;
+    }
+
+    .n-label {
+        font-size: 11px;
+        opacity: 0.7;
+        letter-spacing: 0.2px;
+    }
+    .n-pg {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .manual-ref-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0; /* Removed margin */
+        padding: 0 2px;
+        height: 24px; /* Fixed height */
+    }
+    /* End New Styles */
+
     .row-icon {
         display: flex;
         align-items: center;
@@ -352,15 +407,9 @@
         font-size: 11px;
         color: #888;
     }
-    .ref-selector {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex: 1;
-    }
     .ref-input {
         width: 44px;
-        height: 28px;
+        height: 24px;
         padding: 0 4px;
         border: 1px solid #d9d9d9;
         border-radius: 3px;
@@ -384,41 +433,5 @@
     .ref-input[type=number] {
       -moz-appearance: textfield;
       appearance: textfield;
-    }
-    
-    .ref-toggle-group {
-        display: flex;
-        gap: 2px;
-        background: #f0f0f0;
-        padding: 2px;
-        border-radius: 4px;
-        height: 28px;
-        box-sizing: border-box;
-    }
-    .ref-hint {
-        font-size: 11px;
-        color: #888;
-        white-space: nowrap;
-    }
-    .toggle-btn {
-        background: transparent;
-        border: none;
-        padding: 0 8px; /* Adjusted horizontal padding */
-        border-radius: 3px;
-        cursor: pointer;
-        color: #666;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        height: 100%; /* Fill parent */
-    }
-    .toggle-btn:hover {
-        background: rgba(0,0,0,0.05);
-    }
-    .toggle-btn.active {
-        background: white;
-        color: #1677ff;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 </style>
