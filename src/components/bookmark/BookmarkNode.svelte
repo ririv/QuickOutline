@@ -32,14 +32,27 @@
     const offsetContext = getContext<{ show: boolean }>('offsetContext');
     const dragContext = getContext<{ 
         draggedNodeId: string | null, 
+        dropTargetId: string | null,
+        dropPosition: 'before' | 'after' | 'inside' | null,
         setDraggedNodeId: (id: string | null) => void,
         move: (draggedId: string, targetId: string, pos: 'before' | 'after' | 'inside') => void
     }>('dragContext');
 
     // Drag & Drop State
-    let dropPosition = $state<'before' | 'after' | 'inside' | null>(null);
-    let isDragging = $state(false);
+    let isDragging = $derived(dragContext.draggedNodeId === bookmark.id);
+    let activeDropPosition = $derived(dragContext.dropTargetId === bookmark.id ? dragContext.dropPosition : null);
     let expandTimer: number | undefined;
+
+    // Auto-expand logic on hover
+    $effect(() => {
+        if (activeDropPosition === 'inside' && !bookmark.expanded && bookmark.children.length > 0) {
+            expandTimer = setTimeout(() => {
+                bookmark.expanded = true;
+            }, 600);
+        } else {
+            clearTimeout(expandTimer);
+        }
+    });
 
     function handleDragStart(e: DragEvent) {
         e.stopPropagation();
@@ -48,65 +61,25 @@
             return;
         }
         dragContext.setDraggedNodeId(bookmark.id);
-        isDragging = true;
         if (e.dataTransfer) {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', bookmark.id);
-        }
-    }
-
-    function handleDragEnd() {
-        dragContext.setDraggedNodeId(null);
-        isDragging = false;
-        dropPosition = null;
-        clearTimeout(expandTimer);
-    }
-
-    function handleDragOver(e: DragEvent) {
-        e.preventDefault(); // Allow dropping
-        e.stopPropagation();
-
-        if (!dragContext.draggedNodeId || dragContext.draggedNodeId === bookmark.id) {
-             return;
-        }
-        
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        const y = e.clientY - rect.top;
-        const h = rect.height;
-        
-        let newDropPosition: 'before' | 'after' | 'inside';
-
-        // Thresholds for before/inside/after
-        if (y < h * 0.25) newDropPosition = 'before';
-        else if (y > h * 0.75) newDropPosition = 'after';
-        else newDropPosition = 'inside';
-
-        if (dropPosition !== newDropPosition) {
-            dropPosition = newDropPosition;
-            clearTimeout(expandTimer); // Reset timer on position change
             
-            if (newDropPosition === 'inside' && !bookmark.expanded && bookmark.children.length > 0) {
-                 expandTimer = setTimeout(() => {
-                     bookmark.expanded = true;
-                 }, 600); // Expand after 600ms hover
-            }
+            // Create a transparent drag image
+            const img = new Image();
+            img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            e.dataTransfer.setDragImage(img, 0, 0);
         }
     }
 
-    function handleDragLeave() {
-        dropPosition = null;
-        clearTimeout(expandTimer);
-    }
-
-    function handleDrop(e: DragEvent) {
-        e.preventDefault();
-        e.stopPropagation();
+    function handleDragEnd(e: DragEvent) {
+        // Execute move if we have a valid target (Fallback for Tauri internal drops)
+        // In Tauri, tauri://drag-drop might not fire for internal elements, but drag-over does update the state.
+        if (dragContext.dropTargetId && dragContext.dropPosition) {
+             dragContext.move(bookmark.id, dragContext.dropTargetId, dragContext.dropPosition);
+        }
         
-        const draggedId = dragContext.draggedNodeId;
-        if (draggedId && draggedId !== bookmark.id && dropPosition) {
-             dragContext.move(draggedId, bookmark.id, dropPosition);
-        }
-        dropPosition = null;
+        dragContext.setDraggedNodeId(null);
     }
 
     async function editTitle() {
@@ -192,17 +165,15 @@
 
 <div class="node-container" style="--level: {bookmark.level}">
     <div 
-        class="flex items-center border-b border-transparent transition-colors py-1 min-h-[28px]
-            {dropPosition === 'inside' ? '!bg-[#e6f7ff]' : 'hover:bg-[#f5f5f5]'}
-            {dropPosition === 'before' ? '!border-t-2 !border-t-[#409eff]' : ''}
-            {dropPosition === 'after' ? '!border-b-2 !border-b-[#409eff]' : ''}
+        class="flex items-center border-b border-transparent transition-colors py-1 min-h-[28px] node-row
+            {activeDropPosition === 'inside' ? '!bg-[#e6f7ff]' : 'hover:bg-[#f5f5f5]'}
+            {activeDropPosition === 'before' ? '!border-t-2 !border-t-[#409eff]' : ''}
+            {activeDropPosition === 'after' ? '!border-b-2 !border-b-[#409eff]' : ''}
             {isDragging ? 'opacity-50' : ''}"
         draggable="true"
+        data-id={bookmark.id}
         ondragstart={handleDragStart}
         ondragend={handleDragEnd}
-        ondragover={handleDragOver}
-        ondragleave={handleDragLeave}
-        ondrop={handleDrop}
         role="treeitem"
         aria-selected="false"
         tabindex="-1"

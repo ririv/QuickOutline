@@ -9,21 +9,200 @@
     import PreviewPopup from '../PreviewPopup.svelte';
     import offsetIconRaw from '@/assets/icons/offset.svg?raw';
     import Icon from '../Icon.svelte';
+    import { listen } from '@tauri-apps/api/event';
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
     
     // Drag & Drop State
     let draggedNodeId = $state<string | null>(null);
+    let dropTargetId = $state<string | null>(null);
+    let dropPosition = $state<'before' | 'after' | 'inside' | null>(null);
+    let unlistenFns: (() => void)[] = [];
 
     setContext('dragContext', {
         get draggedNodeId() { return draggedNodeId; },
-        setDraggedNodeId: (id: string | null) => draggedNodeId = id,
+        get dropTargetId() { return dropTargetId; },
+        get dropPosition() { return dropPosition; },
+        setDraggedNodeId: (id: string | null) => {
+            draggedNodeId = id;
+            if (!id) {
+                dropTargetId = null;
+                dropPosition = null;
+            }
+        },
         move: (draggedId: string, targetId: string, position: 'before' | 'after' | 'inside') => {
             moveNode(bookmarks, draggedId, targetId, position);
             bookmarks = [...bookmarks]; // Trigger update
         }
     });
+
+    onMount(async () => {
+        // Initialize bookmarks from store
+        bookmarks = bookmarkStore.tree;
+
+        // Tauri Drag & Drop Strategy
+        try {
+            // @ts-ignore
+            const isTauri = !!(window.__TAURI_INTERNALS__ || window.__TAURI__);
+            if (isTauri) {
+                // 1. Drag Over - Update Visual Feedback
+                 unlistenFns.push(await listen<{ position: { x: number, y: number } }>('tauri://drag-over', (e) => {
+                     if (!draggedNodeId) return;
+
+                     const { position } = e.payload;
+                     // LOGS CONFIRMED: Tauri v2 internal drag coordinates match DOM coordinates directly.
+                     // No need to divide by devicePixelRatio.
+                     const logicalX = position.x;
+                     const logicalY = position.y;
+                     
+                     const element = document.elementFromPoint(logicalX, logicalY);
+                     const nodeElement = element?.closest('.node-row') as HTMLElement;
+                     
+                     if (nodeElement) {
+                         const id = nodeElement.dataset.id;
+                         if (id && id !== draggedNodeId) {
+                             const rect = nodeElement.getBoundingClientRect();
+                             const y = logicalY - rect.top;
+                             const h = rect.height;
+                             
+                             dropTargetId = id;
+                             if (y < h * 0.25) dropPosition = 'before';
+                             else if (y > h * 0.75) dropPosition = 'after';
+                             else dropPosition = 'inside';
+                             return;
+                         }
+                     }
+                     
+                     // If not over a valid target, clear state
+                     dropTargetId = null;
+                     dropPosition = null;
+                 }));
+
+                 // 2. Drag Drop - Execute Move
+                 unlistenFns.push(await listen<{ position: { x: number, y: number } }>('tauri://drag-drop', (e) => {
+                     if (!draggedNodeId) return;
+                     
+                     const { position } = e.payload;
+                     const logicalX = position.x;
+                     const logicalY = position.y;
+
+                     const element = document.elementFromPoint(logicalX, logicalY);
+                     const nodeElement = element?.closest('.node-row') as HTMLElement;
+
+                     if (nodeElement) {
+                         const targetId = nodeElement.dataset.id;
+                         if (targetId && targetId !== draggedNodeId) {
+                             const rect = nodeElement.getBoundingClientRect();
+                             const y = logicalY - rect.top;
+                             const h = rect.height;
+                             
+                             let pos: 'before' | 'after' | 'inside';
+                             if (y < h * 0.25) pos = 'before';
+                             else if (y > h * 0.75) pos = 'after';
+                             else pos = 'inside';
+                             
+                             moveNode(bookmarks, draggedNodeId, targetId, pos);
+                             bookmarks = [...bookmarks];
+                         }
+                     }
+                     
+                     // Reset
+                     draggedNodeId = null;
+                     dropTargetId = null;
+                     dropPosition = null;
+                 }));
+
+                 // 2. Drag Drop - Execute Move
+                 unlistenFns.push(await listen<{ position: { x: number, y: number } }>('tauri://drag-drop', (e) => {
+                     if (!draggedNodeId) return;
+                     
+                     // Re-calculate target at drop time to be safe (stateless-ish)
+                     const { position } = e.payload;
+                     const scaleFactor = window.devicePixelRatio || 1;
+                     const logicalX = position.x / scaleFactor;
+                     const logicalY = position.y / scaleFactor;
+
+                     const element = document.elementFromPoint(logicalX, logicalY);
+                     const nodeElement = element?.closest('.node-row') as HTMLElement;
+
+                     if (nodeElement) {
+                         const targetId = nodeElement.dataset.id;
+                         if (targetId && targetId !== draggedNodeId) {
+                             const rect = nodeElement.getBoundingClientRect();
+                             const y = logicalY - rect.top;
+                             const h = rect.height;
+                             
+                             let pos: 'before' | 'after' | 'inside';
+                             if (y < h * 0.25) pos = 'before';
+                             else if (y > h * 0.75) pos = 'after';
+                             else pos = 'inside';
+                             
+                             moveNode(bookmarks, draggedNodeId, targetId, pos);
+                             bookmarks = [...bookmarks];
+                         }
+                     }
+                     
+                     // Reset
+                     draggedNodeId = null;
+                     dropTargetId = null;
+                     dropPosition = null;
+                 }));
+
+                 // 3. Cancel/Leave
+                 unlistenFns.push(await listen('tauri://drag-leave', () => {
+                     dropTargetId = null;
+                     dropPosition = null;
+                 }));
+            }
+        } catch (e) {
+            console.warn("Tauri event listen failed", e);
+        }
+    });
+
+    onDestroy(() => {
+        clearTimeout(debounceTimer); // Clear any pending debounced calls
+        unlistenFns.forEach(fn => fn());
+    });
+
+    function handleDragOver(e: DragEvent) {
+        if (!draggedNodeId) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Hit testing using coordinates (FileHeader strategy)
+        const element = document.elementFromPoint(e.clientX, e.clientY);
+        const nodeElement = element?.closest('.node-row') as HTMLElement;
+        
+        if (nodeElement) {
+            const id = nodeElement.dataset.id;
+            if (id && id !== draggedNodeId) {
+                const rect = nodeElement.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                const h = rect.height;
+                
+                dropTargetId = id;
+                if (y < h * 0.25) dropPosition = 'before';
+                else if (y > h * 0.75) dropPosition = 'after';
+                else dropPosition = 'inside';
+                return;
+            }
+        }
+        
+        dropTargetId = null;
+        dropPosition = null;
+    }
+
+    function handleDrop(e: DragEvent) {
+        e.preventDefault();
+        if (draggedNodeId && dropTargetId && dropPosition) {
+            moveNode(bookmarks, draggedNodeId, dropTargetId, dropPosition);
+            bookmarks = [...bookmarks];
+        }
+        draggedNodeId = null;
+        dropTargetId = null;
+        dropPosition = null;
+    }
     
     // Preview State
     let hoveredPage = $state<{src: string, y: number, x: number} | null>(null);
@@ -163,7 +342,11 @@
                 </button>
         </div>
     </div>
-    <div class="tree-body">
+    <div class="tree-body" 
+         ondragover={handleDragOver}
+         ondrop={handleDrop}
+         role="tree"
+         tabindex="0">
         {#each bookmarks as bookmark (bookmark.id)}
             <BookmarkNode {bookmark} />
         {/each}
