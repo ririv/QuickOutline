@@ -144,6 +144,15 @@
                             </button>
                         {/if}
                     </div>
+                    <span class="ref-hint">
+                        {#if detection.referencePage === detection.options.above}
+                            Preceding (Page {detection.options.above})
+                        {:else if detection.referencePage === detection.options.below}
+                            Following (Page {detection.options.below})
+                        {:else}
+                            Page {detection.referencePage}
+                        {/if}
+                    </span>
                 </div>
             </div>
         {:else}
@@ -385,6 +394,11 @@
         border-radius: 4px;
         height: 28px;
         box-sizing: border-box;
+    }
+    .ref-hint {
+        font-size: 11px;
+        color: #888;
+        white-space: nowrap;
     }
     .toggle-btn {
         background: transparent;
