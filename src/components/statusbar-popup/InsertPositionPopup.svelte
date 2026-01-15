@@ -30,7 +30,7 @@
   <!-- svelte-ignore a11y_label_has_associated_control -->
   <label>Insert Position</label>
   <StyledInput type="number" bind:value={insertPos} numericType="unsigned-integer" {onchange} />
-  <div class="hint">Page number to insert at.</div>
+  <div class="hint">Insert before this page.</div>
   
   {#if showAutoCorrect}
     <div class="divider"></div>
@@ -39,7 +39,7 @@
         <span>Auto-correct Page Numbers</span>
         <StyledSwitch bind:checked={autoCorrect} {onchange} size="small" />
     </div>
-    <div class="hint">Automatically adjust page numbers based on TOC length.</div>
+    <div class="hint">Adjust references for insertion.</div>
   {/if}
 </ArrowPopup>
 
