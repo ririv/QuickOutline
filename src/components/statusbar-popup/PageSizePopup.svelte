@@ -1,23 +1,23 @@
 <script lang="ts">
-    import type { PageLayout } from '@/lib/types/page';
-    import { PAGE_SIZE_OPTIONS } from '@/lib/types/page';
-    import type { LayoutDetectionState } from '@/lib/pdf-processing/usePdfLayoutDetection.svelte';
+    import type { PageSize } from '@/lib/types/page';
+    import { PAPER_FORMAT_OPTIONS } from '@/lib/types/page';
+    import type { PageSizeDetectionState } from '@/lib/pdf-processing/usePdfPageSizeDetection.svelte';
     import ArrowPopup from '../controls/ArrowPopup.svelte';
     import StyledSelect from '../controls/StyledSelect.svelte';
     import StyledSwitch from '../controls/StyledSwitch.svelte';
     import Icon from '../Icon.svelte';
 
     interface Props {
-        layout: PageLayout;
+        pageSize: PageSize;
         triggerEl?: HTMLElement;
         onchange?: () => void;
         mode?: 'new' | 'edit';
         autoDetect?: boolean;
-        detection?: LayoutDetectionState;
+        detection?: PageSizeDetectionState;
     }
 
     let { 
-        layout = $bindable(), 
+        pageSize = $bindable(), 
         triggerEl, 
         onchange,
         mode = 'edit',
@@ -25,7 +25,7 @@
         detection
     }: Props = $props();
 
-    const sizeOptions = [...PAGE_SIZE_OPTIONS];
+    const sizeOptions = [...PAPER_FORMAT_OPTIONS];
 
     let currentDimensions = $derived.by(() => {
         const format = (num: number) => {
@@ -40,9 +40,9 @@
             w = detection.actualDimensions.width;
             h = detection.actualDimensions.height;
         } else {
-            const opt = sizeOptions.find(o => o.value === layout.size);
+            const opt = sizeOptions.find(o => o.value === pageSize.size);
             if (!opt) return '';
-            if (layout.orientation === 'landscape') {
+            if (pageSize.orientation === 'landscape') {
                 w = opt.h;
                 h = opt.w;
             } else {
@@ -71,25 +71,21 @@
     }
 
     $effect(() => {
-        if (autoDetect && detection?.suggestedLayout && mode === 'edit') {
-            const suggested = detection.suggestedLayout;
+        if (autoDetect && detection?.suggestedPageSize && mode === 'edit') {
+            const suggested = detection.suggestedPageSize;
             const isSame = 
-                layout.size === suggested.size &&
-                layout.orientation === suggested.orientation &&
-                layout.marginTop === suggested.marginTop &&
-                layout.marginBottom === suggested.marginBottom &&
-                layout.marginLeft === suggested.marginLeft &&
-                layout.marginRight === suggested.marginRight;
+                pageSize.size === suggested.size &&
+                pageSize.orientation === suggested.orientation;
 
             if (!isSame) {
-                layout = { ...suggested };
+                pageSize = { ...suggested };
                 onchange?.();
             }
         }
     });
 
     $effect(() => {
-        if (!detection?.suggestedLayout && autoDetect) {
+        if (!detection?.suggestedPageSize && autoDetect) {
             autoDetect = false;
         }
     });
@@ -100,19 +96,19 @@
         <div class="header-row">
             <span class="title">Page Size</span>
             {#if mode === 'edit'}
-                <div class="auto-switch" class:disabled={!detection?.suggestedLayout}>
+                <div class="auto-switch" class:disabled={!detection?.suggestedPageSize}>
                     <span class="switch-label">Auto</span>
                     <StyledSwitch 
                         bind:checked={autoDetect} 
                         onchange={handleChange} 
                         size="small" 
-                        disabled={!detection?.suggestedLayout}
+                        disabled={!detection?.suggestedPageSize}
                     />
                 </div>
             {/if}
         </div>
 
-        {#if autoDetect && detection?.suggestedLayout && mode === 'edit'}
+        {#if autoDetect && detection?.suggestedPageSize && mode === 'edit'}
             <!-- Auto Mode Area -->
             <div class="mode-content">
                 <div class="neighbor-grid">
@@ -165,12 +161,12 @@
                     <div style="flex: 1;">
                         <StyledSelect 
                             options={sizeOptions} 
-                            bind:value={layout.size} 
+                            bind:value={pageSize.size} 
                             onchange={handleChange}
                             displayKey="label"
                             placement="top"
                         >
-                            {#snippet item(opt: typeof PAGE_SIZE_OPTIONS[number])}
+                            {#snippet item(opt: typeof PAPER_FORMAT_OPTIONS[number])}
                                 <div class="size-option">
                                     <span class="main">{opt.label}</span>
                                     <span class="sub">{opt.detail}</span>
@@ -186,15 +182,15 @@
                     </span>
                     <div class="radio-group icon-group">
                         <button 
-                            class:active={layout.orientation === 'portrait'} 
-                            onclick={() => { layout.orientation = 'portrait'; handleChange(); }}
+                            class:active={pageSize.orientation === 'portrait'} 
+                            onclick={() => { pageSize.orientation = 'portrait'; handleChange(); }}
                             title="Portrait"
                         >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="2" ry="2"></rect></svg>
                         </button>
                         <button 
-                            class:active={layout.orientation === 'landscape'} 
-                            onclick={() => { layout.orientation = 'landscape'; handleChange(); }}
+                            class:active={pageSize.orientation === 'landscape'} 
+                            onclick={() => { pageSize.orientation = 'landscape'; handleChange(); }}
                             title="Landscape"
                         >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2" ry="2"></rect></svg>

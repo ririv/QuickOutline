@@ -1,34 +1,46 @@
 // Standard page sizes with UI details. Note: w and h are in millimeters (mm)
-export const PAGE_SIZE_OPTIONS = [
+export const PAPER_FORMAT_OPTIONS = [
     { label: 'A4', detail: '210×297mm', value: 'A4', w: 210, h: 297 },
     { label: 'A3', detail: '297×420mm', value: 'A3', w: 297, h: 420 },
     { label: 'Letter', detail: '8.5×11"', value: 'Letter', w: 215.9, h: 279.4 },
     { label: 'Legal', detail: '8.5×14"', value: 'Legal', w: 215.9, h: 355.6 }
 ] as const;
 
-export type PageSize = typeof PAGE_SIZE_OPTIONS[number]['value'];
+export type PaperFormat = typeof PAPER_FORMAT_OPTIONS[number]['value'];
 
 // Helper map for quick lookup [width, height]
 export const PAGE_SIZES_MM: Record<string, [number, number]> = Object.fromEntries(
-    PAGE_SIZE_OPTIONS.map(opt => [opt.value, [opt.w, opt.h]])
+    PAPER_FORMAT_OPTIONS.map(opt => [opt.value, [opt.w, opt.h]])
 );
 
-export interface PageLayout {
-    size: PageSize;
+export interface PageMargins {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+}
+
+export interface PageSize {
+    size: PaperFormat;
     orientation: 'portrait' | 'landscape';
-    marginTop: number;
-    marginBottom: number;
-    marginLeft: number;
-    marginRight: number;
+}
+
+export interface PageLayout {
+    pageSize: PageSize;
+    margins: PageMargins;
 }
 
 export const defaultPageLayout: PageLayout = {
-    size: 'A4',
-    orientation: 'portrait',
-    marginTop: 20,
-    marginBottom: 20,
-    marginLeft: 20,
-    marginRight: 20
+    pageSize: {
+        size: 'A4',
+        orientation: 'portrait'
+    },
+    margins: {
+        top: 20,
+        bottom: 20,
+        left: 20,
+        right: 20
+    }
 };
 
 export interface HeaderFooterLayout {

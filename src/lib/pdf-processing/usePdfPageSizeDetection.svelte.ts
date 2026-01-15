@@ -1,9 +1,9 @@
-import { detectPageLayout } from './page-layout';
-import type { PageLayout } from '@/lib/types/page';
+import { detectPageSize } from './page-size';
+import type { PageSize } from '@/lib/types/page';
 import { docStore } from '@/stores/docStore.svelte';
 
-export interface LayoutDetectionState {
-    suggestedLayout: PageLayout | undefined;
+export interface PageSizeDetectionState {
+    suggestedPageSize: PageSize | undefined;
     actualDimensions: { width: number, height: number } | undefined;
     referencePage: number;
     pageCount: number;
@@ -14,8 +14,8 @@ export interface LayoutDetectionState {
     onReferenceChange: (page: number) => void;
 }
 
-export function usePdfLayoutDetection(getPosition: () => number): LayoutDetectionState {
-    let suggestedLayout = $state<PageLayout | undefined>(undefined);
+export function usePdfPageSizeDetection(getPosition: () => number): PageSizeDetectionState {
+    let suggestedPageSize = $state<PageSize | undefined>(undefined);
     let actualDimensions = $state<{ width: number, height: number } | undefined>(undefined);
     let manualRefPage = $state<number | null>(null);
 
@@ -59,9 +59,9 @@ export function usePdfLayoutDetection(getPosition: () => number): LayoutDetectio
         if (pdfDoc && refPage >= 1 && refPage <= docStore.pageCount) {
             let active = true;
             
-            detectPageLayout(pdfDoc, refPage).then(result => {
+            detectPageSize(pdfDoc, refPage).then(result => {
                 if (active && result) {
-                    suggestedLayout = result.layout;
+                    suggestedPageSize = result.pageSize;
                     actualDimensions = { width: result.actualWidth, height: result.actualHeight };
                 }
             });
@@ -70,13 +70,13 @@ export function usePdfLayoutDetection(getPosition: () => number): LayoutDetectio
                 active = false;
             };
         } else {
-            suggestedLayout = undefined;
+            suggestedPageSize = undefined;
             actualDimensions = undefined;
         }
     });
 
     return {
-        get suggestedLayout() { return suggestedLayout },
+        get suggestedPageSize() { return suggestedPageSize },
         get actualDimensions() { return actualDimensions },
         get referencePage() { return info.activePage },
         get pageCount() { return docStore.pageCount },

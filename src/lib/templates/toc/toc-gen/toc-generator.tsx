@@ -92,8 +92,8 @@ export function generateTocHtml(
 
     let pageWidthMm = PAGE_SIZES_MM['A4'][0];
     if (pageLayout) {
-        const size = PAGE_SIZES_MM[pageLayout.size] || PAGE_SIZES_MM['A4'];
-        pageWidthMm = pageLayout.orientation === 'landscape' ? size[1] : size[0];
+        const size = PAGE_SIZES_MM[pageLayout.pageSize.size] || PAGE_SIZES_MM['A4'];
+        pageWidthMm = pageLayout.pageSize.orientation === 'landscape' ? size[1] : size[0];
     }
     const maxWidth = Math.ceil(pageWidthMm * 3.8);
     const dotCount = Math.ceil(maxWidth / dotGap);

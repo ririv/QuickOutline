@@ -1,17 +1,17 @@
 <script lang="ts">
-    import type { PageLayout } from '@/lib/types/page';
+    import type { PageMargins } from '@/lib/types/page';
     import ArrowPopup from '../controls/ArrowPopup.svelte';
 
     interface Props {
-        layout: PageLayout;
+        margins: PageMargins;
         triggerEl?: HTMLElement;
         onchange?: () => void;
     }
 
-    let { layout = $bindable(), triggerEl, onchange }: Props = $props();
+    let { margins = $bindable(), triggerEl, onchange }: Props = $props();
 
-    let linkTB = $state(layout.marginTop === layout.marginBottom);
-    let linkLR = $state(layout.marginLeft === layout.marginRight);
+    let linkTB = $state(margins.top === margins.bottom);
+    let linkLR = $state(margins.left === margins.right);
 
     function handleChange() {
         onchange?.();
@@ -19,12 +19,12 @@
 
     function handleMarginChange(side: 'top' | 'bottom' | 'left' | 'right') {
         if (linkTB) {
-            if (side === 'top') layout.marginBottom = layout.marginTop;
-            if (side === 'bottom') layout.marginTop = layout.marginBottom;
+            if (side === 'top') margins.bottom = margins.top;
+            if (side === 'bottom') margins.top = margins.bottom;
         }
         if (linkLR) {
-            if (side === 'left') layout.marginRight = layout.marginLeft;
-            if (side === 'right') layout.marginLeft = layout.marginRight;
+            if (side === 'left') margins.right = margins.left;
+            if (side === 'right') margins.left = margins.right;
         }
         handleChange();
     }
@@ -32,7 +32,7 @@
     function toggleLinkTB() {
         linkTB = !linkTB;
         if (linkTB) {
-            layout.marginBottom = layout.marginTop;
+            margins.bottom = margins.top;
             handleChange();
         }
     }
@@ -40,7 +40,7 @@
     function toggleLinkLR() {
         linkLR = !linkLR;
         if (linkLR) {
-            layout.marginRight = layout.marginLeft;
+            margins.right = margins.left;
             handleChange();
         }
     }
@@ -61,7 +61,7 @@
                             <path d="M5 4h14" stroke-width="2.5"></path>
                         </svg>
                     </span>
-                    <input type="number" bind:value={layout.marginTop} min="0" oninput={() => handleMarginChange('top')} />
+                    <input type="number" bind:value={margins.top} min="0" oninput={() => handleMarginChange('top')} />
                 </div>
                 <button class="link-btn" class:active={linkTB} onclick={toggleLinkTB} title={linkTB ? "Unlink" : "Link Top & Bottom"}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -79,7 +79,7 @@
                             <path d="M5 20h14" stroke-width="2.5"></path>
                         </svg>
                     </span>
-                    <input type="number" bind:value={layout.marginBottom} min="0" oninput={() => handleMarginChange('bottom')} />
+                    <input type="number" bind:value={margins.bottom} min="0" oninput={() => handleMarginChange('bottom')} />
                 </div>
             </div>
             
@@ -91,7 +91,7 @@
                             <path d="M4 5v14" stroke-width="2.5"></path>
                         </svg>
                     </span>
-                    <input type="number" bind:value={layout.marginLeft} min="0" oninput={() => handleMarginChange('left')} />
+                    <input type="number" bind:value={margins.left} min="0" oninput={() => handleMarginChange('left')} />
                 </div>
                 <button class="link-btn" class:active={linkLR} onclick={toggleLinkLR} title={linkLR ? "Unlink" : "Link Left & Right"}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -109,7 +109,7 @@
                             <path d="M20 5v14" stroke-width="2.5"></path>
                         </svg>
                     </span>
-                    <input type="number" bind:value={layout.marginRight} min="0" oninput={() => handleMarginChange('right')} />
+                    <input type="number" bind:value={margins.right} min="0" oninput={() => handleMarginChange('right')} />
                 </div>
             </div>
         </div>

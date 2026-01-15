@@ -4,12 +4,12 @@ import { css } from '@/lib/utils/tags';
 
 export function generatePageCss(header: any, footer: any, layout?: PageLayout, hfLayout?: HeaderFooterLayout) {
     // Layout values
-    const sizeName = layout?.size || 'A4';
-    const orientation = layout?.orientation || 'portrait';
-    const mt = layout?.marginTop ?? 20;
-    const mb = layout?.marginBottom ?? 20;
-    const ml = layout?.marginLeft ?? 20;
-    const mr = layout?.marginRight ?? 20;
+    const sizeName = layout?.pageSize.size || 'A4';
+    const orientation = layout?.pageSize.orientation || 'portrait';
+    const mt = layout?.margins.top ?? 20;
+    const mb = layout?.margins.bottom ?? 20;
+    const ml = layout?.margins.left ?? 20;
+    const mr = layout?.margins.right ?? 20;
     const headerDist = hfLayout?.headerDist ?? 10;
     const footerDist = hfLayout?.footerDist ?? 10;
     const headerPadding = hfLayout?.headerPadding ?? 1;

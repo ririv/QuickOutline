@@ -12,7 +12,7 @@
   import {PageLabelNumberingStyle, generateRulePreview, type PageLabel} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout, PAGE_SIZES_MM } from "@/lib/types/page";
   import labelSimpleIcon from '@/assets/icons/label-simple.svg?raw';
-  import type { LayoutDetectionState } from '@/lib/pdf-processing/usePdfLayoutDetection.svelte';
+  import type { PageSizeDetectionState } from '@/lib/pdf-processing/usePdfPageSizeDetection.svelte';
 
   export interface InsertionSettings {
     pos: number;
@@ -27,7 +27,7 @@
     pageLayout?: PageLayout;
     hfLayout?: HeaderFooterLayout;
     showOffset?: boolean;
-    layoutDetection?: LayoutDetectionState;
+    layoutDetection?: PageSizeDetectionState;
     mode?: 'new' | 'edit';
     onGenerate?: () => void;
     onParamChange?: () => void;
@@ -81,7 +81,7 @@
 
       let w: number;
       let h: number;
-      let matchedName: string = pageLayout.size;
+      let matchedName: string = pageLayout.pageSize.size;
 
       // In Auto mode, the actual detection might differ from the selected size
       if (pageSizeAutoDetect && layoutDetection?.actualDimensions) {
@@ -98,8 +98,8 @@
           if (matched) matchedName = matched[0] as any;
           else matchedName = '';
       } else {
-          const std = PAGE_SIZES_MM[pageLayout.size];
-          if (pageLayout.orientation === 'landscape') {
+          const std = PAGE_SIZES_MM[pageLayout.pageSize.size];
+          if (pageLayout.pageSize.orientation === 'landscape') {
               w = std[1];
               h = std[0];
           } else {
@@ -119,13 +119,13 @@
   });
 
   let marginSummary = $derived.by(() => {
-      const { marginTop, marginBottom, marginLeft, marginRight } = pageLayout;
+      const { top, bottom, left, right } = pageLayout.margins;
       let marginText = '';
       
-      if (marginTop === marginBottom && marginLeft === marginRight && marginTop === marginLeft) {
-          marginText = `${marginTop}mm`;
-      } else if (marginTop === marginBottom && marginLeft === marginRight) {
-          marginText = `${marginTop}x${marginLeft}mm`;
+      if (top === bottom && left === right && top === left) {
+          marginText = `${top}mm`;
+      } else if (top === bottom && left === right) {
+          marginText = `${top}x${left}mm`;
       } else {
           marginText = '*';
       }
@@ -209,7 +209,7 @@
           {pageSizeSummary.display}
           {#snippet popup(triggerEl)}
               <PageSizePopup 
-                bind:layout={pageLayout} 
+                bind:pageSize={pageLayout.pageSize} 
                 bind:autoDetect={pageSizeAutoDetect}
                 onchange={onPopupChange} 
                 {triggerEl} 
@@ -232,7 +232,7 @@
           {/snippet}
           {marginSummary}
           {#snippet popup(triggerEl)}
-              <PageMarginsPopup bind:layout={pageLayout} onchange={onPopupChange} {triggerEl} />
+              <PageMarginsPopup bind:margins={pageLayout.margins} onchange={onPopupChange} {triggerEl} />
           {/snippet}
       </StatusBarItem>
   </StatusBarGroup>
