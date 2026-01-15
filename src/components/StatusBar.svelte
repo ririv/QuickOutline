@@ -5,9 +5,11 @@
   import PaperSizePopup from './statusbar-popup/PaperSizePopup.svelte';
   import PageMarginsPopup from './statusbar-popup/PageMarginsPopup.svelte';
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
+  import StatusBarGroup from './StatusBarGroup.svelte';
+  import StatusBarItem from './StatusBarItem.svelte';
   import Icon from '@/components/Icon.svelte';
   import { clickOutside } from '@/lib/actions/clickOutside';
-  import {PageLabelNumberingStyle, pageLabelStyleMap, generateRulePreview, type PageLabel} from "@/lib/types/page-label.ts";
+  import {PageLabelNumberingStyle, generateRulePreview, type PageLabel} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout } from "@/lib/types/page";
   import labelSimpleIcon from '@/assets/icons/label-simple.svg?raw';
 
@@ -44,7 +46,8 @@
     onParamChange
   }: Props = $props();
 
-  let activePopup: 'pagenum-offset' | 'insert-pos' | 'page-label' | 'paper-size' | 'page-margins' | 'header-footer' | null = $state(null);
+  type PopupType = 'pagenum-offset' | 'insert-pos' | 'page-label' | 'paper-size' | 'page-margins' | 'header-footer';
+  let activePopup = $state<PopupType | null>(null);
   
   // Group expansion states
   let g1Expanded = $state(true);
@@ -53,16 +56,8 @@
   let g4Expanded = $state(true);
 
   let barElement: HTMLElement;
-  
-  // Trigger elements for popups
-  let offsetBtnEl = $state<HTMLElement | undefined>();
-  let posBtnEl = $state<HTMLElement | undefined>();
-  let PageLabelBtnEl = $state<HTMLElement | undefined>();
-  let sizeBtnEl = $state<HTMLElement | undefined>();
-  let marginBtnEl = $state<HTMLElement | undefined>();
-  let hfBtnEl = $state<HTMLElement | undefined>();
 
-  function togglePopup(type: 'pagenum-offset' | 'insert-pos' | 'page-label' | 'paper-size' | 'page-margins' | 'header-footer') {
+  function togglePopup(type: PopupType) {
       if (activePopup === type) activePopup = null;
       else activePopup = type;
   }
@@ -107,219 +102,135 @@
 </script>
 
 <div class="status-bar" bind:this={barElement} use:clickOutside={() => activePopup = null}>
-  {#snippet toggleArrow(expanded: boolean)}
-    <div class="toggle-arrow">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d={expanded ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}></path>
-        </svg>
-    </div>
-  {/snippet}
 
   {#if showOffset}
-      <!-- Content -->
-      <div class="status-group-wrapper" class:collapsed={!g1Expanded}>
-          <div class="status-group-inner">
-              <div class="status-item-wrapper">
-                  <!-- svelte-ignore a11y_click_events_have_key_events -->
-                  <!-- svelte-ignore a11y_no_static_element_interactions -->
-                  <div 
-                    bind:this={offsetBtnEl}
-                    class="status-item {activePopup === 'pagenum-offset' ? 'active' : ''}"
-                    onclick={() => togglePopup('pagenum-offset')}
-                    title="Set Page Offset"
-                  >
-                      <span class="icon">
-                        <Icon name="offset" width="14" height="14" />
-                      </span> Offset {offset}
-                  </div>
-                  {#if activePopup === 'pagenum-offset'}
-                      <OffsetPopup bind:offset onchange={onParamChange} triggerEl={offsetBtnEl} />
-                  {/if}
-              </div>
-          </div>
-      </div>
-
-      <!-- Toggle Handle -->
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="divider toggle-divider" 
-        class:collapsed={!g1Expanded}
-        onclick={() => g1Expanded = !g1Expanded}
-        title={g1Expanded ? "Collapse Offset" : "Expand Offset"}
-      >
-        {@render toggleArrow(g1Expanded)}
-      </div>
+      <StatusBarGroup bind:expanded={g1Expanded} title="Offset">
+          <StatusBarItem 
+              active={activePopup === 'pagenum-offset'} 
+              title="Set Page Offset"
+              onclick={() => togglePopup('pagenum-offset')}
+          >
+              {#snippet icon()}
+                  <Icon name="offset" width="14" height="14" />
+              {/snippet}
+              Offset {offset}
+              {#snippet popup(triggerEl)}
+                  <OffsetPopup bind:offset onchange={onParamChange} {triggerEl} />
+              {/snippet}
+          </StatusBarItem>
+      </StatusBarGroup>
   {/if}
 
   <!-- Group 2: Pos / Size / Margins -->
-  <!-- Content -->
-  <div class="status-group-wrapper" class:collapsed={!g2Expanded}>
-      <div class="status-group-inner">
-          <div class="status-item-wrapper">
-              <!-- svelte-ignore a11y_click_events_have_key_events -->
-              <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <div
-                bind:this={posBtnEl}
-                class="status-item {activePopup === 'insert-pos' ? 'active' : ''}"
-                onclick={() => togglePopup('insert-pos')}
-                title="Set Insert Position"
-              >
-                  <span class="icon">
-                      <Icon name="insert-position" width="14" height="14" />
-                  </span> Pos {insertion.pos}
-              </div>
-              {#if activePopup === 'insert-pos'}
-                  <InsertPositionPopup 
-                    bind:insertPos={insertion.pos} 
-                    bind:autoCorrect={insertion.autoCorrect} 
-                    showAutoCorrect={insertion.showAutoCorrect} 
-                    triggerEl={posBtnEl} 
-                    onchange={onParamChange}
-                  />
-              {/if}
-          </div>
+  <StatusBarGroup bind:expanded={g2Expanded} title="Page Settings">
+      <StatusBarItem
+          active={activePopup === 'insert-pos'}
+          title="Set Insert Position"
+          onclick={() => togglePopup('insert-pos')}
+      >
+          {#snippet icon()}
+              <Icon name="insert-position" width="14" height="14" />
+          {/snippet}
+          Pos {insertion.pos}
+          {#snippet popup(triggerEl)}
+              <InsertPositionPopup 
+                bind:insertPos={insertion.pos} 
+                bind:autoCorrect={insertion.autoCorrect} 
+                showAutoCorrect={insertion.showAutoCorrect} 
+                {triggerEl} 
+                onchange={onParamChange}
+              />
+          {/snippet}
+      </StatusBarItem>
 
-          <div class="status-item-wrapper">
-              <!-- svelte-ignore a11y_click_events_have_key_events -->
-              <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <div 
-                bind:this={sizeBtnEl}
-                class="status-item {activePopup === 'paper-size' ? 'active' : ''}"
-                onclick={() => togglePopup('paper-size')}
-                title="Paper Size: {pageLayout.size}, {pageLayout.orientation}"
-              >
-                  <span class="icon" class:rotated={pageLayout.orientation === 'landscape'}>
-                      <Icon name="page-setup" width="16" height="16" />
-                  </span>
-                  {pageLayout.size}
+      <StatusBarItem
+          active={activePopup === 'paper-size'}
+          title="Paper Size: {pageLayout.size}, {pageLayout.orientation}"
+          onclick={() => togglePopup('paper-size')}
+      >
+          {#snippet icon()}
+              <!-- svelte-ignore css_unused_selector -->
+              <div class:rotated={pageLayout.orientation === 'landscape'}>
+                  <Icon name="page-setup" width="16" height="16" />
               </div>
-              {#if activePopup === 'paper-size'}
-                  <PaperSizePopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={sizeBtnEl} />
-              {/if}
-          </div>
+          {/snippet}
+          {pageLayout.size}
+          {#snippet popup(triggerEl)}
+              <PaperSizePopup bind:layout={pageLayout} onchange={onPopupChange} {triggerEl} />
+          {/snippet}
+      </StatusBarItem>
 
-          <div class="status-item-wrapper">
-              <!-- svelte-ignore a11y_click_events_have_key_events -->
-              <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <div 
-                bind:this={marginBtnEl}
-                class="status-item {activePopup === 'page-margins' ? 'active' : ''}"
-                onclick={() => togglePopup('page-margins')}
-                title="Margins: {marginSummary}"
-              >
-                  <span class="icon">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="3" y="3" width="18" height="18" rx="1" stroke-opacity="0.2"></rect>
-                          <path d="M7 3v18M17 3v18M3 7h18M3 17h18" stroke-width="1.5" stroke-dasharray="2 2"></path>
-                      </svg>
-                  </span>
-                  {marginSummary}
-              </div>
-              {#if activePopup === 'page-margins'}
-                  <PageMarginsPopup bind:layout={pageLayout} onchange={onPopupChange} triggerEl={marginBtnEl} />
-              {/if}
-          </div>
-      </div>
-  </div>
-
-  <!-- Toggle Handle -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="divider toggle-divider" 
-    class:collapsed={!g2Expanded}
-    onclick={() => g2Expanded = !g2Expanded}
-    title={g2Expanded ? "Collapse Page Settings" : "Expand Page Settings"}
-  >
-    {@render toggleArrow(g2Expanded)}
-  </div>
+      <StatusBarItem
+          active={activePopup === 'page-margins'}
+          title="Margins: {marginSummary}"
+          onclick={() => togglePopup('page-margins')}
+      >
+          {#snippet icon()}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="1" stroke-opacity="0.2"></rect>
+                  <path d="M7 3v18M17 3v18M3 7h18M3 17h18" stroke-width="1.5" stroke-dasharray="2 2"></path>
+              </svg>
+          {/snippet}
+          {marginSummary}
+          {#snippet popup(triggerEl)}
+              <PageMarginsPopup bind:layout={pageLayout} onchange={onPopupChange} {triggerEl} />
+          {/snippet}
+      </StatusBarItem>
+  </StatusBarGroup>
 
   <!-- Group 3: HF -->
-  <!-- Content -->
-  <div class="status-group-wrapper" class:collapsed={!g3Expanded}>
-      <div class="status-group-inner">
-          <div class="status-item-wrapper">
-              <!-- svelte-ignore a11y_click_events_have_key_events -->
-              <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <div 
-                bind:this={hfBtnEl}
-                class="status-item {activePopup === 'header-footer' ? 'active' : ''}" 
-                onclick={() => togglePopup('header-footer')} 
-                title="Header & Footer Position"
-              >
-                  <span class="icon">
-                      <Icon name="header-footer" width="14" height="14" />
-                  </span>
-                  <span class="hf-summary-content">
-                    {#if hfLayoutSummary}
-                        {#if hfLayoutSummary.type === 'both-equal'}
-                            <Icon name="arrow-up-down" width="10" height="10" />{hfLayoutSummary.header}mm
-                        {:else if hfLayoutSummary.type === 'both-diff'}
-                            <Icon name="arrow-up" width="10" height="10" />{hfLayoutSummary.header} <Icon name="arrow-down" width="10" height="10" />{hfLayoutSummary.footer}mm
-                        {:else if hfLayoutSummary.type === 'header-only'}
-                            <Icon name="arrow-up" width="10" height="10" />{hfLayoutSummary.header}mm
-                        {:else if hfLayoutSummary.type === 'footer-only'}
-                            <Icon name="arrow-down" width="10" height="10" />{hfLayoutSummary.footer}mm
-                        {/if}
-                    {/if}
-                  </span>
-              </div>
-              {#if activePopup === 'header-footer'}
-                  <HeaderFooterPopup bind:layout={hfLayout} onchange={onParamChange} triggerEl={hfBtnEl} />
-              {/if}
-          </div>
-      </div>
-  </div>
-
-  <!-- Toggle Handle -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="divider toggle-divider" 
-    class:collapsed={!g3Expanded}
-    onclick={() => g3Expanded = !g3Expanded}
-    title={g3Expanded ? "Collapse Header/Footer" : "Expand Header/Footer"}
-  >
-    {@render toggleArrow(g3Expanded)}
-  </div>
+  <StatusBarGroup bind:expanded={g3Expanded} title="Header/Footer">
+      <StatusBarItem
+          active={activePopup === 'header-footer'}
+          title="Header & Footer Position"
+          onclick={() => togglePopup('header-footer')}
+      >
+          {#snippet icon()}
+              <Icon name="header-footer" width="14" height="14" />
+          {/snippet}
+          
+          <span class="hf-summary-content">
+            {#if hfLayoutSummary}
+                {#if hfLayoutSummary.type === 'both-equal'}
+                    <Icon name="arrow-up-down" width="10" height="10" />{hfLayoutSummary.header}mm
+                {:else if hfLayoutSummary.type === 'both-diff'}
+                    <Icon name="arrow-up" width="10" height="10" />{hfLayoutSummary.header} <Icon name="arrow-down" width="10" height="10" />{hfLayoutSummary.footer}mm
+                {:else if hfLayoutSummary.type === 'header-only'}
+                    <Icon name="arrow-up" width="10" height="10" />{hfLayoutSummary.header}mm
+                {:else if hfLayoutSummary.type === 'footer-only'}
+                    <Icon name="arrow-down" width="10" height="10" />{hfLayoutSummary.footer}mm
+                {/if}
+            {/if}
+          </span>
+          
+          {#snippet popup(triggerEl)}
+              <HeaderFooterPopup bind:layout={hfLayout} onchange={onParamChange} {triggerEl} />
+          {/snippet}
+      </StatusBarItem>
+  </StatusBarGroup>
 
   <!-- Group 4: Numbering -->
-  <!-- Content -->
-  <div class="status-group-wrapper" class:collapsed={!g4Expanded}>
-      <div class="status-group-inner">
-            <div class="status-item-wrapper">
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
-                        bind:this={PageLabelBtnEl}
-                        class="status-item {activePopup === 'page-label' ? 'active' : ''}"
-                        onclick={() => togglePopup('page-label')}
-                        title="Set Numbering Style"
-                >
-              <span class="icon">
-                  <Icon data={labelSimpleIcon} width="14" height="14" />
-              </span>
-              {#if pageLabel.numberingStyle === PageLabelNumberingStyle.NONE && !pageLabel.labelPrefix}
-                  None
-              {:else}
-                  {removeSuffix(generateRulePreview(pageLabel, 1), "...")}
-              {/if}
-                </div>
-                {#if activePopup === 'page-label'}
-                    <PageLabelPopup bind:pageLabel onchange={onPopupChange} triggerEl={PageLabelBtnEl} />
-                {/if}
-            </div>
-      </div>
-  </div>
+  <StatusBarGroup bind:expanded={g4Expanded} title="Numbering">
+      <StatusBarItem
+          active={activePopup === 'page-label'}
+          title="Set Numbering Style"
+          onclick={() => togglePopup('page-label')}
+      >
+          {#snippet icon()}
+              <Icon data={labelSimpleIcon} width="14" height="14" />
+          {/snippet}
 
-  <!-- Toggle Handle -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="divider toggle-divider" 
-    class:collapsed={!g4Expanded}
-    onclick={() => g4Expanded = !g4Expanded}
-    title={g4Expanded ? "Collapse Numbering" : "Expand Numbering"}
-  >
-    {@render toggleArrow(g4Expanded)}
-  </div>
+          {#if pageLabel.numberingStyle === PageLabelNumberingStyle.NONE && !pageLabel.labelPrefix}
+              None
+          {:else}
+              {removeSuffix(generateRulePreview(pageLabel, 1), "...")}
+          {/if}
+          
+          {#snippet popup(triggerEl)}
+              <PageLabelPopup bind:pageLabel onchange={onPopupChange} {triggerEl} />
+          {/snippet}
+      </StatusBarItem>
+  </StatusBarGroup>
 
   <div class="spacer"></div>
   
@@ -340,64 +251,6 @@
       user-select: none;
       color: #555;
       z-index: 20;
-  }
-  
-  .status-item-wrapper {
-      position: relative;
-      height: 100%;
-      display: flex;
-      align-items: stretch;
-  }
-
-  .status-group-wrapper {
-      display: grid;
-      grid-template-columns: 1fr;
-      transition: grid-template-columns 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .status-group-wrapper.collapsed {
-      grid-template-columns: 0fr;
-  }
-
-  .status-group-inner {
-      display: flex;
-      align-items: stretch;
-      overflow: hidden;
-      min-width: 0;
-      /* Ensure content doesn't wrap or jump during transition */
-      white-space: nowrap; 
-  }
-
-  .status-item {
-      padding: 0 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: background-color 0.1s;
-      border-radius: 3px;
-  }
-  
-  .status-item:hover, .status-item.active {
-      background-color: #e1e4e8;
-      color: #333;
-  }
-
-  .icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      opacity: 0.8;
-      transition: transform 0.2s ease;
-      transform-origin: center center;
-      flex-shrink: 0;
-      will-change: transform;
-  }
-
-  .icon.rotated {
-      transform: rotate(90deg);
   }
 
   .spacer { flex: 1; }
@@ -442,72 +295,9 @@
   .hf-summary-content :global(svg) {
       transform: translateY(-1px);
   }
-
-  .divider {
-      width: 1px;
-      background-color: #bbb;
-      margin: 6px 4px;
-      flex-shrink: 0;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-  }
-
-  .toggle-divider {
-      width: 12px;
-      margin: 0 2px;
-      background-color: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
-  }
-
-  .toggle-divider::before {
-      content: '';
-      position: absolute;
-      left: 5.5px;
-      top: 6px;
-      bottom: 6px;
-      width: 1px;
-      background-color: #bbb;
-      transition: all 0.2s;
-  }
-
-  .toggle-divider.collapsed::before {
-      opacity: 0;
-  }
-
-  .toggle-divider:hover::before {
-      background-color: #1677ff;
-      height: 100%;
-      top: 0;
-      bottom: 0;
-      opacity: 1;
-  }
-
-  .toggle-arrow {
-      opacity: 0;
-      color: #bbb;
-      transition: opacity 0.2s, color 0.2s;
-      z-index: 1;
-      background: #f6f7f9;
-      display: flex;
-      padding: 2px 0;
-  }
-
-  .toggle-divider:hover .toggle-arrow {
-      opacity: 1;
-      color: #1677ff;
-  }
-
-  .toggle-divider.collapsed .toggle-arrow {
-      opacity: 1;
-      color: #888;
-  }
   
-  .toggle-divider.collapsed:hover .toggle-arrow {
-      color: #1677ff;
+  /* Support for rotated icon inside snippets */
+  :global(.rotated) {
+      transform: rotate(90deg);
   }
 </style>
