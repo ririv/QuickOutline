@@ -228,6 +228,7 @@
                     <div class="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-3 bg-[#409eff] rounded-full"></div>
                     <input 
                         type="text" 
+                        autocomplete="off"
                         class="w-full outline-none pl-3 pr-1.5 py-0.5 text-sm leading-tight bg-transparent rounded font-normal text-gray-900 font-sans"
                         bind:value={bookmark.title} 
                         bind:this={titleInput}
@@ -253,6 +254,7 @@
                     <div class="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-3 bg-[#409eff] rounded-full"></div>
                     <input 
                         type="text" 
+                        autocomplete="off"
                         class="w-full outline-none px-1.5 py-0.5 text-sm leading-tight text-center rounded-lg font-normal {isOutOfRange ? 'bg-[rgba(255,0,0,0.15)] text-gray-900' : 'bg-transparent text-gray-900'} font-sans border border-transparent"
                         bind:value={bookmark.pageNum}
                         bind:this={pageInput}
