@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { BookmarkUI } from "@/lib/types/bookmark.ts";
     import BookmarkNode from "./BookmarkNode.svelte";
-    import { onMount, onDestroy, setContext, untrack } from 'svelte';
+    import { onMount, onDestroy, setContext, untrack, tick } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
@@ -172,9 +172,13 @@
     }, 500); // 500ms debounce delay
 
 
+    let isUpdatingFromStore = false;
+
     onMount(() => {
         // Initialize bookmarks from store
+        isUpdatingFromStore = true;
         bookmarks = bookmarkStore.tree;
+        tick().then(() => isUpdatingFromStore = false);
     });
 
     onDestroy(() => {
@@ -188,7 +192,9 @@
              // Check for deep equality to avoid unnecessary updates and re-renders if the tree is the same
              // Using JSON stringify is a bit expensive but robust for deep structures
              if (JSON.stringify(storeTree) !== JSON.stringify(bookmarks)) {
+                 isUpdatingFromStore = true;
                  bookmarks = storeTree;
+                 tick().then(() => isUpdatingFromStore = false);
              }
         });
     });
@@ -200,13 +206,13 @@
         const currentBookmarks = bookmarks;
         
         untrack(() => {
-            // Check if store is already same as local to prevent loop
-            const isDifferent = JSON.stringify(bookmarkStore.tree) !== JSON.stringify(currentBookmarks);
-            
-            if (isDifferent) {
-                bookmarkStore.setTree(currentBookmarks); // Keep the store's tree up-to-date with local mutations
-                debouncedSyncTreeWithBackend(currentBookmarks);
-            }
+            if (isUpdatingFromStore) return;
+
+            // Always sync when local changes are detected, assuming they are user interactions.
+            // We skip the JSON comparison against the store because shared references (e.g. from drag & drop mutations)
+            // can make the store and local state appear identical even when a sync is needed.
+            bookmarkStore.setTree(currentBookmarks); // Keep the store's tree up-to-date with local mutations
+            debouncedSyncTreeWithBackend(currentBookmarks);
         });
     });
 </script>
@@ -252,8 +258,8 @@
          ondrop={handleDrop}
          role="tree"
          tabindex="0">
-        {#each bookmarks as bookmark (bookmark.id)}
-            <BookmarkNode {bookmark} />
+        {#each bookmarks as _, i (bookmarks[i].id)}
+            <BookmarkNode bind:bookmark={bookmarks[i]} />
         {/each}
     </div>
     

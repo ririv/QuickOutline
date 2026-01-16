@@ -13,7 +13,7 @@
     interface Props {
         bookmark: BookmarkUI;
     }
-    let { bookmark }: Props = $props();
+    let { bookmark = $bindable() }: Props = $props();
 
     let isEditingTitle = $state(false);
     let isEditingPage = $state(false);
@@ -275,8 +275,8 @@
 
     {#if bookmark.expanded && bookmark.children.length > 0}
         <div>
-            {#each bookmark.children as child (child.id)}
-                <BookmarkNode bookmark={child} />
+            {#each bookmark.children as _, i (bookmark.children[i].id)}
+                <BookmarkNode bind:bookmark={bookmark.children[i]} />
             {/each}
         </div>
     {/if}
