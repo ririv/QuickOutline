@@ -66,10 +66,32 @@
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', bookmark.id);
             
-            // Create a transparent drag image
-            const img = new Image();
-            img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-            e.dataTransfer.setDragImage(img, 0, 0);
+            // Create a custom drag preview
+            const dragPreview = document.createElement('div');
+            dragPreview.textContent = bookmark.title || 'Untitled';
+            dragPreview.setAttribute('style', `
+                position: absolute; 
+                top: -1000px; 
+                left: -1000px;
+                padding: 6px 12px;
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                font-size: 14px;
+                font-family: sans-serif;
+                font-weight: 500;
+                color: #374151;
+                width: max-content;
+                max-width: 300px;
+                z-index: 9999;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            `);
+            document.body.appendChild(dragPreview);
+            e.dataTransfer.setDragImage(dragPreview, 0, 0);
+            setTimeout(() => document.body.removeChild(dragPreview), 0);
         }
     }
 
