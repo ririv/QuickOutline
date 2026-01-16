@@ -188,16 +188,25 @@
 
 <div class="node-container" style="--level: {bookmark.level}">
     <div 
-        class="flex items-center border-b border-transparent transition-colors py-1 min-h-[28px] node-row group
+        class="flex items-center border-b border-transparent transition-colors py-1 min-h-[28px] node-row group relative
             {activeDropPosition === 'inside' ? '!bg-[#e6f7ff]' : 'hover:bg-[#f5f5f5]'}
-            {activeDropPosition === 'before' ? '!border-t-2 !border-t-[#409eff]' : ''}
-            {activeDropPosition === 'after' ? '!border-b-2 !border-b-[#409eff]' : ''}
             {isDragging ? 'opacity-50' : ''}"
         data-id={bookmark.id}
         role="treeitem"
         aria-selected="false"
         tabindex="-1"
     >
+        <!-- Drop Indicator Line -->
+        {#if activeDropPosition === 'before' || activeDropPosition === 'after'}
+            <div 
+                class="absolute right-0 h-0.5 bg-[#409eff] pointer-events-none z-10"
+                style="
+                    left: {(bookmark.level - 1) * 20}px;
+                    {activeDropPosition === 'before' ? 'top: 0;' : 'bottom: 0;'}
+                "
+            ></div>
+        {/if}
+
         <!-- Title Cell -->
         <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * 20 + 4}px;">
             <div 
