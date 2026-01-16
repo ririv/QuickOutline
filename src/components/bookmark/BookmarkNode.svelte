@@ -8,6 +8,7 @@
     import { resolveLinkTarget, validatePageTarget } from '@/lib/services/PageLinkResolver';
     import Icon from "@/components/Icon.svelte";
     import arrowRightSolidIcon from '@/assets/icons/arrow-right-solid.svg?raw';
+    import dragHandleIcon from '@/assets/icons/drag-handle.svg?raw';
 
     interface Props {
         bookmark: BookmarkUI;
@@ -165,29 +166,38 @@
 
 <div class="node-container" style="--level: {bookmark.level}">
     <div 
-        class="flex items-center border-b border-transparent transition-colors py-1 min-h-[28px] node-row
+        class="flex items-center border-b border-transparent transition-colors py-1 min-h-[28px] node-row group
             {activeDropPosition === 'inside' ? '!bg-[#e6f7ff]' : 'hover:bg-[#f5f5f5]'}
             {activeDropPosition === 'before' ? '!border-t-2 !border-t-[#409eff]' : ''}
             {activeDropPosition === 'after' ? '!border-b-2 !border-b-[#409eff]' : ''}
             {isDragging ? 'opacity-50' : ''}"
-        draggable="true"
         data-id={bookmark.id}
-        ondragstart={handleDragStart}
-        ondragend={handleDragEnd}
         role="treeitem"
         aria-selected="false"
         tabindex="-1"
     >
         <!-- Title Cell -->
-        <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * 24 + 4}px;">
+        <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * 20 + 4}px;">
+            <div 
+                class="cursor-grab text-gray-400 hover:text-gray-600 mr-0.5 shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                draggable="true"
+                ondragstart={handleDragStart}
+                ondragend={handleDragEnd}
+                role="button"
+                tabindex="-1"
+                title="Drag to move"
+            >
+               <Icon data={dragHandleIcon} width={14} height={14} />
+            </div>
+            
             <button 
                 class="bg-transparent border-none cursor-pointer flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors outline-none shrink-0"
                 onclick={() => bookmark.expanded = !bookmark.expanded} 
-                style="visibility: {bookmark.children.length > 0 ? 'visible' : 'hidden'}; width: 24px; height: 24px;"
+                style="visibility: {bookmark.children.length > 0 ? 'visible' : 'hidden'}; width: 20px; height: 20px;"
                 aria-label={bookmark.expanded ? "Collapse bookmark" : "Expand bookmark"}
             >
                 <span class="inline-block transition-transform duration-200 origin-center {bookmark.expanded ? 'rotate-90' : ''}">
-                    <Icon data={arrowRightSolidIcon} width={10} height={10} />
+                    <Icon data={arrowRightSolidIcon} width={9} height={9} />
                 </span>
             </button>
             
