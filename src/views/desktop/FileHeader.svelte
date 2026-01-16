@@ -139,6 +139,9 @@
         role="region" 
         aria-label="File Header and Drop Zone">
     
+    <!-- Drag Region for Tauri Window Movement -->
+    <div class="drag-region" data-tauri-drag-region></div>
+
     <div class="file-info" 
          class:clickable={!currentFilePath}
          onclick={!currentFilePath ? handleOpen : undefined}
@@ -184,6 +187,15 @@
     .file-header.dragging {
         background-color: #f0f9ff;
     }
+
+    .drag-region {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+    }
     
     .drop-overlay {
         position: absolute;
@@ -224,6 +236,7 @@
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        z-index: 1;
     }
     
     .file-info.clickable {
