@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { BookmarkUI } from "../../lib/types/bookmark.ts";
+    import type { BookmarkUI } from "@/lib/types/bookmark.ts";
     import BookmarkNode from "./BookmarkNode.svelte";
     import { onMount, onDestroy, setContext, untrack } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
@@ -8,8 +8,8 @@
     import { moveNode } from '@/lib/utils/treeUtils';
     import PreviewPopup from '../PreviewPopup.svelte';
     import offsetIconRaw from '@/assets/icons/offset.svg?raw';
+    import { setupTauriDragDrop } from '@/lib/utils/tauriDragDrop';
     import Icon from '../Icon.svelte';
-    import { listen } from '@tauri-apps/api/event';
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
@@ -42,122 +42,27 @@
         bookmarks = bookmarkStore.tree;
 
         // Tauri Drag & Drop Strategy
-        try {
-            // @ts-ignore
-            const isTauri = !!(window.__TAURI_INTERNALS__ || window.__TAURI__);
-            if (isTauri) {
-                // 1. Drag Over - Update Visual Feedback
-                 unlistenFns.push(await listen<{ position: { x: number, y: number } }>('tauri://drag-over', (e) => {
-                     if (!draggedNodeId) return;
-
-                     const { position } = e.payload;
-                     // LOGS CONFIRMED: Tauri v2 internal drag coordinates match DOM coordinates directly.
-                     // No need to divide by devicePixelRatio.
-                     const logicalX = position.x;
-                     const logicalY = position.y;
-                     
-                     const element = document.elementFromPoint(logicalX, logicalY);
-                     const nodeElement = element?.closest('.node-row') as HTMLElement;
-                     
-                     if (nodeElement) {
-                         const id = nodeElement.dataset.id;
-                         if (id && id !== draggedNodeId) {
-                             const rect = nodeElement.getBoundingClientRect();
-                             const y = logicalY - rect.top;
-                             const h = rect.height;
-                             
-                             dropTargetId = id;
-                             if (y < h * 0.25) dropPosition = 'before';
-                             else if (y > h * 0.75) dropPosition = 'after';
-                             else dropPosition = 'inside';
-                             return;
-                         }
-                     }
-                     
-                     // If not over a valid target, clear state
-                     dropTargetId = null;
-                     dropPosition = null;
-                 }));
-
-                 // 2. Drag Drop - Execute Move
-                 unlistenFns.push(await listen<{ position: { x: number, y: number } }>('tauri://drag-drop', (e) => {
-                     if (!draggedNodeId) return;
-                     
-                     const { position } = e.payload;
-                     const logicalX = position.x;
-                     const logicalY = position.y;
-
-                     const element = document.elementFromPoint(logicalX, logicalY);
-                     const nodeElement = element?.closest('.node-row') as HTMLElement;
-
-                     if (nodeElement) {
-                         const targetId = nodeElement.dataset.id;
-                         if (targetId && targetId !== draggedNodeId) {
-                             const rect = nodeElement.getBoundingClientRect();
-                             const y = logicalY - rect.top;
-                             const h = rect.height;
-                             
-                             let pos: 'before' | 'after' | 'inside';
-                             if (y < h * 0.25) pos = 'before';
-                             else if (y > h * 0.75) pos = 'after';
-                             else pos = 'inside';
-                             
-                             moveNode(bookmarks, draggedNodeId, targetId, pos);
-                             bookmarks = [...bookmarks];
-                         }
-                     }
-                     
-                     // Reset
-                     draggedNodeId = null;
-                     dropTargetId = null;
-                     dropPosition = null;
-                 }));
-
-                 // 2. Drag Drop - Execute Move
-                 unlistenFns.push(await listen<{ position: { x: number, y: number } }>('tauri://drag-drop', (e) => {
-                     if (!draggedNodeId) return;
-                     
-                     // Re-calculate target at drop time to be safe (stateless-ish)
-                     const { position } = e.payload;
-                     const scaleFactor = window.devicePixelRatio || 1;
-                     const logicalX = position.x / scaleFactor;
-                     const logicalY = position.y / scaleFactor;
-
-                     const element = document.elementFromPoint(logicalX, logicalY);
-                     const nodeElement = element?.closest('.node-row') as HTMLElement;
-
-                     if (nodeElement) {
-                         const targetId = nodeElement.dataset.id;
-                         if (targetId && targetId !== draggedNodeId) {
-                             const rect = nodeElement.getBoundingClientRect();
-                             const y = logicalY - rect.top;
-                             const h = rect.height;
-                             
-                             let pos: 'before' | 'after' | 'inside';
-                             if (y < h * 0.25) pos = 'before';
-                             else if (y > h * 0.75) pos = 'after';
-                             else pos = 'inside';
-                             
-                             moveNode(bookmarks, draggedNodeId, targetId, pos);
-                             bookmarks = [...bookmarks];
-                         }
-                     }
-                     
-                     // Reset
-                     draggedNodeId = null;
-                     dropTargetId = null;
-                     dropPosition = null;
-                 }));
-
-                 // 3. Cancel/Leave
-                 unlistenFns.push(await listen('tauri://drag-leave', () => {
-                     dropTargetId = null;
-                     dropPosition = null;
-                 }));
+        const cleanup = await setupTauriDragDrop({
+            getDraggedId: () => draggedNodeId,
+            onDragOver: (targetId, position) => {
+                dropTargetId = targetId;
+                dropPosition = position;
+            },
+            onDrop: (targetId, position) => {
+                if (draggedNodeId) {
+                    moveNode(bookmarks, draggedNodeId, targetId, position);
+                    bookmarks = [...bookmarks];
+                }
+                draggedNodeId = null;
+                dropTargetId = null;
+                dropPosition = null;
+            },
+            onDragLeave: () => {
+                dropTargetId = null;
+                dropPosition = null;
             }
-        } catch (e) {
-            console.warn("Tauri event listen failed", e);
-        }
+        });
+        unlistenFns.push(cleanup);
     });
 
     onDestroy(() => {
