@@ -297,7 +297,7 @@
 <style>
     .gap-indicator {
         height: 100%;
-        background-color: rgba(0,0,0,0.2);
+        background-color: transparent;
         transition: background-color 75ms;
     }
     
