@@ -91,10 +91,15 @@ export function calculateDragState(
             dropTargetId = refNode.id;
             dropPosition = 'after';
         } else if (targetLevel === refNode.level + 1) {
-            if (nextNode) {
+            // Check if nextNode is actually a child of refNode (deeper level)
+            const isNextChild = nextNode && nextNode.level > refNode.level;
+            
+            if (isNextChild) {
+                // Insert before the existing child
                 dropTargetId = nextNode.id;
                 dropPosition = 'before';
             } else {
+                // NextNode is a sibling (or null). Append as new child to RefNode.
                 dropTargetId = refNode.id;
                 dropPosition = 'inside';
             }
