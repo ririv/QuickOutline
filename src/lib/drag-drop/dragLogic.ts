@@ -1,4 +1,5 @@
-import type { BookmarkUI } from '../types/bookmark.ts';
+import type { BookmarkUI } from '../types/bookmark';
+import { TREE_INDENT, TREE_BASE_PADDING } from './treeLayout';
 
 export interface DragState {
     dropTargetId: string | null;
@@ -18,8 +19,6 @@ export function calculateDragState(
 ): DragState | null {
     const TOP_ZONE = 0.25;
     const BOTTOM_ZONE = 0.75;
-    const INDENT_WIDTH = 20;
-    const INDENT_BASE = 4;
 
     const relY = mouseY / nodeHeight;
     const hitIndex = visibleNodes.findIndex(n => n.id === hitNodeId);
@@ -73,7 +72,7 @@ export function calculateDragState(
     const maxLevel = refNode ? refNode.level + 1 : 1;
     
     // Calculate Target Level based on X
-    let targetLevel = Math.floor((mouseX - INDENT_BASE + (INDENT_WIDTH / 2)) / INDENT_WIDTH) + 1;
+    let targetLevel = Math.floor((mouseX - TREE_BASE_PADDING + (TREE_INDENT / 2)) / TREE_INDENT) + 1;
     targetLevel = Math.max(1, Math.min(targetLevel, maxLevel));
 
     // 4. Resolve Logical Operation

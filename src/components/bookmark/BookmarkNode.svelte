@@ -10,6 +10,7 @@
     import arrowRightSolidIcon from '@/assets/icons/arrow-right-solid.svg?raw';
     import dragHandleIcon from '@/assets/icons/drag-handle.svg?raw';
     import { DragController } from "@/lib/drag-drop/DragController.svelte";
+    import { TREE_INDENT, TREE_BASE_PADDING } from "@/lib/drag-drop/treeLayout";
     
     interface Props {
         bookmark: BookmarkUI;
@@ -179,7 +180,7 @@
             class="drag-gap-trigger w-full relative z-50"
             style="
                 height: 6px;
-                padding-left: {(visualPos === 'before' ? Math.max(1, targetLevel) - 1 : 0) * 20}px;
+                padding-left: {(visualPos === 'before' ? Math.max(1, targetLevel) - 1 : 0) * TREE_INDENT}px;
                 background-color: transparent;
             "
         >
@@ -197,7 +198,7 @@
         tabindex="-1"
     >
         <!-- Title Cell -->
-        <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * 20 + 4}px;">
+        <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * TREE_INDENT + TREE_BASE_PADDING}px;">
             <div 
                 class="cursor-grab text-gray-400 hover:text-gray-600 mr-0.5 shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 draggable="true"
@@ -278,7 +279,7 @@
         class="drag-gap-trigger w-full relative z-50"
         style="
             height: 6px;
-            padding-left: {(visualPos === 'after' ? Math.max(1, targetLevel) - 1 : 0) * 20}px;
+            padding-left: {(visualPos === 'after' ? Math.max(1, targetLevel) - 1 : 0) * TREE_INDENT}px;
             background-color: transparent;
         "
     >
