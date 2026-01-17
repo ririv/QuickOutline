@@ -18,6 +18,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Calculate Tag Name
+        id: tag_calc
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag_name=dev-build" >> $GITHUB_OUTPUT
+          else
+            echo "tag_name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -50,7 +60,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: --verbose -- --verbose
-          tagName: ${{ github.ref_name }}
+          tagName: ${{ steps.tag_calc.outputs.tag_name }}
           releaseName: 'QuickOutline v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: false
