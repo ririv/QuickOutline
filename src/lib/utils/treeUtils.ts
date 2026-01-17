@@ -1,5 +1,16 @@
 import type { BookmarkUI } from '../types/bookmark';
 
+export function getVisibleNodes(nodes: BookmarkUI[]): BookmarkUI[] {
+    let result: BookmarkUI[] = [];
+    for (const node of nodes) {
+        result.push(node);
+        if (node.expanded && node.children && node.children.length > 0) {
+            result = result.concat(getVisibleNodes(node.children));
+        }
+    }
+    return result;
+}
+
 export function findNode(
     nodes: BookmarkUI[],
     id: string,

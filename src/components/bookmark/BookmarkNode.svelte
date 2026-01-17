@@ -10,58 +10,60 @@
     import arrowRightSolidIcon from '@/assets/icons/arrow-right-solid.svg?raw';
     import dragHandleIcon from '@/assets/icons/drag-handle.svg?raw';
 
-    interface Props {
-        bookmark: BookmarkUI;
-    }
-    let { bookmark = $bindable() }: Props = $props();
-
-    let isEditingTitle = $state(false);
-    let isEditingPage = $state(false);
-    
-    // Local state for preview tooltip
-    let currentPreviewUrl: string | null = null; // Track current blob URL for cleanup
-
-    let titleInput: HTMLInputElement | undefined = $state();
-    let pageInput: HTMLInputElement | undefined = $state();
-    
-    // Initialize expanded state if missing
-    if (bookmark.expanded === undefined) {
-        bookmark.expanded = true;
-    }
-
-    const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
-    const offsetContext = getContext<{ show: boolean }>('offsetContext');
-    const dragContext = getContext<{ 
-        draggedNodeId: string | null, 
-        dropTargetId: string | null,
-        dropPosition: 'before' | 'after' | 'inside' | null,
-        setDraggedNodeId: (id: string | null) => void,
-        move: (draggedId: string, targetId: string, pos: 'before' | 'after' | 'inside') => void
-    }>('dragContext');
-
-    // Drag & Drop State
-    let isDragging = $derived(dragContext.draggedNodeId === bookmark.id);
-    let activeDropPosition = $derived(dragContext.dropTargetId === bookmark.id ? dragContext.dropPosition : null);
-    let expandTimer: number | undefined;
-
-    // Auto-expand logic on hover
-    $effect(() => {
-        if (activeDropPosition === 'inside' && !bookmark.expanded && bookmark.children.length > 0) {
-            expandTimer = setTimeout(() => {
-                bookmark.expanded = true;
-            }, 600);
-        } else {
-            clearTimeout(expandTimer);
-        }
-    });
-
-    function handleDragStart(e: DragEvent) {
-        e.stopPropagation();
-        if (isEditingTitle || isEditingPage) {
-            e.preventDefault();
-            return;
-        }
-        dragContext.setDraggedNodeId(bookmark.id);
+                import { DragController } from "@/lib/drag-drop/DragController.svelte.js";
+                
+                interface Props {
+                    bookmark: BookmarkUI;
+                    index: number;
+                }
+                let { bookmark = $bindable(), index }: Props = $props();
+            
+                let isEditingTitle = $state(false);
+                let isEditingPage = $state(false);
+                
+                // Local state for preview tooltip
+                let currentPreviewUrl: string | null = null; 
+            
+                let titleInput: HTMLInputElement | undefined = $state();
+                let pageInput: HTMLInputElement | undefined = $state();
+                
+                // Initialize expanded state if missing
+                if (bookmark.expanded === undefined) {
+                    bookmark.expanded = true;
+                }
+            
+                const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
+                const offsetContext = getContext<{ show: boolean }>('offsetContext');
+                
+                // Use DragController directly for robust reactivity
+                const dragContext = getContext<DragController>('dragContext');
+            
+                // Drag & Drop State
+                let isDragging = $derived(dragContext.draggedNodeId === bookmark.id);
+                let activeDropPosition = $derived(dragContext.dropTargetId === bookmark.id ? dragContext.dropPosition : null);
+                
+                // Visual Feedback Logic derived from gapNodeId
+                let isVisualActive = $derived(dragContext.gapNodeId === bookmark.id);
+                let visualPos = $derived(isVisualActive ? dragContext.gapPosition : null);
+                let targetLevel = $derived(isVisualActive ? dragContext.dropTargetLevel : 1);
+                
+                let expandTimer: number | undefined;            
+                // Auto-expand logic on hover
+                $effect(() => {
+                    if (activeDropPosition === 'inside' && !bookmark.expanded && bookmark.children.length > 0) {
+                        expandTimer = setTimeout(() => {
+                            bookmark.expanded = true;
+                        }, 600);
+                    } else {
+                        clearTimeout(expandTimer);
+                    }
+                });        
+            function handleDragStart(e: DragEvent) {
+                e.stopPropagation();
+                if (isEditingTitle || isEditingPage) {
+                    e.preventDefault();
+                    return;
+                }        dragContext.setDraggedNodeId(bookmark.id);
         if (e.dataTransfer) {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', bookmark.id);
@@ -187,26 +189,27 @@
 </script>
 
 <div class="node-container" style="--level: {bookmark.level}">
+    <!-- Top Gap (Only for the very first item of the entire tree) -->
+    {#if index === 0 && bookmark.level === 1}
+        <div 
+            class="transition-colors duration-75"
+            style="
+                height: 4px;
+                margin-left: {(visualPos === 'before' ? targetLevel - 1 : 0) * 20}px;
+                background-color: {visualPos === 'before' ? '#409eff' : 'rgba(0,0,0,0.05)'};
+            "
+        ></div>
+    {/if}
+
     <div 
         class="flex items-center border-b border-transparent transition-colors py-1 min-h-[28px] node-row group relative
-            {activeDropPosition === 'inside' ? '!bg-[#e6f7ff]' : 'hover:bg-[#f5f5f5]'}
+            {visualPos === 'inside' ? '!bg-[#e6f7ff]' : 'hover:bg-[#f5f5f5]'}
             {isDragging ? 'opacity-50' : ''}"
         data-id={bookmark.id}
         role="treeitem"
         aria-selected="false"
         tabindex="-1"
     >
-        <!-- Drop Indicator Line -->
-        {#if activeDropPosition === 'before' || activeDropPosition === 'after'}
-            <div 
-                class="absolute right-0 h-0.5 bg-[#409eff] pointer-events-none z-10"
-                style="
-                    left: {(bookmark.level - 1) * 20}px;
-                    {activeDropPosition === 'before' ? 'top: 0;' : 'bottom: 0;'}
-                "
-            ></div>
-        {/if}
-
         <!-- Title Cell -->
         <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * 20 + 4}px;">
             <div 
@@ -284,10 +287,20 @@
         </div>
     </div>
 
+    <!-- Bottom Gap (For all items) -->
+    <div 
+        class="transition-colors duration-75"
+        style="
+            height: 4px;
+            margin-left: {(visualPos === 'after' ? targetLevel - 1 : 0) * 20}px;
+            background-color: {visualPos === 'after' ? '#409eff' : 'rgba(0,0,0,0.05)'};
+        "
+    ></div>
+
     {#if bookmark.expanded && bookmark.children.length > 0}
         <div>
             {#each bookmark.children as _, i (bookmark.children[i].id)}
-                <BookmarkNode bind:bookmark={bookmark.children[i]} />
+                <BookmarkNode bind:bookmark={bookmark.children[i]} index={i} />
             {/each}
         </div>
     {/if}

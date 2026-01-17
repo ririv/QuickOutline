@@ -13,8 +13,9 @@ interface DragDropOptions {
      * Called when a dragged item is over a valid target.
      * @param targetId The ID of the target node, or null if not over a valid target.
      * @param position The position relative to the target, or null.
+     * @param coords The absolute mouse coordinates {x, y}.
      */
-    onDragOver: (targetId: string | null, position: DropPosition | null) => void;
+    onDragOver: (targetId: string | null, position: DropPosition | null, coords?: { x: number, y: number }) => void;
     
     /**
      * Called when the dragged item is dropped onto a valid target.
@@ -80,9 +81,9 @@ export async function setupTauriDragDrop(options: DragDropOptions): Promise<() =
             const target = getDropTarget(x, y, draggedId);
 
             if (target) {
-                onDragOver(target.id, target.position);
+                onDragOver(target.id, target.position, { x, y });
             } else {
-                onDragOver(null, null);
+                onDragOver(null, null, { x, y });
             }
         }));
 

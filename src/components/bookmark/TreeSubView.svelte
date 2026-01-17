@@ -5,61 +5,82 @@
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
-    import { moveNode } from '@/lib/utils/treeUtils';
+    import { moveNode, getVisibleNodes } from '@/lib/utils/treeUtils';
+    import { calculateDragState } from '@/lib/drag-drop/dragLogic.ts';
     import PreviewPopup from '../PreviewPopup.svelte';
     import offsetIconRaw from '@/assets/icons/offset.svg?raw';
-    import { setupTauriDragDrop } from '@/lib/utils/tauriDragDrop';
+    import { DragController } from '@/lib/drag-drop/DragController.svelte.js';
+    import { setupTauriDragDrop } from '@/lib/drag-drop/tauriDragDrop.ts';
     import Icon from '../Icon.svelte';
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
     
-    // Drag & Drop State
-    let draggedNodeId = $state<string | null>(null);
-    let dropTargetId = $state<string | null>(null);
-    let dropPosition = $state<'before' | 'after' | 'inside' | null>(null);
-    let unlistenFns: (() => void)[] = [];
+    // Drag Controller Instance
+    const dragController = new DragController(
+        () => bookmarks,
+        (b) => { bookmarks = b; }
+    );
+    
+    setContext('dragContext', dragController);
 
-    setContext('dragContext', {
-        get draggedNodeId() { return draggedNodeId; },
-        get dropTargetId() { return dropTargetId; },
-        get dropPosition() { return dropPosition; },
-        setDraggedNodeId: (id: string | null) => {
-            draggedNodeId = id;
-            if (!id) {
-                dropTargetId = null;
-                dropPosition = null;
-            }
-        },
-        move: (draggedId: string, targetId: string, position: 'before' | 'after' | 'inside') => {
-            moveNode(bookmarks, draggedId, targetId, position);
-            bookmarks = [...bookmarks]; // Trigger update
-        }
-    });
+    let unlistenFns: (() => void)[] = [];
 
     onMount(async () => {
         // Initialize bookmarks from store
+        isUpdatingFromStore = true;
         bookmarks = bookmarkStore.tree;
+        tick().then(() => isUpdatingFromStore = false);
 
         // Tauri Drag & Drop Strategy
         const cleanup = await setupTauriDragDrop({
-            getDraggedId: () => draggedNodeId,
-            onDragOver: (targetId, position) => {
-                dropTargetId = targetId;
-                dropPosition = position;
+            getDraggedId: () => dragController.draggedNodeId,
+            onDragOver: (targetId, position, coords) => {
+                if (targetId && position && coords) {
+                    // We need to use calculateDragState to get the correct level/gap
+                    // We need to find the node element to get relative coordinates
+                    // But setupTauriDragDrop already found the element to determine targetId.
+                    // We can query it again.
+                    const nodeElement = document.querySelector(`.node-row[data-id="${targetId}"]`) as HTMLElement;
+                    if (nodeElement) {
+                        const rect = nodeElement.getBoundingClientRect();
+                        const visibleNodes = getVisibleNodes(bookmarks);
+                        
+                        const state = calculateDragState(
+                            coords.y - rect.top,
+                            rect.height,
+                            coords.x - rect.left,
+                            targetId,
+                            dragController.draggedNodeId!,
+                            visibleNodes
+                        );
+                        
+                        if (state) {
+                            dragController.updateState(
+                                state.dropTargetId,
+                                state.dropPosition,
+                                state.dropTargetLevel,
+                                state.gapNodeId,
+                                state.gapPosition
+                            );
+                            return;
+                        }
+                    }
+                    
+                    // Fallback if calculation fails (e.g. element not found)
+                    dragController.updateState(targetId, position, 1, targetId, position);
+                } else {
+                    dragController.reset();
+                }
             },
             onDrop: (targetId, position) => {
-                if (draggedNodeId) {
-                    moveNode(bookmarks, draggedNodeId, targetId, position);
-                    bookmarks = [...bookmarks];
+                if (dragController.draggedNodeId) {
+                    dragController.move(dragController.draggedNodeId, targetId, position);
                 }
-                draggedNodeId = null;
-                dropTargetId = null;
-                dropPosition = null;
+                dragController.reset();
             },
             onDragLeave: () => {
-                dropTargetId = null;
-                dropPosition = null;
+                dragController.reset();
             }
         });
         unlistenFns.push(cleanup);
@@ -71,42 +92,64 @@
     });
 
     function handleDragOver(e: DragEvent) {
-        if (!draggedNodeId) return;
+        if (!dragController.draggedNodeId) return;
         e.preventDefault();
         e.stopPropagation();
 
-        // Hit testing using coordinates (FileHeader strategy)
         const element = document.elementFromPoint(e.clientX, e.clientY);
         const nodeElement = element?.closest('.node-row') as HTMLElement;
+        const visibleNodes = getVisibleNodes(bookmarks);
         
-        if (nodeElement) {
-            const id = nodeElement.dataset.id;
-            if (id && id !== draggedNodeId) {
-                const rect = nodeElement.getBoundingClientRect();
-                const y = e.clientY - rect.top;
-                const h = rect.height;
-                
-                dropTargetId = id;
-                if (y < h * 0.25) dropPosition = 'before';
-                else if (y > h * 0.75) dropPosition = 'after';
-                else dropPosition = 'inside';
-                return;
+        if (!nodeElement) {
+            if (visibleNodes.length > 0) {
+                const lastNode = visibleNodes[visibleNodes.length - 1];
+                if (lastNode.id !== dragController.draggedNodeId) {
+                    dragController.updateState(lastNode.id, 'after', 1, lastNode.id, 'after');
+                }
             }
+            return;
         }
-        
-        dropTargetId = null;
-        dropPosition = null;
+
+        const hitId = nodeElement.dataset.id;
+        if (!hitId) return;
+
+        const rect = nodeElement.getBoundingClientRect();
+        const state = calculateDragState(
+            e.clientY - rect.top,
+            rect.height,
+            e.clientX - rect.left,
+            hitId,
+            dragController.draggedNodeId,
+            visibleNodes
+        );
+
+        if (state) {
+            dragController.updateState(
+                state.dropTargetId,
+                state.dropPosition,
+                state.dropTargetLevel,
+                state.gapNodeId,
+                state.gapPosition
+            );
+        } else {
+            dragController.reset();
+        }
     }
 
     function handleDrop(e: DragEvent) {
         e.preventDefault();
-        if (draggedNodeId && dropTargetId && dropPosition) {
-            moveNode(bookmarks, draggedNodeId, dropTargetId, dropPosition);
-            bookmarks = [...bookmarks];
+        if (dragController.draggedNodeId && dragController.dropTargetId && dragController.dropPosition) {
+            dragController.move(dragController.draggedNodeId, dragController.dropTargetId, dragController.dropPosition);
         }
-        draggedNodeId = null;
-        dropTargetId = null;
-        dropPosition = null;
+        dragController.setDraggedNodeId(null);
+    }
+
+    function handleDragLeave(e: DragEvent) {
+         const related = e.relatedTarget as HTMLElement;
+         const current = e.currentTarget as HTMLElement;
+         if (!current.contains(related)) {
+             dragController.reset();
+         }
     }
     
     // Preview State
@@ -256,10 +299,11 @@
     <div class="tree-body" 
          ondragover={handleDragOver}
          ondrop={handleDrop}
+         ondragleave={handleDragLeave}
          role="tree"
          tabindex="0">
         {#each bookmarks as _, i (bookmarks[i].id)}
-            <BookmarkNode bind:bookmark={bookmarks[i]} />
+            <BookmarkNode bind:bookmark={bookmarks[i]} index={i} />
         {/each}
     </div>
     
@@ -300,5 +344,6 @@
     .tree-body {
         flex: 1;
         overflow-y: auto;
+        position: relative;
     }
 </style>
