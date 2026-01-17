@@ -6,11 +6,11 @@
     import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
     import { moveNode, getVisibleNodes } from '@/lib/utils/treeUtils';
-    import { calculateDragState } from '@/lib/drag-drop/dragLogic.ts';
+    import { calculateDragState } from '@/lib/drag-drop/dragLogic';
     import PreviewPopup from '../PreviewPopup.svelte';
     import offsetIconRaw from '@/assets/icons/offset.svg?raw';
-    import { DragController } from '@/lib/drag-drop/DragController.svelte.js';
-    import { setupTauriDragDrop } from '@/lib/drag-drop/tauriDragDrop.ts';
+    import { DragController } from '@/lib/drag-drop/DragController.svelte';
+    import { setupTauriDragDrop } from '@/lib/drag-drop/tauriDragDrop';
     import Icon from '../Icon.svelte';
 
     let bookmarks = $state<BookmarkUI[]>([]);
@@ -97,10 +97,11 @@
         e.stopPropagation();
 
         const element = document.elementFromPoint(e.clientX, e.clientY);
-        const nodeElement = element?.closest('.node-row') as HTMLElement;
+        const containerElement = element?.closest('.node-container') as HTMLElement;
         const visibleNodes = getVisibleNodes(bookmarks);
         
-        if (!nodeElement) {
+        if (!containerElement) {
+            // Drop in empty space
             if (visibleNodes.length > 0) {
                 const lastNode = visibleNodes[visibleNodes.length - 1];
                 if (lastNode.id !== dragController.draggedNodeId) {
@@ -110,10 +111,14 @@
             return;
         }
 
-        const hitId = nodeElement.dataset.id;
+        const hitId = containerElement.dataset.id;
         if (!hitId) return;
 
-        const rect = nodeElement.getBoundingClientRect();
+        // Use the row inside container for precise coordinate calculation
+        const nodeRow = containerElement.querySelector('.node-row') as HTMLElement;
+        if (!nodeRow) return;
+
+        const rect = nodeRow.getBoundingClientRect();
         const state = calculateDragState(
             e.clientY - rect.top,
             rect.height,

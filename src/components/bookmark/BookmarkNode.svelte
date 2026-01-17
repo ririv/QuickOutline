@@ -9,61 +9,64 @@
     import Icon from "@/components/Icon.svelte";
     import arrowRightSolidIcon from '@/assets/icons/arrow-right-solid.svg?raw';
     import dragHandleIcon from '@/assets/icons/drag-handle.svg?raw';
+    import { DragController } from "@/lib/drag-drop/DragController.svelte";
+    
+    interface Props {
+        bookmark: BookmarkUI;
+        index: number;
+    }
+    let { bookmark = $bindable(), index }: Props = $props();
 
-                import { DragController } from "@/lib/drag-drop/DragController.svelte.js";
-                
-                interface Props {
-                    bookmark: BookmarkUI;
-                    index: number;
-                }
-                let { bookmark = $bindable(), index }: Props = $props();
-            
-                let isEditingTitle = $state(false);
-                let isEditingPage = $state(false);
-                
-                // Local state for preview tooltip
-                let currentPreviewUrl: string | null = null; 
-            
-                let titleInput: HTMLInputElement | undefined = $state();
-                let pageInput: HTMLInputElement | undefined = $state();
-                
-                // Initialize expanded state if missing
-                if (bookmark.expanded === undefined) {
-                    bookmark.expanded = true;
-                }
-            
-                const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
-                const offsetContext = getContext<{ show: boolean }>('offsetContext');
-                
-                // Use DragController directly for robust reactivity
-                const dragContext = getContext<DragController>('dragContext');
-            
-                // Drag & Drop State
-                let isDragging = $derived(dragContext.draggedNodeId === bookmark.id);
-                let activeDropPosition = $derived(dragContext.dropTargetId === bookmark.id ? dragContext.dropPosition : null);
-                
-                // Visual Feedback Logic derived from gapNodeId
-                let isVisualActive = $derived(dragContext.gapNodeId === bookmark.id);
-                let visualPos = $derived(isVisualActive ? dragContext.gapPosition : null);
-                let targetLevel = $derived(isVisualActive ? dragContext.dropTargetLevel : 1);
-                
-                let expandTimer: number | undefined;            
-                // Auto-expand logic on hover
-                $effect(() => {
-                    if (activeDropPosition === 'inside' && !bookmark.expanded && bookmark.children.length > 0) {
-                        expandTimer = setTimeout(() => {
-                            bookmark.expanded = true;
-                        }, 600);
-                    } else {
-                        clearTimeout(expandTimer);
-                    }
-                });        
-            function handleDragStart(e: DragEvent) {
-                e.stopPropagation();
-                if (isEditingTitle || isEditingPage) {
-                    e.preventDefault();
-                    return;
-                }        dragContext.setDraggedNodeId(bookmark.id);
+    let isEditingTitle = $state(false);
+    let isEditingPage = $state(false);
+    
+    // Local state for preview tooltip
+    let currentPreviewUrl: string | null = null; 
+
+    let titleInput: HTMLInputElement | undefined = $state();
+    let pageInput: HTMLInputElement | undefined = $state();
+    
+    // Initialize expanded state if missing
+    if (bookmark.expanded === undefined) {
+        bookmark.expanded = true;
+    }
+
+    const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
+    const offsetContext = getContext<{ show: boolean }>('offsetContext');
+    
+    // Use DragController directly for robust reactivity
+    const dragContext = getContext<DragController>('dragContext');
+
+    // Drag & Drop State
+    let isDragging = $derived(dragContext.draggedNodeId === bookmark.id);
+    
+    // Visual Feedback Logic derived from gapNodeId
+    let isVisualActive = $derived(dragContext.gapNodeId === bookmark.id);
+    let visualPos = $derived(isVisualActive ? dragContext.gapPosition : null);
+    let targetLevel = $derived(isVisualActive ? dragContext.dropTargetLevel : 1);
+    
+    let expandTimer: number | undefined;
+
+    // Auto-expand logic on hover
+    $effect(() => {
+        // Use logic target for auto-expand
+        const activeDropPosition = dragContext.dropTargetId === bookmark.id ? dragContext.dropPosition : null;
+        if (activeDropPosition === 'inside' && !bookmark.expanded && bookmark.children.length > 0) {
+            expandTimer = setTimeout(() => {
+                bookmark.expanded = true;
+            }, 600);
+        } else {
+            clearTimeout(expandTimer);
+        }
+    });
+
+    function handleDragStart(e: DragEvent) {
+        e.stopPropagation();
+        if (isEditingTitle || isEditingPage) {
+            e.preventDefault();
+            return;
+        }
+        dragContext.setDraggedNodeId(bookmark.id);
         if (e.dataTransfer) {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', bookmark.id);
@@ -98,23 +101,19 @@
     }
 
     function handleDragEnd(e: DragEvent) {
-        // Execute move if we have a valid target (Fallback for Tauri internal drops)
-        // In Tauri, tauri://drag-drop might not fire for internal elements, but drag-over does update the state.
         if (dragContext.dropTargetId && dragContext.dropPosition) {
              dragContext.move(bookmark.id, dragContext.dropTargetId, dragContext.dropPosition);
         }
-        
         dragContext.setDraggedNodeId(null);
     }
 
     async function editTitle() {
         isEditingTitle = true;
-        await tick(); // Wait for the DOM to update
+        await tick(); 
         titleInput?.focus();
     }
 
     async function editPage() {
-        // Hide preview when editing starts
         handlePageMouseLeave();
         isEditingPage = true;
         await tick();
@@ -123,8 +122,6 @@
 
     function handlePageMouseEnter(e: MouseEvent) {
         if (isEditingPage || !bookmark.pageNum) return;
-        
-        // Use real offset for preview, regardless of display toggle
         const result = resolveLinkTarget(bookmark.pageNum, {
             offset: bookmarkStore.offset || 0,
             pageLabels: docStore.originalPageLabels,
@@ -133,18 +130,13 @@
 
         if (result && docStore.currentFilePath) {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-            
             if (currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl);
-            
             pdfRenderService.renderPage(docStore.currentFilePath, result.index, 'preview')
                 .then(url => {
                     currentPreviewUrl = url;
-                    // Only show if still hovering (simple check: logic in mouseleave handles the nulling)
-                    // We check if currentPreviewUrl is still valid (not nulled by leave)
                     if (currentPreviewUrl === url) {
                          previewContext.show(url, rect.top + rect.height / 2, rect.left);
                     } else {
-                         // Mouse left before render finished
                          URL.revokeObjectURL(url);
                     }
                 })
@@ -159,16 +151,11 @@
         }
     }
 
-    // Computed page to display
     let displayedPage = $derived.by(() => {
         if (!bookmark.pageNum) return '';
-        
-        // If it's a special syntax or label, show as is
         if (bookmark.pageNum.startsWith('#') || bookmark.pageNum.startsWith('@') || isNaN(parseInt(bookmark.pageNum, 10))) {
             return bookmark.pageNum;
         }
-
-        // It's a standard logical number
         const pageNum = parseInt(bookmark.pageNum, 10);
         const offset = bookmarkStore.offset || 0;
         return offsetContext.show ? String(pageNum + offset) : bookmark.pageNum;
@@ -176,8 +163,6 @@
 
     let isOutOfRange = $derived.by(() => {
         if (!bookmark.pageNum) return false;
-        
-        // Validation must always use the real offset to match the editor's behavior
         return !validatePageTarget(bookmark.pageNum, {
             offset: bookmarkStore.offset || 0,
             totalPage: docStore.pageCount,
@@ -185,20 +170,21 @@
             insertPos: 0
         });
     });
-
 </script>
 
-<div class="node-container" style="--level: {bookmark.level}">
+<div class="node-container" style="--level: {bookmark.level}" data-id={bookmark.id}>
     <!-- Top Gap (Only for the very first item of the entire tree) -->
     {#if index === 0 && bookmark.level === 1}
         <div 
-            class="transition-colors duration-75"
+            class="drag-gap-trigger w-full relative z-50"
             style="
-                height: 4px;
-                margin-left: {(visualPos === 'before' ? targetLevel - 1 : 0) * 20}px;
-                background-color: {visualPos === 'before' ? '#409eff' : 'rgba(0,0,0,0.05)'};
+                height: 6px;
+                padding-left: {(visualPos === 'before' ? Math.max(1, targetLevel) - 1 : 0) * 20}px;
+                background-color: transparent;
             "
-        ></div>
+        >
+            <div class="gap-indicator" class:gap-active={visualPos === 'before'}></div>
+        </div>
     {/if}
 
     <div 
@@ -250,12 +236,12 @@
                 </div>
             {:else}
                 <div 
-                    class="pl-3 pr-1.5 py-0.5 m-0 text-sm leading-tight text-gray-700 text-left cursor-text w-full truncate hover:text-gray-900 font-sans whitespace-pre" 
+                    class="pl-3 pr-1.5 py-0.5 m-0 text-sm leading-tight text-gray-700 text-left cursor-text w-full truncate hover:text-gray-900 font-sans whitespace-pre"
                     onclick={editTitle}
                     role="button"
                     tabindex="0"
                     onkeydown={(e) => e.key === 'Enter' && editTitle()}
-                >{bookmark.title}</div><!-- whitespace-pre: 避免空格折叠，保持与编辑态 input 宽度一致，消除布局跳动 -->
+                >{bookmark.title}</div>
             {/if}
         </div>
 
@@ -282,20 +268,22 @@
                     role="button"
                     tabindex="0"
                     onkeydown={(e) => e.key === 'Enter' && editPage()}
-                >{displayedPage}</div><!-- whitespace-pre: 避免空格折叠，保持与编辑态 input 宽度一致，消除布局跳动 -->
+                >{displayedPage}</div>
             {/if}
         </div>
     </div>
 
     <!-- Bottom Gap (For all items) -->
     <div 
-        class="transition-colors duration-75"
+        class="drag-gap-trigger w-full relative z-50"
         style="
-            height: 4px;
-            margin-left: {(visualPos === 'after' ? targetLevel - 1 : 0) * 20}px;
-            background-color: {visualPos === 'after' ? '#409eff' : 'rgba(0,0,0,0.05)'};
+            height: 6px;
+            padding-left: {(visualPos === 'after' ? Math.max(1, targetLevel) - 1 : 0) * 20}px;
+            background-color: transparent;
         "
-    ></div>
+    >
+        <div class="gap-indicator" class:gap-active={visualPos === 'after'}></div>
+    </div>
 
     {#if bookmark.expanded && bookmark.children.length > 0}
         <div>
@@ -305,3 +293,15 @@
         </div>
     {/if}
 </div>
+
+<style>
+    .gap-indicator {
+        height: 100%;
+        background-color: rgba(0,0,0,0.2);
+        transition: background-color 75ms;
+    }
+    
+    .gap-indicator.gap-active {
+        background-color: #409eff !important;
+    }
+</style>

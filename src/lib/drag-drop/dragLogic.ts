@@ -61,9 +61,11 @@ export function calculateDragState(
         gapPosition = 'after';
     }
 
-    // Filter interaction with self
-    if (refNode?.id === draggedNodeId || nextNode?.id === draggedNodeId) return null;
-
+    // Filter interaction with self (Inside only)
+    // For Gap interactions (Before/After), we allow returning a state even if it's a no-op
+    // This ensures visual feedback (the line) is always visible, which is better UX.
+    // The actual 'move' operation will be a no-op if logic determines start === end.
+    
     // 3. Determine Allowed Level Range at this Gap
     // Min Level is always 1.
     // Max Level is RefNode.level + 1 (can only be 1 deeper than the node before the gap).

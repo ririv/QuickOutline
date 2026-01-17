@@ -35,7 +35,9 @@ function getDropTarget(x: number, y: number, draggedId: string | null): { id: st
     if (!draggedId) return null;
 
     const element = document.elementFromPoint(x, y);
-    const nodeElement = element?.closest('.node-row') as HTMLElement;
+    // Fix: Look for container first to catch gaps
+    const container = element?.closest('.node-container');
+    const nodeElement = container?.querySelector('.node-row') as HTMLElement;
 
     if (nodeElement) {
         const id = nodeElement.dataset.id;
@@ -44,6 +46,9 @@ function getDropTarget(x: number, y: number, draggedId: string | null): { id: st
             const relativeY = y - rect.top;
             const h = rect.height;
 
+            // This simplistic logic is just a fallback for the system drag.
+            // The actual detailed position/level is recalculated in the component callback.
+            // But we MUST return a valid ID here to trigger the callback.
             let position: DropPosition;
             if (relativeY < h * 0.25) position = 'before';
             else if (relativeY > h * 0.75) position = 'after';
