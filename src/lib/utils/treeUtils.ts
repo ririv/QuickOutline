@@ -105,3 +105,38 @@ function updateLevel(node: BookmarkUI, newLevel: number) {
         }
     }
 }
+
+export function removeNode(tree: BookmarkUI[], id: string): BookmarkUI[] {
+    const result = findNode(tree, id);
+    if (!result) return tree;
+    
+    const { list, index } = result;
+    list.splice(index, 1);
+    
+    return tree;
+}
+
+export function insertNode(
+    tree: BookmarkUI[],
+    targetId: string,
+    position: 'before' | 'after' | 'inside',
+    newNode: BookmarkUI
+): BookmarkUI[] {
+    const targetResult = findNode(tree, targetId);
+    if (!targetResult) return tree;
+
+    const { node: targetNode, parent: targetParent, list: targetList, index: targetIndex } = targetResult;
+
+    if (position === 'inside') {
+        if (!targetNode.children) targetNode.children = [];
+        targetNode.children.push(newNode);
+        targetNode.expanded = true;
+        updateLevel(newNode, targetNode.level + 1);
+    } else {
+        const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+        targetList.splice(insertIndex, 0, newNode);
+        updateLevel(newNode, targetNode.level);
+    }
+
+    return tree;
+}

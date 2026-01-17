@@ -34,6 +34,24 @@
 
     const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
     const offsetContext = getContext<{ show: boolean }>('offsetContext');
+    const treeContext = getContext<{ 
+        openContextMenu: (e: MouseEvent, nodeId: string) => void,
+        pendingFocusId: string | null,
+        clearPendingFocus: () => void
+    }>('treeContext');
+    
+    // Auto-focus logic for new nodes
+    $effect(() => {
+        if (treeContext.pendingFocusId === bookmark.id) {
+            // Must use untrack if we don't want re-run on other dependencies? 
+            // But pendingFocusId is the trigger.
+            // We need to wait for DOM update (if just mounted).
+            tick().then(() => {
+                editTitle();
+                treeContext.clearPendingFocus();
+            });
+        }
+    });
     
     // Use DragController directly for robust reactivity
     const dragContext = getContext<DragController>('dragContext');
@@ -196,6 +214,7 @@
         role="treeitem"
         aria-selected="false"
         tabindex="-1"
+        oncontextmenu={(e) => treeContext.openContextMenu(e, bookmark.id)}
     >
         <!-- Title Cell -->
         <div class="flex-[0.9] flex items-center w-full overflow-hidden" style="padding-left: {(bookmark.level - 1) * TREE_INDENT + TREE_BASE_PADDING}px;">

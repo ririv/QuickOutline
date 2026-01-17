@@ -12,9 +12,50 @@
     import { DragController } from '@/lib/drag-drop/DragController.svelte';
     import { setupTauriDragDrop } from '@/lib/drag-drop/tauriDragDrop';
     import Icon from '../Icon.svelte';
+    import ContextMenu from '../controls/ContextMenu.svelte';
+    import { removeNode, insertNode } from '@/lib/utils/treeUtils';
 
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
+    
+    // Context Menu State
+    let contextMenu = $state<{ x: number, y: number, nodeId: string } | null>(null);
+    let pendingFocusId = $state<string | null>(null);
+
+    function handleDelete(id: string) {
+        removeNode(bookmarks, id);
+        bookmarks = [...bookmarks]; // Trigger update and sync
+    }
+
+    function handleAdd(targetId: string, position: 'before' | 'after' | 'inside') {
+        const newNode: BookmarkUI = {
+            id: crypto.randomUUID(),
+            title: 'New Bookmark',
+            pageNum: '',
+            children: [],
+            level: 1, // Will be updated by insertNode
+            expanded: true
+        };
+        
+        insertNode(bookmarks, targetId, position, newNode);
+        bookmarks = [...bookmarks];
+        
+        // Schedule focus
+        pendingFocusId = newNode.id;
+        // Reset after a delay to allow other interactions? 
+        // Actually, BookmarkNode should consume this and then we can clear it?
+        // Or just keep it as "last focused request".
+    }
+
+    setContext('treeContext', {
+        openContextMenu: (e: MouseEvent, nodeId: string) => {
+            e.preventDefault();
+            e.stopPropagation();
+            contextMenu = { x: e.clientX, y: e.clientY, nodeId };
+        },
+        get pendingFocusId() { return pendingFocusId; },
+        clearPendingFocus: () => { pendingFocusId = null; }
+    });
     
     // Drag Controller Instance
     const dragController = new DragController(
@@ -292,6 +333,29 @@
             <BookmarkNode bind:bookmark={bookmarks[i]} index={i} />
         {/each}
     </div>
+    
+    {#if contextMenu}
+        <ContextMenu 
+            x={contextMenu.x} 
+            y={contextMenu.y} 
+            items={[
+                { 
+                    label: 'Add Sibling', 
+                    onClick: () => handleAdd(contextMenu!.nodeId, 'after') 
+                },
+                { 
+                    label: 'Add Child', 
+                    onClick: () => handleAdd(contextMenu!.nodeId, 'inside') 
+                },
+                { 
+                    label: 'Delete', 
+                    variant: 'danger', 
+                    onClick: () => handleDelete(contextMenu!.nodeId) 
+                }
+            ]}
+            onClose={() => contextMenu = null}
+        />
+    {/if}
     
     {#if hoveredPage}
         <PreviewPopup

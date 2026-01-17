@@ -96,7 +96,7 @@ export function calculateDragState(
             
             if (isNextChild) {
                 // Insert before the existing child
-                dropTargetId = nextNode.id;
+                dropTargetId = nextNode!.id;
                 dropPosition = 'before';
             } else {
                 // NextNode is a sibling (or null). Append as new child to RefNode.
