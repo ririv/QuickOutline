@@ -1,4 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
+import { getDragTargetInfo } from './dragLogic';
 
 export type DropPosition = 'before' | 'after' | 'inside';
 
@@ -34,28 +35,17 @@ interface DragDropOptions {
 function getDropTarget(x: number, y: number, draggedId: string | null): { id: string, position: DropPosition } | null {
     if (!draggedId) return null;
 
-    const element = document.elementFromPoint(x, y);
-    // Fix: Look for container first to catch gaps
-    const container = element?.closest('.node-container');
-    const nodeElement = container?.querySelector('.node-row') as HTMLElement;
+    const target = getDragTargetInfo(x, y);
+    if (target && target.id !== draggedId) {
+        const h = target.rect.height;
+        const relativeY = target.relY;
 
-    if (nodeElement) {
-        const id = nodeElement.dataset.id;
-        if (id && id !== draggedId) {
-            const rect = nodeElement.getBoundingClientRect();
-            const relativeY = y - rect.top;
-            const h = rect.height;
+        let position: DropPosition;
+        if (relativeY < h * 0.25) position = 'before';
+        else if (relativeY > h * 0.75) position = 'after';
+        else position = 'inside';
 
-            // This simplistic logic is just a fallback for the system drag.
-            // The actual detailed position/level is recalculated in the component callback.
-            // But we MUST return a valid ID here to trigger the callback.
-            let position: DropPosition;
-            if (relativeY < h * 0.25) position = 'before';
-            else if (relativeY > h * 0.75) position = 'after';
-            else position = 'inside';
-
-            return { id, position };
-        }
+        return { id: target.id, position };
     }
     return null;
 }

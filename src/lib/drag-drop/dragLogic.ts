@@ -126,3 +126,31 @@ export function calculateDragState(
         gapPosition
     };
 }
+
+/**
+ * Shared hit-testing logic.
+ * Finds the bookmark node info at the given screen coordinates.
+ */
+export function getDragTargetInfo(x: number, y: number): { id: string, rect: DOMRect, relX: number, relY: number, row: HTMLElement, container: HTMLElement } | null {
+    const element = document.elementFromPoint(x, y);
+    // Find the container first to catch both gaps and content rows
+    const container = element?.closest('.node-container') as HTMLElement;
+    if (!container) return null;
+
+    // Retrieve the row logic data
+    const id = container.dataset.id;
+    const row = container.querySelector('.node-row') as HTMLElement;
+
+    if (id && row) {
+        const rect = row.getBoundingClientRect();
+        return {
+            id,
+            rect,
+            relX: x - rect.left,
+            relY: y - rect.top,
+            row,
+            container
+        };
+    }
+    return null;
+}

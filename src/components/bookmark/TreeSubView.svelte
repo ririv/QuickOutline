@@ -6,7 +6,7 @@
     import { serializeBookmarkTree } from '@/lib/outlineParser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
     import { moveNode, getVisibleNodes } from '@/lib/utils/treeUtils';
-    import { calculateDragState } from '@/lib/drag-drop/dragLogic';
+    import { calculateDragState, getDragTargetInfo } from '@/lib/drag-drop/dragLogic';
     import PreviewPopup from '../PreviewPopup.svelte';
     import offsetIconRaw from '@/assets/icons/offset.svg?raw';
     import { DragController } from '@/lib/drag-drop/DragController.svelte';
@@ -35,22 +35,16 @@
         // Tauri Drag & Drop Strategy
         const cleanup = await setupTauriDragDrop({
             getDraggedId: () => dragController.draggedNodeId,
-            onDragOver: (targetId, position, coords) => {
-                if (targetId && position && coords) {
-                    // We need to use calculateDragState to get the correct level/gap
-                    // We need to find the node element to get relative coordinates
-                    // But setupTauriDragDrop already found the element to determine targetId.
-                    // We can query it again.
-                    const nodeElement = document.querySelector(`.node-row[data-id="${targetId}"]`) as HTMLElement;
-                    if (nodeElement) {
-                        const rect = nodeElement.getBoundingClientRect();
+            onDragOver: (_targetId, _position, coords) => {
+                if (coords) {
+                    const target = getDragTargetInfo(coords.x, coords.y);
+                    if (target) {
                         const visibleNodes = getVisibleNodes(bookmarks);
-                        
                         const state = calculateDragState(
-                            coords.y - rect.top,
-                            rect.height,
-                            coords.x - rect.left,
-                            targetId,
+                            target.relY,
+                            target.rect.height,
+                            target.relX,
+                            target.id,
                             dragController.draggedNodeId!,
                             visibleNodes
                         );
@@ -66,12 +60,8 @@
                             return;
                         }
                     }
-                    
-                    // Fallback if calculation fails (e.g. element not found)
-                    dragController.updateState(targetId, position, 1, targetId, position);
-                } else {
-                    dragController.reset();
                 }
+                dragController.reset();
             },
             onDrop: (targetId, position) => {
                 if (dragController.draggedNodeId) {
@@ -96,11 +86,10 @@
         e.preventDefault();
         e.stopPropagation();
 
-        const element = document.elementFromPoint(e.clientX, e.clientY);
-        const containerElement = element?.closest('.node-container') as HTMLElement;
         const visibleNodes = getVisibleNodes(bookmarks);
+        const target = getDragTargetInfo(e.clientX, e.clientY);
         
-        if (!containerElement) {
+        if (!target) {
             // Drop in empty space
             if (visibleNodes.length > 0) {
                 const lastNode = visibleNodes[visibleNodes.length - 1];
@@ -111,19 +100,11 @@
             return;
         }
 
-        const hitId = containerElement.dataset.id;
-        if (!hitId) return;
-
-        // Use the row inside container for precise coordinate calculation
-        const nodeRow = containerElement.querySelector('.node-row') as HTMLElement;
-        if (!nodeRow) return;
-
-        const rect = nodeRow.getBoundingClientRect();
         const state = calculateDragState(
-            e.clientY - rect.top,
-            rect.height,
-            e.clientX - rect.left,
-            hitId,
+            target.relY,
+            target.rect.height,
+            target.relX,
+            target.id,
             dragController.draggedNodeId,
             visibleNodes
         );
