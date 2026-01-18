@@ -47,63 +47,64 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
         }
     }
 
-    // 2. Forced Physical Index (e.g., #15)
+    // 2. Physical Page Index (e.g., #10 -> Physical Page 10 -> Index 9)
     if (trimmed.startsWith("#")) {
         const numStr = trimmed.substring(1);
         const n = parseInt(numStr, 10);
         if (!isNaN(n)) {
-            // Physical absolute index - This IS part of the original document
             return { index: n - 1, isOriginalDoc: true };
         }
     }
 
-    // 3. Explicit Page Label Matching (e.g., @5 or @iv)
-    if (trimmed.startsWith("@")) {
-        const labelStr = trimmed.substring(1);
+    // 3. Logical Page Number (e.g., p10 -> 10 + offset -> Index)
+    if (/^p\d+$/i.test(trimmed)) {
+        const numStr = trimmed.substring(1);
+        const n = parseInt(numStr, 10);
+        if (!isNaN(n)) {
+            return { index: (n + config.offset) - 1, isOriginalDoc: true };
+        }
+    }
+
+    // 4. Explicit Page Label Matching (e.g., "10 -> Label "10")
+    if (trimmed.startsWith('"') || trimmed.startsWith("'")) {
+        let labelStr = trimmed.substring(1);
+        // Optional closing quote removal
+        if (labelStr.endsWith(trimmed[0])) {
+            labelStr = labelStr.slice(0, -1);
+        }
+        
         if (config.pageLabels) {
             const idx = getPageLabelIndex(config.pageLabels, labelStr);
             if (idx !== -1) {
                 return { index: idx, isOriginalDoc: true };
             }
         }
-        return null; // Explicit target not found
+        return null;
     }
 
-    // 4. Numeric Input Handling
+    // 5. Numeric Input Handling (Smart Mode: Label -> Logical)
     if (/^-?\d+$/.test(trimmed)) {
         const n = parseInt(trimmed, 10);
         if (!isNaN(n)) {
-            // Strategy: "Non-zero Offset Takes Precedence"
-            
-            // Case A: User set an offset. Trust their manual correction.
-            if (config.offset !== 0) {
-                return { index: (n + config.offset) - 1, isOriginalDoc: true };
-            }
-
-            // Case B: Offset is 0. Try to be smart (Label First).
+            // Try Label Match First
             if (config.pageLabels) {
                 const idx = getPageLabelIndex(config.pageLabels, trimmed);
                 if (idx !== -1) {
                     return { index: idx, isOriginalDoc: true };
                 }
             }
-            
-            // Case C: Offset is 0 and no label match. Fallback to raw physical index.
-            return { index: n - 1, isOriginalDoc: true };
+
+            // Fallback to Logical Page Calculation
+            return { index: (n + config.offset) - 1, isOriginalDoc: true };
         }
     }
 
-    // 5. Page Number Placeholders (e.g. {p}, {p R})
-    // Treat as valid target (resolving to current/first page for validation context)
+    // 6. Page Number Placeholders (e.g. {p}, {p R})
     if (/^\{p( [RrAa])?\}$/.test(trimmed)) {
-        // We return 0 (first page) as a dummy valid index. 
-        // In a real link scenario, this would need context of "current page", 
-        // but for validation "is this a valid format?", it suffices.
         return { index: 0, isOriginalDoc: true };
     }
 
-    // 6. Non-Numeric Input: Implicit Label Matching
-    // (e.g., "iv", "Appendix")
+    // 7. Non-Numeric Input: Implicit Label Matching
     if (config.pageLabels) {
         const idx = getPageLabelIndex(config.pageLabels, trimmed);
         if (idx !== -1) {
