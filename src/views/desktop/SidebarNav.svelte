@@ -126,7 +126,7 @@
     .icon-label { mask-image: url('../../assets/icons/pagenum2.svg'); -webkit-mask-image: url('../../assets/icons/pagenum2.svg'); }
     .icon-toc { mask-image: url('../../assets/icons/toc.svg'); -webkit-mask-image: url('../../assets/icons/toc.svg'); }
     .icon-markdown { mask-image: url('../../assets/icons/markdown.svg'); -webkit-mask-image: url('../../assets/icons/markdown.svg'); }
-    .icon-viewer { mask-image: url('../../assets/icons/preview.svg'); -webkit-mask-image: url('../../assets/icons/preview.svg'); }
+    .icon-viewer { mask-image: url('../../assets/icons/pages.svg'); -webkit-mask-image: url('../../assets/icons/pages.svg'); }
     .icon-settings { mask-image: url('../../assets/icons/settings.svg'); -webkit-mask-image: url('../../assets/icons/settings.svg'); }
     .icon-help { mask-image: url('../../assets/icons/help.svg'); -webkit-mask-image: url('../../assets/icons/help.svg'); }
 </style>
