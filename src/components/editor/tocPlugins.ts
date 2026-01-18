@@ -18,98 +18,69 @@ export const pageValidationConfig = Facet.define<ValidationState, ValidationStat
     combine: values => values[0] || { offset: 0, totalPage: 0, pageLabels: null, insertPos: 0 }
 });
 
-const invalidPageDecoration = Decoration.line({ class: "cm-invalid-page-line" });
+const invalidPageDecoration = Decoration.mark({ class: "cm-invalid-page-target" });
 
 const pageValidationTheme = EditorView.baseTheme({
-    ".cm-invalid-page-line": {
-        backgroundColor: "rgba(255, 0, 0, 0.15)"
+    ".cm-invalid-page-target": {
+        textDecoration: "underline wavy red 1px",
+        textDecorationSkipInk: "none"
     }
 });
 
-const pageValidationPlugin = ViewPlugin.fromClass(class {
-    decorations: any;
-
-    constructor(view: EditorView) {
-        this.decorations = this.compute(view);
-    }
-
-    update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged || update.state.facet(pageValidationConfig) !== update.startState.facet(pageValidationConfig)) {
-            this.decorations = this.compute(update.view);
-        }
-    }
-
-    compute(view: EditorView) {
-        const { offset, totalPage, pageLabels, insertPos } = view.state.facet(pageValidationConfig);
-        if (totalPage <= 0) return Decoration.none;
-
-        const builder = new RangeSetBuilder<Decoration>();
-
-        for (const { from, to } of view.visibleRanges) {
-            for (let pos = from; pos <= to;) {
-                const line = view.state.doc.lineAt(pos);
-                const text = line.text;
-                const parsed = parseTocLine(text);
-
-                if (parsed) {
-                    // Determine the target link string (either explicit <...> or display page)
-                    const targetStr = parsed.hasExplicitLink ? parsed.linkTarget : parsed.displayPage;
-                    
-                    const isValid = validatePageTarget(targetStr, {
-                        offset,
-                        totalPage,
-                        pageLabels,
-                        insertPos
-                    });
-
-                    if (!isValid) {
-                        builder.add(line.from, line.from, invalidPageDecoration);
-                    }
-                }
-                pos = line.to + 1;
-            }
-        }
-        return builder.finish();
-    }
-}, {
-    decorations: v => v.decorations
-});
+// pageValidationPlugin removed as its logic is merged into tocPlugin
 
 export const pageValidationExtension = [
     pageValidationTheme,
-    pageValidationPlugin
+    // pageValidationPlugin removed
 ];
 
 // --- TOC Decoration Plugin ---
 
 class LeaderWidget extends WidgetType {
-    readonly page: string;
-
-    constructor(page: string) {
+    constructor() {
         super();
-        this.page = page;
     }
 
     toDOM() {
         const span = document.createElement("span");
-        span.className = "toc-leader-widget";
-
+        span.className = "toc-leader-widget toc-leader-only";
         const dots = document.createElement("span");
         dots.className = "toc-leader-dots";
-        // Empty content ensures baseline aligns with bottom edge
         span.appendChild(dots);
+        return span;
+    }
 
-        const pageNum = document.createElement("span");
-        pageNum.className = "toc-leader-page";
-        pageNum.textContent = this.page;
-        span.appendChild(pageNum);
+    ignoreEvent() { return false; }
+    eq(other: LeaderWidget) { return true; }
+}
 
+class PageWidget extends WidgetType {
+    readonly displayPage: string;
+    readonly isValid: boolean;
+
+    constructor(displayPage: string, isValid: boolean) {
+        super();
+        this.displayPage = displayPage;
+        this.isValid = isValid;
+    }
+
+    toDOM() {
+        const span = document.createElement("span");
+        span.className = "toc-page-widget";
+        span.textContent = this.displayPage;
+        
+        if (!this.isValid) {
+            span.classList.add("cm-invalid-page-target");
+        }
+        
         return span;
     }
 
     ignoreEvent() { return false; }
 
-    eq(other: LeaderWidget) { return other.page == this.page; }
+    eq(other: PageWidget) { 
+        return other.displayPage === this.displayPage && other.isValid === this.isValid; 
+    }
 }
 
 class MathWidget extends WidgetType {
@@ -123,7 +94,6 @@ class MathWidget extends WidgetType {
     toDOM() {
         const span = document.createElement("span");
         span.className = "toc-math-widget";
-        // Use inline display for math in TOC titles
         span.style.display = "inline-block";
         try {
             katex.render(this.formula, span, { 
@@ -182,16 +152,15 @@ export const tocTheme = EditorView.theme({
     },
     ".toc-leader-widget": {
         display: "flex",
-        flexGrow: "1",
+        flexGrow: "1", 
         alignItems: "baseline",
-        // marginLeft: "4px", // 根据最新要求，移除此行
         cursor: "default",
         userSelect: "none",
-        animation: "leaderFadeIn 0.3s ease-out forwards" // 添加淡入动画
+        animation: "leaderFadeIn 0.3s ease-out forwards"
     },
     ".toc-leader-dots": {
         flexGrow: "1",
-        margin: "0 1px", /* 左右间距调整为1px */
+        margin: "0 1px",
         ...generateDotLeaderData({
             color: '#a0a0a0',
             width: 4,
@@ -203,7 +172,7 @@ export const tocTheme = EditorView.theme({
         display: "block",
         opacity: "0.6"
     },
-    ".toc-leader-page": {
+    ".toc-page-widget": {
         fontWeight: "bold",
         flexShrink: "0"
     },
@@ -217,7 +186,6 @@ export const tocTheme = EditorView.theme({
     "&.cm-focused": {
         outline: "none"
     },
-    // Hover effect for the editor content area
     "&.cm-editor:hover .cm-scroller": {
         backgroundColor: "rgba(0, 0, 0, 0.02)"
     },
@@ -242,7 +210,8 @@ export const tocPlugin = ViewPlugin.fromClass(class {
 
     update(update: ViewUpdate) {
         const selectionChanged = update.selectionSet;
-        const layoutChanged = update.docChanged || update.viewportChanged || update.focusChanged;
+        const layoutChanged = update.docChanged || update.viewportChanged || update.focusChanged || 
+                              update.state.facet(pageValidationConfig) !== update.startState.facet(pageValidationConfig);
 
         if (layoutChanged) {
             this.lastCursorLines = this.getCursorLines(update.view);
@@ -279,70 +248,68 @@ export const tocPlugin = ViewPlugin.fromClass(class {
     }
 
     computeDecorations(view: EditorView, cursorLines: Set<number>) {
+        const { offset, totalPage, pageLabels, insertPos } = view.state.facet(pageValidationConfig);
         const builder = new RangeSetBuilder<Decoration>();
 
         for (const {from, to} of view.visibleRanges) {
             for (let pos = from; pos <= to;) {
                 const line = view.state.doc.lineAt(pos);
 
-                // Only decorate if cursor is NOT on this line
+                // Common logic: Validation
+                const text = line.text;
+                const parsed = parseTocLine(text);
+                
+                let isValid = true;
+                let targetStr = "";
+
+                if (parsed) {
+                    targetStr = parsed.hasExplicitLink ? parsed.linkTarget : parsed.displayPage;
+                    isValid = validatePageTarget(targetStr, {
+                        offset,
+                        totalPage,
+                        pageLabels,
+                        insertPos
+                    });
+                }
+
+                // If cursor is NOT on this line -> Fold mode (Show Widgets)
                 if (!cursorLines.has(line.number)) {
-                    const text = line.text;
-
-                    const parsed = parseTocLine(text);
-
-
                     if (parsed) {
-
                         const titleLen = parsed.title.length;
-
                         const sepStart = line.from + titleLen;
+                        const sepEnd = sepStart + parsed.separator.length; 
                         const lineEnd = line.from + text.length;
 
-                        // 1. First add the line class (at line start)
-                        builder.add(
-                            line.from,
-                            line.from,
-                            flexLineDecoration
-                        );
+                        builder.add(line.from, line.from, flexLineDecoration);
 
-                        // 2. Scan for math in the title (must come BEFORE LeaderWidget because title is first)
-                        // Use shared parser logic
                         const mathNodes = scanMathInString(parsed.title);
-                        
                         for (const node of mathNodes) {
                             const nodeStart = line.from + node.start;
                             const nodeEnd = line.from + node.end;
-
-                            // Safety check: ensure we don't exceed the title length (overlap with separator)
                             if (nodeEnd <= sepStart) {
                                 if (node.type === 'escape') {
-                                    builder.add(
-                                        nodeStart,
-                                        nodeEnd,
-                                        Decoration.replace({ widget: new EscapeWidget() })
-                                    );
+                                    builder.add(nodeStart, nodeEnd, Decoration.replace({ widget: new EscapeWidget() }));
                                 } else if (node.type === 'math' && node.content) {
-                                    builder.add(
-                                        nodeStart,
-                                        nodeEnd,
-                                        Decoration.replace({
-                                            widget: new MathWidget(node.content)
-                                        })
-                                    );
+                                    builder.add(nodeStart, nodeEnd, Decoration.replace({ widget: new MathWidget(node.content) }));
                                 }
                             }
                         }
 
-                        // 3. Then add the widget replacement (at separator position)
-                        builder.add(
-                            sepStart,
-                            lineEnd,
-                            Decoration.replace({
-                                widget: new LeaderWidget(parsed.displayPage),
-                                inclusive: true // Include text in replacement
-                            })
-                        );
+                        builder.add(sepStart, sepEnd, Decoration.replace({ widget: new LeaderWidget(), inclusive: true }));
+
+                        if (lineEnd > sepEnd) {
+                             builder.add(sepEnd, lineEnd, Decoration.replace({ widget: new PageWidget(parsed.displayPage, isValid), inclusive: true }));
+                        }
+                    }
+                } 
+                // If cursor IS on this line -> Edit mode (Show Source + Source Highlighting)
+                else {
+                    if (parsed && !isValid) {
+                         const start = line.from + parsed.title.length + parsed.separator.length;
+                         const end = line.to;
+                         if (end > start) {
+                             builder.add(start, end, invalidPageDecoration);
+                         }
                     }
                 }
 
