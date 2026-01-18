@@ -37,7 +37,7 @@
 
 <div class="flex flex-col gap-4">
     <div class="grid grid-cols-[120px_1fr] items-center gap-2.5">
-        <label for="startPage" class="text-right text-sm text-[#333]">Page Index</label>
+        <label for="pageIndex" class="text-right text-sm font-semibold text-[#409eff]">From Page</label>
         <StyledInput id="pageIndex" type="number" min="1" step="1" bind:value={pageLabelStore.pageIndex} placeholder="e.g. 1 (Required)" numericType="unsigned-integer" />
     </div>
 
