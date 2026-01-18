@@ -15,20 +15,22 @@
 
 <div class="tooltip-container {className}">
     {@render children?.()}
-    <div class="tooltip {position}" class:right-aligned={rightAligned}>
-        {#if popup}
-            {@render popup()}
-        {:else}
-            {@html content}
-        {/if}
-    </div>
+    {#if content || popup}
+        <div class="tooltip {position}" class:right-aligned={rightAligned}>
+            {#if popup}
+                {@render popup()}
+            {:else}
+                {@html content}
+            {/if}
+        </div>
+    {/if}
 </div>
 
 <style>
     .tooltip-container {
         position: relative;
         display: flex;
-        align-items: center;
+        /* align-items: center; Removed to prevent layout interference */
     }
 
     .tooltip {
