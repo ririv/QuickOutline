@@ -20,6 +20,7 @@
     import rulerSvg from '@/assets/icons/ruler.svg?raw';
     import addSiblingSvg from '@/assets/icons/add-sibling.svg?raw';
     import addChildSvg from '@/assets/icons/add-child.svg?raw';
+    import helpSvg from '@/assets/icons/help.svg?raw';
 
     const icons = {
         'trash': trashSvg,
@@ -42,7 +43,8 @@
         'arrow-up': arrowUpSvg,
         'arrow-down': arrowDownSvg,
         'arrow-up-down': arrowUpDownSvg,
-        'ruler': rulerSvg
+        'ruler': rulerSvg,
+        'help': helpSvg
     };
 
     export type IconName = keyof typeof icons;

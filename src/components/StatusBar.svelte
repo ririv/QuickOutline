@@ -8,6 +8,7 @@
   import StatusBarGroup from './StatusBarGroup.svelte';
   import StatusBarItem from './StatusBarItem.svelte';
   import Icon from '@/components/Icon.svelte';
+  import Tooltip from '@/components/Tooltip.svelte';
   import { clickOutside } from '@/lib/actions/clickOutside';
   import {PageLabelNumberingStyle, generateRulePreview, type PageLabel} from "@/lib/types/page-label.ts";
   import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout, PAGE_SIZES_MM } from "@/lib/types/page";
@@ -31,6 +32,7 @@
     mode?: 'new' | 'edit';
     onGenerate?: () => void;
     onParamChange?: () => void;
+    onGuide?: () => void;
   }
 
   let { 
@@ -48,7 +50,8 @@
     layoutDetection,
     mode = 'edit',
     onGenerate,
-    onParamChange
+    onParamChange,
+    onGuide
   }: Props = $props();
 
   type PopupType = 'pagenum-offset' | 'insert-pos' | 'page-label' | 'page-size' | 'page-margins' | 'header-footer';
@@ -293,6 +296,14 @@
 
   <div class="spacer"></div>
   
+  {#if onGuide}
+      <Tooltip content="Syntax Guide" position="top" usePortal={true}>
+          <button class="icon-btn guide-btn" onclick={onGuide}>
+              <Icon name="help" width="16" height="16" />
+          </button>
+      </Tooltip>
+  {/if}
+
   <button class="icon-btn generate-btn" onclick={onGenerate} title="Generate PDF">
       <Icon name="play" width="20" height="20" />
   </button>
@@ -343,6 +354,15 @@
   .generate-btn:hover {
       background-color: rgba(64, 150, 255, 0.1);
       color: #1677ff;
+  }
+
+  .guide-btn {
+      color: #666;
+      margin-right: 12px;
+  }
+  .guide-btn:hover {
+      background-color: #e1e4e8;
+      color: #333;
   }
 
   .hf-summary-content {

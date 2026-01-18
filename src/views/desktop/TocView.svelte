@@ -4,6 +4,8 @@
   import TocEditor from '../../components/editor/TocEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
+  import Modal from '../../components/common/Modal.svelte';
+  import TocGuide from '../../components/TocGuide.svelte';
   import { onMount, onDestroy } from 'svelte';
 
   import { docStore } from '@/stores/docStore.svelte.ts';
@@ -19,10 +21,15 @@
   
   let showHeader = $state(false);
   let showFooter = $state(false);
+  let showGuide = $state(false);
   
   let activeTab = $derived(appStore.activeTab);
   
   const layoutDetection = usePdfPageSizeDetection(() => tocStore.insertionConfig.pos);
+
+  function handleGuide() {
+      showGuide = true;
+  }
 
   // Auto-load TOC when file changes
   $effect(() => {
@@ -114,8 +121,13 @@
       bind:hfLayout={tocStore.hfLayout}
       onGenerate={handleGenerate} 
       onParamChange={triggerPreview}
+      onGuide={handleGuide}
       {layoutDetection}
   />
+
+  <Modal title="TOC Syntax Guide" bind:show={showGuide}>
+      <TocGuide />
+  </Modal>
 </main>
 
 <style>
