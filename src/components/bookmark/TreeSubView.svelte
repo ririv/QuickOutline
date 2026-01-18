@@ -14,7 +14,6 @@
     import Icon from '../Icon.svelte';
     import ContextMenu from '../controls/ContextMenu.svelte';
     import { removeNode, insertNode } from '@/lib/utils/treeUtils';
-
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
     
@@ -335,21 +334,28 @@
     </div>
     
     {#if contextMenu}
+        {#snippet AddSiblingIcon()} <Icon name="add-sibling" size="16" /> {/snippet}
+        {#snippet AddChildIcon()} <Icon name="add-child" size="16" /> {/snippet}
+        {#snippet DeleteIcon()} <Icon name="delete" size="16" /> {/snippet}
+
         <ContextMenu 
             x={contextMenu.x} 
             y={contextMenu.y} 
             items={[
                 { 
                     label: 'Add Sibling', 
+                    icon: AddSiblingIcon,
                     onClick: () => handleAdd(contextMenu!.nodeId, 'after') 
                 },
                 { 
                     label: 'Add Child', 
+                    icon: AddChildIcon,
                     onClick: () => handleAdd(contextMenu!.nodeId, 'inside') 
                 },
                 { 
                     label: 'Delete', 
                     variant: 'danger', 
+                    icon: DeleteIcon,
                     onClick: () => handleDelete(contextMenu!.nodeId) 
                 }
             ]}

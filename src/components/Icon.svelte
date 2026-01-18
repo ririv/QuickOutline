@@ -18,11 +18,15 @@
     import arrowDownSvg from '@/assets/icons/arrow/arrow-down.svg?raw';
     import arrowUpDownSvg from '@/assets/icons/arrow/arrow-up-down.svg?raw';
     import rulerSvg from '@/assets/icons/ruler.svg?raw';
+    import addSiblingSvg from '@/assets/icons/add-sibling.svg?raw';
+    import addChildSvg from '@/assets/icons/add-child.svg?raw';
 
     const icons = {
         'trash': trashSvg,
         'delete': deleteSvg,
         'add': plusSvg,
+        'add-sibling': addSiblingSvg,
+        'add-child': addChildSvg,
         'check': successSvg,
         'page-orientation': pageOrientationSvg,
         'github': githubSvg,
@@ -89,17 +93,35 @@
                     svg.setAttribute('style', existingStyle ? `${existingStyle}; ${style}` : style);
                 }
 
-                // 3. Handle Color (fill="currentColor")
+                // 3. Handle Color (fill/stroke="currentColor")
+                // Helper to check if a color should be replaced by currentColor
+                const shouldReplaceColor = (color: string | null) => {
+                    if (!color || color === 'none' || color === 'transparent') return false;
+                    // Always keep currentColor as is
+                    if (color === 'currentColor') return false;
+                    // Replace black variations, assume others are intentional specific colors
+                    const blacks = ['#000', '#000000', 'black', 'rgb(0, 0, 0)'];
+                    return blacks.includes(color.toLowerCase().replace(/\s/g, ''));
+                };
+
                 const rootFill = svg.getAttribute('fill');
-                if (!rootFill || (rootFill !== 'none' && rootFill !== 'currentColor')) {
+                if (shouldReplaceColor(rootFill)) {
+                    svg.setAttribute('fill', 'currentColor');
+                } else if (!rootFill) {
+                    // Default to currentColor if no fill is specified on root
                     svg.setAttribute('fill', 'currentColor');
                 }
 
                 const allElements = svg.querySelectorAll('*');
                 allElements.forEach(el => {
                     const elFill = el.getAttribute('fill');
-                    if (elFill && elFill !== 'none' && elFill !== 'transparent') {
+                    if (shouldReplaceColor(elFill)) {
                         el.setAttribute('fill', 'currentColor');
+                    }
+
+                    const elStroke = el.getAttribute('stroke');
+                    if (shouldReplaceColor(elStroke)) {
+                        el.setAttribute('stroke', 'currentColor');
                     }
                 });
 

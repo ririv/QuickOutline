@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount, onDestroy, type Snippet } from 'svelte';
 
     export interface MenuItem {
         label: string;
         onClick: () => void;
-        icon?: string; // Optional icon data
+        icon?: Snippet; 
         variant?: 'danger' | 'default';
     }
 
@@ -18,6 +18,7 @@
     let { x, y, items, onClose }: Props = $props();
     
     let menuEl: HTMLDivElement | undefined = $state();
+    const hasAnyIcon = $derived(items.some(i => i.icon));
 
     function handleClickOutside(e: MouseEvent) {
         if (menuEl && !menuEl.contains(e.target as Node)) {
@@ -73,15 +74,18 @@
                    {item.variant === 'danger' 
                        ? 'text-red-600 hover:bg-red-50' 
                        : 'text-gray-700 hover:bg-[#f2f2f4] hover:text-gray-900'}"
-            onclick={() => { item.onClick(); onClose(); }}
-            role="menuitem"
-        >
-            {#if item.icon}
-                <span class="opacity-70">{@html item.icon}</span>
-            {/if}
-            {item.label}
-        </button>
-    {/each}
+                                                onclick={() => { item.onClick(); onClose(); }}
+                                                role="menuitem"
+                                            >
+                                                {#if hasAnyIcon}
+                                                    <span class="w-4 flex-shrink-0 flex items-center justify-center opacity-70">
+                                                        {#if item.icon}
+                                                            {@render item.icon()}
+                                                        {/if}
+                                                    </span>
+                                                {/if}
+                                                <span class="flex-1">{item.label}</span>
+                                            </button>    {/each}
 </div>
 
 <style>
