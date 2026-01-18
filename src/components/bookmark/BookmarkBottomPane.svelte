@@ -338,9 +338,10 @@
             <GraphButton 
                 bind:element={viewModeBtnEl} 
                 title={m.bookmark_view_settings()}
-                class={viewMode !== 'NONE' ? 'active' : ''}
+                class="{viewMode !== 'NONE' ? 'active' : ''} !border-dashed !border-gray-300 relative"
             >
                 <img src={viewModeIcon} alt="Settings" />
+                <div class="absolute bottom-0 right-0 w-0 h-0 border-l-[4px] border-l-transparent border-b-[4px] border-b-gray-400"></div>
             </GraphButton>
             {#if activePopup === 'viewMode' && viewModeBtnEl}
                 <SetContentsPopup 
