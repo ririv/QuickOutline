@@ -1,17 +1,17 @@
 <script lang="ts">
     import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
-    import HelpWindow from '../../components/HelpWindow.svelte';
+    import AboutWindow from '../../components/AboutWindow.svelte';
     import Tooltip from '../../components/Tooltip.svelte';
     
     const activeTab = $derived(appStore.activeTab);
-    let showHelpModal = $state(false);
+    let showAboutModal = $state(false);
 
     function switchTab(tab: FnTab) {
         appStore.switchTab(tab);
     }
 
-    function showHelp() {
-        showHelpModal = true;
+    function showAbout() {
+        showAboutModal = true;
     }
 
     function getNavBtnClass(isActive: boolean) {
@@ -112,19 +112,19 @@
             </button>
         </Tooltip>
 
-        <Tooltip content="Help" position="right">
+        <Tooltip content="About" position="right">
             <button
                 class={getNavBtnClass(false)}
-                onclick={showHelp}
-                aria-label="Help"
+                onclick={showAbout}
+                aria-label="About"
             >
-                <div class="icon icon-help"></div>
+                <div class="icon icon-about"></div>
             </button>
         </Tooltip>
     </div>
 </div>
 
-<HelpWindow bind:showHelpModal={showHelpModal} />
+<AboutWindow bind:showAboutModal={showAboutModal} />
 
 <style>
     .icon {
@@ -145,5 +145,10 @@
     .icon-markdown { mask-image: url('../../assets/icons/markdown.svg'); -webkit-mask-image: url('../../assets/icons/markdown.svg'); }
     .icon-viewer { mask-image: url('../../assets/icons/pages.svg'); -webkit-mask-image: url('../../assets/icons/pages.svg'); }
     .icon-settings { mask-image: url('../../assets/icons/settings.svg'); -webkit-mask-image: url('../../assets/icons/settings.svg'); }
-    .icon-help { mask-image: url('../../assets/icons/help.svg'); -webkit-mask-image: url('../../assets/icons/help.svg'); }
+    .icon-about { 
+        mask-image: url('../../assets/icons/about.svg'); 
+        -webkit-mask-image: url('../../assets/icons/about.svg');
+        width: 22px;
+        height: 22px;
+    }
 </style>
