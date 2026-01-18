@@ -5,25 +5,21 @@
         initialSplit?: number;
         left: Snippet;
         right: Snippet;
-        hideLeft?: boolean;
-        hideRight?: boolean;
     }
 
-    let { 
+    let {
         initialSplit = $bindable(50),
         left,
-        right,
-        hideLeft = false,
-        hideRight = false
+        right
     }: Props = $props();
 
     let container: HTMLDivElement;
     let isResizing = false;
-    
+
     function startResize(e: MouseEvent) {
         isResizing = true;
         document.body.classList.add('is-resizing'); // 关键：添加全局标记
-        
+
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', stopResize);
     }
@@ -41,21 +37,21 @@
     function stopResize() {
         isResizing = false;
         document.body.classList.remove('is-resizing'); // 移除标记
-        
+
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', stopResize);
     }
 </script>
 
-<div class="split-container" bind:this={container} class:hide-left={hideLeft} class:hide-right={hideRight}>
-    <div class="pane left" style="width: {hideLeft ? '0' : hideRight ? '100%' : initialSplit + '%'}">
+<div class="split-container" bind:this={container}>
+    <div class="pane left" style="width: {initialSplit}%">
         {@render left()}
     </div>
-    
+
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="resizer" onmousedown={startResize}></div>
-    
-    <div class="pane right" style="width: {hideRight ? '0' : hideLeft ? '100%' : (100 - initialSplit) + '%'}">
+
+    <div class="pane right" style="width: {100 - initialSplit}%">
         {@render right()}
     </div>
 </div>
@@ -71,14 +67,8 @@
     .pane {
         height: 100%;
         overflow: hidden;
-        transition: width 0.2s ease-in-out; /* 添加平滑过渡 */
     }
 
-    .split-container.hide-left .resizer,
-    .split-container.hide-right .resizer {
-        display: none;
-    }
-    
     /* 
      * Resizer Strategy:
      * 1. The element itself is 0-width to minimize layout impact.
@@ -92,7 +82,7 @@
         flex-shrink: 0;
         user-select: none;
     }
-    
+
     /* Hit Area: Wide and transparent */
     .resizer::after {
         content: '';
@@ -113,7 +103,7 @@
         top: 0;
         bottom: 0;
         /* Center 1px line: -0.5px offset */
-        left: -0.5px; 
+        left: -0.5px;
         width: 1px;
         background-color: #e5e5e5;
         transition: all 0.15s ease-out;
