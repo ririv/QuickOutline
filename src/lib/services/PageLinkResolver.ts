@@ -26,6 +26,70 @@ function getPageLabelIndex(labels: string[], label: string): number {
     return idx !== undefined ? idx : -1;
 }
 
+interface ResolutionContext {
+    offset: number;
+    pageLabels: string[] | null;
+}
+
+/**
+ * Core parsing logic for page targets.
+ * Supports: # (Physical), p (Logical), " (Label), and Smart/Implicit modes.
+ * Returns 0-based index or null if unresolvable.
+ */
+function resolvePageNumber(target: string, context: ResolutionContext): number | null {
+    const trimmed = target.trim();
+
+    // 1. Physical Page Index (#10 -> Index 9)
+    if (trimmed.startsWith("#")) {
+        const numStr = trimmed.substring(1);
+        const n = parseInt(numStr, 10);
+        if (!isNaN(n)) return n - 1;
+    }
+
+    // 2. Logical Page Number (p10 -> 10 + offset -> Index)
+    if (/^p\d+$/i.test(trimmed)) {
+        const numStr = trimmed.substring(1);
+        const n = parseInt(numStr, 10);
+        if (!isNaN(n)) return (n + context.offset) - 1;
+    }
+
+    // 3. Explicit Page Label ("10 -> Label "10")
+    if (trimmed.startsWith('"') || trimmed.startsWith("'")) {
+        let labelStr = trimmed.substring(1);
+        if (labelStr.endsWith(trimmed[0])) {
+            labelStr = labelStr.slice(0, -1);
+        }
+        
+        if (context.pageLabels) {
+            const idx = getPageLabelIndex(context.pageLabels, labelStr);
+            if (idx !== -1) return idx;
+        }
+        return null;
+    }
+
+    // 4. Numeric Input (Smart: Label -> Logical)
+    if (/^-?\d+$/.test(trimmed)) {
+        const n = parseInt(trimmed, 10);
+        if (!isNaN(n)) {
+            // Priority 1: Label Match
+            if (context.pageLabels) {
+                const idx = getPageLabelIndex(context.pageLabels, trimmed);
+                if (idx !== -1) return idx;
+            }
+            // Priority 2: Logical Page
+            return (n + context.offset) - 1;
+        }
+    }
+
+    // 5. Implicit Label Matching (Non-numeric)
+    if (context.pageLabels) {
+        const idx = getPageLabelIndex(context.pageLabels, trimmed);
+        if (idx !== -1) return idx;
+    }
+
+    return null;
+}
+
 /**
  * Resolves a target page string (e.g., "5", "#15", "toc:1") into a target configuration.
  * 
@@ -37,79 +101,30 @@ export function resolveLinkTarget(target: string, config: LinkResolverConfig): {
     if (!target) return null;
     const trimmed = target.trim();
 
-    // 1. TOC Internal Link (e.g., toc:1)
+    // 1. TOC Internal Link (e.g., toc:1, toc:#1, toc:p1)
     if (trimmed.toLowerCase().startsWith("toc:")) {
-        const numStr = trimmed.substring(4);
-        const n = parseInt(numStr, 10);
-        if (!isNaN(n)) {
-            // Physical index = insertPos + (n - 1)
-            return { index: config.insertPos + (n - 1), isOriginalDoc: false };
-        }
-    }
-
-    // 2. Physical Page Index (e.g., #10 -> Physical Page 10 -> Index 9)
-    if (trimmed.startsWith("#")) {
-        const numStr = trimmed.substring(1);
-        const n = parseInt(numStr, 10);
-        if (!isNaN(n)) {
-            return { index: n - 1, isOriginalDoc: true };
-        }
-    }
-
-    // 3. Logical Page Number (e.g., p10 -> 10 + offset -> Index)
-    if (/^p\d+$/i.test(trimmed)) {
-        const numStr = trimmed.substring(1);
-        const n = parseInt(numStr, 10);
-        if (!isNaN(n)) {
-            return { index: (n + config.offset) - 1, isOriginalDoc: true };
-        }
-    }
-
-    // 4. Explicit Page Label Matching (e.g., "10 -> Label "10")
-    if (trimmed.startsWith('"') || trimmed.startsWith("'")) {
-        let labelStr = trimmed.substring(1);
-        // Optional closing quote removal
-        if (labelStr.endsWith(trimmed[0])) {
-            labelStr = labelStr.slice(0, -1);
-        }
+        const subTarget = trimmed.substring(4);
+        // TOC context: No offset (usually), No labels (yet)
+        const relativeIndex = resolvePageNumber(subTarget, { offset: 0, pageLabels: null });
         
-        if (config.pageLabels) {
-            const idx = getPageLabelIndex(config.pageLabels, labelStr);
-            if (idx !== -1) {
-                return { index: idx, isOriginalDoc: true };
-            }
-        }
-        return null;
-    }
-
-    // 5. Numeric Input Handling (Smart Mode: Label -> Logical)
-    if (/^-?\d+$/.test(trimmed)) {
-        const n = parseInt(trimmed, 10);
-        if (!isNaN(n)) {
-            // Try Label Match First
-            if (config.pageLabels) {
-                const idx = getPageLabelIndex(config.pageLabels, trimmed);
-                if (idx !== -1) {
-                    return { index: idx, isOriginalDoc: true };
-                }
-            }
-
-            // Fallback to Logical Page Calculation
-            return { index: (n + config.offset) - 1, isOriginalDoc: true };
+        if (relativeIndex !== null && relativeIndex >= 0) {
+            return { index: config.insertPos + relativeIndex, isOriginalDoc: false };
         }
     }
 
-    // 6. Page Number Placeholders (e.g. {p}, {p R})
+    // 2. Page Number Placeholders (e.g. {p}, {p R})
     if (/^\{p( [RrAa])?\}$/.test(trimmed)) {
         return { index: 0, isOriginalDoc: true };
     }
 
-    // 7. Non-Numeric Input: Implicit Label Matching
-    if (config.pageLabels) {
-        const idx = getPageLabelIndex(config.pageLabels, trimmed);
-        if (idx !== -1) {
-            return { index: idx, isOriginalDoc: true };
-        }
+    // 3. Standard Document Link
+    const index = resolvePageNumber(trimmed, { 
+        offset: config.offset, 
+        pageLabels: config.pageLabels 
+    });
+
+    if (index !== null) {
+        return { index, isOriginalDoc: true };
     }
 
     return null;
