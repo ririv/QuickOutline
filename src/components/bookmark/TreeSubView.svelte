@@ -289,7 +289,7 @@
 <div class="tree-subview-container">
     <div class="tree-header">
         <div class="tree-column-title relative flex items-center justify-center">
-            <div class="absolute left-2 flex gap-1">
+            <div class="absolute left-[22px] flex gap-1">
                 <button 
                     class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer border-none bg-transparent p-0" 
                     onclick={toggleAll}
