@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
     import HelpWindow from '../../components/HelpWindow.svelte';
+    import Tooltip from '../../components/Tooltip.svelte';
     
     const activeTab = $derived(appStore.activeTab);
     let showHelpModal = $state(false);
@@ -37,73 +38,89 @@
 
 <div class="w-[50px] bg-white border-r border-[#dcdfe6] flex flex-col justify-between py-[10px] h-full box-border shrink-0">
     <div class="flex flex-col items-center gap-2">
-        <button 
-            class={getNavBtnClass(activeTab === FnTab.bookmark)} 
-            onclick={() => switchTab(FnTab.bookmark)}
-            title="Bookmark"
-        >
-            <div class="icon icon-bookmark"></div>
-        </button>
+        <Tooltip content="Bookmark" position="right">
+            <button 
+                class={getNavBtnClass(activeTab === FnTab.bookmark)} 
+                onclick={() => switchTab(FnTab.bookmark)}
+                aria-label="Bookmark"
+            >
+                <div class="icon icon-bookmark"></div>
+            </button>
+        </Tooltip>
         
-        <button 
-            class={getNavBtnClass(activeTab === FnTab.label)} 
-            onclick={() => switchTab(FnTab.label)}
-            title="Page Label"
-        >
-            <div class="icon icon-label"></div>
-        </button>
+        <Tooltip content="Page Label" position="right">
+            <button 
+                class={getNavBtnClass(activeTab === FnTab.label)} 
+                onclick={() => switchTab(FnTab.label)}
+                aria-label="Page Label"
+            >
+                <div class="icon icon-label"></div>
+            </button>
+        </Tooltip>
 
-        <button 
-            class={getNavBtnClass(activeTab === FnTab.tocGenerator)} 
-            onclick={() => switchTab(FnTab.tocGenerator)}
-            title="TOC Generator"
-        >
-            <div class="icon icon-toc"></div>
-        </button>
+        <Tooltip content="TOC Generator" position="right">
+            <button 
+                class={getNavBtnClass(activeTab === FnTab.tocGenerator)} 
+                onclick={() => switchTab(FnTab.tocGenerator)}
+                aria-label="TOC Generator"
+            >
+                <div class="icon icon-toc"></div>
+            </button>
+        </Tooltip>
 
-        <button 
-            class={getNavBtnClass(activeTab === FnTab.markdown)} 
-            onclick={() => switchTab(FnTab.markdown)}
-            title="Markdown"
-        >
-            <div class="icon icon-markdown"></div>
-        </button>
+        <Tooltip content="Markdown" position="right">
+            <button 
+                class={getNavBtnClass(activeTab === FnTab.markdown)} 
+                onclick={() => switchTab(FnTab.markdown)}
+                aria-label="Markdown"
+            >
+                <div class="icon icon-markdown"></div>
+            </button>
+        </Tooltip>
 
-        <button 
-            class={getNavBtnClass(activeTab === FnTab.viewer)}
-            onclick={() => switchTab(FnTab.viewer)}
-            title="viewer"
-        >
-            <div class="icon icon-viewer"></div>
-        </button>
+        <Tooltip content="Viewer" position="right">
+            <button 
+                class={getNavBtnClass(activeTab === FnTab.viewer)}
+                onclick={() => switchTab(FnTab.viewer)}
+                aria-label="Viewer"
+            >
+                <div class="icon icon-viewer"></div>
+            </button>
+        </Tooltip>
     </div>
 
     <div class="flex flex-col items-center gap-2">
         {#if import.meta.env.DEV}
-        <button
-            class={getNavBtnClass(activeTab === FnTab.experimental)}
-            onclick={() => switchTab(FnTab.experimental)}
-            title="Experimental Features"
-        >
-             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.1.5-3z"/></svg>
-        </button>
+        <Tooltip content="Experimental Features" position="right">
+            <button
+                class={getNavBtnClass(activeTab === FnTab.experimental)}
+                onclick={() => switchTab(FnTab.experimental)}
+                aria-label="Experimental Features"
+            >
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.1.5-3z"/></svg>
+            </button>
+        </Tooltip>
         {/if}
 
-        <button
-            class={getNavBtnClass(activeTab === FnTab.settings)}
-            onclick={() => switchTab(FnTab.settings)}
-            title="Settings"
-        >
-            <div class="icon icon-settings"></div>
-        </button>
+        <Tooltip content="Settings" position="right">
+            <button
+                class={getNavBtnClass(activeTab === FnTab.settings)}
+                onclick={() => switchTab(FnTab.settings)}
+                aria-label="Settings"
+            >
+                <div class="icon icon-settings"></div>
+            </button>
+        </Tooltip>
 
-        <button
-            class={getNavBtnClass(false)}
-            onclick={showHelp}
-            title="Help"
-        >
-            <div class="icon icon-help"></div>
-        </button>
+        <Tooltip content="Help" position="right">
+            <button
+                class={getNavBtnClass(false)}
+                onclick={showHelp}
+                aria-label="Help"
+            >
+                <div class="icon icon-help"></div>
+            </button>
+        </Tooltip>
     </div>
 </div>
 

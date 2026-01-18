@@ -4,7 +4,7 @@
     interface Props {
         content?: string;
         className?: string;
-        position?: 'top' | 'bottom';
+        position?: 'top' | 'bottom' | 'right' | 'left';
         rightAligned?: boolean;
         children?: Snippet;
         popup?: Snippet; // New snippet prop for custom tooltip content
@@ -15,7 +15,7 @@
 
 <div class="tooltip-container {className}">
     {@render children?.()}
-    <div class="tooltip {position === 'top' ? 'top' : 'bottom'}" class:right-aligned={rightAligned}>
+    <div class="tooltip {position}" class:right-aligned={rightAligned}>
         {#if popup}
             {@render popup()}
         {:else}
@@ -79,6 +79,42 @@
         border-width: 5px;
         border-style: solid;
         border-color: transparent transparent #333 transparent;
+    }
+
+    .tooltip.right {
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-left: 8px;
+    }
+
+    .tooltip.right::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        margin-top: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent #333 transparent transparent;
+    }
+
+    .tooltip.left {
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-right: 8px;
+    }
+
+    .tooltip.left::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        margin-top: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent transparent #333;
     }
 
     .tooltip.right-aligned {
