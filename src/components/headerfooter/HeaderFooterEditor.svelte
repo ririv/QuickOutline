@@ -19,6 +19,7 @@
         type?: 'header' | 'footer';
         numberingStyle?: PageLabelNumberingStyle;
         padding?: number;
+        defaultContent?: Partial<Record<'left' | 'center' | 'right' | 'inner' | 'outer', string>>;
         onchange?: () => void;
         onStyleChange?: (style: PageLabelNumberingStyle) => void;
     }
@@ -28,6 +29,7 @@
         type = 'header',
         numberingStyle = $bindable(),
         padding = $bindable(0),
+        defaultContent = {},
         onchange,
         onStyleChange
     }: Props = $props();
@@ -103,11 +105,14 @@
     // Helper to check if a position has content (for dot indicator)
     function hasContent(pos: 'left' | 'center' | 'right' | 'inner' | 'outer') {
         const value = config[pos];
+        const defaultValue = defaultContent[pos] || '';
+
         if (!value || value.trim().length === 0) {
             return false;
         }
-        // For footer center, if the value is '{p}', it's considered default and shouldn't show a dot
-        if (type === 'footer' && pos === 'center' && value.trim() === '{p}') {
+        
+        // If the value matches the specific default for this position, it shouldn't show a dot
+        if (value.trim() === defaultValue.trim()) {
             return false;
         }
         return true;
@@ -245,7 +250,7 @@
         bind:value={config[activePos]}
         oninput={handleInput}
         ondblclick={handleInputDoubleClick}
-        placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) (e.g. &lbrace;p&rbrace;)..."
+        placeholder="{type === 'header' ? 'Header' : 'Footer'} ({activePos}) {defaultContent[activePos] ? `(e.g. ${defaultContent[activePos]})` : ''}..."
         style:text-align={activePos === 'right' ? 'right' : activePos === 'center' ? 'center' : 'left'}
         type="text"
     />

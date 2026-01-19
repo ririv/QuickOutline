@@ -89,6 +89,7 @@
             bind:hfLayout={tocStore.hfLayout}
             bind:showHeader={showHeader}
             bind:showFooter={showFooter}
+            defaultFooterContent={{ center: '{p r}' }}
             onHeaderChange={triggerPreview}
             onFooterChange={triggerPreview}
           >

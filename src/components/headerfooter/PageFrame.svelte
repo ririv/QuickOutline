@@ -11,6 +11,8 @@
       hfLayout?: HeaderFooterLayout;
       showHeader: boolean;
       showFooter: boolean;
+      defaultHeaderContent?: Partial<Record<'left' | 'center' | 'right' | 'inner' | 'outer', string>>;
+      defaultFooterContent?: Partial<Record<'left' | 'center' | 'right' | 'inner' | 'outer', string>>;
       onHeaderChange?: () => void;
       onFooterChange?: () => void;
       children?: import('svelte').Snippet;
@@ -22,6 +24,8 @@
       hfLayout = $bindable(defaultHeaderFooterLayout),
       showHeader = $bindable(),
       showFooter = $bindable(),
+      defaultHeaderContent = {},
+      defaultFooterContent = { center: '{p}' },
       onHeaderChange,
       onFooterChange,
       children
@@ -43,6 +47,7 @@
     label="Header"
     expanded={showHeader}
     content={headerConfig}
+    defaultContent={defaultHeaderContent}
     ontoggle={toggleHeader}
   />
   {#if showHeader}
@@ -51,6 +56,7 @@
         type="header"
         bind:config={headerConfig}
         bind:padding={hfLayout.headerPadding}
+        defaultContent={defaultHeaderContent}
         onchange={onHeaderChange}
       />
     </div>
@@ -68,6 +74,7 @@
         type="footer"
         bind:config={footerConfig}
         bind:padding={hfLayout.footerPadding}
+        defaultContent={defaultFooterContent}
         onchange={onFooterChange}
       />
     </div>
@@ -77,6 +84,7 @@
     label="Footer"
     expanded={showFooter}
     content={footerConfig}
+    defaultContent={defaultFooterContent}
     ontoggle={toggleFooter}
   />
 </div>

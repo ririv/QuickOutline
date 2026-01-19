@@ -6,6 +6,7 @@
     label?: string;
     expanded?: boolean;
     content?: HeaderFooterConfig;
+    defaultContent?: Partial<Record<'left' | 'center' | 'right' | 'inner' | 'outer', string>>;
     ontoggle?: () => void;
   }
 
@@ -14,6 +15,7 @@
     label = '', 
     expanded = false, 
     content = {} as HeaderFooterConfig,
+    defaultContent = {},
     ontoggle 
   }: Props = $props();
 
@@ -32,7 +34,14 @@
   function hasContent(config: HeaderFooterConfig) {
       const hasText = Object.entries(config).some(([k, v]) => {
           if (k === 'drawLine') return false;
-          return typeof v === 'string' && v.trim().length > 0 && v !== '{p}';
+          
+          const pos = k as 'left' | 'center' | 'right' | 'inner' | 'outer';
+          const defaultValue = defaultContent[pos] || '';
+          
+          // Check if value exists, is not empty, and differs from default
+          return typeof v === 'string' 
+              && v.trim().length > 0 
+              && v.trim() !== defaultValue.trim();
       });
       return hasText || config.drawLine;
   }
