@@ -18,7 +18,6 @@
     }: Props = $props();
 
     let numberingStyle = $state<PageNumberStyle>(PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
-    let dateStyle = $state('default');
     let triggerEl = $state<HTMLElement | undefined>();
     let isOpen = $state(false);
     
@@ -26,7 +25,6 @@
     const styles = pageLabelStyleMap.getAllStyles().filter(s => s.enumName !== PageLabelNumberingStyle.NONE);
 
     const dateStyles = [
-        { label: 'Default', value: 'default' },
         { label: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
         { label: 'YYYY年M月D日', value: 'YYYY年M月D日' },
         { label: 'YYYY年M月D日 dddd', value: 'YYYY年M月D日 dddd' },
@@ -35,7 +33,15 @@
         { label: 'Custom', value: 'custom' },
     ];
 
+    const localeStyles = [
+        { label: 'Auto', value: 'auto' },
+        { label: 'Chinese (zh-CN)', value: 'zh-CN' },
+        { label: 'English (en-US)', value: 'en-US' },
+    ];
+
     let customFormat = $state('YYYY-MM-DD HH:mm');
+    let selectedLocale = $state('auto');
+    let dateStyle = $state('YYYY-MM-DD'); // Default to explicit ISO format
 
     function toggle() {
         isOpen = !isOpen;
@@ -56,21 +62,33 @@
         }
     }
 
-    function getDateInsertText(style: string, custom: string): string {
-        if (style === 'default') return '{d}';
-        
+    function getDateInsertText(style: string, custom: string, locale: string): string {
         const pattern = style === 'custom' ? custom : style;
         
+        let result = '';
         if (pattern.includes(' ')) {
-            return `{d "${pattern}"}`;
+             result = `{d "${pattern}"`;
+        } else {
+             result = `{d ${pattern}`;
         }
-        return `{d ${pattern}}`;
+
+        if (locale !== 'auto') {
+            // Append locale
+             result += ` ${locale}`;
+        }
+
+        // Close brace if opened with {d ...
+        if (result.startsWith('{d ')) {
+             result += '}';
+        }
+        
+        return result;
     }
 
     // Preview Logic
-    function formatDatePreview(date: Date, formatStyle: string, custom: string): string {
+    function formatDatePreview(date: Date, formatStyle: string, custom: string, locale: string): string {
         let pattern = formatStyle === 'custom' ? custom : formatStyle;
-        if (formatStyle === 'default') return date.toLocaleDateString();
+        const localeArg = locale === 'auto' ? undefined : locale;
 
         // Pattern logic mirrors PageSectionTemplate
         const replacements: Record<string, string | number> = {
@@ -86,8 +104,8 @@
             'm': date.getMinutes(),
             'ss': String(date.getSeconds()).padStart(2, '0'),
             's': date.getSeconds(),
-            'dddd': date.toLocaleDateString(undefined, { weekday: 'long' }),
-            'ddd': date.toLocaleDateString(undefined, { weekday: 'short' }),
+            'dddd': date.toLocaleDateString(localeArg, { weekday: 'long' }),
+            'ddd': date.toLocaleDateString(localeArg, { weekday: 'short' }),
         };
 
         return pattern.replace(/YYYY|YY|MM|M|DD|D|HH|H|mm|m|ss|s|dddd|ddd/g, (match) => {
@@ -96,8 +114,8 @@
     }
 
     let insertText = $derived(getInsertText(numberingStyle));
-    let insertDateText = $derived(getDateInsertText(dateStyle, customFormat));
-    let previewDateText = $derived(formatDatePreview(new Date(), dateStyle, customFormat));
+    let insertDateText = $derived(getDateInsertText(dateStyle, customFormat, selectedLocale));
+    let previewDateText = $derived(formatDatePreview(new Date(), dateStyle, customFormat, selectedLocale));
 </script>
 
 <div class="btn-wrapper" use:clickOutside={close}>
@@ -150,23 +168,36 @@
 
                 <div class="popup-title">Date</div>
                 
-                <div class="style-select-wrapper">
-                    <div class="section-title">Date Format</div>
-                    <StyledSelect 
-                        options={dateStyles}
-                        displayKey="label"
-                        optionKey="label"
-                        valueKey="value"
-                        bind:value={dateStyle}
-                    />
-                    {#if dateStyle === 'custom'}
-                        <input 
-                            type="text" 
-                            class="custom-format-input" 
-                            bind:value={customFormat} 
-                            placeholder="YYYY-MM-DD HH:mm"
+                <div class="date-settings-group">
+                    <div class="style-select-wrapper">
+                        <div class="section-title">Date Format</div>
+                        <StyledSelect 
+                            options={dateStyles}
+                            displayKey="label"
+                            optionKey="label"
+                            valueKey="value"
+                            bind:value={dateStyle}
                         />
-                    {/if}
+                        {#if dateStyle === 'custom'}
+                            <input 
+                                type="text" 
+                                class="custom-format-input" 
+                                bind:value={customFormat} 
+                                placeholder="YYYY-MM-DD HH:mm"
+                            />
+                        {/if}
+                    </div>
+
+                    <div class="style-select-wrapper">
+                        <div class="section-title">Language</div>
+                        <StyledSelect 
+                            options={localeStyles}
+                            displayKey="label"
+                            optionKey="label"
+                            valueKey="value"
+                            bind:value={selectedLocale}
+                        />
+                    </div>
                 </div>
 
                 <div class="hint-row">
@@ -347,6 +378,12 @@
         padding-left: 1px;
         text-transform: uppercase;
         font-weight: 600;
+    }
+    
+    .date-settings-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
     
     .style-select-wrapper {

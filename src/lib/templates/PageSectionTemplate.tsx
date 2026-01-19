@@ -2,9 +2,9 @@ import { createElement, Fragment } from '@/lib/utils/jsx.ts';
 import type { SectionConfig } from '@/lib/types/page';
 
 export function PageSectionTemplate(config: SectionConfig) {
-    const formatDate = (date: Date, format: string): string => {
+    const formatDate = (date: Date, format: string, locale?: string): string => {
         if (!format || format === 'default') {
-            return date.toLocaleDateString();
+            return date.toLocaleDateString(locale);
         }
 
         const formatMap: Record<string, string> = {
@@ -30,8 +30,8 @@ export function PageSectionTemplate(config: SectionConfig) {
             'm': date.getMinutes(),
             'ss': String(date.getSeconds()).padStart(2, '0'),
             's': date.getSeconds(),
-            'dddd': date.toLocaleDateString(undefined, { weekday: 'long' }),
-            'ddd': date.toLocaleDateString(undefined, { weekday: 'short' }),
+            'dddd': date.toLocaleDateString(locale, { weekday: 'long' }),
+            'ddd': date.toLocaleDateString(locale, { weekday: 'short' }),
         };
 
         return pattern.replace(/YYYY|YY|MM|M|DD|D|HH|H|mm|m|ss|s|dddd|ddd/g, (match) => {
@@ -43,24 +43,35 @@ export function PageSectionTemplate(config: SectionConfig) {
         if (!text) return '';
         
         // Split by regex capturing the placeholder.
-        // Matches: {p}, {p R}, {p r}, {p A}, {p a}
-        // Matches: {d}, {d <custom format string>}
-        // Note: The regex for {d ...} needs to be greedy enough to capture spaces in the format string.
         const parts = text.split(/(\{p(?: [RrAa])?\}|\{d(?: [^}]+)?\})/g);
         
         return parts.map((part) => {
             if (part.startsWith('{d')) {
-                // Extract content: supports {d}, {d format}, {d "format"}, {d 'format'}
-                // Handles multiple spaces and optional quotes.
-                const match = part.match(/^\{d(?: +(?:"([^"]*)"|'([^']*)'|([^}]+)))?\}$/);
+                // 1. Extract raw content inside {d ... }
+                const rawMatch = part.match(/^\{d(?: +(.+))?\}$/);
+                let content = rawMatch && rawMatch[1] ? rawMatch[1].trim() : '';
                 
+                // 2. Extract locale if present at the end (e.g. " zh-CN" or " en")
+                // Looks for space + 2 letters + optional (- + 2-4 letters)
+                let locale: string | undefined = undefined;
+                const localeMatch = content.match(/\s+([a-zA-Z]{2}(?:-[a-zA-Z]{2,4})?)$/);
+                
+                if (localeMatch) {
+                    locale = localeMatch[1];
+                    content = content.substring(0, localeMatch.index).trim();
+                }
+
+                // 3. Extract format from the remaining content (handle quotes)
                 let format = 'default';
-                if (match) {
-                    // match[1] is double quoted, [2] is single quoted, [3] is unquoted
-                    format = (match[1] || match[2] || match[3] || 'default').trim();
+                if (content) {
+                    // Check for quotes
+                    const quoteMatch = content.match(/^(?:"([^"]*)"|'([^']*)'|([^"']+))$/);
+                    if (quoteMatch) {
+                        format = quoteMatch[1] || quoteMatch[2] || quoteMatch[3];
+                    }
                 }
                 
-                return <span>{formatDate(new Date(), format)}</span>;
+                return <span>{formatDate(new Date(), format, locale)}</span>;
             }
 
             switch (part) {
