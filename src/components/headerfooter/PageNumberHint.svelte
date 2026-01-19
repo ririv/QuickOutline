@@ -16,11 +16,24 @@
     }: Props = $props();
 
     let numberingStyle = $state<PageNumberStyle>(PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
+    let dateStyle = $state('default');
     let triggerEl = $state<HTMLElement | undefined>();
     let isOpen = $state(false);
     
     // Filter out 'None' style
     const styles = pageLabelStyleMap.getAllStyles().filter(s => s.enumName !== PageLabelNumberingStyle.NONE);
+
+    const dateStyles = [
+        { label: 'Default', value: 'default' },
+        { label: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
+        { label: 'YYYY年M月D日', value: 'YYYY年M月D日' },
+        { label: 'YYYY年M月D日 dddd', value: 'YYYY年M月D日 dddd' },
+        { label: 'MM/DD/YYYY', value: 'MM/DD/YYYY' },
+        { label: 'DD/MM/YYYY', value: 'DD/MM/YYYY' },
+        { label: 'Custom', value: 'custom' },
+    ];
+
+    let customFormat = $state('YYYY-MM-DD HH:mm');
 
     function toggle() {
         isOpen = !isOpen;
@@ -41,7 +54,48 @@
         }
     }
 
+    function getDateInsertText(style: string, custom: string): string {
+        if (style === 'default') return '{d}';
+        
+        const pattern = style === 'custom' ? custom : style;
+        
+        if (pattern.includes(' ')) {
+            return `{d "${pattern}"}`;
+        }
+        return `{d ${pattern}}`;
+    }
+
+    // Preview Logic
+    function formatDatePreview(date: Date, formatStyle: string, custom: string): string {
+        let pattern = formatStyle === 'custom' ? custom : formatStyle;
+        if (formatStyle === 'default') return date.toLocaleDateString();
+
+        // Pattern logic mirrors PageSectionTemplate
+        const replacements: Record<string, string | number> = {
+            'YYYY': date.getFullYear(),
+            'YY': String(date.getFullYear()).slice(-2),
+            'MM': String(date.getMonth() + 1).padStart(2, '0'),
+            'M': date.getMonth() + 1,
+            'DD': String(date.getDate()).padStart(2, '0'),
+            'D': date.getDate(),
+            'HH': String(date.getHours()).padStart(2, '0'),
+            'H': date.getHours(),
+            'mm': String(date.getMinutes()).padStart(2, '0'),
+            'm': date.getMinutes(),
+            'ss': String(date.getSeconds()).padStart(2, '0'),
+            's': date.getSeconds(),
+            'dddd': date.toLocaleDateString(undefined, { weekday: 'long' }),
+            'ddd': date.toLocaleDateString(undefined, { weekday: 'short' }),
+        };
+
+        return pattern.replace(/YYYY|YY|MM|M|DD|D|HH|H|mm|m|ss|s|dddd|ddd/g, (match) => {
+            return String(replacements[match]);
+        });
+    }
+
     let insertText = $derived(getInsertText(numberingStyle));
+    let insertDateText = $derived(getDateInsertText(dateStyle, customFormat));
+    let previewDateText = $derived(formatDatePreview(new Date(), dateStyle, customFormat));
 </script>
 
 <div class="btn-wrapper" use:clickOutside={close}>
@@ -74,9 +128,8 @@
                 </div>
 
                 <div class="hint-row">
-                    <span class="hint-icon">?</span>
                     <div class="hint-text">
-                        Use <code>{insertText}</code> for page number
+                        Code <code>{insertText}</code>
                     </div>
                 </div>
                 
@@ -87,7 +140,53 @@
                         close();
                     }}
                 >
-                    Insert
+                    Insert Page Number
+                </button>
+
+                <div class="separator"></div>
+
+                <div class="popup-title">Date</div>
+                
+                <div class="style-select-wrapper">
+                    <div class="section-title">Date Format</div>
+                    <StyledSelect 
+                        options={dateStyles}
+                        displayKey="label"
+                        optionKey="label"
+                        valueKey="value"
+                        bind:value={dateStyle}
+                    />
+                    {#if dateStyle === 'custom'}
+                        <input 
+                            type="text" 
+                            class="custom-format-input" 
+                            bind:value={customFormat} 
+                            placeholder="YYYY-MM-DD HH:mm"
+                        />
+                    {/if}
+                </div>
+
+                <div class="hint-row">
+                    <div class="hint-text">
+                        Code <code>{insertDateText}</code>
+                    </div>
+                </div>
+                
+                <div class="preview-row">
+                    <span class="preview-label">Preview</span>
+                    <div class="preview-text">
+                        {previewDateText}
+                    </div>
+                </div>
+
+                <button 
+                    class="insert-btn"
+                    onclick={() => {
+                        onInsert?.(insertDateText);
+                        close();
+                    }}
+                >
+                    Insert Date
                 </button>
             </div>
         </ArrowPopup>
@@ -98,6 +197,13 @@
     .btn-wrapper {
         position: relative;
         display: inline-flex;
+    }
+
+    .separator {
+        height: 1px;
+        background: #eee;
+        margin: 0;
+        width: 100%;
     }
 
         .trigger-btn {
@@ -147,6 +253,35 @@
         gap: 8px;
     }
 
+    .preview-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: -4px;
+    }
+
+    .preview-label {
+        font-size: 11px;
+        color: #999;
+        text-transform: uppercase;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .preview-text {
+        font-size: 12px;
+        color: #666;
+        background: #f9f9f9;
+        padding: 3px 6px;
+        border-radius: 4px;
+        border: 1px dashed #ddd;
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 
     .hint-icon {
         font-size: 12px;
         color: #999;
@@ -160,13 +295,15 @@
         flex-shrink: 0;
         user-select: none;
         background: #fff;
-        margin-top: 1px; /* Align with text */
-    }
+        margin-top: 1px;
+    } 
+    */
 
     .hint-text {
         color: #666;
         font-size: 13px;
         line-height: 1.4;
+        padding-left: 0;
     }
 
     code {
@@ -208,5 +345,19 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
+    }
+
+    .custom-format-input {
+        width: 100%;
+        padding: 4px 6px;
+        font-size: 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 4px;
+        box-sizing: border-box;
+    }
+    .custom-format-input:focus {
+        outline: none;
+        border-color: #aaa;
     }
 </style>
