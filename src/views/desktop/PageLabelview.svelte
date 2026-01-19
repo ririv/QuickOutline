@@ -61,7 +61,7 @@
                     {#each pageLabelStore.sortedRules as rule (rule.pageIndex)}
                         <div class="flex items-center justify-between px-2 py-1 border-b border-[#f0f0f0] text-[13px] bg-transparent rounded mb-0.5 hover:bg-gray-50 transition-colors last:border-0 last:mb-0">
                             <div class="flex items-center gap-2 flex-1 overflow-hidden">
-                                <span class="bg-el-plain-primary-bg text-el-primary border border-[#d9ecff] rounded px-1.5 py-0.5 text-xs font-semibold min-w-[32px] text-center shrink-0">
+                                <span class="bg-slate-100 text-slate-600 border border-slate-200 rounded px-1.5 py-0.5 text-xs font-semibold min-w-[32px] text-center shrink-0">
                                     P{rule.pageIndex}
                                 </span>
 
