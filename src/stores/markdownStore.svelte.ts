@@ -1,6 +1,8 @@
 import {PageLabelNumberingStyle, type PageLabel} from "@/lib/types/page-label.ts";
 import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout, type SectionConfig } from "@/lib/types/page";
 
+export const MARKDOWN_DEFAULT_FOOTER_CONTENT = { center: '{p}' };
+
 export class MarkdownState {
     // Content
     content = $state('# Hello CodeMirror 6\n\nTry typing **bold text** or *italic* here.\n\nMove cursor inside and outside the styled text to see the magic!\n\n$$\\int^2_1xdx$$');
@@ -22,7 +24,7 @@ export class MarkdownState {
 
     // Section Configs
     headerConfig = $state<SectionConfig>({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
-    footerConfig = $state<SectionConfig>({ left: '', center: '{p}', right: '', inner: '', outer: '', drawLine: false });
+    footerConfig = $state<SectionConfig>({ left: '', center: MARKDOWN_DEFAULT_FOOTER_CONTENT.center, right: '', inner: '', outer: '', drawLine: false });
 
     // UI State
     showHeader = $state(false);

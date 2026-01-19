@@ -5,7 +5,7 @@
   import StatusBar from '../../components/StatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import { onMount, onDestroy } from 'svelte';
-  import { markdownStore } from '@/stores/markdownStore.svelte.js';
+  import { markdownStore, MARKDOWN_DEFAULT_FOOTER_CONTENT } from '@/stores/markdownStore.svelte.js';
   import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
   
   import { useMarkdownActions } from '../shared/markdown.svelte.ts';
@@ -43,6 +43,7 @@
             bind:hfLayout={markdownStore.hfLayout}
             bind:showHeader={markdownStore.showHeader}
             bind:showFooter={markdownStore.showFooter}
+            defaultFooterContent={MARKDOWN_DEFAULT_FOOTER_CONTENT}
             onHeaderChange={triggerPreview}
             onFooterChange={triggerPreview}
           >
