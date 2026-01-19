@@ -2,6 +2,8 @@ import { PageLabelNumberingStyle, type PageLabel } from "@/lib/types/page-label.
 import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout, type SectionConfig } from "@/lib/types/page";
 import { offsetStore } from "./offsetStore.svelte";
 
+export const TOC_DEFAULT_FOOTER_CONTENT = { center: '{p r}' };
+
 export class TocState {
     // File association
     filePath = $state<string | null>(null);
@@ -37,7 +39,7 @@ export class TocState {
     hfLayout = $state<HeaderFooterLayout>({ ...defaultHeaderFooterLayout });
     
     headerConfig = $state<SectionConfig>({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
-    footerConfig = $state<SectionConfig>({ left: '', center: '{p r}', right: '', inner: '', outer: '', drawLine: false });
+    footerConfig = $state<SectionConfig>({ left: '', center: TOC_DEFAULT_FOOTER_CONTENT.center, right: '', inner: '', outer: '', drawLine: false });
 
     // Cache
     previewData = $state<any>(null);
@@ -77,7 +79,7 @@ export class TocState {
         this.pageLayout = { ...defaultPageLayout };
         this.hfLayout = { ...defaultHeaderFooterLayout };
         this.headerConfig = { left: '', center: '', right: '', inner: '', outer: '', drawLine: false };
-        this.footerConfig = { left: '', center: '{p r}', right: '', inner: '', outer: '', drawLine: false };
+        this.footerConfig = { left: '', center: TOC_DEFAULT_FOOTER_CONTENT.center, right: '', inner: '', outer: '', drawLine: false };
     }
 
     // Check if store has valid content for the given path

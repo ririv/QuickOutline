@@ -10,7 +10,7 @@
   import { onMount, onDestroy } from 'svelte';
 
   import { docStore } from '@/stores/docStore.svelte.ts';
-  import { tocStore } from '@/stores/tocStore.svelte.js';
+  import { tocStore, TOC_DEFAULT_FOOTER_CONTENT } from '@/stores/tocStore.svelte.js';
   import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
   
   import { useTocActions } from '../shared/toc.svelte.ts';
@@ -89,7 +89,7 @@
             bind:hfLayout={tocStore.hfLayout}
             bind:showHeader={showHeader}
             bind:showFooter={showFooter}
-            defaultFooterContent={{ center: '{p r}' }}
+            defaultFooterContent={TOC_DEFAULT_FOOTER_CONTENT}
             onHeaderChange={triggerPreview}
             onFooterChange={triggerPreview}
           >
