@@ -4,8 +4,8 @@
   import TocEditor from '../../components/editor/TocEditor.svelte';
   import StatusBar from '../../components/StatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
-  import Modal from '../../components/common/Modal.svelte';
-  import TocGuide from '../../components/TocGuide.svelte';
+  import GuideWindow from '../../components/common/GuideWindow.svelte';
+  import MarkdownViewer from '../../components/common/MarkdownViewer.svelte';
   import { onMount, onDestroy } from 'svelte';
 
   import { docStore } from '@/stores/docStore.svelte.ts';
@@ -125,9 +125,9 @@
       {layoutDetection}
   />
 
-  <Modal title="TOC Syntax Guide" bind:show={showGuide}>
-      <TocGuide />
-  </Modal>
+  <GuideWindow bind:visible={showGuide} onClose={() => showGuide = false} title="TOC Syntax Guide">
+      <MarkdownViewer src="/docs/TOC_User_Guide.md" />
+  </GuideWindow>
 </main>
 
 <style>

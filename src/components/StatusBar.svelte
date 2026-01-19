@@ -297,7 +297,7 @@
   <div class="spacer"></div>
   
   {#if onGuide}
-      <Tooltip content="Syntax Guide" position="top" usePortal={true}>
+      <Tooltip content="Syntax Guide" position="top">
           <button class="icon-btn guide-btn" onclick={onGuide}>
               <Icon name="help" width="16" height="16" />
           </button>

@@ -2,13 +2,15 @@
     import { onMount } from 'svelte';
     import { markdownService } from '@/lib/services/MarkdownService';
 
+    let { src } = $props<{ src: string }>();
+
     let guideContent = $state('');
     let loading = $state(true);
     let error = $state<string | null>(null);
 
     onMount(async () => {
         try {
-            const response = await fetch('/docs/TOC_User_Guide.md');
+            const response = await fetch(src);
             if (!response.ok) {
                 throw new Error(`Failed to load guide: ${response.statusText}`);
             }
@@ -17,7 +19,7 @@
             guideContent = markdownService.compileHtml(text);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Unknown error occurred';
-            console.error('Error loading TOC guide:', e);
+            console.error(`Error loading markdown from ${src}:`, e);
         } finally {
             loading = false;
         }
@@ -39,13 +41,10 @@
 
 <style>
     .guide-container {
-        padding: 10px 0;
+        padding: 16px;
         font-size: 13px;
         color: #444;
-        max-height: 400px;
         overflow-y: auto;
-        /* 移除边框和外边距，由父组件统一控制 */
-        margin-top: 0;
     }
 
     .loading, .error {
