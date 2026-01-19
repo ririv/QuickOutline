@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { markdownService } from '@/lib/services/MarkdownService';
 
-    let { src } = $props<{ src: string }>();
+    let { src, rawContent = $bindable('') } = $props<{ src: string, rawContent?: string }>();
 
     let guideContent = $state('');
     let loading = $state(true);
@@ -15,6 +15,7 @@
                 throw new Error(`Failed to load guide: ${response.statusText}`);
             }
             const text = await response.text();
+            rawContent = text;
             // Render markdown to HTML
             guideContent = markdownService.compileHtml(text);
         } catch (e) {

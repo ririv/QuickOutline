@@ -6,6 +6,7 @@
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import GuideWindow from '../../components/common/GuideWindow.svelte';
   import MarkdownViewer from '../../components/common/MarkdownViewer.svelte';
+  import Icon from '../../components/Icon.svelte';
   import { onMount, onDestroy } from 'svelte';
 
   import { docStore } from '@/stores/docStore.svelte.ts';
@@ -22,6 +23,8 @@
   let showHeader = $state(false);
   let showFooter = $state(false);
   let showGuide = $state(false);
+  let rawGuideContent = $state('');
+  let copied = $state(false);
   
   let activeTab = $derived(appStore.activeTab);
   
@@ -29,6 +32,17 @@
 
   function handleGuide() {
       showGuide = true;
+  }
+
+  async function handleCopy() {
+      if (!rawGuideContent) return;
+      try {
+          await navigator.clipboard.writeText(rawGuideContent);
+          copied = true;
+          setTimeout(() => copied = false, 2000);
+      } catch (err) {
+          console.error('Failed to copy:', err);
+      }
   }
 
   // Auto-load TOC when file changes
@@ -126,7 +140,16 @@
   />
 
   <GuideWindow bind:visible={showGuide} onClose={() => showGuide = false} title="TOC Syntax Guide">
-      <MarkdownViewer src="/docs/TOC_User_Guide.md" />
+      {#snippet actions()}
+          <button class="action-btn" onclick={handleCopy} title="Copy raw markdown">
+              {#if copied}
+                  <Icon name="check" width="14" height="14" style="color: #67c23a;" />
+              {:else}
+                  <Icon name="copy" width="14" height="14" />
+              {/if}
+          </button>
+      {/snippet}
+      <MarkdownViewer src="/docs/TOC_User_Guide.md" bind:rawContent={rawGuideContent} />
   </GuideWindow>
 </main>
 
@@ -197,5 +220,22 @@
     flex: 1;
     overflow: hidden;
     padding: 10px;
+  }
+  .action-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #909399;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s;
+  }
+
+  .action-btn:hover {
+      background-color: #e4e7ed;
+      color: #409eff;
   }
 </style>

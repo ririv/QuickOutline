@@ -6,18 +6,20 @@
         onClose: () => void;
         title?: string;
         children?: import('svelte').Snippet;
+        actions?: import('svelte').Snippet;
     }
 
-    let { visible = $bindable(false), onClose, title = "Guide", children }: Props = $props();
+    let { visible = $bindable(false), onClose, title = "Guide", children, actions }: Props = $props();
 </script>
 
 <DraggableWindow 
     {title} 
     bind:visible 
     {onClose} 
+    {actions}
     width="500px" 
     height="600px"
-    initialX={800}
+    initialX={500}
     initialY={100}
 >
     {@render children?.()}

@@ -21,6 +21,7 @@
     import addSiblingSvg from '@/assets/icons/add-sibling.svg?raw';
     import addChildSvg from '@/assets/icons/add-child.svg?raw';
     import helpSvg from '@/assets/icons/help.svg?raw';
+    import copySvg from '@/assets/icons/copy.svg?raw';
 
     const icons = {
         'trash': trashSvg,
@@ -44,7 +45,8 @@
         'arrow-down': arrowDownSvg,
         'arrow-up-down': arrowUpDownSvg,
         'ruler': rulerSvg,
-        'help': helpSvg
+        'help': helpSvg,
+        'copy': copySvg
     };
 
     export type IconName = keyof typeof icons;
