@@ -61,9 +61,10 @@
         width?: string | number;
         height?: string | number;
         size?: string | number;
+        forceColor?: boolean;
     }
 
-    let { name, data, class: className = "", style = "", width, height, size }: Props = $props();
+    let { name, data, class: className = "", style = "", width, height, size, forceColor = false }: Props = $props();
 
     const svgContent = $derived.by(() => {
         // Prefer 'data' prop, fallback to registry lookup by 'name'
@@ -103,6 +104,9 @@
                     if (!color || color === 'none' || color === 'transparent') return false;
                     // Always keep currentColor as is
                     if (color === 'currentColor') return false;
+
+                    if (forceColor) return true;
+
                     // Replace black variations, assume others are intentional specific colors
                     const blacks = ['#000', '#000000', 'black', 'rgb(0, 0, 0)'];
                     return blacks.includes(color.toLowerCase().replace(/\s/g, ''));

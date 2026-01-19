@@ -76,7 +76,7 @@
             use:ripple
             onclick={handleAdd}
         >
-            <Icon data={existingRule ? updateIcon : addIcon} class="w-4 h-4 opacity-70" />
+            <Icon data={existingRule ? updateIcon : addIcon} class="w-4 h-4 opacity-70" forceColor={true} />
             {existingRule ? 'Update Rule' : 'Add Rule'}
         </button>
     </div>
