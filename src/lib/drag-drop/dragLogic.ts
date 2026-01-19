@@ -65,47 +65,40 @@ export function calculateDragState(
     // This ensures visual feedback (the line) is always visible, which is better UX.
     // The actual 'move' operation will be a no-op if logic determines start === end.
     
-    // 3. Determine Allowed Level Range at this Gap
-    // Min Level is always 1.
-    // Max Level is RefNode.level + 1 (can only be 1 deeper than the node before the gap).
-    // If no refNode (top of list), Max Level is 1.
-    const maxLevel = refNode ? refNode.level + 1 : 1;
-    
-    // Calculate Target Level based on X
+    // 3. 确定允许的层级范围 (Max Level)
+    // 默认情况下，横线层级被锁定为上一个节点的层级 (只能做兄弟，不能做子节点)。
+    // 但是，如果下一个节点是子节点 (说明父节点已展开)，我们允许横线向右缩进。
+    let maxLevel = refNode ? refNode.level : 1;
+    if (refNode && nextNode && nextNode.level > refNode.level) {
+        maxLevel = nextNode.level;
+    }
+
+    // 根据鼠标 X 坐标计算目标层级
     let targetLevel = calculateLevelFromX(mouseX);
     targetLevel = Math.max(1, Math.min(targetLevel, maxLevel));
 
-    // 4. Resolve Logical Operation
+    // 4. 解析逻辑操作
     let dropTargetId = '';
     let dropPosition: 'before' | 'after' | 'inside' = 'after';
 
     if (!refNode) {
-        // Very top
+        // 绝对列表最顶部
         if (nextNode) {
             dropTargetId = nextNode.id;
             dropPosition = 'before';
         }
     } else {
-        // Standard Gap
-        if (targetLevel === refNode.level) {
+        // 情况 A：匹配了下方子节点的层级 (作为第一个子节点插入)
+        if (nextNode && targetLevel === nextNode.level && nextNode.level > refNode.level) {
+             dropTargetId = nextNode.id;
+             dropPosition = 'before';
+        } 
+        // 情况 B：标准层级 (作为上一个节点的兄弟插入)
+        else if (targetLevel === refNode.level) {
             dropTargetId = refNode.id;
             dropPosition = 'after';
-        } else if (targetLevel === refNode.level + 1) {
-            // Check if nextNode is actually a child of refNode (deeper level)
-            const isNextChild = nextNode && nextNode.level > refNode.level;
-            
-            if (isNextChild) {
-                // Insert before the existing child
-                dropTargetId = nextNode!.id;
-                dropPosition = 'before';
-            } else {
-                // NextNode is a sibling (or null). Append as new child to RefNode.
-                dropTargetId = refNode.id;
-                dropPosition = 'inside';
-            }
         } else {
-            // Outdent: Find the ancestor sibling
-            // Search back for the last node that had this level.
+            // 情况 C：向左缩进 (Outdent)，寻找对应层级的祖先兄弟
             let found = false;
             for (let i = hitIndex; i >= 0; i--) {
                 if (visibleNodes[i].level === targetLevel) {
