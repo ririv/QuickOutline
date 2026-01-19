@@ -229,11 +229,12 @@
             >
                <Icon data={dragHandleIcon} width={14} height={14} />
             </div>
-            
-            <button 
+
+<!--         修复 CSS 跨浏览器渲染差异问题，查看 dev_notes/.../Safari_Input_Height_Jump_Analysis.md -->
+            <button
                 class="bg-transparent border-none cursor-pointer flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors outline-none shrink-0"
-                onclick={() => bookmark.expanded = !bookmark.expanded} 
-                style="visibility: {bookmark.children.length > 0 ? 'visible' : 'hidden'}; width: 20px; height: 20px;"
+                onclick={() => bookmark.expanded = !bookmark.expanded}
+                style="visibility: {bookmark.children.length > 0 ? 'visible' : 'hidden'}; width: 24px; height: 24px;"
                 aria-label={bookmark.expanded ? "Collapse bookmark" : "Expand bookmark"}
             >
                 <span class="inline-block transition-transform duration-200 origin-center {bookmark.expanded ? 'rotate-90' : ''}">
