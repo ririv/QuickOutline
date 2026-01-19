@@ -4,6 +4,8 @@
     import StyledSelect from '@/components/controls/StyledSelect.svelte';
     import { PageLabelNumberingStyle, pageLabelStyleMap, type PageNumberStyle } from '@/lib/types/page-label.ts';
     import { clickOutside } from '@/lib/actions/clickOutside';
+    import codeIcon from '@/assets/icons/code.svg?raw';
+    import previewIcon from '@/assets/icons/eye.svg?raw';
 
     interface Props {
         type?: 'header' | 'footer';
@@ -129,7 +131,8 @@
 
                 <div class="hint-row">
                     <div class="hint-text">
-                        Code <code>{insertText}</code>
+                        <span class="icon-label" title="Code"><Icon data={codeIcon} width="15" height="15" /></span>
+                        <code>{insertText}</code>
                     </div>
                 </div>
                 
@@ -168,12 +171,13 @@
 
                 <div class="hint-row">
                     <div class="hint-text">
-                        Code <code>{insertDateText}</code>
+                        <span class="icon-label" title="Code"><Icon data={codeIcon} width="15" height="15" /></span>
+                        <code>{insertDateText}</code>
                     </div>
                 </div>
                 
                 <div class="preview-row">
-                    <span class="preview-label">Preview</span>
+                    <span class="icon-label" title="Preview"><Icon data={previewIcon} width="15" height="15" /></span>
                     <div class="preview-text">
                         {previewDateText}
                     </div>
@@ -256,15 +260,16 @@
     .preview-row {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
         margin-top: -4px;
     }
-
-    .preview-label {
-        font-size: 11px;
+    
+    .icon-label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         color: #999;
-        text-transform: uppercase;
-        font-weight: 600;
+        width: 20px;
         flex-shrink: 0;
     }
 
@@ -304,6 +309,9 @@
         font-size: 13px;
         line-height: 1.4;
         padding-left: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
 
     code {
