@@ -198,7 +198,7 @@
             class="drag-gap-trigger w-full relative z-50"
             style="
                 height: 6px;
-                padding-left: {(visualPos === 'before' ? Math.max(1, targetLevel) - 1 : 0) * TREE_INDENT}px;
+                padding-left: {(visualPos === 'before' ? (Math.max(1, targetLevel) - 1) * TREE_INDENT + TREE_BASE_PADDING : 0)}px;
                 background-color: transparent;
             "
         >
@@ -296,11 +296,11 @@
     <!-- Bottom Gap (For all items) -->
     <div 
         class="drag-gap-trigger w-full relative z-50"
-        style="
-            height: 6px;
-            padding-left: {(visualPos === 'after' ? Math.max(1, targetLevel) - 1 : 0) * TREE_INDENT}px;
-            background-color: transparent;
-        "
+                    style="
+                        height: 6px;
+                        padding-left: {(visualPos === 'after' ? (Math.max(1, targetLevel) - 1) * TREE_INDENT + TREE_BASE_PADDING : 0)}px;
+                        background-color: transparent;
+                    "
     >
         <div class="gap-indicator" class:gap-active={visualPos === 'after'}></div>
     </div>
