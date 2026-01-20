@@ -20,6 +20,7 @@
     let numberingStyle = $state<PageNumberStyle>(PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS);
     let triggerEl = $state<HTMLElement | undefined>();
     let isOpen = $state(false);
+    let activeTab = $state<'page' | 'date'>('page');
     
     // Filter out 'None' style
     const styles = pageLabelStyleMap.getAllStyles().filter(s => s.enumName !== PageLabelNumberingStyle.NONE);
@@ -131,98 +132,115 @@
             className="hover-popup" 
             placement={type === 'header' ? 'bottom' : 'top'}
             triggerEl={triggerEl}
-            minWidth="220px"
+            minWidth="240px"
         >
             <div class="hint-content">
-                <div class="popup-title">Page Number</div>
-                
-                <div class="style-select-wrapper">
-                    <div class="section-title">Numbering Style</div>
-                    <StyledSelect 
-                        options={styles}
-                        displayKey="displayText"
-                        optionKey="displayText"
-                        valueKey="enumName"
-                        bind:value={numberingStyle}
-                    />
-                </div>
-
-                <div class="hint-row">
-                    <div class="hint-text">
-                        <span class="icon-label" title="Code"><Icon data={codeIcon} width="15" height="15" /></span>
-                        <code>{insertText}</code>
-                    </div>
+                <div class="tab-header">
+                    <button 
+                        class="tab-btn" 
+                        class:active={activeTab === 'page'} 
+                        onclick={() => activeTab = 'page'}
+                    >
+                        Page Number
+                    </button>
+                    <button 
+                        class="tab-btn" 
+                        class:active={activeTab === 'date'} 
+                        onclick={() => activeTab = 'date'}
+                    >
+                        Date
+                    </button>
                 </div>
                 
-                <button 
-                    class="insert-btn"
-                    onclick={() => {
-                        onInsert?.(insertText);
-                        close();
-                    }}
-                >
-                    Insert Page Number
-                </button>
-
-                <div class="separator"></div>
-
-                <div class="popup-title">Date</div>
-                
-                <div class="date-settings-group">
-                    <div class="style-select-wrapper">
-                        <div class="section-title">Date Format</div>
-                        <StyledSelect 
-                            options={dateStyles}
-                            displayKey="label"
-                            optionKey="label"
-                            valueKey="value"
-                            bind:value={dateStyle}
-                        />
-                        {#if dateStyle === 'custom'}
-                            <input 
-                                type="text" 
-                                class="custom-format-input" 
-                                bind:value={customFormat} 
-                                placeholder="YYYY-MM-DD HH:mm"
+                {#if activeTab === 'page'}
+                    <div class="tab-content">
+                        <div class="style-select-wrapper">
+                            <div class="section-title">Numbering Style</div>
+                            <StyledSelect 
+                                options={styles}
+                                displayKey="displayText"
+                                optionKey="displayText"
+                                valueKey="enumName"
+                                bind:value={numberingStyle}
                             />
-                        {/if}
-                    </div>
+                        </div>
 
-                    <div class="style-select-wrapper">
-                        <div class="section-title">Language</div>
-                        <StyledSelect 
-                            options={localeStyles}
-                            displayKey="label"
-                            optionKey="label"
-                            valueKey="value"
-                            bind:value={selectedLocale}
-                        />
+                        <div class="hint-row">
+                            <div class="hint-text">
+                                <span class="icon-label" title="Code"><Icon data={codeIcon} width="15" height="15" /></span>
+                                <code>{insertText}</code>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            class="insert-btn"
+                            onclick={() => {
+                                onInsert?.(insertText);
+                                close();
+                            }}
+                        >
+                            Insert Page Number
+                        </button>
                     </div>
-                </div>
+                {:else}
+                    <div class="tab-content">
+                        <div class="date-settings-group">
+                            <div class="style-select-wrapper">
+                                <div class="section-title">Date Format</div>
+                                <StyledSelect 
+                                    options={dateStyles}
+                                    displayKey="label"
+                                    optionKey="label"
+                                    valueKey="value"
+                                    bind:value={dateStyle}
+                                />
+                                {#if dateStyle === 'custom'}
+                                    <input 
+                                        type="text" 
+                                        class="custom-format-input" 
+                                        bind:value={customFormat} 
+                                        placeholder="YYYY-MM-DD HH:mm"
+                                    />
+                                {/if}
+                            </div>
 
-                <div class="hint-row">
-                    <div class="hint-text">
-                        <span class="icon-label" title="Code"><Icon data={codeIcon} width="15" height="15" /></span>
-                        <code>{insertDateText}</code>
-                    </div>
-                </div>
-                
-                <div class="preview-row">
-                    <span class="icon-label" title="Preview"><Icon data={previewIcon} width="15" height="15" /></span>
-                    <div class="preview-text">
-                        {previewDateText}
-                    </div>
-                </div>
+                            <div class="style-select-wrapper">
+                                <div class="section-title">Language</div>
+                                <StyledSelect 
+                                    options={localeStyles}
+                                    displayKey="label"
+                                    optionKey="label"
+                                    valueKey="value"
+                                    bind:value={selectedLocale}
+                                />
+                            </div>
+                        </div>
 
-                <button 
-                    class="insert-btn"
-                    onclick={() => {
-                        onInsert?.(insertDateText);
-                        close();
-                    }}
-                >
-                    Insert Date
-                </button>
+                        <div class="hint-row">
+                            <div class="hint-text">
+                                <span class="icon-label" title="Code"><Icon data={codeIcon} width="15" height="15" /></span>
+                                <code>{insertDateText}</code>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-row">
+                            <span class="icon-label" title="Preview"><Icon data={previewIcon} width="15" height="15" /></span>
+                            <div class="preview-text">
+                                {previewDateText}
+                            </div>
+                        </div>
+
+                        <button 
+                            class="insert-btn"
+                            onclick={() => {
+                                onInsert?.(insertDateText);
+                                close();
+                            }}
+                        >
+                            Insert Date
+                        </button>
+                    </div>
+                {/if}
             </div>
         </ArrowPopup>
     {/if}
@@ -234,52 +252,82 @@
         display: inline-flex;
     }
 
-    .separator {
-        height: 1px;
-        background: #eee;
-        margin: 0;
-        width: 100%;
+    .trigger-btn {
+        background: transparent;
+        border: none;
+        padding: 4px;
+        cursor: pointer;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        transition: all 0.2s;
     }
 
-        .trigger-btn {
-            background: transparent;
-            border: none;
-            padding: 4px;
-            cursor: pointer;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-            transition: all 0.2s;
-            /* Width/Height handled by content (icon-box 14px + padding 4px*2 = 22px) */
-        }
+    .trigger-btn:hover {
+        background: #f0f0f0;
+        color: #333;
+    }
     
-        .trigger-btn:hover {
-            background: #f0f0f0;
-            color: #333;
-        }
-        
-        .icon-box {
-            width: 14px;
-            height: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    
-        /* Popup Visibility Control */
-    /* Content Styles */
+    .icon-box {
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .hint-content {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 0;
     }
 
-    .popup-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #333;
+    .tab-header {
+        display: flex;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 12px;
+        margin-top: -4px; /* Slight adjustment to align with popup padding */
+    }
+    
+    .tab-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        padding: 8px;
+        font-size: 13px;
+        color: #888;
+        cursor: pointer;
+        font-weight: 500;
+        position: relative;
+        transition: all 0.2s;
+        text-align: center;
+    }
+
+    .tab-btn:hover {
+        color: #555;
+        background-color: #f9f9f9;
+    }
+
+    .tab-btn.active {
+        color: #60a5fa;
+    }
+
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: #60a5fa;
+    }
+
+    .tab-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
     .hint-row {
@@ -317,24 +365,6 @@
         text-overflow: ellipsis;
     }
 
-    /* 
-    .hint-icon {
-        font-size: 12px;
-        color: #999;
-        border: 1px solid #ccc;
-        border-radius: 50%;
-        width: 18px;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        user-select: none;
-        background: #fff;
-        margin-top: 1px;
-    } 
-    */
-
     .hint-text {
         color: #666;
         font-size: 13px;
@@ -353,9 +383,9 @@
     }
 
     .insert-btn {
-        background-color: #fff9eb; /* amber-50ish */
-        color: #d97706; /* amber-600 */
-        border: 1px solid #fde68a; /* amber-200 */
+        background-color: #fff9eb;
+        color: #d97706;
+        border: 1px solid #fde68a;
         border-radius: 4px;
         padding: 5px 8px;
         cursor: pointer;
@@ -367,8 +397,8 @@
     }
 
     .insert-btn:hover {
-        background-color: #fef3c7; /* amber-100 */
-        border-color: #d97706; /* amber-600 */
+        background-color: #fef3c7;
+        border-color: #d97706;
     }
     
     .section-title {
