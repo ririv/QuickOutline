@@ -1,6 +1,6 @@
 import tocStyles from './toc.css?inline';
 import { css } from "@/lib/utils/tags";
-import { type PageLayout, PAGE_SIZES_MM } from '@/lib/types/page';
+import { type PageLayout, PAGE_SIZES_MM, defaultColumnLayout, type ColumnLayoutConfig } from '@/lib/types/page';
 import { createElement, Fragment } from '@/lib/utils/jsx';
 import { parseTocLine, scanMathInString } from './parser';
 import katex from 'katex';
@@ -107,7 +107,7 @@ export function generateTocHtml(
     if (count > 1) {
         if (direction === 'horizontal') {
             // Grid Layout (Z-flow)
-            columnStyle = `
+            columnStyle = css`
                 .toc-content .toc-list {
                     display: grid;
                     grid-template-columns: repeat(${count}, 1fr);
@@ -123,11 +123,14 @@ export function generateTocHtml(
         } else {
             // Column Layout (N-flow)
             const ruleValue = rule ? '1px solid #ccc' : '1px solid transparent';
-            columnStyle = `
+            columnStyle = css`
                 .toc-content {
                     column-count: ${count};
                     column-gap: ${gap}pt;
                     column-rule: ${ruleValue};
+                    /* Force columns to fill sequentially rather than balancing heights */
+                    column-fill: auto;
+                    height: 100%;
                 }
                 .toc-content > h1, .toc-content > h2, .toc-title {
                     column-span: all;

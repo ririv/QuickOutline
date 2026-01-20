@@ -77,6 +77,7 @@
                     onclick={() => { layout.rule = !layout.rule; onchange?.(); }}
                     role="switch"
                     aria-checked={layout.rule}
+                    aria-label="Toggle separator line"
                 >
                     <div class="switch-thumb"></div>
                 </button>
