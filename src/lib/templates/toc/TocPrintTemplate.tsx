@@ -9,7 +9,8 @@ interface PrintTemplateProps {
     headerHtml: string;
     footerHtml: string;
     tocHtml: string;
-    dotGap?: number; // Added
+    dotGap?: number;
+    columns?: number;
 }
 
 export function TocPrintTemplate({ styles, pageCss, headerHtml, footerHtml, tocHtml, dotGap = 6 }: PrintTemplateProps) {

@@ -81,7 +81,8 @@ export function generateTocHtml(
     indentStep: number = 20,
     pageLayout?: PageLayout,
     pageNumberOffset: number = 0, // New param: amount to add to page numbers
-    autoCorrectThreshold: number = 1 // New param: only correct pages >= this value
+    autoCorrectThreshold: number = 1, // New param: only correct pages >= this value
+    columnLayout: ColumnLayoutConfig = defaultColumnLayout // New param: full column config
 ): { html: string, styles: string } {
 
     const lines = content.split('\n');
@@ -99,9 +100,49 @@ export function generateTocHtml(
     const dotCount = Math.ceil(maxWidth / dotGap);
 
     // Initial dot generation logic is moved to fixDots.js for dynamic rendering
+    
+    const { count, direction, gap, rule } = columnLayout;
+    let columnStyle = '';
+
+    if (count > 1) {
+        if (direction === 'horizontal') {
+            // Grid Layout (Z-flow)
+            columnStyle = `
+                .toc-content .toc-list {
+                    display: grid;
+                    grid-template-columns: repeat(${count}, 1fr);
+                    column-gap: ${gap}pt;
+                    align-items: end; /* Ensure leaders align at bottom */
+                }
+                /* Grid items don't need break-inside prevention as much as columns, but good to have */
+                .toc-item {
+                    break-inside: avoid;
+                    width: 100%; /* Fill grid cell */
+                }
+            `;
+        } else {
+            // Column Layout (N-flow)
+            const ruleValue = rule ? '1px solid #ccc' : '1px solid transparent';
+            columnStyle = `
+                .toc-content {
+                    column-count: ${count};
+                    column-gap: ${gap}pt;
+                    column-rule: ${ruleValue};
+                }
+                .toc-content > h1, .toc-content > h2, .toc-title {
+                    column-span: all;
+                    margin-bottom: 24px;
+                }
+                /* Ensure items don't break across columns awkwardly */
+                .toc-item {
+                    break-inside: avoid;
+                }
+            `;
+        }
+    }
 
     const htmlOutput = (
-        <>
+        <div class="toc-content">
             <h1 class="toc-title">{escapeHtml(title)}</h1>
             <ul class="toc-list" style={{ '--toc-indent-step': `${indentStep}pt` }}>
                 {lines.map(line => {
@@ -199,11 +240,12 @@ export function generateTocHtml(
                     );
                 })}
             </ul>
-        </>
+        </div>
     );
 
     const styles = css`
         ${tocStyles}
+        ${columnStyle}
         .toc-leader {
             display: flex;
             align-items: flex-end;

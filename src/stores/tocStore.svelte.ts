@@ -1,5 +1,5 @@
 import { PageLabelNumberingStyle, type PageLabel } from "@/lib/types/page-label.ts";
-import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout, type SectionConfig } from "@/lib/types/page";
+import { defaultPageLayout, type PageLayout, defaultHeaderFooterLayout, type HeaderFooterLayout, type SectionConfig, defaultColumnLayout, type ColumnLayoutConfig } from "@/lib/types/page";
 import { offsetStore } from "./offsetStore.svelte";
 
 export const TOC_DEFAULT_FOOTER_CONTENT = { center: '{p r}' };
@@ -36,6 +36,7 @@ export class TocState {
         startValue: 1
     });
     pageLayout = $state<PageLayout>({ ...defaultPageLayout });
+    columnLayout = $state<ColumnLayoutConfig>({ ...defaultColumnLayout });
     hfLayout = $state<HeaderFooterLayout>({ ...defaultHeaderFooterLayout });
     
     headerConfig = $state<SectionConfig>({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
@@ -77,6 +78,7 @@ export class TocState {
             startValue: 1
         };
         this.pageLayout = { ...defaultPageLayout };
+        this.columnLayout = { ...defaultColumnLayout };
         this.hfLayout = { ...defaultHeaderFooterLayout };
         this.headerConfig = { left: '', center: '', right: '', inner: '', outer: '', drawLine: false };
         this.footerConfig = { left: '', center: TOC_DEFAULT_FOOTER_CONTENT.center, right: '', inner: '', outer: '', drawLine: false };

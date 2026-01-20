@@ -65,7 +65,8 @@ export function useTocActions() {
                 undefined, // Use default indentStep
                 tocStore.pageLayout,
                 pageOffset,
-                threshold
+                threshold,
+                tocStore.columnLayout
             );
             
             // Update payload in store, which is passed to Preview component
@@ -140,7 +141,8 @@ export function useTocActions() {
                 undefined, // Use default indentStep
                 tocStore.pageLayout,
                 pageOffset,
-                threshold
+                threshold,
+                tocStore.columnLayout
             );
             
             const headerHtml = PageSectionTemplate(tocStore.headerConfig);

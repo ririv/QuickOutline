@@ -5,14 +5,16 @@
   import PageSizePopup from './statusbar-popup/PageSizePopup.svelte';
   import PageMarginsPopup from './statusbar-popup/PageMarginsPopup.svelte';
   import HeaderFooterPopup from './statusbar-popup/HeaderFooterPopup.svelte';
+  import ColumnLayoutPopup from './statusbar-popup/ColumnLayoutPopup.svelte';
   import StatusBarGroup from './StatusBarGroup.svelte';
   import StatusBarItem from './StatusBarItem.svelte';
   import Icon from '@/components/Icon.svelte';
   import Tooltip from '@/components/Tooltip.svelte';
   import { clickOutside } from '@/lib/actions/clickOutside';
   import {PageLabelNumberingStyle, generateRulePreview, type PageLabel} from "@/lib/types/page-label.ts";
-  import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout, PAGE_SIZES_MM } from "@/lib/types/page";
+  import { type PageLayout, defaultPageLayout, type HeaderFooterLayout, defaultHeaderFooterLayout, PAGE_SIZES_MM, defaultColumnLayout, type ColumnLayoutConfig } from "@/lib/types/page";
   import labelSimpleIcon from '@/assets/icons/label-simple.svg?raw';
+  import doubleColumnIcon from '@/assets/icons/double-column.svg?raw';
   import type { PageSizeDetectionState } from '@/lib/pdf-processing/usePdfPageSizeDetection.svelte';
 
   export interface InsertionSettings {
@@ -26,6 +28,7 @@
     insertion?: InsertionSettings;
     pageLabel?: PageLabel; 
     pageLayout?: PageLayout;
+    columnLayout?: ColumnLayoutConfig;
     hfLayout?: HeaderFooterLayout;
     showOffset?: boolean;
     layoutDetection?: PageSizeDetectionState;
@@ -45,6 +48,7 @@
         startValue: 1
     }),
     pageLayout = $bindable(defaultPageLayout),
+    columnLayout = $bindable(defaultColumnLayout),
     hfLayout = $bindable(defaultHeaderFooterLayout),
     showOffset = true,
     layoutDetection,
@@ -54,7 +58,7 @@
     onGuide
   }: Props = $props();
 
-  type PopupType = 'pagenum-offset' | 'insert-pos' | 'page-label' | 'page-size' | 'page-margins' | 'header-footer';
+  type PopupType = 'pagenum-offset' | 'insert-pos' | 'page-label' | 'page-size' | 'page-margins' | 'header-footer' | 'column-layout';
   let activePopup = $state<PopupType | null>(null);
   
   // Group expansion states
@@ -236,6 +240,20 @@
           {marginSummary}
           {#snippet popup(triggerEl)}
               <PageMarginsPopup bind:margins={pageLayout.margins} onchange={onPopupChange} {triggerEl} />
+          {/snippet}
+      </StatusBarItem>
+
+      <StatusBarItem
+          active={activePopup === 'column-layout'}
+          title="Column Layout"
+          onclick={() => togglePopup('column-layout')}
+      >
+          {#snippet icon()}
+              <Icon data={doubleColumnIcon} width="14" height="14" />
+          {/snippet}
+          {(columnLayout.count || 1) === 1 ? '1 Col' : `${columnLayout.count} Cols`}
+          {#snippet popup(triggerEl)}
+              <ColumnLayoutPopup bind:layout={columnLayout} onchange={onParamChange} {triggerEl} />
           {/snippet}
       </StatusBarItem>
   </StatusBarGroup>

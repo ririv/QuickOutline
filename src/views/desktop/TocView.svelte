@@ -133,6 +133,7 @@
       bind:insertion={tocStore.insertionConfig}
       bind:pageLabel={tocStore.pageLabel}
       bind:pageLayout={tocStore.pageLayout}
+      bind:columnLayout={tocStore.columnLayout}
       bind:hfLayout={tocStore.hfLayout}
       onGenerate={handleGenerate} 
       onParamChange={triggerPreview}

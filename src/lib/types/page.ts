@@ -30,6 +30,20 @@ export interface PageLayout {
     margins: PageMargins;
 }
 
+export interface ColumnLayoutConfig {
+    count: number;
+    direction: 'vertical' | 'horizontal'; // vertical = N-flow (down then right), horizontal = Z-flow (right then down)
+    gap: number; // pt
+    rule: boolean;
+}
+
+export const defaultColumnLayout: ColumnLayoutConfig = {
+    count: 1,
+    direction: 'vertical',
+    gap: 20, 
+    rule: false
+};
+
 export const defaultPageLayout: PageLayout = {
     pageSize: {
         size: 'A4',
