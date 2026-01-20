@@ -204,12 +204,12 @@
 
       <StatusBarItem
           active={activePopup === 'page-size'}
-          title="Page Size: {pageSizeSummary.full}"
+          title="Page Size: {pageLayout.pageSize.size}, {pageLayout.pageSize.orientation}"
           onclick={() => togglePopup('page-size')}
       >
           {#snippet icon()}
               <!-- svelte-ignore css_unused_selector -->
-              <div class:rotated={pageSizeSummary.orientation === 'landscape'}>
+              <div class="icon-rotator" class:rotated={pageLayout.pageSize.orientation === 'landscape'}>
                   <Icon name="page-setup" width="16" height="16" />
               </div>
           {/snippet}
@@ -393,8 +393,17 @@
       transform: translateY(-1px);
   }
   
-  /* Support for rotated icon inside snippets */
-  :global(.rotated) {
+  .icon-rotator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.2s ease;
+      will-change: transform;
+  }
+
+  .icon-rotator.rotated {
       transform: rotate(90deg);
   }
 </style>
