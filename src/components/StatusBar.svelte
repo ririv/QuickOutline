@@ -163,7 +163,7 @@
 <div class="status-bar" bind:this={barElement} use:clickOutside={() => activePopup = null}>
 
   {#if showOffset}
-      <StatusBarGroup bind:expanded={g1Expanded} title="Offset">
+      <StatusBarGroup bind:expanded={g1Expanded} title="Page Logic">
           <StatusBarItem 
               active={activePopup === 'pagenum-offset'} 
               title="Set Page Offset"
@@ -177,11 +177,31 @@
                   <OffsetPopup bind:offset onchange={onParamChange} {triggerEl} />
               {/snippet}
           </StatusBarItem>
+
+          <StatusBarItem
+              active={activePopup === 'page-label'}
+              title="Set Numbering Style"
+              onclick={() => togglePopup('page-label')}
+          >
+              {#snippet icon()}
+                  <Icon data={labelSimpleIcon} width="14" height="14" />
+              {/snippet}
+
+              {#if pageLabel.numberingStyle === PageLabelNumberingStyle.NONE && !pageLabel.labelPrefix}
+                  None
+              {:else}
+                  {removeSuffix(generateRulePreview(pageLabel, 1), "...")}
+              {/if}
+              
+              {#snippet popup(triggerEl)}
+                  <PageLabelPopup bind:pageLabel onchange={onPopupChange} {triggerEl} />
+              {/snippet}
+          </StatusBarItem>
       </StatusBarGroup>
   {/if}
 
-  <!-- Group 2: Pos / Size / Margins -->
-  <StatusBarGroup bind:expanded={g2Expanded} title="Page Settings">
+  <!-- Group 2: Layout Basics -->
+  <StatusBarGroup bind:expanded={g2Expanded} title="Layout Basics">
       <StatusBarItem
           active={activePopup === 'insert-pos'}
           title="Set Insert Position"
@@ -225,7 +245,10 @@
               />
           {/snippet}
       </StatusBarItem>
+  </StatusBarGroup>
 
+  <!-- Group 3: Advanced Layout -->
+  <StatusBarGroup bind:expanded={g3Expanded} title="Advanced Layout">
       <StatusBarItem
           active={activePopup === 'page-margins'}
           title="Margins: {marginSummary}"
@@ -256,10 +279,7 @@
               <ColumnLayoutPopup bind:layout={columnLayout} onchange={onParamChange} {triggerEl} />
           {/snippet}
       </StatusBarItem>
-  </StatusBarGroup>
 
-  <!-- Group 3: HF -->
-  <StatusBarGroup bind:expanded={g3Expanded} title="Header/Footer">
       <StatusBarItem
           active={activePopup === 'header-footer'}
           title="Header & Footer Position"
@@ -285,29 +305,6 @@
           
           {#snippet popup(triggerEl)}
               <HeaderFooterPopup bind:layout={hfLayout} onchange={onParamChange} {triggerEl} />
-          {/snippet}
-      </StatusBarItem>
-  </StatusBarGroup>
-
-  <!-- Group 4: Numbering -->
-  <StatusBarGroup bind:expanded={g4Expanded} title="Numbering">
-      <StatusBarItem
-          active={activePopup === 'page-label'}
-          title="Set Numbering Style"
-          onclick={() => togglePopup('page-label')}
-      >
-          {#snippet icon()}
-              <Icon data={labelSimpleIcon} width="14" height="14" />
-          {/snippet}
-
-          {#if pageLabel.numberingStyle === PageLabelNumberingStyle.NONE && !pageLabel.labelPrefix}
-              None
-          {:else}
-              {removeSuffix(generateRulePreview(pageLabel, 1), "...")}
-          {/if}
-          
-          {#snippet popup(triggerEl)}
-              <PageLabelPopup bind:pageLabel onchange={onPopupChange} {triggerEl} />
           {/snippet}
       </StatusBarItem>
   </StatusBarGroup>
