@@ -107,12 +107,27 @@ export function generateTocHtml(
     if (count > 1) {
         if (direction === 'horizontal') {
             // Grid Layout (Z-flow)
+            let gridRuleStyle = '';
+            if (rule) {
+                const color = '#ccc'; // Match default rule color
+                const stops = [];
+                for (let i = 1; i < count; i++) {
+                    const percent = (i / count) * 100;
+                    stops.push(`transparent calc(${percent}% - 0.5px)`);
+                    stops.push(`${color} calc(${percent}% - 0.5px)`);
+                    stops.push(`${color} calc(${percent}% + 0.5px)`);
+                    stops.push(`transparent calc(${percent}% + 0.5px)`);
+                }
+                gridRuleStyle = `background-image: linear-gradient(to right, ${stops.join(', ')});`;
+            }
+
             columnStyle = css`
                 .toc-content .toc-list {
                     display: grid;
                     grid-template-columns: repeat(${count}, 1fr);
                     column-gap: ${gap}pt;
                     align-items: end; /* Ensure leaders align at bottom */
+                    ${gridRuleStyle}
                 }
                 /* Grid items don't need break-inside prevention as much as columns, but good to have */
                 .toc-item {

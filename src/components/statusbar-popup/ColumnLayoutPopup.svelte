@@ -68,22 +68,20 @@
 >
   <div class="popup-content">
       {#if layout.count > 1}
-          {#if layout.direction === 'vertical'}
-            <div class="switch-row">
-                <span class="switch-label">Separator Line</span>
-                <button 
-                    class="switch-btn" 
-                    class:active={layout.rule}
-                    onclick={() => { layout.rule = !layout.rule; onchange?.(); }}
-                    role="switch"
-                    aria-checked={layout.rule}
-                    aria-label="Toggle separator line"
-                >
-                    <div class="switch-thumb"></div>
-                </button>
-            </div>
-            <div class="divider"></div>
-          {/if}
+          <div class="switch-row">
+              <span class="switch-label">Separator Line</span>
+              <button 
+                  class="switch-btn" 
+                  class:active={layout.rule}
+                  onclick={() => { layout.rule = !layout.rule; onchange?.(); }}
+                  role="switch"
+                  aria-checked={layout.rule}
+                  aria-label="Toggle separator line"
+              >
+                  <div class="switch-thumb"></div>
+              </button>
+          </div>
+          <div class="divider"></div>
 
           <div class="popup-label">Flow Direction</div>
           <div class="direction-tabs">
