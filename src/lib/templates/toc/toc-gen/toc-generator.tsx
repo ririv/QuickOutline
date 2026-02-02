@@ -101,6 +101,9 @@ export function generateTocHtml(
 
     // Initial dot generation logic is moved to fixDots.js for dynamic rendering
     
+    // Generate a unique scope ID to prevent style conflicts during re-renders (double-buffering)
+    const scopeId = `toc-${Math.random().toString(36).substring(2, 8)}`;
+    
     const { count, direction, gap, rule } = columnLayout;
     let columnStyle = '';
 
@@ -121,8 +124,8 @@ export function generateTocHtml(
                 gridRuleStyle = `background-image: linear-gradient(to right, ${stops.join(', ')});`;
             }
 
-            columnStyle = css`
-                .toc-content .toc-list {
+            columnStyle = `
+                .${scopeId}.toc-content .toc-list {
                     display: grid;
                     grid-template-columns: repeat(${count}, 1fr);
                     column-gap: ${gap}pt;
@@ -130,7 +133,7 @@ export function generateTocHtml(
                     ${gridRuleStyle}
                 }
                 /* Grid items don't need break-inside prevention as much as columns, but good to have */
-                .toc-item {
+                .${scopeId} .toc-item {
                     break-inside: avoid;
                     width: 100%; /* Fill grid cell */
                 }
@@ -138,8 +141,8 @@ export function generateTocHtml(
         } else {
             // Column Layout (N-flow)
             const ruleValue = rule ? '1px solid #ccc' : '1px solid transparent';
-            columnStyle = css`
-                .toc-content {
+            columnStyle = `
+                .${scopeId}.toc-content {
                     column-count: ${count};
                     column-gap: ${gap}pt;
                     column-rule: ${ruleValue};
@@ -147,12 +150,12 @@ export function generateTocHtml(
                     column-fill: auto;
                     height: 100%;
                 }
-                .toc-content > h1, .toc-content > h2, .toc-title {
+                .${scopeId}.toc-content > h1, .${scopeId}.toc-content > h2, .${scopeId}.toc-content .toc-title {
                     column-span: all;
                     margin-bottom: 24px;
                 }
                 /* Ensure items don't break across columns awkwardly */
-                .toc-item {
+                .${scopeId} .toc-item {
                     break-inside: avoid;
                 }
             `;
@@ -160,7 +163,7 @@ export function generateTocHtml(
     }
 
     const htmlOutput = (
-        <div class="toc-content">
+        <div class={`toc-content ${scopeId}`}>
             <h1 class="toc-title">{escapeHtml(title)}</h1>
             <ul class="toc-list" style={{ '--toc-indent-step': `${indentStep}pt` }}>
                 {lines.map(line => {
