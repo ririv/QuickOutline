@@ -2,7 +2,7 @@
   import SplitPane from '../../components/SplitPane.svelte';
   import Preview from '../../components/Preview.svelte';
   import TocEditor from '../../components/editor/TocEditor.svelte';
-  import StatusBar from '../../components/StatusBar.svelte';
+  import TocStatusBar from './TocStatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import GuideWindow from '../../components/common/GuideWindow.svelte';
   import MarkdownViewer from '../../components/common/MarkdownViewer.svelte';
@@ -128,13 +128,7 @@
       </SplitPane>
   </div>
 
-  <StatusBar 
-      bind:offset={tocStore.offset} 
-      bind:insertion={tocStore.insertionConfig}
-      bind:pageLabel={tocStore.pageLabel}
-      bind:pageLayout={tocStore.pageLayout}
-      bind:columnLayout={tocStore.columnLayout}
-      bind:hfLayout={tocStore.hfLayout}
+  <TocStatusBar 
       onGenerate={handleGenerate} 
       onParamChange={triggerPreview}
       onGuide={handleGuide}

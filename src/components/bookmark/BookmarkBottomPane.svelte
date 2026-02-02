@@ -13,7 +13,7 @@
 
     import GetContentsPopup from './GetContentsPopup.svelte';
     import SetContentsPopup from './SetContentsPopup.svelte';
-    import OffsetPopup from '../statusbar-popup/OffsetPopup.svelte';
+    import OffsetPopup from '@/components/statusbar/statusbar-popup/OffsetPopup.svelte';
     import type { ViewScaleType } from '@/lib/types/pdf';
     import GraphButton from '../controls/GraphButton.svelte';
     import StyledInput from '../controls/StyledInput.svelte';

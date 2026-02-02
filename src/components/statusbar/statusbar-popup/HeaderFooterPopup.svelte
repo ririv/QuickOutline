@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { HeaderFooterLayout } from '@/lib/types/page';
-    import ArrowPopup from '../controls/ArrowPopup.svelte';
+    import type { HeaderFooterLayout } from '@/lib/types/page.ts';
+    import ArrowPopup from '../../controls/ArrowPopup.svelte';
 
     interface Props {
         layout: HeaderFooterLayout;

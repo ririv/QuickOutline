@@ -1,25 +1,27 @@
 <script lang="ts">
-  import { type Snippet } from 'svelte';
+  import { getContext, type Snippet } from 'svelte';
 
   interface Props {
-    active: boolean;
+    id: string; // Unique ID for popup handling
     title: string;
-    onclick: () => void;
     icon: Snippet;
     children?: Snippet;
     popup?: Snippet<[HTMLElement]>;
   }
 
   let { 
-    active, 
+    id,
     title, 
-    onclick, 
     icon, 
     children, 
     popup 
   }: Props = $props();
 
   let triggerEl = $state<HTMLElement>();
+  
+  // Consume StatusBar Context
+  const ctx = getContext('STATUS_BAR_CTX') as { activeId: string | null, toggle: (id: string) => void };
+  let active = $derived(ctx.activeId === id);
 </script>
 
 <div class="status-item-wrapper">
@@ -29,7 +31,7 @@
         bind:this={triggerEl}
         class="status-item" 
         class:active={active}
-        {onclick}
+        onclick={() => ctx.toggle(id)}
         {title}
     >
         <span class="icon">

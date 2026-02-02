@@ -1,11 +1,11 @@
 <script lang="ts">
-  import ArrowPopup from '../controls/ArrowPopup.svelte';
-  import StyledInput from '../controls/StyledInput.svelte';
-  import PreviewPopup from '../PreviewPopup.svelte'; 
-  import VirtualList from '../common/VirtualList.svelte';
-  import LazyPdfImage from '../common/LazyPdfImage.svelte';
-  import { docStore } from '@/stores/docStore.svelte';
-  import { pdfRenderService } from '@/lib/services/PdfRenderService';
+  import ArrowPopup from '../../controls/ArrowPopup.svelte';
+  import StyledInput from '../../controls/StyledInput.svelte';
+  import PreviewPopup from '../../PreviewPopup.svelte';
+  import VirtualList from '../../common/VirtualList.svelte';
+  import LazyPdfImage from '../../common/LazyPdfImage.svelte';
+  import { docStore } from '@/stores/docStore.svelte.js';
+  import { pdfRenderService } from '@/lib/services/PdfRenderService.ts';
   import { onMount, untrack, onDestroy } from 'svelte';
 
   interface Props {

@@ -2,7 +2,7 @@
   import SplitPane from '../../components/SplitPane.svelte';
   import MdEditor from '../../components/editor/MdEditor.svelte';
   import Preview from '../../components/Preview.svelte';
-  import StatusBar from '../../components/StatusBar.svelte';
+  import MarkdownStatusBar from './MarkdownStatusBar.svelte';
   import PageFrame from '../../components/headerfooter/PageFrame.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { markdownStore, MARKDOWN_DEFAULT_FOOTER_CONTENT } from '@/stores/markdownStore.svelte.js';
@@ -74,12 +74,7 @@
       </SplitPane>
   </div>
   
-  <StatusBar 
-      bind:insertion={markdownStore.insertionConfig}
-      bind:pageLabel={markdownStore.pageLabel}
-      bind:pageLayout={markdownStore.pageLayout}
-      bind:hfLayout={markdownStore.hfLayout}
-      showOffset={false}
+  <MarkdownStatusBar 
       onGenerate={handleGenerate} 
       onParamChange={debouncedPreview}
       {layoutDetection}

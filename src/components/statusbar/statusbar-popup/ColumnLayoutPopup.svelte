@@ -1,7 +1,7 @@
 <script lang="ts">
-  import ArrowPopup from '../controls/ArrowPopup.svelte';
+  import ArrowPopup from '../../controls/ArrowPopup.svelte';
   import Icon from '@/components/Icon.svelte';
-  import { defaultColumnLayout, type ColumnLayoutConfig } from '@/lib/types/page';
+  import { defaultColumnLayout, type ColumnLayoutConfig } from '@/lib/types/page.ts';
   
   const singleColumnIcon = `
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
