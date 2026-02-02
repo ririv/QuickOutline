@@ -4,6 +4,7 @@ import { type PageLayout, PAGE_SIZES_MM, defaultColumnLayout, type ColumnLayoutC
 import { createElement, Fragment } from '@/lib/utils/jsx';
 import { parseTocLine, scanMathInString } from './parser';
 import katex from 'katex';
+import { generateColumnCss } from '@/lib/templates/utils/column-layout';
 
 interface DotConfig {
     width?: number;
@@ -104,62 +105,19 @@ export function generateTocHtml(
     // Generate a unique scope ID to prevent style conflicts during re-renders (double-buffering)
     const scopeId = `toc-${Math.random().toString(36).substring(2, 8)}`;
     
-    const { count, direction, gap, rule } = columnLayout;
+    const { direction } = columnLayout;
     let columnStyle = '';
 
-    if (count > 1) {
-        if (direction === 'horizontal') {
-            // Grid Layout (Z-flow)
-            let gridRuleStyle = '';
-            if (rule) {
-                const color = '#ccc'; // Match default rule color
-                const stops = [];
-                for (let i = 1; i < count; i++) {
-                    const percent = (i / count) * 100;
-                    stops.push(`transparent calc(${percent}% - 0.5px)`);
-                    stops.push(`${color} calc(${percent}% - 0.5px)`);
-                    stops.push(`${color} calc(${percent}% + 0.5px)`);
-                    stops.push(`transparent calc(${percent}% + 0.5px)`);
-                }
-                gridRuleStyle = `background-image: linear-gradient(to right, ${stops.join(', ')});`;
-            }
+    if (columnLayout.count > 1) {
+        // For Grid (Horizontal), we apply styles to the list container (.toc-list)
+        // For Columns (Vertical), we apply styles to the wrapper (.toc-content)
+        const targetSelector = direction === 'horizontal' 
+            ? `.${scopeId}.toc-content .toc-list` 
+            : `.${scopeId}.toc-content`;
+            
+        const itemSelector = `.${scopeId} .toc-item`;
 
-            columnStyle = `
-                .${scopeId}.toc-content .toc-list {
-                    display: grid;
-                    grid-template-columns: repeat(${count}, 1fr);
-                    column-gap: ${gap}pt;
-                    align-items: end; /* Ensure leaders align at bottom */
-                    ${gridRuleStyle}
-                }
-                /* Grid items don't need break-inside prevention as much as columns, but good to have */
-                .${scopeId} .toc-item {
-                    break-inside: avoid;
-                    width: 100%; /* Fill grid cell */
-                }
-            `;
-        } else {
-            // Column Layout (N-flow)
-            const ruleValue = rule ? '1px solid #ccc' : '1px solid transparent';
-            columnStyle = `
-                .${scopeId}.toc-content {
-                    column-count: ${count};
-                    column-gap: ${gap}pt;
-                    column-rule: ${ruleValue};
-                    /* Force columns to fill sequentially rather than balancing heights */
-                    column-fill: auto;
-                    height: 100%;
-                }
-                .${scopeId}.toc-content > h1, .${scopeId}.toc-content > h2, .${scopeId}.toc-content .toc-title {
-                    column-span: all;
-                    margin-bottom: 24px;
-                }
-                /* Ensure items don't break across columns awkwardly */
-                .${scopeId} .toc-item {
-                    break-inside: avoid;
-                }
-            `;
-        }
+        columnStyle = generateColumnCss(columnLayout, targetSelector, itemSelector);
     }
 
     const htmlOutput = (
