@@ -54,7 +54,7 @@
 
   <div class="spacer"></div>
 
-  <Generate {onGenerate} />
+  <Generate {onGenerate} loading={markdownStore.isGenerating} />
 </StatusBar>
 
 <style>

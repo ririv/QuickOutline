@@ -61,7 +61,7 @@
   <div class="spacer"></div>
   
   <Guide {onGuide} />
-  <Generate {onGenerate} />
+  <Generate {onGenerate} loading={tocStore.isGenerating} />
 </StatusBar>
 
 <style>

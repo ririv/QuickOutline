@@ -91,6 +91,7 @@ export function useTocActions() {
             return;
         }
 
+        tocStore.isGenerating = true;
         try {
             // 1. Calculate Links and Resolve Targets
             const rawLinks = getTocLinkData();
@@ -217,6 +218,8 @@ export function useTocActions() {
         } catch (e: any) {
             console.error("Generate failed", e);
             messageStore.add("Failed: " + (e.message || e), "ERROR");
+        } finally {
+            tocStore.isGenerating = false;
         }
     }
 

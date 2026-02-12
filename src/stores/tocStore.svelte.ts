@@ -42,6 +42,9 @@ export class TocState {
     headerConfig = $state<SectionConfig>({ left: '', center: '', right: '', inner: '', outer: '', drawLine: false });
     footerConfig = $state<SectionConfig>({ left: '', center: TOC_DEFAULT_FOOTER_CONTENT.center, right: '', inner: '', outer: '', drawLine: false });
 
+    // State
+    isGenerating = $state(false);
+
     // Cache
     previewData = $state<any>(null);
     scrollTop = $state(0);

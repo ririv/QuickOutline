@@ -31,6 +31,7 @@ export class MarkdownState {
     showFooter = $state(false);
     enableIndentedCodeBlocks = $state(false); // New config option
     tableStyle = $state<'grid' | 'academic'>('grid'); // New config option
+    isGenerating = $state(false);
     
     // Preview Cache
     currentPagedContent = $state<any>(null);

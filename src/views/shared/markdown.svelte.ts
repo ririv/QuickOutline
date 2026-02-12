@@ -70,31 +70,32 @@ export function useMarkdownActions() {
             return;
         }
    
-       messageStore.add("Preparing PDF resources...", "INFO");
-   
-       const baseUrl = '.';
-   
-       // Generate Header/Footer HTML
-       const headerHtml = PageSectionTemplate(pagedContent.header);
-       const footerHtml = PageSectionTemplate(pagedContent.footer);
-   
-       // Generate Page CSS
-       const pageCss = generatePageCss(pagedContent.header, pagedContent.footer, pagedContent.pageLayout, pagedContent.hfLayout);
-   
-       // Construct full HTML for printing
-   
-       const fullHtml = MarkdownPrintTemplate({
-          styles: pagedContent.styles,
-          pageCss: pageCss,
-          headerHtml: headerHtml,
-          footerHtml: footerHtml,
-          contentHtml: pagedContent.html,
-          baseUrl: baseUrl
-       });
-       messageStore.add("Generating PDF...", "INFO");
-        const filename = `markdown_${Date.now()}.pdf`;
-        
-        try {
+       markdownStore.isGenerating = true;
+       try {
+           messageStore.add("Preparing PDF resources...", "INFO");
+       
+           const baseUrl = '.';
+       
+           // Generate Header/Footer HTML
+           const headerHtml = PageSectionTemplate(pagedContent.header);
+           const footerHtml = PageSectionTemplate(pagedContent.footer);
+       
+           // Generate Page CSS
+           const pageCss = generatePageCss(pagedContent.header, pagedContent.footer, pagedContent.pageLayout, pagedContent.hfLayout);
+       
+           // Construct full HTML for printing
+       
+           const fullHtml = MarkdownPrintTemplate({
+              styles: pagedContent.styles,
+              pageCss: pageCss,
+              headerHtml: headerHtml,
+              footerHtml: footerHtml,
+              contentHtml: pagedContent.html,
+              baseUrl: baseUrl
+           });
+           messageStore.add("Generating PDF...", "INFO");
+            const filename = `markdown_${Date.now()}.pdf`;
+            
             let modeParam = printStore.mode.toLowerCase();
             if (printStore.mode === 'HeadlessChrome') {
                 modeParam = 'headless_chrome';
@@ -126,6 +127,8 @@ export function useMarkdownActions() {
         } catch (e: any) {
             console.error("Generate failed", e);
             messageStore.add("Failed: " + (e.message || e), "ERROR");
+        } finally {
+            markdownStore.isGenerating = false;
         }
     }
 
