@@ -5,6 +5,7 @@ import { docStore } from '@/stores/docStore.svelte.ts';
 import { tocStore } from '@/stores/tocStore.svelte.js';
 import { printStore } from '@/stores/printStore.svelte.js';
 import { generateTocHtml, DOT_GAP } from '@/lib/templates/toc/toc-gen/toc-generator.tsx';
+import { PAGE_SIZES_MM } from '@/lib/types/page';
 import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
 import { generatePageCss } from '@/lib/preview-engine/css-generator.ts';
 import { TocPrintTemplate } from '@/lib/templates/toc/TocPrintTemplate.tsx';
@@ -168,10 +169,24 @@ export function useTocActions() {
                 modeParam = 'headless_chrome';
             }
 
+            let dimensions: { width: number, height: number } | undefined = undefined;
+            const ps = tocStore.pageLayout.pageSize;
+            if (ps.type === 'preset') {
+                const std = PAGE_SIZES_MM[ps.size] || PAGE_SIZES_MM['A4'];
+                if (ps.orientation === 'landscape') {
+                    dimensions = { width: std[1], height: std[0] };
+                } else {
+                    dimensions = { width: std[0], height: std[1] };
+                }
+            } else {
+                dimensions = { width: ps.width, height: ps.height };
+            }
+
             const pdfPath = await invoke('print_to_pdf', { 
                 html: fullHtml, 
                 filename: filename,
-                mode: modeParam
+                mode: modeParam,
+                dimensions: dimensions
             });
             
             console.log("PDF Generated at:", pdfPath);

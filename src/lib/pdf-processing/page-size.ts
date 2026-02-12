@@ -1,4 +1,4 @@
-import { type PageSize, PAGE_SIZES_MM } from '@/lib/types/page';
+import { type PageSize, PAGE_SIZES_MM, type PresetPageSize } from '@/lib/types/page';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { getPageDimensions } from '@/lib/pdfjs/layout-extractor';
 
@@ -15,7 +15,7 @@ export async function detectPageSize(doc: PDFDocumentProxy | null, pageNumber: n
         const { widthMm, heightMm } = await getPageDimensions(doc, pageNumber);
         
         let orientation: 'portrait' | 'landscape' = 'portrait';
-        let matchedSize: PageSize['size'] = 'A4'; 
+        let matchedSize: PresetPageSize['size'] = 'A4';
         let bestDiff = Infinity;
 
         if (widthMm > heightMm) {
@@ -29,12 +29,26 @@ export async function detectPageSize(doc: PDFDocumentProxy | null, pageNumber: n
             const diff = Math.abs(stdW - checkW) + Math.abs(stdH - checkH);
             if (diff < bestDiff) {
                 bestDiff = diff;
-                matchedSize = key as PageSize['size'];
+                matchedSize = key as PresetPageSize['size'];
             }
+        }
+
+        // If the best match is more than 2mm off total, use CustomPageSize
+        if (bestDiff > 2) {
+            return {
+                pageSize: {
+                    type: 'custom',
+                    width: widthMm,
+                    height: heightMm
+                },
+                actualWidth: widthMm,
+                actualHeight: heightMm
+            };
         }
         
         return {
             pageSize: {
+                type: 'preset',
                 size: matchedSize,
                 orientation: orientation
             },

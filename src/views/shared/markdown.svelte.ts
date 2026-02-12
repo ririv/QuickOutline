@@ -7,6 +7,7 @@ import markdownPreviewCss from '@/lib/editor/styles/markdown-preview.css?inline'
 import { PageSectionTemplate } from '@/lib/templates/PageSectionTemplate.tsx';
 import { generatePageCss } from '@/lib/preview-engine/css-generator.ts';
 import { MarkdownPrintTemplate } from '@/lib/templates/MarkdownPrintTemplate.tsx';
+import { PAGE_SIZES_MM } from '@/lib/types/page';
 import type { EditorMode, StylesConfig } from '@/lib/editor';
 
 import { useAdaptiveDebounce } from '@/lib/composables/useAdaptiveDebounce.ts';
@@ -98,11 +99,25 @@ export function useMarkdownActions() {
             if (printStore.mode === 'HeadlessChrome') {
                 modeParam = 'headless_chrome';
             }
+
+            let dimensions: { width: number, height: number } | undefined = undefined;
+            const ps = pagedContent.pageLayout.pageSize;
+            if (ps.type === 'preset') {
+                const std = PAGE_SIZES_MM[ps.size] || PAGE_SIZES_MM['A4'];
+                if (ps.orientation === 'landscape') {
+                    dimensions = { width: std[1], height: std[0] };
+                } else {
+                    dimensions = { width: std[0], height: std[1] };
+                }
+            } else {
+                dimensions = { width: ps.width, height: ps.height };
+            }
    
             const pdfPath = await invoke('print_to_pdf', { 
                 html: fullHtml,
                 filename: filename,
-                mode: modeParam
+                mode: modeParam,
+                dimensions: dimensions
             });
             
             console.log("PDF Generated at:", pdfPath);

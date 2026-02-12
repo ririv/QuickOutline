@@ -11,6 +11,7 @@ pub mod headless;
 pub mod headless_chrome;
 
 use crate::static_server::LocalServerState; // Import LocalServerState
+use crate::printer::native::PageDimensions;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -31,6 +32,7 @@ pub async fn print_to_pdf<R: Runtime>(
     mode: Option<PrintMode>,
     browser_path: Option<String>,
     force_download: Option<bool>,
+    dimensions: Option<PageDimensions>,
 ) -> Result<String, String> {
     // Use app_data_dir / pdf_workspace
     let app_data_dir = app.path().app_data_dir()
@@ -45,12 +47,12 @@ pub async fn print_to_pdf<R: Runtime>(
     let print_mode = mode.unwrap_or(PrintMode::Native);
     let force_dl = force_download.unwrap_or(false);
 
-    info!("Print Request: Mode={:?}, Output={:?}, URL={:?}, HTML len={:?}", 
-             print_mode, output_path, url, html.as_ref().map(|s| s.len()));
+    info!("Print Request: Mode={:?}, Output={:?}, URL={:?}, HTML len={:?}, Dimensions={:?}", 
+             print_mode, output_path, url, html.as_ref().map(|s| s.len()), dimensions);
 
     // Try to get local server port and workspace path
     let mut local_url: Option<String> = None;
-    let mut temp_file_to_clean: Option<PathBuf> = None; // Track temp file for cleanup
+    let mut _temp_file_to_clean: Option<PathBuf> = None; // Track temp file for cleanup
     
     if let Some(html_content) = &html {
         let state = app.state::<LocalServerState>();
@@ -64,8 +66,8 @@ pub async fn print_to_pdf<R: Runtime>(
              
              if let Ok(_) = fs::write(&temp_file_path, html_content) {
                  local_url = Some(format!("http://127.0.0.1:{}/{}", port, temp_filename));
-                 temp_file_to_clean = Some(temp_file_path); // Store path for cleanup
-                 info!("Saved HTML to workspace: {:?} -> URL: {:?}", temp_file_to_clean, local_url);
+                 _temp_file_to_clean = Some(temp_file_path); // Store path for cleanup
+                 info!("Saved HTML to workspace: {:?} -> URL: {:?}", _temp_file_to_clean, local_url);
              }
         }
     }
@@ -106,7 +108,7 @@ pub async fn print_to_pdf<R: Runtime>(
                 let res = {
                      #[cfg(target_os = "macos")]
                      {
-                        native::print_to_pdf_with_url_native(app, window, url_str, output_path.clone()).await
+                        native::print_to_pdf_with_url_native(app, window, url_str, output_path.clone(), dimensions).await
                      }
                      #[cfg(target_os = "windows")]
                      {
@@ -165,7 +167,7 @@ pub async fn print_to_pdf<R: Runtime>(
                     let res_inner = {
                          #[cfg(target_os = "macos")]
                          {
-                            native::print_native_with_html_mac_wkpdf(window, html_str, output_path).await
+                            native::print_native_with_html_mac_wkpdf(window, html_str, output_path, dimensions).await
                          }
                          #[cfg(target_os = "windows")]
                          {

@@ -29,7 +29,11 @@
 
       let w: number;
       let h: number;
-      let matchedName: string = pageSize.size;
+      let matchedName: string = '';
+
+      if (pageSize.type === 'preset') {
+          matchedName = pageSize.size;
+      }
 
       // In Auto mode, the actual detection might differ from the selected size
       if (pageSizeAutoDetect && layoutDetection?.actualDimensions) {
@@ -46,13 +50,18 @@
           if (matched) matchedName = matched[0] as any;
           else matchedName = '';
       } else {
-          const std = PAGE_SIZES_MM[pageSize.size];
-          if (pageSize.orientation === 'landscape') {
-              w = std[1];
-              h = std[0];
+          if (pageSize.type === 'preset') {
+            const std = PAGE_SIZES_MM[pageSize.size];
+            if (pageSize.orientation === 'landscape') {
+                w = std[1];
+                h = std[0];
+            } else {
+                w = std[0];
+                h = std[1];
+            }
           } else {
-              w = std[0];
-              h = std[1];
+            w = pageSize.width;
+            h = pageSize.height;
           }
       }
 
@@ -73,7 +82,7 @@
 >
     {#snippet icon()}
         <!-- svelte-ignore css_unused_selector -->
-        <div class="icon-rotator" class:rotated={pageSize.orientation === 'landscape'}>
+        <div class="icon-rotator" class:rotated={summary.orientation === 'landscape'}>
             <Icon name="page-setup" width="16" height="16" />
         </div>
     {/snippet}

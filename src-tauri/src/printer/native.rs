@@ -9,12 +9,19 @@ pub use super::native_windows::print_native_windows;
 #[cfg(target_os = "linux")]
 pub use super::native_linux::print_native_linux;
 
+#[derive(Debug, Clone, Copy, serde::Deserialize)]
+pub struct PageDimensions {
+    pub width: f64,
+    pub height: f64,
+}
+
 #[tauri::command]
 pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
     app: AppHandle<R>,
     window: WebviewWindow<R>, // Use WebviewWindow
     html: String,
     filename: String,
+    dimensions: Option<PageDimensions>,
 ) -> Result<String, String> {
     let output_path = app.path().app_data_dir()
         .map_err(|e| e.to_string())?
@@ -25,33 +32,11 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
     }
 
     // Platform specific implementations
-    #[cfg(target_os = "windows")]
-    {
-        match print_native_windows(app, window, html, output_path).await {
-            Ok(path) => Ok(path),
-            Err(e) => {
-                error!("Native print (Windows) failed: {}", e);
-                Err(e)
-            }
-        }
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        match print_native_linux(app, window, html, output_path).await {
-            Ok(path) => Ok(path),
-            Err(e) => {
-                error!("Native print (Linux) failed: {}", e);
-                Err(e)
-            }
-        }
-    }
-
     #[cfg(target_os = "macos")]
     {
         // Switch to NSPrintOperation based printing for better consistency
         // No fallback as requested
-        match print_native_with_html_mac_op(window.clone(), html.clone(), output_path.clone()).await {
+        match print_native_with_html_mac_op(window.clone(), html.clone(), output_path.clone(), dimensions).await {
             Ok(path) => Ok(path),
             Err(e) => {
                 error!("Native print (OP) failed: {}", e);
@@ -59,6 +44,8 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
             }
         }
     }
+    
+    // ... (other platforms)
 }
 
 pub async fn print_to_pdf_with_url_native<R: Runtime>(
@@ -66,6 +53,7 @@ pub async fn print_to_pdf_with_url_native<R: Runtime>(
     window: WebviewWindow<R>,
     url: String,
     output_path: PathBuf,
+    dimensions: Option<PageDimensions>,
 ) -> Result<String, String> {
     if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -74,7 +62,7 @@ pub async fn print_to_pdf_with_url_native<R: Runtime>(
     #[cfg(target_os = "macos")]
     {
         // Use WKPDFConfiguration (modern) as default for URL printing
-        match print_native_with_url_mac_wkpdf(window, url, output_path).await {
+        match print_native_with_url_mac_wkpdf(window, url, output_path, dimensions).await {
              Ok(path) => Ok(path),
              Err(e) => {
                  error!("Native print (WKPDF) failed: {}. No fallback configured.", e);
@@ -91,7 +79,7 @@ pub async fn print_to_pdf_with_url_native<R: Runtime>(
 
 // ================= MAC OS NATIVE (WKPDFConfiguration - URL) =================
 #[cfg(target_os = "macos")]
-pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R>, url: String, output_path: PathBuf) -> Result<String, String> {
+pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R>, url: String, output_path: PathBuf, dimensions: Option<PageDimensions>) -> Result<String, String> {
 
     use objc2_foundation::{NSData, NSError, NSString, NSRect, NSPoint, NSSize, NSURL, NSURLRequest};
     use objc2_web_kit::{WKPDFConfiguration, WKWebView, WKWebViewConfiguration};
@@ -113,7 +101,14 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R
         unsafe {
             let mtm = MainThreadMarker::new_unchecked();
             
-            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(595.0, 842.0));
+            let (w, h) = if let Some(d) = dimensions {
+                (d.width, d.height)
+            } else {
+                (210.0, 297.0)
+            };
+            let w_pts = w * 2.83465;
+            let h_pts = h * 2.83465;
+            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             let config = WKWebViewConfiguration::new(mtm);
             
             let alloc_view = mtm.alloc::<WKWebView>();
@@ -219,7 +214,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R
 
 // ================= MAC OS NATIVE (NSPrintOperation - URL) =================
 #[cfg(target_os = "macos")]
-pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, url: String, output_path: PathBuf) -> Result<String, String> {
+pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, url: String, output_path: PathBuf, dimensions: Option<PageDimensions>) -> Result<String, String> {
     use objc2_foundation::{NSString, NSRect, NSPoint, NSSize, NSURL, NSURLRequest};
     use objc2_web_kit::{WKWebView, WKWebViewConfiguration};
     use objc2_app_kit::{NSPrintInfo, NSPrintOperation, NSPrinter};
@@ -241,7 +236,15 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, 
         unsafe {
             let mtm = MainThreadMarker::new_unchecked();
 
-            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(595.0, 842.0));
+            let (w, h) = if let Some(d) = dimensions {
+                (d.width, d.height)
+            } else {
+                (210.0, 297.0)
+            };
+            let w_pts = w * 2.83465;
+            let h_pts = h * 2.83465;
+
+            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             let config = WKWebViewConfiguration::new(mtm);
 
             let alloc_view = mtm.alloc::<WKWebView>();
@@ -324,7 +327,16 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, 
             }
 
             print_info.setScalingFactor(1.0);
-            let paper_size = NSSize::new(595.0, 842.0); 
+            
+            let (w, h) = if let Some(d) = dimensions {
+                (d.width, d.height)
+            } else {
+                (210.0, 297.0)
+            };
+            let w_pts = w * 2.83465;
+            let h_pts = h * 2.83465;
+
+            let paper_size = NSSize::new(w_pts, h_pts); 
             print_info.setPaperSize(paper_size);
             print_info.setLeftMargin(0.0);
             print_info.setRightMargin(0.0);
@@ -375,7 +387,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, 
 
 // ================= MAC OS NATIVE (NSPrintOperation) =================
 #[cfg(target_os = "macos")]
-pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
+pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf, dimensions: Option<PageDimensions>) -> Result<String, String> {
     use objc2_foundation::{NSString, NSRect, NSPoint, NSSize, NSURL};
     use objc2_web_kit::{WKWebView, WKWebViewConfiguration};
     use objc2_app_kit::{NSPrintInfo, NSPrintOperation};
@@ -397,7 +409,15 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>,
         unsafe {
             let mtm = MainThreadMarker::new_unchecked();
 
-            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(595.0, 842.0));
+            let (w, h) = if let Some(d) = dimensions {
+                (d.width, d.height)
+            } else {
+                (210.0, 297.0)
+            };
+            let w_pts = w * 2.83465;
+            let h_pts = h * 2.83465;
+
+            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             let config = WKWebViewConfiguration::new(mtm);
 
             let alloc_view = mtm.alloc::<WKWebView>();
@@ -492,8 +512,15 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>,
             print_info.setScalingFactor(1.0);
 
             // 关键修复：手动填充缺失的默认值，防止系统查询默认打印机
-            // Set A4 Paper Size (595 x 842 points)
-            let paper_size = NSSize::new(595.0, 842.0); 
+            let (w, h) = if let Some(d) = dimensions {
+                (d.width, d.height)
+            } else {
+                (210.0, 297.0)
+            };
+            let w_pts = w * 2.83465;
+            let h_pts = h * 2.83465;
+
+            let paper_size = NSSize::new(w_pts, h_pts); 
             print_info.setPaperSize(paper_size);
             
             // Set Margins to 0
@@ -562,7 +589,7 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>,
 
 // ================= MAC OS NATIVE (WKPDFConfiguration - LEGACY) =================
 #[cfg(target_os = "macos")]
-pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
+pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<R>, html: String, output_path: PathBuf, dimensions: Option<PageDimensions>) -> Result<String, String> {
 
     use objc2_foundation::{NSData, NSError, NSString, NSRect, NSPoint, NSSize};
     use objc2_web_kit::{WKPDFConfiguration, WKWebView, WKWebViewConfiguration};
@@ -584,7 +611,15 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<
         unsafe {
             let mtm = MainThreadMarker::new_unchecked();
             
-            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(595.0, 842.0));
+            let (w, h) = if let Some(d) = dimensions {
+                (d.width, d.height)
+            } else {
+                (210.0, 297.0)
+            };
+            let w_pts = w * 2.83465;
+            let h_pts = h * 2.83465;
+
+            let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             let config = WKWebViewConfiguration::new(mtm);
             
             // Fix: Use msg_send! for init

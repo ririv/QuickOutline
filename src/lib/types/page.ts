@@ -20,10 +20,20 @@ export interface PageMargins {
     right: number;
 }
 
-export interface PageSize {
+export interface PresetPageSize {
+    type: 'preset';
     size: PaperFormat;
     orientation: 'portrait' | 'landscape';
 }
+
+
+export interface CustomPageSize {
+    type: 'custom';
+    width:  number;
+    height: number;
+}
+
+export type PageSize = PresetPageSize | CustomPageSize;
 
 export interface PageLayout {
     pageSize: PageSize;
@@ -46,6 +56,7 @@ export const defaultColumnLayout: ColumnLayoutConfig = {
 
 export const defaultPageLayout: PageLayout = {
     pageSize: {
+        type: 'preset',
         size: 'A4',
         orientation: 'portrait'
     },

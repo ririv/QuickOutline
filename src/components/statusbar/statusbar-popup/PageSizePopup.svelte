@@ -36,18 +36,25 @@
         let w: number;
         let h: number;
 
+        const ps = pageSize; // Local copy for narrowing
+
         if (autoDetect && detection?.actualDimensions) {
             w = detection.actualDimensions.width;
             h = detection.actualDimensions.height;
         } else {
-            const opt = sizeOptions.find(o => o.value === pageSize.size);
-            if (!opt) return '';
-            if (pageSize.orientation === 'landscape') {
-                w = opt.h;
-                h = opt.w;
+            if (ps.type === 'preset') {
+                const opt = sizeOptions.find(o => o.value === ps.size);
+                if (!opt) return '';
+                if (ps.orientation === 'landscape') {
+                    w = opt.h;
+                    h = opt.w;
+                } else {
+                    w = opt.w;
+                    h = opt.h;
+                }
             } else {
-                w = opt.w;
-                h = opt.h;
+                w = ps.width;
+                h = ps.height;
             }
         }
 
@@ -73,12 +80,19 @@
     $effect(() => {
         if (autoDetect && detection?.suggestedPageSize && mode === 'edit') {
             const suggested = detection.suggestedPageSize;
-            const isSame = 
-                pageSize.size === suggested.size &&
-                pageSize.orientation === suggested.orientation;
+            
+            let isSame = false;
+            // Discriminated union handling
+            if (pageSize.type === 'preset' && suggested.type === 'preset') {
+                isSame = pageSize.size === suggested.size && 
+                         pageSize.orientation === suggested.orientation;
+            } else if (pageSize.type === 'custom' && suggested.type === 'custom') {
+                isSame = Math.abs(pageSize.width - suggested.width) < 0.1 && 
+                         Math.abs(pageSize.height - suggested.height) < 0.1;
+            }
 
             if (!isSame) {
-                pageSize = { ...suggested };
+                pageSize = suggested;
                 onchange?.();
             }
         }
@@ -89,6 +103,20 @@
             autoDetect = false;
         }
     });
+
+    // Helper to ensure pageSize is preset when autoDetect is toggled off
+    function handleAutoDetectChange(e: Event) {
+        const checked = (e.target as HTMLInputElement).checked;
+        if (!checked && pageSize.type === 'custom') {
+            // Default back to A4 if we were in a custom auto-detected size
+            pageSize = {
+                type: 'preset',
+                size: 'A4',
+                orientation: 'portrait'
+            };
+        }
+        handleChange();
+    }
 </script>
 
 <ArrowPopup triggerEl={triggerEl} placement="top" className="paper-size-popup" trackTrigger={false}>
@@ -100,7 +128,7 @@
                     <span class="switch-label">Auto</span>
                     <StyledSwitch 
                         bind:checked={autoDetect} 
-                        onchange={handleChange} 
+                        onchange={handleAutoDetectChange} 
                         size="small" 
                         disabled={!detection?.suggestedPageSize}
                     />
@@ -110,6 +138,7 @@
 
         {#if autoDetect && detection?.suggestedPageSize && mode === 'edit'}
             <!-- Auto Mode Area -->
+            <!-- ... same ... -->
             <div class="mode-content">
                 <div class="neighbor-grid">
                     {#if detection.options.above}
@@ -161,8 +190,11 @@
                     <div style="flex: 1;">
                         <StyledSelect 
                             options={sizeOptions} 
-                            bind:value={pageSize.size} 
-                            onchange={handleChange}
+                            value={pageSize.type === 'preset' ? pageSize.size : 'A4'} 
+                            onchange={(val) => {
+                                pageSize = { type: 'preset', size: val as any, orientation: pageSize.type === 'preset' ? pageSize.orientation : 'portrait' };
+                                handleChange();
+                            }}
                             displayKey="label"
                             placement="top"
                         >
@@ -182,15 +214,29 @@
                     </span>
                     <div class="radio-group icon-group">
                         <button 
-                            class:active={pageSize.orientation === 'portrait'} 
-                            onclick={() => { pageSize.orientation = 'portrait'; handleChange(); }}
+                            class:active={pageSize.type === 'preset' && pageSize.orientation === 'portrait'} 
+                            onclick={() => { 
+                                if (pageSize.type === 'preset') {
+                                    pageSize.orientation = 'portrait'; 
+                                } else {
+                                    pageSize = { type: 'preset', size: 'A4', orientation: 'portrait' };
+                                }
+                                handleChange(); 
+                            }}
                             title="Portrait"
                         >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="2" ry="2"></rect></svg>
                         </button>
                         <button 
-                            class:active={pageSize.orientation === 'landscape'} 
-                            onclick={() => { pageSize.orientation = 'landscape'; handleChange(); }}
+                            class:active={pageSize.type === 'preset' && pageSize.orientation === 'landscape'} 
+                            onclick={() => { 
+                                if (pageSize.type === 'preset') {
+                                    pageSize.orientation = 'landscape'; 
+                                } else {
+                                    pageSize = { type: 'preset', size: 'A4', orientation: 'landscape' };
+                                }
+                                handleChange(); 
+                            }}
                             title="Landscape"
                         >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2" ry="2"></rect></svg>

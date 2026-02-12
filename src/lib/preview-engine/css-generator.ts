@@ -4,8 +4,6 @@ import { css } from '@/lib/utils/tags';
 
 export function generatePageCss(header: any, footer: any, layout?: PageLayout, hfLayout?: HeaderFooterLayout) {
     // Layout values
-    const sizeName = layout?.pageSize.size || 'A4';
-    const orientation = layout?.pageSize.orientation || 'portrait';
     const mt = layout?.margins.top ?? 20;
     const mb = layout?.margins.bottom ?? 20;
     const ml = layout?.margins.left ?? 20;
@@ -18,13 +16,24 @@ export function generatePageCss(header: any, footer: any, layout?: PageLayout, h
     let widthNum = PAGE_SIZES_MM['A4'][0];
     let heightNum = PAGE_SIZES_MM['A4'][1];
 
-    if (PAGE_SIZES_MM[sizeName]) {
-        if (orientation === 'landscape') {
-            widthNum = PAGE_SIZES_MM[sizeName][1];
-            heightNum = PAGE_SIZES_MM[sizeName][0];
+    if (layout?.pageSize) {
+        const ps = layout.pageSize;
+        if (ps.type === 'preset') {
+            // PresetPageSize
+            const orientation = ps.orientation || 'portrait';
+            if (PAGE_SIZES_MM[ps.size]) {
+                if (orientation === 'landscape') {
+                    widthNum = PAGE_SIZES_MM[ps.size][1];
+                    heightNum = PAGE_SIZES_MM[ps.size][0];
+                } else {
+                    widthNum = PAGE_SIZES_MM[ps.size][0];
+                    heightNum = PAGE_SIZES_MM[ps.size][1];
+                }
+            }
         } else {
-            widthNum = PAGE_SIZES_MM[sizeName][0];
-            heightNum = PAGE_SIZES_MM[sizeName][1];
+            // CustomPageSize
+            widthNum = ps.width;
+            heightNum = ps.height;
         }
     }
 
