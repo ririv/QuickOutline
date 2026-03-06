@@ -1,5 +1,5 @@
 <script lang="ts">
-    import DraggableWindow from './DraggableWindow.svelte';
+    import DraggableWindow from '../controls/DraggableWindow.svelte';
 
     interface Props {
         visible: boolean;

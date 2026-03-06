@@ -1,5 +1,5 @@
 <script lang="ts">
-    import BaseModal from './common/BaseModal.svelte';
+    import StyledModal from './controls/StyledModal.svelte';
     import { confirmState } from '../stores/confirm.svelte';
 
     function handleConfirm() {
@@ -18,7 +18,7 @@
     };
 </script>
 
-<BaseModal 
+<StyledModal 
     isOpen={confirmState.isOpen} 
     onClose={handleCancel} 
     blur={true} 
@@ -44,7 +44,7 @@
             {confirmState.confirmText}
         </button>
     </div>
-</BaseModal>
+</StyledModal>
 
 <style>
     .confirm-content-wrapper {

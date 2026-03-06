@@ -7,7 +7,7 @@
     import TocViewView from './views/desktop/TocView.svelte';
     import MarkDownView from './views/desktop/MarkDownView.svelte';
     import ViewerView from './views/desktop/ViewerView.svelte';
-    import MessageContainer from './components/common/MessageContainer.svelte';
+    import MessageContainer from './components/controls/MessageContainer.svelte';
     import FileHeader from './views/desktop/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
     import ConfirmDialog from './components/ConfirmDialog.svelte';

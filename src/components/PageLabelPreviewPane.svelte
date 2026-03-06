@@ -6,7 +6,7 @@
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
     import PreviewPopup from './PreviewPopup.svelte';
-    import VirtualList from './common/VirtualList.svelte';
+    import VirtualList from './controls/VirtualList.svelte';
     import LazyPdfImage from './common/LazyPdfImage.svelte';
     import { usePageLabelActions } from '../views/shared/pagelabel.svelte';
     import Icon from "@/components/Icon.svelte";
