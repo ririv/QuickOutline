@@ -1,5 +1,6 @@
 <script lang="ts">
     import DraggableWindow from '../controls/DraggableWindow.svelte';
+    import Icon from '@/components/Icon.svelte';
 
     interface Props {
         visible: boolean;
@@ -22,5 +23,9 @@
     initialX={500}
     initialY={100}
 >
+    {#snippet closeIcon()}
+        <Icon name="add" width="14" height="14" style="transform: rotate(45deg);" />
+    {/snippet}
+
     {@render children?.()}
 </DraggableWindow>
