@@ -1,49 +1,55 @@
 <script lang="ts">
-    import Modal from './common/Modal.svelte';
+    import StyledModal from './controls/StyledModal.svelte';
     import Icon from './Icon.svelte';
 
     let { showAboutModal = $bindable() } = $props<{ showAboutModal: boolean }>();
 
     const APP_VERSION = __APP_VERSION__;
+
+    function close() {
+        showAboutModal = false;
+    }
 </script>
 
-<Modal title="About" bind:show={showAboutModal}>
-    <div class="about-content">
-        <div class="product-header">
-            <div class="logo-wrapper">
-                <img src="/icon.png" alt="QuickOutline Logo" class="app-logo" />
-            </div>
-            <h2 class="app-name">QuickOutline</h2>
-            <div class="app-version">Version {APP_VERSION}</div>
-        </div>
-
-        <div class="info-sections">
-            <div class="info-section">
-                <div class="section-label">Created by</div>
-                <div class="section-content">
-                    <a href="https://www.xiaohongshu.com/user/profile/5f988414000000000101ca29" target="_blank" rel="noopener noreferrer" class="author-link">
-                        xhh
-                        <Icon name="xiaohongshu" width="14" height="14" style="color: #ff2442;" />
-                    </a>
+<StyledModal isOpen={showAboutModal} onClose={close} blur={true} width="max-w-[360px]">
+    {#snippet children()}
+        <div class="about-content">
+            <div class="product-header">
+                <div class="logo-wrapper">
+                    <img src="/icon.png" alt="QuickOutline Logo" class="app-logo" />
                 </div>
+                <h2 class="app-name">QuickOutline</h2>
+                <div class="app-version">Version {APP_VERSION}</div>
             </div>
 
-            <div class="info-section">
-                <div class="section-label">Source</div>
-                <div class="section-content">
-                    <a href="https://github.com/ririv/QuickOutline" target="_blank" rel="noopener noreferrer" class="source-link">
-                        <Icon name="github" width="16" height="16" />
-                        GitHub
-                    </a>
+            <div class="info-sections">
+                <div class="info-section">
+                    <div class="section-label">Created by</div>
+                    <div class="section-content">
+                        <a href="https://www.xiaohongshu.com/user/profile/5f988414000000000101ca29" target="_blank" rel="noopener noreferrer" class="author-link">
+                            xhh
+                            <Icon name="xiaohongshu" width="14" height="14" style="color: #ff2442;" />
+                        </a>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="section-label">Source</div>
+                    <div class="section-content">
+                        <a href="https://github.com/ririv/QuickOutline" target="_blank" rel="noopener noreferrer" class="source-link">
+                            <Icon name="github" width="16" height="16" />
+                            GitHub
+                        </a>
+                    </div>
                 </div>
             </div>
+            
+            <div class="footer-note">
+                © 2025-2026 ririv
+            </div>
         </div>
-        
-        <div class="footer-note">
-            © 2025-2026 ririv
-        </div>
-    </div>
-</Modal>
+    {/snippet}
+</StyledModal>
 
 <style>
     .about-content {
