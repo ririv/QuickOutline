@@ -10,8 +10,10 @@
     import MessageContainer from './components/controls/MessageContainer.svelte';
     import FileHeader from './views/desktop/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
-    import ConfirmDialog from './components/ConfirmDialog.svelte';
+    import ConfirmDialog from './components/controls/ConfirmDialog.svelte';
     import { provideExternalEditor } from '@/lib/bridge/useExternalEditor.svelte';
+    import { messageStore } from '@/stores/messageStore.svelte';
+    import { confirmState } from '@/stores/confirm.svelte';
     import { onMount, onDestroy } from 'svelte';
 
     let activeTab = $derived(appStore.activeTab);
@@ -22,8 +24,8 @@
 </script>
 
 <main class="app-container" role="application">
-    <ConfirmDialog />
-    <MessageContainer />
+    <ConfirmDialog state={confirmState} />
+    <MessageContainer store={messageStore} />
     <FileHeader />
     <div class="app-body">
         <SidebarNav />

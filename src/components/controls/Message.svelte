@@ -1,15 +1,22 @@
 <script lang="ts">
-    import { fade, slide } from 'svelte/transition';
+    import { slide } from 'svelte/transition';
     import { onMount } from 'svelte';
-    import { messageStore, type MessageType } from '@/stores/messageStore.svelte.ts';
 
-    interface Props {
+    // 直接在组件中定义并导出类型
+    export type MessageType = 'SUCCESS' | 'INFO' | 'WARNING' | 'ERROR';
+
+    export interface Message {
         id: number;
         text: string;
         type: MessageType;
         duration?: number;
     }
-    let { id, text, type, duration = 3000 }: Props = $props();
+
+    interface Props extends Message {
+        onClose: () => void;
+    }
+
+    let { id, text, type, duration = 3000, onClose }: Props = $props();
 
     const icons = {
         SUCCESS: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.00002 16.0001L5.00002 12.0001L6.41002 10.5901L9.00002 13.1701L17.59 4.59009L19 6.00009L9.00002 16.0001Z" fill="currentColor"/></svg>`,
@@ -26,7 +33,7 @@
         if (remaining <= 0) return;
         startTime = Date.now();
         clearTimeout(timer);
-        timer = setTimeout(() => messageStore.remove(id), remaining);
+        timer = setTimeout(() => onClose(), remaining);
     }
 
     function pauseTimer() {
@@ -53,7 +60,7 @@
     <div class="text">
         {text}
     </div>
-    <button class="close-btn" onclick={() => messageStore.remove(id)}>
+    <button class="close-btn" onclick={() => onClose()}>
         &times;
     </button>
 </div>

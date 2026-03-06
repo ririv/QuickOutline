@@ -8,7 +8,7 @@ interface ConfirmOptions {
     type?: 'info' | 'warning' | 'error';
 }
 
-class ConfirmState {
+export class ConfirmState {
     isOpen = $state(false);
     title = $state('');
     message = $state('');
@@ -19,7 +19,7 @@ class ConfirmState {
     // Promise resolver
     private resolvePromise: ((value: boolean) => void) | null = null;
 
-    request(options: ConfirmOptions): Promise<boolean> {
+    request = (options: ConfirmOptions): Promise<boolean> => {
         this.title = options.title || 'Confirmation';
         this.message = options.message;
         this.confirmText = options.confirmText || 'Confirm';
@@ -32,7 +32,7 @@ class ConfirmState {
         });
     }
 
-    close(result: boolean) {
+    close = (result: boolean) => {
         this.isOpen = false;
         if (this.resolvePromise) {
             this.resolvePromise(result);

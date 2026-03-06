@@ -1,7 +1,16 @@
 <script lang="ts">
     import { flip } from 'svelte/animate';
-    import { messageStore } from '@/stores/messageStore.svelte';
-    import Message from './Message.svelte';
+    import MessageComponent, { type Message } from './Message.svelte';
+
+    // 显式通过 Prop 接收 Store 实例
+    interface Props {
+        store: {
+            list: Message[];
+            remove: (id: number) => void;
+        };
+    }
+
+    let { store }: Props = $props();
 </script>
 
 <div 
@@ -9,9 +18,9 @@
     aria-live="polite"
     role="status"
 >
-    {#each messageStore.list as message (message.id)}
+    {#each store.list as message (message.id)}
         <div animate:flip={{ duration: 500 }}>
-            <Message {...message} />
+            <MessageComponent {...message} onClose={() => store.remove(message.id)} />
         </div>
     {/each}
 </div>
