@@ -38,8 +38,8 @@
     });
 
     // Ensure menu stays within viewport
-    let adjustedX = $state(x);
-    let adjustedY = $state(y);
+    let adjustedX = $state(0);
+    let adjustedY = $state(0);
 
     $effect(() => {
         if (menuEl) {
@@ -68,7 +68,7 @@
     role="menu"
     tabindex="-1"
 >
-    {#each items as item}
+    {#each items as item (item.label)}
         <button 
             class="w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 rounded transition-colors border-none bg-transparent cursor-pointer
                    {item.variant === 'danger' 

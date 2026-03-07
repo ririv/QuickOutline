@@ -64,7 +64,7 @@
     }
 
     // Export methods for parent
-    export function scrollTo(index: number, behavior: ScrollBehavior = 'auto') {
+    export function scrollTo(index: number, behavior: 'auto' | 'smooth' = 'auto') {
         if (container) {
             container.scrollTo({
                 top: index * itemHeight,

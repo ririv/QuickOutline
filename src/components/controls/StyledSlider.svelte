@@ -9,7 +9,7 @@
     style?: string; // Explicitly define style prop
     oninput?: (val: number) => void;
     onchange?: (val: number) => void;
-    [key: string]: any; // Allow rest props
+    [key: string]: unknown; // Allow rest props
   }
 
   let { 

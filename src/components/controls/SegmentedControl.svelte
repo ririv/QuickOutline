@@ -32,8 +32,9 @@
 </script>
 
 <div class={`flex p-1 bg-gray-100 rounded-lg gap-1 ${className}`}>
-    {#each options as option}
-        <button 
+    {#each options as option (option.value)}
+      <button
+ 
             class={getButtonClass(value === option.value)}
             onclick={() => handleClick(option.value)}
             title={option.title}

@@ -44,7 +44,7 @@
         ></div>
     {/if}
 
-    {#each options as option}
+    {#each options as option (option.value)}
         <button 
             class={getButtonClass(value === option.value)}
             onclick={() => handleClick(option.value)}

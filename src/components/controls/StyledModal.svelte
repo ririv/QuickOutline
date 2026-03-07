@@ -1,11 +1,12 @@
 <script lang="ts">
     import { fade, scale } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
+    import type { Snippet } from 'svelte';
 
     interface Props {
         isOpen: boolean;
         onClose: () => void;
-        children: any;
+        children: Snippet;
         blur?: boolean;
         width?: string;
         zIndex?: string;

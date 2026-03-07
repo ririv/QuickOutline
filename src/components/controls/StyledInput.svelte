@@ -34,7 +34,7 @@
     }: Props = $props();
 
     // 内部实际渲染的 type，如果启用了数字限制，则强制为 text
-    const actualType = numericType ? 'text' : type;
+    const actualType = $derived(numericType ? 'text' : type);
 
     function handleKeydown(e: KeyboardEvent) {
         if (!numericType) return;
@@ -75,7 +75,7 @@
         
         e.preventDefault();
         
-        const pastedText = (e.clipboardData || (window as any).clipboardData).getData('text');
+        const pastedText = e.clipboardData?.getData('text') || '';
         
         // 简单的预清洗
         let cleanText = '';

@@ -12,7 +12,7 @@
     children?: Snippet;
     element?: HTMLButtonElement; // Define 'element' as a bindable prop
     onclick?: (event: MouseEvent) => void;  // 显示提供，让编辑器知道这个属性存在，提供类型检查（vscode不提供也可以，IDEA目前必须提供）
-    [key:string]: any;
+    [key:string]: unknown;
   }
 
   let {

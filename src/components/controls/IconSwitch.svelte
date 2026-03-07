@@ -41,8 +41,9 @@
             style="left: 2px; width: 24px; transform: translateX({selectedIndex * 32}px);"
         ></div>
 
-        {#each options as option}
-            <button 
+        {#each options as option (option.value)}
+            <button
+ 
                 class="relative z-10 flex items-center justify-center w-6 h-6 rounded-full transition-colors duration-200 outline-none cursor-pointer"
                 title={option.title || option.label}
                 type="button"

@@ -3,10 +3,10 @@
 
   interface Props<T> {
     options: T[];
-    value?: any;
+    value?: unknown;
     placeholder?: string;
     disabled?: boolean;
-    onchange?: (val: any) => void;
+    onchange?: (val: unknown) => void;
     valueKey?: string;
     displayKey?: string; // Key for the label shown in the closed state
     optionKey?: string;  // Key for the label shown in the dropdown options
@@ -33,14 +33,14 @@
 
   function getLabel(opt: T, key: string = 'label'): string { // key is now explicitly passed
     if (typeof opt === 'object' && opt !== null && key in opt) {
-      return String((opt as any)[key]);
+      return String((opt as Record<string, unknown>)[key]);
     }
     return String(opt);
   }
 
-  function getValue(opt: T): any {
+  function getValue(opt: T): unknown {
     if (typeof opt === 'object' && opt !== null && valueKey in opt) {
-      return (opt as any)[valueKey];
+      return (opt as Record<string, unknown>)[valueKey];
     }
     return opt;
   }
@@ -86,7 +86,7 @@
   
   {#if isOpen}
       <div class="select-dropdown {placement}" style:max-height={maxHeight}>
-          {#each options as opt}
+          {#each options as opt (getValue(opt))}
               {@const optVal = getValue(opt)}
               <div 
                   class="select-option {value === optVal ? 'selected' : ''}" 
