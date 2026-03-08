@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from '@/components/Icon.svelte';
-  import Tooltip from '@/components/Tooltip.svelte';
+  import Tooltip from '@/components/controls/Tooltip.svelte';
 
   interface Props {
     onGuide?: () => void;

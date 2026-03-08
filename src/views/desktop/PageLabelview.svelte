@@ -1,6 +1,6 @@
 <script lang="ts">
     import '@/assets/global.css';
-    import SplitPane from '../../components/SplitPane.svelte';
+    import SplitPane from '../../components/controls/SplitPane.svelte';
     import PageLabelPreviewPane from '../../components/PageLabelPreviewPane.svelte';
     import Icon from "@/components/Icon.svelte";
     import deleteIcon from '../../assets/icons/delete-item.svg?raw';
