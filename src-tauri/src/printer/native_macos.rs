@@ -90,6 +90,14 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
             };
 
             let pdf_config = WKPDFConfiguration::new(mtm);
+            
+            // 设置 PDF 页面矩形以控制分页
+            let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
+            let w_pts = w * 2.83465;
+            let h_pts = h * 2.83465;
+            let pdf_rect = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
+            pdf_config.setRect(pdf_rect);
+            
             let webview_for_block = target_webview.clone();
 
             let completion_handler = RcBlock::new(move |pdf_data: *mut NSData, error: *mut NSError| {
@@ -526,6 +534,14 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
             };
 
             let pdf_config = WKPDFConfiguration::new(mtm);
+            
+            // 设置 PDF 页面矩形以控制分页
+            let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
+            let w_pts = w * 2.83465;
+            let h_pts = h * 2.83465;
+            let pdf_rect = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
+            pdf_config.setRect(pdf_rect);
+            
             let webview_for_block = target_webview.clone();
 
             let completion_handler = RcBlock::new(move |pdf_data: *mut NSData, error: *mut NSError| {
