@@ -4,6 +4,9 @@ use log::{info, warn, error};
 
 use super::native::PageDimensions;
 
+/// mm 转 points 的转换因子 (72 / 25.4)
+const MM_TO_POINTS: f64 = 2.83465;
+
 // ================= MAC OS NATIVE (WKPDFConfiguration - URL) =================
 #[cfg(target_os = "macos")]
 pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
@@ -23,7 +26,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
     use std::time::Duration;
 
     let path_str = output_path.to_string_lossy().to_string();
-    let (ptr_tx, ptr_rx) = mpsc::channel();
+    let (ptr_tx, ptr_rx) = mpsc::channel::<Result<usize, String>>();
     
     // Step 1: Initialize, Attach, and Load
     let url_clone = url.clone();
@@ -33,8 +36,8 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
             let mtm = MainThreadMarker::new_unchecked();
             
             let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
-            let w_pts = w * 2.83465;
-            let h_pts = h * 2.83465;
+            let w_pts = w * MM_TO_POINTS;
+            let h_pts = h * MM_TO_POINTS;
             let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             let config = WKWebViewConfiguration::new(mtm);
             
@@ -50,12 +53,20 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
                 let _: () = msg_send![&sv, addSubview: &*new_view];
                 let _: () = msg_send![&*new_view, setAlphaValue: 0.0f64];
             } else {
-                warn!("Warning: Could not find superview to attach print webview.");
+                warn!("无法找到 superview 来附加打印 webview");
             }
             
             // Load Request
             let url_ns = NSString::from_str(&url_clone);
-            let ns_url = if let Some(u) = NSURL::URLWithString(&url_ns) { u } else { return; };
+            let ns_url = match NSURL::URLWithString(&url_ns) {
+                Some(u) => u,
+                None => {
+                    // URL 解析失败，清理 webview 并返回错误
+                    let _: () = msg_send![&*new_view, removeFromSuperview];
+                    let _ = ptr_tx.send(Err(format!("无效的 URL: {}", url_clone)));
+                    return;
+                }
+            };
             let request = NSURLRequest::requestWithURL(&ns_url);
             
             new_view.loadRequest(&request);
@@ -63,12 +74,16 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
             // Pass pointer out
             let raw: *mut WKWebView = Retained::into_raw(new_view);
             let addr = raw as usize;
-            let _ = ptr_tx.send(addr);
+            let _ = ptr_tx.send(Ok(addr));
         }
     }).map_err(|e| e.to_string())?;
 
     // Step 2: Wait for content to load
-    let addr = ptr_rx.recv().map_err(|_| "Failed to create webview".to_string())?;
+    let addr = match ptr_rx.recv() {
+        Ok(Ok(addr)) => addr,
+        Ok(Err(e)) => return Err(e),
+        Err(_) => return Err("创建 webview 失败".to_string()),
+    };
     thread::sleep(Duration::from_millis(2000));
 
     // Step 3: Print
@@ -84,7 +99,8 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
             let target_webview: Retained<WKWebView> = match Retained::from_raw(ptr) {
                 Some(w) => w,
                 None => {
-                    error!("Invalid webview pointer");
+                    error!("无效的 webview 指针");
+                    let _ = result_tx.send(Err("无效的 webview 指针".to_string()));
                     return;
                 }
             };
@@ -93,8 +109,8 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
             
             // 设置 PDF 页面矩形以控制分页
             let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
-            let w_pts = w * 2.83465;
-            let h_pts = h * 2.83465;
+            let w_pts = w * MM_TO_POINTS;
+            let h_pts = h * MM_TO_POINTS;
             let pdf_rect = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             pdf_config.setRect(pdf_rect);
             
@@ -106,13 +122,13 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
                 if !error.is_null() {
                     let error_obj: &NSError = &*error;
                     let desc = error_obj.localizedDescription();
-                    let err_msg = format!("PDF creation failed: {}", desc);
+                    let err_msg = format!("PDF 创建失败: {}", desc);
                     let _ = result_tx.send(Err(err_msg));
                     return;
                 }
 
                 if pdf_data.is_null() {
-                    let _ = result_tx.send(Err("PDF creation failed: No data returned".to_string()));
+                    let _ = result_tx.send(Err("PDF 创建失败: 未返回数据".to_string()));
                     return;
                 }
 
@@ -125,7 +141,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
 
                 match std::fs::write(&output_path_clone, data_slice) {
                     Ok(_) => {
-                        info!("Native PDF generated at: {:?}", output_path_clone);
+                        info!("原生 PDF 已生成: {:?}", output_path_clone);
                         let _ = result_tx.send(Ok(path_str_clone.clone()));
                     },
                     Err(e) => {
@@ -170,8 +186,8 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
             let mtm = MainThreadMarker::new_unchecked();
 
             let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
-            let w_pts = w * 2.83465;
-            let h_pts = h * 2.83465;
+            let w_pts = w * MM_TO_POINTS;
+            let h_pts = h * MM_TO_POINTS;
 
             let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             let config = WKWebViewConfiguration::new(mtm);
@@ -247,8 +263,8 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
             print_info.setScalingFactor(1.0);
             
             let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
-            let w_pts = w * 2.83465;
-            let h_pts = h * 2.83465;
+            let w_pts = w * MM_TO_POINTS;
+            let h_pts = h * MM_TO_POINTS;
 
             let paper_size = NSSize::new(w_pts, h_pts); 
             print_info.setPaperSize(paper_size);
@@ -327,8 +343,8 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
             let mtm = MainThreadMarker::new_unchecked();
 
             let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
-            let w_pts = w * 2.83465;
-            let h_pts = h * 2.83465;
+            let w_pts = w * MM_TO_POINTS;
+            let h_pts = h * MM_TO_POINTS;
 
             let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             let config = WKWebViewConfiguration::new(mtm);
@@ -403,8 +419,8 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
             print_info.setScalingFactor(1.0);
 
             let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
-            let w_pts = w * 2.83465;
-            let h_pts = h * 2.83465;
+            let w_pts = w * MM_TO_POINTS;
+            let h_pts = h * MM_TO_POINTS;
 
             let paper_size = NSSize::new(w_pts, h_pts); 
             print_info.setPaperSize(paper_size);
@@ -482,8 +498,8 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
             let mtm = MainThreadMarker::new_unchecked();
             
             let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
-            let w_pts = w * 2.83465;
-            let h_pts = h * 2.83465;
+            let w_pts = w * MM_TO_POINTS;
+            let h_pts = h * MM_TO_POINTS;
 
             let frame = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             let config = WKWebViewConfiguration::new(mtm);
@@ -537,8 +553,8 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
             
             // 设置 PDF 页面矩形以控制分页
             let (w, h) = dimensions.map(|d| (d.width, d.height)).unwrap_or((210.0, 297.0));
-            let w_pts = w * 2.83465;
-            let h_pts = h * 2.83465;
+            let w_pts = w * MM_TO_POINTS;
+            let h_pts = h * MM_TO_POINTS;
             let pdf_rect = NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(w_pts, h_pts));
             pdf_config.setRect(pdf_rect);
             
