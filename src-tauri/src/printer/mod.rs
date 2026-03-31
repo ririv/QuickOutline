@@ -5,12 +5,13 @@ use serde::Deserialize;
 use log::info;
 
 pub mod native;
+pub mod native_macos;
 pub mod native_windows;
 pub mod native_linux;
 pub mod headless;
 pub mod headless_chrome;
 
-use crate::static_server::LocalServerState; // Import LocalServerState
+use crate::static_server::LocalServerState;
 use crate::printer::native::PageDimensions;
 
 #[derive(Debug, Deserialize)]
