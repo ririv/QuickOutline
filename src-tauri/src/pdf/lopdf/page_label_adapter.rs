@@ -1,7 +1,7 @@
 use lopdf::{Document, Object, Dictionary, StringFormat};
 use crate::pdf::page_label::{PageLabel, PageLabelNumberingStyle};
 use crate::pdf::page_label_traits::PageLabelEngine;
-use crate::pdf::lopdf::utils::resolve_object;
+use crate::pdf::lopdf::utils::{resolve_object, encode_pdf_string};
 use anyhow::{Result, anyhow};
 
 pub struct LopdfPageLabelAdapter<'a> {
@@ -108,7 +108,7 @@ impl<'a> PageLabelEngine for LopdfPageLabelAdapter<'a> {
                 dict.set("S", Object::Name(s.as_bytes().to_vec()));
             }
             if let Some(prefix) = &label.label_prefix {
-                dict.set("P", Object::String(prefix.as_bytes().to_vec(), StringFormat::Literal));
+                dict.set("P", Object::String(encode_pdf_string(prefix), StringFormat::Literal));
             }
             if let Some(start) = label.start_value {
                 dict.set("St", Object::Integer(start as i64));

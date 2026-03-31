@@ -1,7 +1,7 @@
 use lopdf::{Document, Object, ObjectId, Dictionary};
 use crate::pdf_outline::traits::OutlineEngine;
 use crate::pdf_outline::model::ViewScaleType;
-use crate::pdf::lopdf::utils::{resolve_object, decode_pdf_string};
+use crate::pdf::lopdf::utils::{resolve_object, decode_pdf_string, encode_pdf_string};
 use anyhow::{Result, anyhow};
 use std::collections::BTreeMap;
 
@@ -100,7 +100,7 @@ impl<'a> OutlineEngine for LopdfOutlineAdapter<'a> {
 
     fn create_node(&mut self, title: &str, page_num: Option<i32>, scale: ViewScaleType) -> Result<String> {
         let mut dict = Dictionary::new();
-        dict.set("Title", Object::String(title.as_bytes().to_vec(), lopdf::StringFormat::Literal));
+        dict.set("Title", Object::String(encode_pdf_string(title), lopdf::StringFormat::Literal));
         
         if let Some(pn) = page_num {
             if let Some(page_id) = self.page_num_to_id.get(&(pn as u32)) {
