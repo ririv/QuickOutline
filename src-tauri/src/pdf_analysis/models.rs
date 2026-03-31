@@ -264,7 +264,7 @@ impl PdfBlock {
                     if gap > space_width * 6.0 {
                         text_builder.push_str("     ");
                     } else if gap > space_width * 0.5 {
-                        text_builder.push_str(" ");
+                        text_builder.push(' ');
                     }
                     text_builder.push_str(&curr.text);
                 }

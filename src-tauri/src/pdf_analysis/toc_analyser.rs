@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use regex::Regex;
 use once_cell::sync::Lazy;
 
-use log::{info, debug};
 
 #[allow(clippy::expect_used)]
 static TOC_DOT_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r".*([.]\s*|\s{2,}){4,}\s*\d+\s*$").expect("Invalid TOC_DOT_PATTERN"));
@@ -41,7 +40,7 @@ impl TocAnalyser {
         
         // 100% Replica: use char count for length checks
         let char_count = text.chars().count();
-        if char_count > 150 || char_count < 3 { return false; }
+        if !(3..=150).contains(&char_count) { return false; }
         
         if TOC_DOT_PATTERN.is_match(text) { return true; }
         

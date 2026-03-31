@@ -1,5 +1,5 @@
 use anyhow::Result;
-use crate::pdf_outline::model::{Bookmark, ViewScaleType};
+use crate::pdf_outline::model::ViewScaleType;
 
 pub trait OutlineEngine {
     // Reading

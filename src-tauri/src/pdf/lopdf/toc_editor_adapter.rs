@@ -2,7 +2,7 @@ use anyhow::{Result, format_err, anyhow};
 use crate::pdf::toc_traits::TocEditor;
 use crate::pdf::toc::{TocLinkDto};
 use crate::pdf::manager::{PdfSession};
-use crate::pdf::page_label::{PageLabel, PageLabelProcessor};
+use crate::pdf::page_label::PageLabel;
 use lopdf::{Document, Object, Dictionary};
 
 pub struct LopdfTocAdapter<'a> {

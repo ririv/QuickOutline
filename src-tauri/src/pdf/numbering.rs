@@ -16,7 +16,7 @@ impl Numbering {
     }
 
     pub fn to_roman_upper_case(number: i32) -> String {
-        if number < 1 || number > 3999 {
+        if !(1..=3999).contains(&number) {
             return String::new();
         }
         let thousands = ["", "M", "MM", "MMM"];

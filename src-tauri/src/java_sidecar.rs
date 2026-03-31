@@ -44,11 +44,10 @@ pub fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
             if let Some(arg_data) = matches.args.get("port") {
                 if let Some(port_val) = arg_data.value.as_u64() {
                     custom_port = Some(port_val as u16);
-                } else if let Some(port_str) = arg_data.value.as_str() {
-                    if let Ok(p) = port_str.parse::<u16>() {
+                } else if let Some(port_str) = arg_data.value.as_str()
+                    && let Ok(p) = port_str.parse::<u16>() {
                         custom_port = Some(p);
                     }
-                }
             }
             if let Some(arg_data) = matches.args.get("external-sidecar") {
                 use_external_sidecar = arg_data.value.as_bool().unwrap_or(false);
@@ -86,7 +85,7 @@ pub fn start(app: &AppHandle, custom_port: Option<u16>) {
 
         // If a custom port is provided, add it as an argument
         if let Some(port) = custom_port {
-            sidecar_command = sidecar_command.args(&["--port", &port.to_string()]);
+            sidecar_command = sidecar_command.args(["--port", &port.to_string()]);
             info!("Rust: Passing custom port {} to Java Sidecar.", port);
         }
         
@@ -108,17 +107,16 @@ pub fn start(app: &AppHandle, custom_port: Option<u16>) {
 
                     if line.contains("port") {
                         // 3. 解析并保存端口到全局状态
-                        if let Ok(json) = serde_json::from_str::<Value>(&line) {
-                            if let Some(port_val) = json["port"].as_u64() {
+                        if let Ok(json) = serde_json::from_str::<Value>(&line)
+                            && let Some(port_val) = json["port"].as_u64() {
                                 let port = port_val as u16;
 
                                 // === 更新全局状态 ===
-                                if let Some(state) = app_handle.try_state::<JavaState>() {
-                                    if let Ok(mut port_guard) = state.port.lock() {
+                                if let Some(state) = app_handle.try_state::<JavaState>()
+                                    && let Ok(mut port_guard) = state.port.lock() {
                                         *port_guard = Some(port);
                                         info!("Rust: 端口 {} 已保存到全局状态", port);
                                     }
-                                }
 
                                 // 发送事件 (Push)
                                 let _ = app_handle.emit(
@@ -128,7 +126,6 @@ pub fn start(app: &AppHandle, custom_port: Option<u16>) {
                                     },
                                 );
                             }
-                        }
                     }
                 }
                 CommandEvent::Stderr(data) => {
@@ -145,12 +142,11 @@ pub fn connect_external(app: &AppHandle, port: u16) {
     let app_handle = app.clone();
 
     // Update global state
-    if let Some(state) = app_handle.try_state::<JavaState>() {
-        if let Ok(mut port_guard) = state.port.lock() {
+    if let Some(state) = app_handle.try_state::<JavaState>()
+        && let Ok(mut port_guard) = state.port.lock() {
             *port_guard = Some(port);
             info!("Rust: Configured for external Java Sidecar on port {}", port);
         }
-    }
 
     // Use a standard thread to poll for the external service
     std::thread::spawn(move || {

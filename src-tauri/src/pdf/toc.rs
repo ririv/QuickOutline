@@ -31,11 +31,10 @@ pub struct TocConfig {
 }
 
 pub fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
-    if let Some(path) = dest_path {
-        if !path.trim().is_empty() {
+    if let Some(path) = dest_path
+        && !path.trim().is_empty() {
             return path;
         }
-    }
     let src = Path::new(src_path);
     let parent = src.parent().unwrap_or(Path::new(""));
     let file_stem = src.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
@@ -74,11 +73,10 @@ pub fn process_toc_generation<M: TocMerger, E: TocEditor>(
     
     // 3. Links (lopdf)
     let mut final_bytes = merged_bytes;
-    if let Some(links) = config.links {
-        if !links.is_empty() {
+    if let Some(links) = config.links
+        && !links.is_empty() {
             final_bytes = editor.inject_links(&final_bytes, links, config.insert_pos as usize, &original_page_ids).map_err(|e| e.to_string())?;
         }
-    }
 
     // 4. Page Labels (lopdf)
     final_bytes = editor.apply_page_labels(&final_bytes, &toc_pdf_path, config.insert_pos, config.toc_page_label.as_ref()).map_err(|e| e.to_string())?;

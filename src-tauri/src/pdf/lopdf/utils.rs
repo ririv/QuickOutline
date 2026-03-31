@@ -36,7 +36,7 @@ pub fn decode_pdf_string(bytes: &[u8]) -> String {
 /// For ASCII-only text, returns the bytes directly.
 pub fn encode_pdf_string(text: &str) -> Vec<u8> {
     // Check if text contains non-ASCII characters
-    if text.chars().all(|c| c.is_ascii()) {
+    if text.is_ascii() {
         text.as_bytes().to_vec()
     } else {
         // Use UTF-16BE with BOM for non-ASCII text (PDF standard)

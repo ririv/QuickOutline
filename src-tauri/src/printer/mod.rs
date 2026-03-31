@@ -2,7 +2,7 @@ use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 use std::fs;
 use std::path::PathBuf;
 use serde::Deserialize;
-use log::{info, warn, error};
+use log::info;
 
 pub mod native;
 pub mod native_windows;
@@ -22,6 +22,7 @@ pub enum PrintMode {
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn print_to_pdf<R: Runtime>(
     app: AppHandle<R>,
     window: WebviewWindow<R>,
@@ -56,26 +57,25 @@ pub async fn print_to_pdf<R: Runtime>(
     
     if let Some(html_content) = &html {
         let state = app.state::<LocalServerState>();
-        let port_guard = state.port.lock().unwrap();
-        let workspace_guard = state.workspace.lock().unwrap();
-        
-        if let Some(port) = *port_guard {
-             // Save HTML to workspace
-             let temp_filename = format!("print_job_{}.html", uuid::Uuid::new_v4());
-             let temp_file_path = workspace_guard.join(&temp_filename);
-             
-             if let Ok(_) = fs::write(&temp_file_path, html_content) {
-                 local_url = Some(format!("http://127.0.0.1:{}/{}", port, temp_filename));
-                 _temp_file_to_clean = Some(temp_file_path); // Store path for cleanup
-                 info!("Saved HTML to workspace: {:?} -> URL: {:?}", _temp_file_to_clean, local_url);
-             }
-        }
+        if let (Ok(port_guard), Ok(workspace_guard)) = (state.port.lock(), state.workspace.lock())
+            && let Some(port) = *port_guard {
+                 // Save HTML to workspace
+                 let temp_filename = format!("print_job_{}.html", uuid::Uuid::new_v4());
+                 let temp_file_path = workspace_guard.join(&temp_filename);
+                 
+                 if fs::write(&temp_file_path, html_content).is_ok() {
+                     local_url = Some(format!("http://127.0.0.1:{}/{}", port, temp_filename));
+                     _temp_file_to_clean = Some(temp_file_path); // Store path for cleanup
+                     info!("Saved HTML to workspace: {:?} -> URL: {:?}", _temp_file_to_clean, local_url);
+                 }
+            }
     }
 
     // Determine target URL: Provided URL > Local Server URL
     let target_url = url.or(local_url);
 
-    let result = if let Some(url_str) = target_url {
+    
+    if let Some(url_str) = target_url {
         // URL-based printing (Remote or Localhost)
         match print_mode {
             PrintMode::HeadlessChrome => {
@@ -84,7 +84,8 @@ pub async fn print_to_pdf<R: Runtime>(
                     .map_err(|e| e.to_string())
             },
             PrintMode::Headless => {
-                let res = {
+                
+                {
                     #[cfg(target_os = "macos")]
                     {
                         headless::print_with_url_mac(&app, url_str, output_path, browser_path, force_dl).await
@@ -101,11 +102,11 @@ pub async fn print_to_pdf<R: Runtime>(
                     {
                         Err("Headless printing not implemented for this OS.".to_string())
                     }
-                };
-                res
+                }
             },
             _ => { // Native Mode
-                let res = {
+                
+                {
                      #[cfg(target_os = "macos")]
                      {
                         native::print_to_pdf_with_url_native(app, window, url_str, output_path.clone(), dimensions).await
@@ -122,8 +123,7 @@ pub async fn print_to_pdf<R: Runtime>(
                      {
                         Err("Native URL printing is only implemented for supported platforms.".to_string())
                      }
-                };
-                res
+                }
             }
         }
     } else if let Some(html_str) = html {
@@ -133,7 +133,8 @@ pub async fn print_to_pdf<R: Runtime>(
         let temp_filename = format!("print_fallback_{}.html", uuid::Uuid::new_v4());
         let temp_path = temp_dir.join(&temp_filename);
         
-        let res = if let Ok(_) = fs::write(&temp_path, &html_str) {
+        
+        if fs::write(&temp_path, &html_str).is_ok() {
              let file_url = format!("file://{}", temp_path.to_string_lossy());
              
              match print_mode {
@@ -143,7 +144,8 @@ pub async fn print_to_pdf<R: Runtime>(
                         .map_err(|e| e.to_string())
                 },
                 PrintMode::Headless => {
-                    let res_inner = {
+                    
+                    {
                         #[cfg(target_os = "macos")]
                         {
                             headless::print_with_url_mac(&app, file_url, output_path, browser_path, force_dl).await
@@ -160,11 +162,11 @@ pub async fn print_to_pdf<R: Runtime>(
                         {
                             Err("Headless printing not implemented for this OS.".to_string())
                         }
-                    };
-                    res_inner
+                    }
                 },
                 PrintMode::Native => {
-                    let res_inner = {
+                    
+                    {
                          #[cfg(target_os = "macos")]
                          {
                             native::print_native_with_html_mac_wkpdf(window, html_str, output_path, dimensions).await
@@ -181,16 +183,13 @@ pub async fn print_to_pdf<R: Runtime>(
                          {
                             Err("Native printing not implemented for this OS.".to_string())
                          }
-                    };
-                    res_inner
+                    }
                 }
              }
         } else {
             Err("Failed to save temporary HTML file for fallback printing.".to_string())
-        };
-        res // Return the result of the print operation
+        } // Return the result of the print operation
     } else {
         Err("Neither 'html' nor 'url' parameters were provided.".to_string())
-    };
-    result // Return the final result
+    } // Return the final result
 }

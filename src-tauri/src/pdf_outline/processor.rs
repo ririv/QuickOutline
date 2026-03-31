@@ -8,11 +8,10 @@ impl PdfOutlineProcessor {
     pub fn get_outline<E: OutlineEngine>(engine: &E, offset: i32) -> Result<Bookmark> {
         let mut root_bookmark = Bookmark::new("Outlines".to_string(), None, 0);
         
-        if let Some(root_id) = engine.get_root_node_id()? {
-            if let Some(first_child_id) = engine.get_first_child_id(&root_id)? {
+        if let Some(root_id) = engine.get_root_node_id()?
+            && let Some(first_child_id) = engine.get_first_child_id(&root_id)? {
                 root_bookmark.children = Self::parse_chain(engine, &first_child_id, offset, 1)?;
             }
-        }
 
         Ok(root_bookmark)
     }

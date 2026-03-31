@@ -8,6 +8,9 @@ use serde::{Deserialize, Serialize};
 use lru::LruCache;
 use std::num::NonZeroUsize;
 
+// SAFETY: 50 is a compile-time constant, non-zero
+const CACHE_SIZE: NonZeroUsize = NonZeroUsize::new(50).unwrap();
+
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum LoadMode {
     DirectFile,
@@ -45,7 +48,7 @@ impl PdfSession {
             debug!("[PdfSession] First-time lopdf::Document::load took {:?}", start.elapsed());
             self.lopdf_doc = Some(doc);
         }
-        Ok(self.lopdf_doc.as_mut().unwrap())
+        self.lopdf_doc.as_mut().ok_or_else(|| format_err!("lopdf_doc is None after loading"))
     }
 
     pub fn load_lopdf_doc(&self) -> Result<lopdf::Document> {
@@ -149,7 +152,7 @@ impl PdfWorkerInternalState {
                     pdfium_doc: Some(doc),
                     lopdf_doc: None,
                     memory_ptr: None,
-                    render_cache: LruCache::new(NonZeroUsize::new(50).unwrap()),
+                    render_cache: LruCache::new(CACHE_SIZE),
                 }
             },
             LoadMode::MemoryBuffer => {
@@ -167,7 +170,7 @@ impl PdfWorkerInternalState {
                     pdfium_doc: Some(doc),
                     lopdf_doc: None,
                     memory_ptr: Some(ptr),
-                    render_cache: LruCache::new(NonZeroUsize::new(50).unwrap()),
+                    render_cache: LruCache::new(CACHE_SIZE),
                 }
             }
         };

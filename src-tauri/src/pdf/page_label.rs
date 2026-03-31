@@ -41,7 +41,7 @@ impl PageLabelProcessor {
         for i in 1..=total_pages {
             let active_rule = sorted_rules.iter()
                 .filter(|r| i as i32 >= r.page_index)
-                .last();
+                .next_back();
 
             let label = if let Some(rule) = active_rule {
                 let page_offset = (i as i32) - rule.page_index;

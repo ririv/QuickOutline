@@ -5,7 +5,7 @@ use tiny_http::{Server, Response, Header, Method};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use tauri::{AppHandle, Manager, Runtime}; // Import Manager and Runtime trait
-use log::{info, warn, error, debug};
+use log::{info, error, debug};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ActiveDocument {
@@ -115,11 +115,10 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
             let clean_path = clean_path.replace("%20", " ");
 
             let mut file_path = workspace_path.join(&clean_path);
-            let mut served_from_resources = false;
 
             // Strategy: Check workspace first, then resources fallback
-            if !file_path.exists() {
-                if let Some(res_dir) = &resources_path {
+            if !file_path.exists()
+                && let Some(res_dir) = &resources_path {
                     // Only fallback for specific asset directories to avoid serving unintended files
                     // Assuming structure: resources/libs/..., resources/fonts/...
                     // Match "libs", "libs/", "fonts", "fonts/"
@@ -129,12 +128,10 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                         let potential_path = res_dir.join(&clean_path);
                         if potential_path.exists() {
                             file_path = potential_path;
-                            served_from_resources = true;
                             debug!("Serving from resources: {}", file_path.display());
                         }
                     }
                 }
-            }
 
             if file_path.exists() {
                 if file_path.is_file() {
@@ -195,8 +192,8 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                     // 2. Scan Resources (Fallback)
                     if let Some(res_dir) = &resources_path {
                         let res_target = res_dir.join(&clean_path);
-                        if res_target.exists() && res_target.is_dir() {
-                             if let Ok(res_entries) = std::fs::read_dir(&res_target) {
+                        if res_target.exists() && res_target.is_dir()
+                             && let Ok(res_entries) = std::fs::read_dir(&res_target) {
                                 for entry in res_entries.flatten() {
                                     let filename = entry.file_name().to_string_lossy().to_string();
                                     if !seen_files.contains(&filename) {
@@ -205,7 +202,6 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                                     }
                                 }
                              }
-                        }
                     }
 
                     // Sort entries: Directories first, then alphabetical
@@ -219,7 +215,6 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
 
                     for (filename, is_dir, source) in entries {
                         let display_name = if is_dir { format!("{}/", filename) } else { filename.clone() };
-                        let link = if clean_path.is_empty() { filename.clone() } else { format!("{}/{}", clean_path, filename) }; 
                         // Note: link construction might need adjustment based on how browser handles relative links. 
                         // If we are at /libs/, href="paged.js" works. 
                         // If we are at /libs (no slash), href="paged.js" replaces "libs".
@@ -261,16 +256,15 @@ fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
     for header in request.headers() {
         if header.field.equiv("Range") {
             let val = header.value.as_str();
-            if val.starts_with("bytes=") {
-                let ranges: Vec<&str> = val["bytes=".len()..].split('-').collect();
+            if let Some(stripped) = val.strip_prefix("bytes=") {
+                let ranges: Vec<&str> = stripped.split('-').collect();
                 if let Ok(s) = ranges[0].parse::<u64>() {
                     start = s;
                 }
-                if ranges.len() > 1 && !ranges[1].is_empty() {
-                    if let Ok(e) = ranges[1].parse::<u64>() {
+                if ranges.len() > 1 && !ranges[1].is_empty()
+                    && let Ok(e) = ranges[1].parse::<u64>() {
                         end = e;
                     }
-                }
                 is_range = true;
             }
         }
@@ -284,7 +278,7 @@ fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
 
     let len = end - start + 1;
     
-    if let Err(_) = file.seek(SeekFrom::Start(start)) {
+    if file.seek(SeekFrom::Start(start)).is_err() {
          let _ = request.respond(Response::from_string("Seek Failed").with_status_code(500));
          return;
     }
@@ -306,11 +300,10 @@ fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
         None,
     );
 
-    if is_range {
-        if let Ok(h) = Header::from_bytes(&b"Content-Range"[..], format!("bytes {}-{}/{}", start, end, file_len).as_bytes()) {
+    if is_range
+        && let Ok(h) = Header::from_bytes(&b"Content-Range"[..], format!("bytes {}-{}/{}", start, end, file_len).as_bytes()) {
             response.add_header(h);
         }
-    }
 
     let _ = request.respond(response);
 }

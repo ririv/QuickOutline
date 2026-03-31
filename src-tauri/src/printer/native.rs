@@ -49,7 +49,7 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
 }
 
 pub async fn print_to_pdf_with_url_native<R: Runtime>(
-    app: AppHandle<R>,
+    _app: AppHandle<R>,
     window: WebviewWindow<R>,
     url: String,
     output_path: PathBuf,
@@ -205,7 +205,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(window: WebviewWindow<R
                 }
             });
 
-            target_webview.createPDFWithConfiguration_completionHandler(Some(&pdf_config), &*completion_handler);
+            target_webview.createPDFWithConfiguration_completionHandler(Some(&pdf_config), &completion_handler);
         }
     }).map_err(|e| e.to_string())?;
 
@@ -224,7 +224,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, 
     use std::sync::mpsc;
     use std::thread;
     use std::time::Duration;
-    use std::ffi::{c_void, CStr};
+    use std::ffi::c_void;
 
     let path_str = output_path.to_string_lossy().to_string();
     let (ptr_tx, ptr_rx) = mpsc::channel();
@@ -318,8 +318,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(window: WebviewWindow<R>, 
 
             // Set Generic Printer
             let k_printer_name = NSString::from_str("Generic");
-            let cls_name = if let Ok(c) = CStr::from_bytes_with_nul(b"NSPrinter\0") { c } else { return; };
-            let printer_class = if let Some(c) = AnyClass::get(cls_name) { c } else { return; };
+            let printer_class = if let Some(c) = AnyClass::get(c"NSPrinter") { c } else { return; };
             let printer: Option<Retained<NSPrinter>> = msg_send![printer_class, printerWithName: &*k_printer_name];
             
             if let Some(p) = printer {
@@ -491,11 +490,9 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(window: WebviewWindow<R>,
             // 引入 NSPrinter 和 AnyClass
             use objc2_app_kit::NSPrinter;
             use objc2::runtime::AnyClass;
-            use std::ffi::CStr;
             
             // 获取 NSPrinter 类
-            let cls_name = if let Ok(c) = CStr::from_bytes_with_nul(b"NSPrinter\0") { c } else { return; };
-            let printer_class = if let Some(c) = AnyClass::get(cls_name) { c } else { return; };
+            let printer_class = if let Some(c) = AnyClass::get(c"NSPrinter") { c } else { return; };
             
             // 尝试创建 NSPrinter 对象
             // 注意：printerWithName 返回 Option<Retained<NSPrinter>>
@@ -720,7 +717,7 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(window: WebviewWindow<
                 }
             });
 
-            target_webview.createPDFWithConfiguration_completionHandler(Some(&pdf_config), &*completion_handler);
+            target_webview.createPDFWithConfiguration_completionHandler(Some(&pdf_config), &completion_handler);
         }
     }).map_err(|e| e.to_string())?;
 

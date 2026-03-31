@@ -69,13 +69,11 @@ impl<'a> OutlineEngine for LopdfOutlineAdapter<'a> {
 
         if let Some(dest) = dest_obj {
             let resolved = resolve_object(self.doc, dest)?;
-            if let Object::Array(arr) = resolved {
-                if !arr.is_empty() {
-                    if let Ok(page_ref) = arr[0].as_reference() {
+            if let Object::Array(arr) = resolved
+                && !arr.is_empty()
+                    && let Ok(page_ref) = arr[0].as_reference() {
                         return Ok(self.page_id_to_num.get(&page_ref).map(|&n| n as i32));
                     }
-                }
-            }
         }
         Ok(None)
     }
@@ -102,15 +100,14 @@ impl<'a> OutlineEngine for LopdfOutlineAdapter<'a> {
         let mut dict = Dictionary::new();
         dict.set("Title", Object::String(encode_pdf_string(title), lopdf::StringFormat::Literal));
         
-        if let Some(pn) = page_num {
-            if let Some(page_id) = self.page_num_to_id.get(&(pn as u32)) {
+        if let Some(pn) = page_num
+            && let Some(page_id) = self.page_num_to_id.get(&(pn as u32)) {
                 let dest = match scale {
                     ViewScaleType::FitToPage => vec![Object::Reference(*page_id), Object::Name(b"Fit".to_vec())],
                     _ => vec![Object::Reference(*page_id), Object::Name(b"XYZ".to_vec()), Object::Null, Object::Null, Object::Null],
                 };
                 dict.set("Dest", Object::Array(dest));
             }
-        }
 
         let id = self.doc.add_object(dict);
         Ok(Self::format_id(id))

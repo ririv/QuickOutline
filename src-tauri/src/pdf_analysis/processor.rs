@@ -44,7 +44,7 @@ impl PdfProcessor {
         for (i, char_info) in sorted_chars.into_iter().enumerate() {
             let mut text = char_info.text;
             if text.contains('\r') || text.contains('\n') {
-                text = text.replace('\r', "").replace('\n', "");
+                text = text.replace(['\r', '\n'], "");
             }
             
             let baseline_y = char_info.y;
@@ -56,7 +56,7 @@ impl PdfProcessor {
             };
             
             let space_width = page_global_space_width;
-            let advance_width = inferred_widths.get(i).cloned().unwrap_or_else(|| char_info.width);
+            let advance_width = inferred_widths.get(i).cloned().unwrap_or(char_info.width);
 
             let skew = char_info.skew;
 
@@ -147,12 +147,11 @@ impl PdfProcessor {
     fn add_line_to_blocks(blocks: &mut Vec<PdfBlock>, line: PdfLine) {
         if line.text.trim().is_empty() { return; }
 
-        if let Some(last_block) = blocks.last_mut() {
-            if Self::should_merge_lines(last_block, &line) {
+        if let Some(last_block) = blocks.last_mut()
+            && Self::should_merge_lines(last_block, &line) {
                 last_block.merge_line(line);
                 return;
             }
-        }
         blocks.push(PdfBlock::from_line(line));
     }
 
@@ -179,7 +178,7 @@ impl PdfProcessor {
         let next_text = next_line.text.trim();
         if NUMBERING_REGEX.is_match(next_text) { return false; }
 
-        let is_lowercase_continuation = next_text.chars().next().map_or(false, |c| c.is_lowercase());
+        let is_lowercase_continuation = next_text.chars().next().is_some_and(|c| c.is_lowercase());
         if is_lowercase_continuation {
             return true;
         }

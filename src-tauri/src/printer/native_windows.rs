@@ -1,7 +1,5 @@
-use tauri::{AppHandle, Runtime, WebviewWindow, WebviewWindowBuilder, WebviewUrl};
+use tauri::{AppHandle, Runtime, WebviewWindow};
 use std::path::PathBuf;
-use log::{info, warn, error};
-use uuid::Uuid;
 
 #[cfg(target_os = "windows")]
 mod impl_win {

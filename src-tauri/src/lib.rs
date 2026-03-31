@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![deny(clippy::unwrap_used, clippy::expect_used)]
+#![allow(dead_code)] // Allow unused code for modules under development
 
 mod java_sidecar;
 mod printer;
@@ -10,12 +11,10 @@ mod pdf_outline;
 mod external_editor;
 mod pdf_analysis;
 
-use std::sync::Mutex;
 use tauri::{AppHandle, Manager, Runtime};
 use tauri::http::{Response, StatusCode};
 use std::fs;
 use std::path::{Path, PathBuf};
-use tauri_plugin_cli::CliExt;
 use log::{info, warn, error};
 
 // Helper function to set up print workspace (now only creates directory and cleans old files)
@@ -31,9 +30,9 @@ fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBu
     if let Ok(entries) = fs::read_dir(&workspace) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_file() {
-                if let Some(filename) = path.file_name().and_then(|s| s.to_str()) {
-                    if (filename.starts_with("print_job_") || filename.starts_with("print_fallback_")) 
+            if path.is_file()
+                && let Some(filename) = path.file_name().and_then(|s| s.to_str())
+                    && (filename.starts_with("print_job_") || filename.starts_with("print_fallback_")) 
                        && filename.ends_with(".html") {
                         if let Err(e) = fs::remove_file(&path) {
                             warn!("Rust Setup: Failed to delete old print job {:?}: {}", path, e);
@@ -41,8 +40,6 @@ fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBu
                             info!("Rust Setup: Cleaned up old print job: {:?}", filename);
                         }
                     }
-                }
-            }
         }
     }
 
@@ -55,24 +52,21 @@ fn cleanup_pdf_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<(), St
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
     let pdf_workspace = app_data_dir.join("pdf_workspace");
 
-    if pdf_workspace.exists() {
-        if let Ok(entries) = fs::read_dir(&pdf_workspace) {
+    if pdf_workspace.exists()
+        && let Ok(entries) = fs::read_dir(&pdf_workspace) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.is_file() {
-                    if let Some(filename) = path.file_name().and_then(|s| s.to_str()) {
-                        if filename.starts_with("toc_") && filename.ends_with(".pdf") {
+                if path.is_file()
+                    && let Some(filename) = path.file_name().and_then(|s| s.to_str())
+                        && filename.starts_with("toc_") && filename.ends_with(".pdf") {
                             if let Err(e) = fs::remove_file(&path) {
                                 warn!("Rust Setup: Failed to delete PDF temp file {:?}: {}", path, e);
                             } else {
                                 info!("Rust Setup: Cleaned up PDF temp file: {:?}", filename);
                             }
                         }
-                    }
-                }
             }
         }
-    }
     Ok(())
 }
 
@@ -81,11 +75,10 @@ use crate::pdf::page_label::{PageLabel, PageLabelProcessor};
 use crate::pdf::page_label_traits::PageLabelEngine;
 
 fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
-    if let Some(path) = dest_path {
-        if !path.trim().is_empty() {
+    if let Some(path) = dest_path
+        && !path.trim().is_empty() {
             return path;
         }
-    }
     
     let src = Path::new(src_path);
     let parent = src.parent().unwrap_or(Path::new(""));
@@ -253,10 +246,18 @@ pub fn run() {
             let uri = request.uri();
             let url_str = uri.to_string();
             
+            // Helper to build error response
+            let error_response = |status: StatusCode, body: Vec<u8>| -> Response<Vec<u8>> {
+                Response::builder()
+                    .status(status)
+                    .body(body)
+                    .unwrap_or_else(|_| Response::new(vec![]))
+            };
+            
             // Parse query: pdfstream://render?path=...&page=...&scale=...
             let url = match url::Url::parse(&url_str) {
                 Ok(u) => u,
-                Err(_) => return Response::builder().status(StatusCode::BAD_REQUEST).body(vec![]).unwrap(),
+                Err(_) => return error_response(StatusCode::BAD_REQUEST, vec![]),
             };
 
             let pairs: std::collections::HashMap<_, _> = url.query_pairs().collect();
@@ -283,20 +284,20 @@ pub fn run() {
                             // The frontend handles invalidation by appending ?v=... to the URL when file changes.
                             .header("Cache-Control", "public, max-age=31536000, immutable") 
                             .body(png_data)
-                            .unwrap();
+                            .unwrap_or_else(|_| Response::new(vec![]));
                     },
                     Ok(Err(e)) => {
                         error!("Protocol Render Error: {}", e);
-                        return Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body(e.to_string().into_bytes()).unwrap();
+                        return error_response(StatusCode::INTERNAL_SERVER_ERROR, e.to_string().into_bytes());
                     },
                     Err(e) => {
                         error!("Worker Error: {}", e);
-                        return Response::builder().status(StatusCode::INTERNAL_SERVER_ERROR).body(e.to_string().into_bytes()).unwrap();
+                        return error_response(StatusCode::INTERNAL_SERVER_ERROR, e.to_string().into_bytes());
                     }
                 }
             }
 
-            Response::builder().status(StatusCode::BAD_REQUEST).body(vec![]).unwrap()
+            error_response(StatusCode::BAD_REQUEST, vec![])
         })
         .setup(move |app| {
             // Setup print workspace on app startup
@@ -345,14 +346,12 @@ pub fn run() {
             app.run(|app_handle, event| {
                 if let tauri::RunEvent::Exit = event {
                     // Cleanup: Kill active external editor process
-                    if let Some(state) = app_handle.try_state::<external_editor::ExternalEditorState>() {
-                        if let Ok(mut child_guard) = state.active_child.lock() {
-                            if let Some(mut child) = child_guard.take() {
+                    if let Some(state) = app_handle.try_state::<external_editor::ExternalEditorState>()
+                        && let Ok(mut child_guard) = state.active_child.lock()
+                            && let Some(mut child) = child_guard.take() {
                                 let _ = child.kill();
                                 info!("Rust Exit Hook: Killed active external editor.");
                             }
-                        }
-                    }
                 }
             });
         })

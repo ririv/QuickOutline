@@ -51,7 +51,7 @@ impl EditorBackend for VscodeBackend {
         let exe = if cfg!(windows) { format!("{}.cmd", self.executable) } else { self.executable.to_string() };
         let mut cmd = Command::new(exe);
         let goto_arg = format!("{}:{}:{}", file_path.to_string_lossy(), line, col);
-        cmd.args(&["-n", "-w", "-g", &goto_arg]);
+        cmd.args(["-n", "-w", "-g", &goto_arg]);
         cmd
     }
 
@@ -98,18 +98,16 @@ impl ExternalEditor {
         state: tauri::State<'_, ExternalEditorState>,
     ) -> Result<(), String> {
         // 1. Cancel existing watcher
-        if let Ok(mut handle) = state.abort_handle.lock() {
-            if let Some(old_abort) = handle.take() {
+        if let Ok(mut handle) = state.abort_handle.lock()
+            && let Some(old_abort) = handle.take() {
                 let _ = old_abort.send(());
             }
-        }
 
         // 2. Kill existing child process if any
-        if let Ok(mut child_guard) = state.active_child.lock() {
-            if let Some(mut child) = child_guard.take() {
+        if let Ok(mut child_guard) = state.active_child.lock()
+            && let Some(mut child) = child_guard.take() {
                 let _ = child.kill();
             }
-        }
 
         let mut temp_file_guard = state.temp_file.lock().map_err(|e| e.to_string())?;
         
@@ -143,8 +141,8 @@ impl ExternalEditor {
         let file_path_for_watcher = file_path.clone();
         tokio::spawn(async move {
             let watcher_result = Self::async_watcher();
-            if let Ok((mut watcher, mut rx)) = watcher_result {
-                if let Some(parent) = file_path_for_watcher.parent() {
+            if let Ok((mut watcher, mut rx)) = watcher_result
+                && let Some(parent) = file_path_for_watcher.parent() {
                     let _ = watcher.watch(parent, RecursiveMode::NonRecursive);
                     let mut last_content_hash = Self::calculate_hash(&content);
                     loop {
@@ -170,7 +168,6 @@ impl ExternalEditor {
                         }
                     }
                 }
-            }
         });
 
         // 5. Editor Discovery
@@ -213,19 +210,22 @@ impl ExternalEditor {
                 loop {
                     std::thread::sleep(std::time::Duration::from_millis(500));
                     if let Some(s) = app_clone_final.try_state::<ExternalEditorState>() {
-                        let mut guard = s.active_child.lock().unwrap();
-                        if let Some(ref mut child) = *guard {
-                            // Specify ExitStatus as expected type
-                            match child.try_wait() {
-                                Ok(Some(_status)) => { 
-                                    *guard = None;
-                                    break;
-                                }
-                                Ok(None) => continue, // Still running
-                                Err(_) => { *guard = None; break; }
+                        if let Ok(mut guard) = s.active_child.lock() {
+                            if let Some(ref mut child) = *guard {
+                                // Specify ExitStatus as expected type
+                                match child.try_wait() {
+                                    Ok(Some(_status)) => { 
+                                        *guard = None;
+                                        break;
+                                    }
+                                    Ok(None) => continue, // Still running
+                                    Err(_) => { *guard = None; break; }
                             }
                         } else {
                             break; 
+                        }
+                        } else {
+                            break;
                         }
                     } else {
                         break;
