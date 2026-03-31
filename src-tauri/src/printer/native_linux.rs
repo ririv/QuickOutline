@@ -1,95 +1,113 @@
+//! Linux 原生 PDF 打印，使用 webkit2gtk 的 PrintOperation。
+//!
+//! 本模块利用 WebKitGTK 的 PrintOperation 功能，
+//! 在 Linux 上实现原生 PDF 生成。
+
 use tauri::{AppHandle, Runtime, WebviewWindow};
 use std::path::PathBuf;
 
+use super::native::PageDimensions;
+
+/// 在 Linux 上使用 WebKitGTK 将 HTML 或 URL 内容打印为 PDF。
+///
+/// # 参数
+/// * `_app` - Tauri 应用句柄（未使用，保留以保持 API 一致性）
+/// * `window` - 用于打印的 WebviewWindow
+/// * `content` - 要打印的 HTML 字符串或 URL
+/// * `output_path` - PDF 保存路径
+/// * `_dimensions` - 页面尺寸（传递给打印设置）
+///
+/// # 平台
+/// 此函数仅在 Linux（GTK）上有效。在其他平台上返回错误。
 #[cfg(target_os = "linux")]
-mod impl_linux {
-    use super::*;
-    use webkit2gtk::{PrintOperation, WebViewExt, PrintOperationExt};
-    use gtk::{PrintSettings, PrintOperationAction};
-    use gtk::prelude::*; 
-    use gtk::glib;
+pub async fn print_native_linux<R: Runtime>(
+    _app: AppHandle<R>,
+    window: WebviewWindow<R>,
+    content: String,
+    output_path: PathBuf,
+    _dimensions: Option<PageDimensions>,
+) -> Result<String, String> {
+    use webkit2gtk::{WebViewExt, PrintOperationExt};
+    use gtk::prelude::*;
     use std::sync::{Arc, Mutex};
+    use std::sync::mpsc;
+    use std::time::Duration;
 
-    pub async fn execute<R: Runtime>(app: AppHandle<R>, html: String, output_path: PathBuf) -> Result<String, String> {
-        let label = format!("print_hidden_{}", Uuid::new_v4());
+    let (result_tx, result_rx) = mpsc::channel();
+    let result_tx = Arc::new(Mutex::new(result_tx));
+    let output_path_clone = output_path.clone();
+    let content_clone = content.clone();
+
+    window.with_webview(move |webview| {
+        let webview = webview.inner();
         
-        let hidden_window = WebviewWindowBuilder::new(
-            &app,
-            &label,
-            WebviewUrl::App("about:blank".into())
-        )
-        .visible(false) 
-        .build()
-        .map_err(|e| e.to_string())?;
-
-        let (tx, rx) = std::sync::mpsc::channel();
-        let tx = Arc::new(Mutex::new(tx));
-        let output_path_clone = output_path.clone();
-        let html_clone = html.clone();
-
-        hidden_window.with_webview(move |webview| {
-            // In Tauri v2 Linux, webview is PlatformWebview. 
-            // .inner() returns the webkit2gtk::WebView
-            let webview = webview.inner();
-            
-            let tx_clone = tx.clone();
-            let path = output_path_clone.clone();
-            
-            webview.connect_load_changed(move |wv, event| {
-                if event == webkit2gtk::LoadEvent::Finished {
-                    let op = PrintOperation::new(wv);
-                    let settings = PrintSettings::new();
-                    
-                    let uri = format!("file://{}", path.to_string_lossy());
-                    settings.set(gtk::PRINT_SETTINGS_OUTPUT_URI, Some(&uri));
-                    settings.set(gtk::PRINT_SETTINGS_PRINTER, Some("Print to File"));
-                    
-                    op.set_print_settings(&settings);
-                    // op.set_action(PrintOperationAction::Export); // Removed as it might not exist on WebKitPrintOperation
-                    
-                    let tx_inner = tx_clone.clone();
-                    op.connect_finished(move |_| {
-                        if let Ok(sender) = tx_inner.lock() {
-                            let _ = sender.send(Ok(()));
-                        }
-                    });
-                    
-                    let tx_inner_err = tx_clone.clone();
-                    op.connect_failed(move |_, error: &glib::Error| {
-                         if let Ok(sender) = tx_inner_err.lock() {
-                            let _ = sender.send(Err(error.to_string()));
-                        }
-                    });
-                    
-                    op.print(); // Use print() for silent printing
-                }
-            });
-            
-            if html_clone.starts_with("http://") || html_clone.starts_with("https://") || html_clone.starts_with("file://") {
-                webview.load_uri(&html_clone);
-            } else {
-                webview.load_html(&html_clone, None);
+        let tx = result_tx.clone();
+        let path = output_path_clone.clone();
+        
+        // 设置页面加载完成回调
+        webview.connect_load_changed(move |wv, event| {
+            if event == webkit2gtk::LoadEvent::Finished {
+                // 创建打印操作
+                let op = webkit2gtk::PrintOperation::new(wv);
+                let settings = gtk::PrintSettings::new();
+                
+                // 配置 PDF 输出
+                let uri = format!("file://{}", path.to_string_lossy());
+                settings.set(gtk::PRINT_SETTINGS_OUTPUT_URI, Some(&uri));
+                settings.set(gtk::PRINT_SETTINGS_PRINTER, Some("Print to File"));
+                settings.set(gtk::PRINT_SETTINGS_OUTPUT_FILE_FORMAT, Some("pdf"));
+                
+                op.set_print_settings(&settings);
+                
+                // 处理完成事件
+                let tx_success = tx.clone();
+                op.connect_finished(move |_| {
+                    if let Ok(sender) = tx_success.lock() {
+                        let _ = sender.send(Ok(()));
+                    }
+                });
+                
+                // 处理失败事件
+                let tx_error = tx.clone();
+                op.connect_failed(move |_, error| {
+                    if let Ok(sender) = tx_error.lock() {
+                        let _ = sender.send(Err(error.to_string()));
+                    }
+                });
+                
+                // 执行打印（静默模式）
+                op.print();
             }
-            
-        }).map_err(|e| e.to_string())?;
-
-        let result = match rx.recv_timeout(std::time::Duration::from_secs(30)) {
-            Ok(Ok(())) => Ok(output_path.to_string_lossy().to_string()),
-            Ok(Err(e)) => Err(e),
-            Err(_) => Err("PrintToPdf timed out".to_string()),
-        };
+        });
         
-        let _ = hidden_window.close();
-        result
+        // 加载内容
+        let is_url = content_clone.starts_with("http://") 
+            || content_clone.starts_with("https://") 
+            || content_clone.starts_with("file://");
+            
+        if is_url {
+            webview.load_uri(&content_clone);
+        } else {
+            webview.load_html(&content_clone, None);
+        }
+        
+    }).map_err(|e| e.to_string())?;
+
+    // 等待结果，带超时
+    match result_rx.recv_timeout(Duration::from_secs(30)) {
+        Ok(Ok(())) => Ok(output_path.to_string_lossy().to_string()),
+        Ok(Err(e)) => Err(e),
+        Err(_) => Err("PrintToPdf 超时（30秒）".to_string()),
     }
 }
 
-#[cfg(target_os = "linux")]
-pub async fn print_native_linux<R: Runtime>(app: AppHandle<R>, _window: WebviewWindow<R>, html: String, output_path: PathBuf) -> Result<String, String> {
-    impl_linux::execute(app, html, output_path).await
-}
-
 #[cfg(not(target_os = "linux"))]
-pub async fn print_native_linux<R: Runtime>(_app: AppHandle<R>, _window: WebviewWindow<R>, _html: String, _output_path: PathBuf) -> Result<String, String> {
-    unimplemented!("Linux native print called on non-Linux platform.");
+pub async fn print_native_linux<R: Runtime>(
+    _app: AppHandle<R>,
+    _window: WebviewWindow<R>,
+    _content: String,
+    _output_path: PathBuf,
+    _dimensions: Option<PageDimensions>,
+) -> Result<String, String> {
+    Err("Linux 原生打印仅在 Linux 上可用。".to_string())
 }

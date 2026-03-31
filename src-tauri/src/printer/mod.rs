@@ -114,11 +114,11 @@ pub async fn print_to_pdf<R: Runtime>(
                      }
                      #[cfg(target_os = "windows")]
                      {
-                        native::print_native_windows(app.clone(), window.clone(), url_str, output_path).await
+                        native::print_native_windows(app.clone(), window.clone(), url_str, output_path, dimensions).await
                      }
                      #[cfg(target_os = "linux")]
                      {
-                        native::print_native_linux(app.clone(), window.clone(), url_str, output_path).await
+                        native::print_native_linux(app.clone(), window.clone(), url_str, output_path, dimensions).await
                      }
                      #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
                      {
