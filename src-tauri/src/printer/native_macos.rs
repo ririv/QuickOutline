@@ -177,7 +177,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
     use std::ffi::c_void;
 
     let path_str = output_path.to_string_lossy().to_string();
-    let (ptr_tx, ptr_rx) = mpsc::channel();
+    let (ptr_tx, ptr_rx) = mpsc::channel::<Result<usize, String>>();
 
     let url_clone = url.clone();
 
@@ -207,18 +207,29 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
 
             // Load Request
             let url_ns = NSString::from_str(&url_clone);
-            let ns_url = if let Some(u) = NSURL::URLWithString(&url_ns) { u } else { return; };
+            let ns_url = match NSURL::URLWithString(&url_ns) {
+                Some(u) => u,
+                None => {
+                    let _: () = msg_send![&*new_view, removeFromSuperview];
+                    let _ = ptr_tx.send(Err(format!("无效的 URL: {}", url_clone)));
+                    return;
+                }
+            };
             let request = NSURLRequest::requestWithURL(&ns_url);
             
             new_view.loadRequest(&request);
 
             let raw: *mut WKWebView = Retained::into_raw(new_view);
             let addr = raw as usize;
-            let _ = ptr_tx.send(addr);
+            let _ = ptr_tx.send(Ok(addr));
         }
     }).map_err(|e| e.to_string())?;
 
-    let addr = ptr_rx.recv().map_err(|_| "Failed to create webview".to_string())?;
+    let addr = match ptr_rx.recv() {
+        Ok(Ok(addr)) => addr,
+        Ok(Err(e)) => return Err(e),
+        Err(_) => return Err("创建 webview 失败".to_string()),
+    };
     thread::sleep(Duration::from_millis(2000));
 
     let (result_tx, result_rx) = mpsc::channel();
@@ -233,7 +244,8 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
             let target_webview: Retained<WKWebView> = match Retained::from_raw(ptr) {
                 Some(w) => w,
                 None => {
-                    error!("Invalid webview pointer");
+                    error!("无效的 webview 指针");
+                    let _ = result_tx.send(Err("无效的 webview 指针".to_string()));
                     return;
                 }
             };
@@ -253,7 +265,14 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
             let _: () = msg_send![&dict, setObject: &*v_url, forKey: &*k_url];
 
             let k_printer_name = NSString::from_str("Generic");
-            let printer_class = if let Some(c) = AnyClass::get(c"NSPrinter") { c } else { return; };
+            let printer_class = match AnyClass::get(c"NSPrinter") {
+                Some(c) => c,
+                None => {
+                    let _: () = msg_send![&*target_webview, removeFromSuperview];
+                    let _ = result_tx.send(Err("无法获取 NSPrinter 类".to_string()));
+                    return;
+                }
+            };
             let printer: Option<Retained<NSPrinter>> = msg_send![printer_class, printerWithName: &*k_printer_name];
             
             if let Some(p) = printer {
@@ -295,14 +314,14 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
                 if output_path_clone.exists() {
                     Ok(path_str_clone.clone())
                 } else {
-                    Err("Native print operation finished but file not found.".to_string())
+                    Err("打印操作完成但文件未找到".to_string())
                 }
             } else {
                 let success: bool = print_op.runOperation();
                 if success && output_path_clone.exists() {
                     Ok(path_str_clone.clone())
                 } else {
-                    Err("NSPrintOperation failed or no window context.".to_string())
+                    Err("NSPrintOperation 失败或无窗口上下文".to_string())
                 }
             };
 
@@ -334,7 +353,7 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
     use std::ffi::c_void;
 
     let path_str = output_path.to_string_lossy().to_string();
-    let (ptr_tx, ptr_rx) = mpsc::channel();
+    let (ptr_tx, ptr_rx) = mpsc::channel::<Result<usize, String>>();
 
     let html_clone = html.clone();
 
@@ -368,11 +387,15 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
 
             let raw: *mut WKWebView = Retained::into_raw(new_view);
             let addr = raw as usize;
-            let _ = ptr_tx.send(addr);
+            let _ = ptr_tx.send(Ok(addr));
         }
     }).map_err(|e| e.to_string())?;
 
-    let addr = ptr_rx.recv().map_err(|_| "Failed to create webview".to_string())?;
+    let addr = match ptr_rx.recv() {
+        Ok(Ok(addr)) => addr,
+        Ok(Err(e)) => return Err(e),
+        Err(_) => return Err("创建 webview 失败".to_string()),
+    };
     thread::sleep(Duration::from_millis(1000));
 
     let (result_tx, result_rx) = mpsc::channel();
@@ -387,7 +410,8 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
             let target_webview: Retained<WKWebView> = match Retained::from_raw(ptr) {
                 Some(w) => w,
                 None => {
-                    error!("Invalid webview pointer");
+                    error!("无效的 webview 指针");
+                    let _ = result_tx.send(Err("无效的 webview 指针".to_string()));
                     return;
                 }
             };
@@ -407,13 +431,20 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
             let _: () = msg_send![&dict, setObject: &*v_url, forKey: &*k_url];
 
             let k_printer_name = NSString::from_str("Generic");
-            let printer_class = if let Some(c) = AnyClass::get(c"NSPrinter") { c } else { return; };
+            let printer_class = match AnyClass::get(c"NSPrinter") {
+                Some(c) => c,
+                None => {
+                    let _: () = msg_send![&*target_webview, removeFromSuperview];
+                    let _ = result_tx.send(Err("无法获取 NSPrinter 类".to_string()));
+                    return;
+                }
+            };
             let printer: Option<Retained<NSPrinter>> = msg_send![printer_class, printerWithName: &*k_printer_name];
             
             if let Some(p) = printer {
                  let _: () = msg_send![&print_info, setPrinter: &*p];
             } else {
-                 warn!("Warning: Could not create 'Generic' printer.");
+                 warn!("无法创建 'Generic' 打印机");
             }
 
             print_info.setScalingFactor(1.0);
@@ -451,14 +482,14 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
                 if output_path_clone.exists() {
                     Ok(path_str_clone.clone())
                 } else {
-                    Err("Print operation finished but PDF file not created.".to_string())
+                    Err("打印操作完成但 PDF 文件未创建".to_string())
                 }
             } else {
                 let success: bool = print_op.runOperation();
                 if success && output_path_clone.exists() {
                     Ok(path_str_clone.clone())
                 } else {
-                    Err("NSPrintOperation failed or no window context.".to_string())
+                    Err("NSPrintOperation 失败或无窗口上下文".to_string())
                 }
             };
 
@@ -489,7 +520,7 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
     use std::time::Duration;
 
     let path_str = output_path.to_string_lossy().to_string();
-    let (ptr_tx, ptr_rx) = mpsc::channel();
+    let (ptr_tx, ptr_rx) = mpsc::channel::<Result<usize, String>>();
     
     let html_clone = html.clone();
     
@@ -516,7 +547,7 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
                 let _: () = msg_send![&sv, addSubview: &*new_view];
                 let _: () = msg_send![&*new_view, setAlphaValue: 0.0f64];
             } else {
-                warn!("Warning: Could not find superview to attach print webview.");
+                warn!("无法找到 superview 来附加打印 webview");
             }
             
             // Load HTML
@@ -525,11 +556,15 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
             
             let raw: *mut WKWebView = Retained::into_raw(new_view);
             let addr = raw as usize;
-            let _ = ptr_tx.send(addr);
+            let _ = ptr_tx.send(Ok(addr));
         }
     }).map_err(|e| e.to_string())?;
 
-    let addr = ptr_rx.recv().map_err(|_| "Failed to create webview".to_string())?;
+    let addr = match ptr_rx.recv() {
+        Ok(Ok(addr)) => addr,
+        Ok(Err(e)) => return Err(e),
+        Err(_) => return Err("创建 webview 失败".to_string()),
+    };
     thread::sleep(Duration::from_millis(1000));
 
     let (result_tx, result_rx) = mpsc::channel();
@@ -544,7 +579,8 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
             let target_webview: Retained<WKWebView> = match Retained::from_raw(ptr) {
                 Some(w) => w,
                 None => {
-                    error!("Invalid webview pointer");
+                    error!("无效的 webview 指针");
+                    let _ = result_tx.send(Err("无效的 webview 指针".to_string()));
                     return;
                 }
             };
@@ -568,13 +604,13 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
                     let desc = error_obj.localizedDescription();
                     let domain = error_obj.domain();
                     let code = error_obj.code();
-                    let err_msg = format!("PDF creation failed: {} (Domain: {}, Code: {})", desc, domain, code);
+                    let err_msg = format!("PDF 创建失败: {} (Domain: {}, Code: {})", desc, domain, code);
                     let _ = result_tx.send(Err(err_msg));
                     return;
                 }
 
                 if pdf_data.is_null() {
-                    let _ = result_tx.send(Err("PDF creation failed: No data returned".to_string()));
+                    let _ = result_tx.send(Err("PDF 创建失败: 未返回数据".to_string()));
                     return;
                 }
 
@@ -587,7 +623,7 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
 
                 match std::fs::write(&output_path_clone, data_slice) {
                     Ok(_) => {
-                        info!("Native PDF generated at: {:?}", output_path_clone);
+                        info!("原生 PDF 已生成: {:?}", output_path_clone);
                         let _ = result_tx.send(Ok(path_str_clone.clone()));
                     },
                     Err(e) => {
@@ -603,7 +639,7 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
     result_rx.recv().map_err(|e| e.to_string())?
 }
 
-// Stub implementations for non-macOS platforms
+// 非 macOS 平台的桩实现
 #[cfg(not(target_os = "macos"))]
 pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
     _window: WebviewWindow<R>,
@@ -611,7 +647,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
     _output_path: PathBuf,
     _dimensions: Option<PageDimensions>,
 ) -> Result<String, String> {
-    Err("macOS native print called on non-macOS platform.".to_string())
+    Err("macOS 原生打印在非 macOS 平台上不可用".to_string())
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -621,7 +657,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
     _output_path: PathBuf,
     _dimensions: Option<PageDimensions>,
 ) -> Result<String, String> {
-    Err("macOS native print called on non-macOS platform.".to_string())
+    Err("macOS 原生打印在非 macOS 平台上不可用".to_string())
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -631,7 +667,7 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
     _output_path: PathBuf,
     _dimensions: Option<PageDimensions>,
 ) -> Result<String, String> {
-    Err("macOS native print called on non-macOS platform.".to_string())
+    Err("macOS 原生打印在非 macOS 平台上不可用".to_string())
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -641,5 +677,5 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
     _output_path: PathBuf,
     _dimensions: Option<PageDimensions>,
 ) -> Result<String, String> {
-    Err("macOS native print called on non-macOS platform.".to_string())
+    Err("macOS 原生打印在非 macOS 平台上不可用".to_string())
 }
