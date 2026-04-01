@@ -8,6 +8,11 @@ use std::path::PathBuf;
 
 use super::native::PageDimensions;
 
+/// 内容加载等待时间（毫秒）
+const CONTENT_LOAD_WAIT_MS: u64 = 1500;
+/// 打印超时时间（秒）
+const PRINT_TIMEOUT_SECS: u64 = 30;
+
 /// 在 Windows 上使用 WebView2 将 HTML 或 URL 内容打印为 PDF。
 ///
 /// # 参数
@@ -100,7 +105,7 @@ pub async fn print_native_windows<R: Runtime>(
 
             // 等待内容加载（简单延时方式）
             // TODO: 使用 NavigationCompleted 事件实现更可靠的处理
-            thread::sleep(Duration::from_millis(1500));
+            thread::sleep(Duration::from_millis(CONTENT_LOAD_WAIT_MS));
 
             // 创建打印回调
             let callback = PrintCallback { tx: result_tx };
@@ -123,10 +128,10 @@ pub async fn print_native_windows<R: Runtime>(
     }).map_err(|e| e.to_string())?;
 
     // 等待结果，带超时
-    match result_rx.recv_timeout(Duration::from_secs(30)) {
+    match result_rx.recv_timeout(Duration::from_secs(PRINT_TIMEOUT_SECS)) {
         Ok(Ok(())) => Ok(output_path.to_string_lossy().to_string()),
         Ok(Err(e)) => Err(e),
-        Err(_) => Err("PrintToPdf 超时（30秒）".to_string()),
+        Err(_) => Err(format!("PrintToPdf 超时（{}秒）", PRINT_TIMEOUT_SECS)),
     }
 }
 

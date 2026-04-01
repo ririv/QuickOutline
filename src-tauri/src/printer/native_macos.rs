@@ -6,6 +6,10 @@ use super::native::PageDimensions;
 
 /// mm 转 points 的转换因子 (72 / 25.4)
 const MM_TO_POINTS: f64 = 2.83465;
+/// URL 内容加载等待时间（毫秒）
+const URL_LOAD_WAIT_MS: u64 = 2000;
+/// HTML 内容加载等待时间（毫秒）
+const HTML_LOAD_WAIT_MS: u64 = 1000;
 
 // ================= MAC OS NATIVE (WKPDFConfiguration - URL) =================
 #[cfg(target_os = "macos")]
@@ -84,7 +88,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
         Ok(Err(e)) => return Err(e),
         Err(_) => return Err("创建 webview 失败".to_string()),
     };
-    thread::sleep(Duration::from_millis(2000));
+    thread::sleep(Duration::from_millis(URL_LOAD_WAIT_MS));
 
     // Step 3: Print
     let (result_tx, result_rx) = mpsc::channel();
@@ -230,7 +234,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
         Ok(Err(e)) => return Err(e),
         Err(_) => return Err("创建 webview 失败".to_string()),
     };
-    thread::sleep(Duration::from_millis(2000));
+    thread::sleep(Duration::from_millis(URL_LOAD_WAIT_MS));
 
     let (result_tx, result_rx) = mpsc::channel();
     let output_path_clone = output_path.clone();
@@ -396,7 +400,7 @@ pub async fn print_native_with_html_mac_op<R: Runtime>(
         Ok(Err(e)) => return Err(e),
         Err(_) => return Err("创建 webview 失败".to_string()),
     };
-    thread::sleep(Duration::from_millis(1000));
+    thread::sleep(Duration::from_millis(HTML_LOAD_WAIT_MS));
 
     let (result_tx, result_rx) = mpsc::channel();
     let output_path_clone = output_path.clone();
@@ -565,7 +569,7 @@ pub async fn print_native_with_html_mac_wkpdf<R: Runtime>(
         Ok(Err(e)) => return Err(e),
         Err(_) => return Err("创建 webview 失败".to_string()),
     };
-    thread::sleep(Duration::from_millis(1000));
+    thread::sleep(Duration::from_millis(HTML_LOAD_WAIT_MS));
 
     let (result_tx, result_rx) = mpsc::channel();
     let output_path_clone = output_path.clone();
