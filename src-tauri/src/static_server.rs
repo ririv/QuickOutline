@@ -34,6 +34,10 @@ impl LocalServerState {
 pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBuf, resources_path: Option<PathBuf>) {
     let state = app_handle.state::<LocalServerState>();
     
+    // Log paths for debugging
+    info!("Static server: workspace_path = {:?}", workspace_path);
+    info!("Static server: resources_path = {:?}", resources_path);
+    
     // Store workspace and resources path
     match state.workspace.lock() {
         Ok(mut w) => *w = workspace_path.clone(),
@@ -126,6 +130,7 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                        clean_path == "fonts" || clean_path.starts_with("fonts/") {
                         
                         let potential_path = res_dir.join(&clean_path);
+                        debug!("Checking resources path: {} (exists: {})", potential_path.display(), potential_path.exists());
                         if potential_path.exists() {
                             file_path = potential_path;
                             debug!("Serving from resources: {}", file_path.display());
@@ -133,110 +138,111 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                     }
                 }
 
-            if file_path.exists() {
-                if file_path.is_file() {
-                    if let Ok(file) = File::open(&file_path) {
-                        let mut response = Response::from_file(file);
-                        
-                        // Add MIME type
-                        let mime_type = match file_path.extension().and_then(|s| s.to_str()) {
-                            Some("html") => "text/html",
-                            Some("css") => "text/css",
-                            Some("js") => "application/javascript",
-                            Some("png") => "image/png",
-                            Some("jpg") | Some("jpeg") => "image/jpeg",
-                            Some("svg") => "image/svg+xml",
-                            Some("pdf") => "application/pdf",
-                            Some("woff") => "font/woff",
-                            Some("woff2") => "font/woff2",
-                            Some("ttf") => "font/ttf",
-                            _ => "application/octet-stream",
-                        };
-                        
-                        if let Ok(header) = Header::from_bytes(&b"Content-Type"[..], mime_type.as_bytes()) {
-                            response.add_header(header);
-                        }
+            if !file_path.exists() {
+                debug!("File not found: {} (clean_path: {})", file_path.display(), clean_path);
+                let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
+                continue;
+            }
 
-                        // Add CORS headers just in case
-                        if let Ok(cors) = Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]) {
-                            response.add_header(cors);
-                        }
-
-                        let _ = request.respond(response);
-                    } else {
-                        let _ = request.respond(Response::from_string("Internal Server Error").with_status_code(500));
-                    }
-                } else if file_path.is_dir() { // Removed !served_from_resources check to allow listing virtual dirs
-                    // Generate directory listing with merged view
-                    let mut html = String::from("<html><head><title>Directory Listing</title><style>body{font-family:sans-serif;} table{border-collapse:collapse;width:100%;} td,th{padding:8px;text-align:left;border-bottom:1px solid #ddd;} .src{color:#888;font-size:0.8em;}</style></head><body>");
-                    html.push_str(&format!("<h1>Index of /{}</h1><table><tr><th>Name</th><th>Source</th></tr>", clean_path));
+            if file_path.is_file() {
+                if let Ok(file) = File::open(&file_path) {
+                    let mut response = Response::from_file(file);
                     
-                    if !clean_path.is_empty() {
-                         html.push_str("<tr><td><a href=\"..\">.. (Parent Directory)</a></td><td></td></tr>");
-                    }
-
-                    // Use a Set to track seen filenames to avoid duplicates
-                    let mut seen_files = std::collections::HashSet::new();
-                    let mut entries = Vec::new();
-
-                    // 1. Scan Workspace (High Priority)
-                    if let Ok(ws_entries) = std::fs::read_dir(&file_path) {
-                        for entry in ws_entries.flatten() {
-                            let filename = entry.file_name().to_string_lossy().to_string();
-                            let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-                            entries.push((filename.clone(), is_dir, "Workspace"));
-                            seen_files.insert(filename);
-                        }
-                    }
-
-                    // 2. Scan Resources (Fallback)
-                    if let Some(res_dir) = &resources_path {
-                        let res_target = res_dir.join(&clean_path);
-                        if res_target.exists() && res_target.is_dir()
-                             && let Ok(res_entries) = std::fs::read_dir(&res_target) {
-                                for entry in res_entries.flatten() {
-                                    let filename = entry.file_name().to_string_lossy().to_string();
-                                    if !seen_files.contains(&filename) {
-                                        let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-                                        entries.push((filename, is_dir, "Resources (Virtual)"));
-                                    }
-                                }
-                             }
-                    }
-
-                    // Sort entries: Directories first, then alphabetical
-                    entries.sort_by(|a, b| {
-                        if a.1 != b.1 {
-                            b.1.cmp(&a.1) // Directories first
-                        } else {
-                            a.0.cmp(&b.0)
-                        }
-                    });
-
-                    for (filename, is_dir, source) in entries {
-                        let display_name = if is_dir { format!("{}/", filename) } else { filename.clone() };
-                        // Note: link construction might need adjustment based on how browser handles relative links. 
-                        // If we are at /libs/, href="paged.js" works. 
-                        // If we are at /libs (no slash), href="paged.js" replaces "libs".
-                        // Assuming tiny_http or browser handles the current URL context.
-                        // Safest is relative just filename if we assume standard behavior.
-                        
-                        html.push_str(&format!("<tr><td><a href=\"{}\">{}</a></td><td class=\"src\">{}</td></tr>", filename, display_name, source));
-                    }
-
-                    html.push_str("</table></body></html>");
+                    // Add MIME type
+                    let mime_type = match file_path.extension().and_then(|s| s.to_str()) {
+                        Some("html") => "text/html",
+                        Some("css") => "text/css",
+                        Some("js") | Some("mjs") => "application/javascript",
+                        Some("png") => "image/png",
+                        Some("jpg") | Some("jpeg") => "image/jpeg",
+                        Some("svg") => "image/svg+xml",
+                        Some("pdf") => "application/pdf",
+                        Some("woff") => "font/woff",
+                        Some("woff2") => "font/woff2",
+                        Some("ttf") => "font/ttf",
+                        _ => "application/octet-stream",
+                    };
                     
-                    let mut response = Response::from_string(html);
-                    if let Ok(header) = Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]) {
+                    if let Ok(header) = Header::from_bytes(&b"Content-Type"[..], mime_type.as_bytes()) {
                         response.add_header(header);
                     }
+
+                    // Add CORS headers just in case
+                    if let Ok(cors) = Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]) {
+                        response.add_header(cors);
+                    }
+
                     let _ = request.respond(response);
                 } else {
-                     // Directory listing disabled for resources or failed
-                     let _ = request.respond(Response::from_string("Forbidden").with_status_code(403));
+                    let _ = request.respond(Response::from_string("Internal Server Error").with_status_code(500));
                 }
+            } else if file_path.is_dir() {
+                // Generate directory listing with merged view
+                let mut html = String::from("<html><head><title>Directory Listing</title><style>body{font-family:sans-serif;} table{border-collapse:collapse;width:100%;} td,th{padding:8px;text-align:left;border-bottom:1px solid #ddd;} .src{color:#888;font-size:0.8em;}</style></head><body>");
+                html.push_str(&format!("<h1>Index of /{}</h1><table><tr><th>Name</th><th>Source</th></tr>", clean_path));
+                
+                if !clean_path.is_empty() {
+                    html.push_str("<tr><td><a href=\"..\">.. (Parent Directory)</a></td><td></td></tr>");
+                }
+
+                // Use a Set to track seen filenames to avoid duplicates
+                let mut seen_files = std::collections::HashSet::new();
+                let mut entries = Vec::new();
+
+                // 1. Scan Workspace (High Priority)
+                if let Ok(ws_entries) = std::fs::read_dir(&file_path) {
+                    for entry in ws_entries.flatten() {
+                        let filename = entry.file_name().to_string_lossy().to_string();
+                        let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
+                        entries.push((filename.clone(), is_dir, "Workspace"));
+                        seen_files.insert(filename);
+                    }
+                }
+
+                // 2. Scan Resources (Fallback)
+                if let Some(res_dir) = &resources_path {
+                    let res_target = res_dir.join(&clean_path);
+                    if res_target.exists() && res_target.is_dir()
+                        && let Ok(res_entries) = std::fs::read_dir(&res_target) {
+                            for entry in res_entries.flatten() {
+                                let filename = entry.file_name().to_string_lossy().to_string();
+                                if !seen_files.contains(&filename) {
+                                    let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
+                                    entries.push((filename, is_dir, "Resources (Virtual)"));
+                                }
+                            }
+                        }
+                }
+
+                // Sort entries: Directories first, then alphabetical
+                entries.sort_by(|a, b| {
+                    if a.1 != b.1 {
+                        b.1.cmp(&a.1) // Directories first
+                    } else {
+                        a.0.cmp(&b.0)
+                    }
+                });
+
+                for (filename, is_dir, source) in entries {
+                    let display_name = if is_dir { format!("{}/", filename) } else { filename.clone() };
+                    // 注意：链接构建可能需要根据浏览器处理相对链接的方式进行调整。
+                    // 如果当前路径是 /libs/，href="paged.js" 可以正常工作。
+                    // 如果当前路径是 /libs（无尾部斜杠），href="paged.js" 会替换 "libs"。
+                    // 假设 tiny_http 或浏览器能正确处理当前 URL 上下文。
+                    // 使用相对文件名是最安全的标准行为。
+                    html.push_str(&format!("<tr><td><a href=\"{}\">{}</a></td><td class=\"src\">{}</td></tr>", filename, display_name, source));
+                }
+
+                html.push_str("</table></body></html>");
+                
+                let mut response = Response::from_string(html);
+                if let Ok(header) = Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]) {
+                    response.add_header(header);
+                }
+                let _ = request.respond(response);
             } else {
-                let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
+                // 路径存在但既不是文件也不是目录（如符号链接等）
+                let _ = request.respond(Response::from_string("Forbidden").with_status_code(403));
             }
         }
     });
