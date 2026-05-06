@@ -206,3 +206,85 @@ pub fn init_pdf_worker() -> PdfWorker {
 
     PdfWorker(tx)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{fs, path::Path};
+
+    const PDFIUM_SMOKE_ENV: &str = "QO_PDFIUM_SMOKE";
+
+    fn minimal_pdf_bytes() -> Vec<u8> {
+        let objects = [
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>",
+        ];
+        let mut pdf = b"%PDF-1.4\n".to_vec();
+        let mut offsets = Vec::with_capacity(objects.len());
+
+        for (index, object) in objects.iter().enumerate() {
+            offsets.push(pdf.len());
+            pdf.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", index + 1, object).as_bytes());
+        }
+
+        let xref_offset = pdf.len();
+        pdf.extend_from_slice(format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).as_bytes());
+        for offset in offsets {
+            pdf.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes());
+        }
+        pdf.extend_from_slice(
+            format!(
+                "trailer\n<< /Root 1 0 R /Size {} >>\nstartxref\n{}\n%%EOF\n",
+                objects.len() + 1,
+                xref_offset
+            )
+            .as_bytes(),
+        );
+        pdf
+    }
+
+    #[test]
+    fn loads_pdf_with_configured_pdfium_resource_path() -> Result<()> {
+        if std::env::var_os(PDFIUM_SMOKE_ENV).is_none() {
+            eprintln!("Skipping PDFium smoke test. Set {PDFIUM_SMOKE_ENV}=1 to run it.");
+            return Ok(());
+        }
+
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let pdfium_lib_dir = manifest_dir.join("libs");
+        let pdfium_library = Pdfium::pdfium_platform_library_name_at_path(&pdfium_lib_dir);
+        if !pdfium_library.exists() {
+            return Err(format_err!(
+                "Missing PDFium test library at {:?}",
+                pdfium_library
+            ));
+        }
+
+        crate::pdf::pdfium_render::configure_pdfium_search_paths(vec![pdfium_lib_dir]);
+
+        let temp_dir = tempfile::tempdir()
+            .map_err(|e| format_err!("Failed to create temp dir for PDFium smoke test: {}", e))?;
+        let pdf_path = temp_dir.path().join("minimal.pdf");
+        fs::write(&pdf_path, minimal_pdf_bytes())
+            .map_err(|e| format_err!("Failed to write minimal PDF: {}", e))?;
+
+        let worker = init_pdf_worker();
+        let runtime = tokio::runtime::Runtime::new()
+            .map_err(|e| format_err!("Failed to create Tokio runtime: {}", e))?;
+
+        runtime.block_on(async {
+            let path = pdf_path.to_string_lossy().to_string();
+            let load_path = path.clone();
+            worker
+                .call(move |state| state.load_document(load_path, LoadMode::MemoryBuffer))
+                .await??;
+            worker
+                .call(move |state| state.close_document(&path))
+                .await?;
+            Ok::<(), anyhow::Error>(())
+        })?;
+
+        Ok(())
+    }
+}
