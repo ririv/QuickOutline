@@ -163,7 +163,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
 
 // ================= MAC OS NATIVE (NSPrintOperation - URL) =================
 #[cfg(target_os = "macos")]
-pub async fn print_native_with_url_mac_op<R: Runtime>(
+pub async fn print_native_with_url_mac_print_operation<R: Runtime>(
     window: WebviewWindow<R>,
     url: String,
     output_path: PathBuf,
@@ -339,7 +339,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
 
 // ================= MAC OS NATIVE (NSPrintOperation - HTML) =================
 #[cfg(target_os = "macos")]
-pub async fn print_native_with_html_mac_op<R: Runtime>(
+pub async fn print_native_with_html_mac_print_operation<R: Runtime>(
     window: WebviewWindow<R>,
     html: String,
     output_path: PathBuf,
@@ -655,7 +655,7 @@ pub async fn print_native_with_url_mac_wkpdf<R: Runtime>(
 }
 
 #[cfg(not(target_os = "macos"))]
-pub async fn print_native_with_url_mac_op<R: Runtime>(
+pub async fn print_native_with_url_mac_print_operation<R: Runtime>(
     _window: WebviewWindow<R>,
     _url: String,
     _output_path: PathBuf,
@@ -665,7 +665,7 @@ pub async fn print_native_with_url_mac_op<R: Runtime>(
 }
 
 #[cfg(not(target_os = "macos"))]
-pub async fn print_native_with_html_mac_op<R: Runtime>(
+pub async fn print_native_with_html_mac_print_operation<R: Runtime>(
     _window: WebviewWindow<R>,
     _html: String,
     _output_path: PathBuf,
