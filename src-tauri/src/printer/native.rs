@@ -11,8 +11,8 @@ pub use super::native_linux::print_native_linux;
 
 #[cfg(target_os = "macos")]
 pub use super::native_macos::{
-    print_native_with_url_mac_wkpdf,
-    print_native_with_html_mac_wkpdf,
+    print_native_with_url_mac_print_operation,
+    print_native_with_html_mac_print_operation,
 };
 
 #[derive(Debug, Clone, Copy, serde::Deserialize)]
@@ -39,10 +39,10 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
 
     #[cfg(target_os = "macos")]
     {
-        match print_native_with_html_mac_wkpdf(window.clone(), html.clone(), output_path.clone(), dimensions).await {
+        match print_native_with_html_mac_print_operation(window.clone(), html.clone(), output_path.clone(), dimensions).await {
             Ok(path) => Ok(path),
             Err(e) => {
-                error!("Native PDF generation (WKPDF) failed: {}", e);
+                error!("Native PDF generation (NSPrintOperation) failed: {}", e);
                 Err(e)
             }
         }
@@ -68,10 +68,10 @@ pub async fn print_to_pdf_with_url_native<R: Runtime>(
 
     #[cfg(target_os = "macos")]
     {
-        match print_native_with_url_mac_wkpdf(window, url, output_path, dimensions).await {
+        match print_native_with_url_mac_print_operation(window, url, output_path, dimensions).await {
             Ok(path) => Ok(path),
             Err(e) => {
-                error!("Native PDF generation (WKPDF) failed: {}.", e);
+                error!("Native PDF generation (NSPrintOperation) failed: {}.", e);
                 Err(e)
             }
         }

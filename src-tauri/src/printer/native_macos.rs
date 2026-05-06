@@ -171,14 +171,13 @@ pub async fn print_native_with_url_mac_print_operation<R: Runtime>(
 ) -> Result<String, String> {
     use objc2_foundation::{NSString, NSRect, NSPoint, NSSize, NSURL, NSURLRequest};
     use objc2_web_kit::{WKWebView, WKWebViewConfiguration};
-    use objc2_app_kit::{NSPrintInfo, NSPrintOperation, NSPrinter};
+    use objc2_app_kit::{NSPrintInfo, NSPrintJobSavingURL, NSPrintOperation, NSPrintSaveJob, NSPrintingPaginationMode};
     use objc2::rc::Retained;
     use objc2::{MainThreadMarker, msg_send};
-    use objc2::runtime::{AnyObject, AnyClass};
+    use objc2::runtime::AnyObject;
     use std::sync::mpsc;
     use std::thread;
     use std::time::Duration;
-    use std::ffi::c_void;
 
     let path_str = output_path.to_string_lossy().to_string();
     let (ptr_tx, ptr_rx) = mpsc::channel::<Result<usize, String>>();
@@ -257,31 +256,12 @@ pub async fn print_native_with_url_mac_print_operation<R: Runtime>(
             let alloc_print_info = mtm.alloc::<NSPrintInfo>();
             let print_info: Retained<NSPrintInfo> = msg_send![alloc_print_info, init];
 
+            print_info.setJobDisposition(NSPrintSaveJob);
+
             let dict = print_info.dictionary();
-
-            let k_disposition = NSString::from_str("NSPrintJobDisposition");
-            let v_save = NSString::from_str("NSPrintSaveJob");
-            let _: () = msg_send![&dict, setObject: &*v_save, forKey: &*k_disposition];
-
-            let k_url = NSString::from_str("NSPrintJobSavingURL");
             let output_path_str = output_path_clone.to_string_lossy();
             let v_url = NSURL::fileURLWithPath(&NSString::from_str(&output_path_str));
-            let _: () = msg_send![&dict, setObject: &*v_url, forKey: &*k_url];
-
-            let k_printer_name = NSString::from_str("Generic");
-            let printer_class = match AnyClass::get(c"NSPrinter") {
-                Some(c) => c,
-                None => {
-                    let _: () = msg_send![&*target_webview, removeFromSuperview];
-                    let _ = result_tx.send(Err("无法获取 NSPrinter 类".to_string()));
-                    return;
-                }
-            };
-            let printer: Option<Retained<NSPrinter>> = msg_send![printer_class, printerWithName: &*k_printer_name];
-            
-            if let Some(p) = printer {
-                 let _: () = msg_send![&print_info, setPrinter: &*p];
-            }
+            let _: () = msg_send![&dict, setObject: &*v_url, forKey: NSPrintJobSavingURL];
 
             print_info.setScalingFactor(1.0);
             
@@ -298,35 +278,22 @@ pub async fn print_native_with_url_mac_print_operation<R: Runtime>(
             let _: () = msg_send![&print_info, setOrientation: 0isize];
             print_info.setVerticallyCentered(false);
             print_info.setHorizontallyCentered(false);
+            print_info.setHorizontalPagination(NSPrintingPaginationMode::Automatic);
+            print_info.setVerticalPagination(NSPrintingPaginationMode::Automatic);
 
             let print_op: Retained<NSPrintOperation> = target_webview.printOperationWithPrintInfo(&print_info);
             print_op.setShowsPrintPanel(false);
             print_op.setShowsProgressPanel(false);
+            print_op.setCanSpawnSeparateThread(false);
+            print_op.setJobTitle(Some(&NSString::from_str("QuickOutline PDF")));
 
-            let ns_window: Option<Retained<AnyObject>> = msg_send![&*target_webview, window];
-
-            let result = if let Some(win) = ns_window {
-                let null_ptr: *mut c_void = std::ptr::null_mut();
-                let _: () = msg_send![
-                    &print_op,
-                    runOperationModalForWindow: &*win,
-                    delegate: null_ptr,
-                    didRunSelector: null_ptr,
-                    contextInfo: null_ptr
-                ];
-
-                if output_path_clone.exists() {
-                    Ok(path_str_clone.clone())
-                } else {
-                    Err("打印操作完成但文件未找到".to_string())
-                }
+            let success = print_op.runOperation();
+            let result = if success && output_path_clone.exists() {
+                Ok(path_str_clone.clone())
+            } else if success {
+                Err("NSPrintOperation completed but PDF file was not created".to_string())
             } else {
-                let success: bool = print_op.runOperation();
-                if success && output_path_clone.exists() {
-                    Ok(path_str_clone.clone())
-                } else {
-                    Err("NSPrintOperation 失败或无窗口上下文".to_string())
-                }
+                Err("NSPrintOperation failed".to_string())
             };
 
             let _: () = msg_send![&target_webview, removeFromSuperview];
@@ -347,14 +314,13 @@ pub async fn print_native_with_html_mac_print_operation<R: Runtime>(
 ) -> Result<String, String> {
     use objc2_foundation::{NSString, NSRect, NSPoint, NSSize, NSURL};
     use objc2_web_kit::{WKWebView, WKWebViewConfiguration};
-    use objc2_app_kit::{NSPrintInfo, NSPrintOperation, NSPrinter};
+    use objc2_app_kit::{NSPrintInfo, NSPrintJobSavingURL, NSPrintOperation, NSPrintSaveJob, NSPrintingPaginationMode};
     use objc2::rc::Retained;
     use objc2::{MainThreadMarker, msg_send};
-    use objc2::runtime::{AnyObject, AnyClass};
+    use objc2::runtime::AnyObject;
     use std::sync::mpsc;
     use std::thread;
     use std::time::Duration;
-    use std::ffi::c_void;
 
     let path_str = output_path.to_string_lossy().to_string();
     let (ptr_tx, ptr_rx) = mpsc::channel::<Result<usize, String>>();
@@ -423,33 +389,12 @@ pub async fn print_native_with_html_mac_print_operation<R: Runtime>(
             let alloc_print_info = mtm.alloc::<NSPrintInfo>();
             let print_info: Retained<NSPrintInfo> = msg_send![alloc_print_info, init];
 
+            print_info.setJobDisposition(NSPrintSaveJob);
+
             let dict = print_info.dictionary();
-
-            let k_disposition = NSString::from_str("NSPrintJobDisposition");
-            let v_save = NSString::from_str("NSPrintSaveJob");
-            let _: () = msg_send![&dict, setObject: &*v_save, forKey: &*k_disposition];
-
-            let k_url = NSString::from_str("NSPrintJobSavingURL");
             let output_path_str = output_path_clone.to_string_lossy();
             let v_url = NSURL::fileURLWithPath(&NSString::from_str(&output_path_str));
-            let _: () = msg_send![&dict, setObject: &*v_url, forKey: &*k_url];
-
-            let k_printer_name = NSString::from_str("Generic");
-            let printer_class = match AnyClass::get(c"NSPrinter") {
-                Some(c) => c,
-                None => {
-                    let _: () = msg_send![&*target_webview, removeFromSuperview];
-                    let _ = result_tx.send(Err("无法获取 NSPrinter 类".to_string()));
-                    return;
-                }
-            };
-            let printer: Option<Retained<NSPrinter>> = msg_send![printer_class, printerWithName: &*k_printer_name];
-            
-            if let Some(p) = printer {
-                 let _: () = msg_send![&print_info, setPrinter: &*p];
-            } else {
-                 warn!("无法创建 'Generic' 打印机");
-            }
+            let _: () = msg_send![&dict, setObject: &*v_url, forKey: NSPrintJobSavingURL];
 
             print_info.setScalingFactor(1.0);
 
@@ -466,35 +411,22 @@ pub async fn print_native_with_html_mac_print_operation<R: Runtime>(
             let _: () = msg_send![&print_info, setOrientation: 0isize];
             print_info.setVerticallyCentered(false);
             print_info.setHorizontallyCentered(false);
+            print_info.setHorizontalPagination(NSPrintingPaginationMode::Automatic);
+            print_info.setVerticalPagination(NSPrintingPaginationMode::Automatic);
 
             let print_op: Retained<NSPrintOperation> = target_webview.printOperationWithPrintInfo(&print_info);
             print_op.setShowsPrintPanel(false);
             print_op.setShowsProgressPanel(false);
+            print_op.setCanSpawnSeparateThread(false);
+            print_op.setJobTitle(Some(&NSString::from_str("QuickOutline PDF")));
 
-            let ns_window: Option<Retained<AnyObject>> = msg_send![&*target_webview, window];
-
-            let result = if let Some(win) = ns_window {
-                let null_ptr: *mut c_void = std::ptr::null_mut();
-                let _: () = msg_send![
-                    &print_op,
-                    runOperationModalForWindow: &*win,
-                    delegate: null_ptr,
-                    didRunSelector: null_ptr,
-                    contextInfo: null_ptr
-                ];
-
-                if output_path_clone.exists() {
-                    Ok(path_str_clone.clone())
-                } else {
-                    Err("打印操作完成但 PDF 文件未创建".to_string())
-                }
+            let success = print_op.runOperation();
+            let result = if success && output_path_clone.exists() {
+                Ok(path_str_clone.clone())
+            } else if success {
+                Err("NSPrintOperation completed but PDF file was not created".to_string())
             } else {
-                let success: bool = print_op.runOperation();
-                if success && output_path_clone.exists() {
-                    Ok(path_str_clone.clone())
-                } else {
-                    Err("NSPrintOperation 失败或无窗口上下文".to_string())
-                }
+                Err("NSPrintOperation failed".to_string())
             };
 
             let _: () = msg_send![&target_webview, removeFromSuperview];
