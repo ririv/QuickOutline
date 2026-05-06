@@ -226,8 +226,6 @@ async fn get_print_workspace_path<R: Runtime>(app: AppHandle<R>) -> Result<Strin
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let pdf_worker = pdf::manager::init_pdf_worker();
-
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default()
             .level(log::LevelFilter::Warn) // Global default: only Warn/Error
@@ -241,8 +239,7 @@ pub fn run() {
         .plugin(tauri_plugin_cli::init())
         .manage(external_editor::ExternalEditorState::new())
         .manage(static_server::LocalServerState::new())
-        .manage(pdf_worker.clone())
-        .register_uri_scheme_protocol("pdfstream", move |_app, request| {
+        .register_uri_scheme_protocol("pdfstream", move |app, request| {
             let uri = request.uri();
             let url_str = uri.to_string();
             
@@ -266,7 +263,11 @@ pub fn run() {
             let scale = pairs.get("scale").and_then(|v| v.parse::<f32>().ok()).unwrap_or(1.0);
 
             if let (Some(path), Some(page_index)) = (path, page_index) {
-                let state = pdf_worker.clone();
+                let Some(state) = app.app_handle().try_state::<pdf::manager::PdfWorker>() else {
+                    error!("PDF worker state is not initialized");
+                    return error_response(StatusCode::INTERNAL_SERVER_ERROR, b"PDF worker state is not initialized".to_vec());
+                };
+                let state = state.inner().clone();
                 
                 // Execute render synchronously
                 let result = tauri::async_runtime::block_on(async {
@@ -310,7 +311,16 @@ pub fn run() {
 
             // Start local static server
             // Pass the resources path ("resources" subfolder inside the resource dir)
-            let resources_path = app.handle().path().resource_dir().ok().map(|p| p.join("resources"));
+            let resource_dir = app.handle().path().resource_dir().ok();
+            let resources_path = resource_dir.as_ref().map(|p| p.join("resources"));
+            let pdfium_search_paths = resource_dir
+                .as_ref()
+                .map(|p| vec![p.join("libs"), p.clone()])
+                .unwrap_or_default();
+            pdf::pdfium_render::configure_pdfium_search_paths(pdfium_search_paths);
+            if !app.manage(pdf::manager::init_pdf_worker()) {
+                return Err("Failed to initialize PDF worker state".into());
+            }
             static_server::start_server(app.handle().clone(), workspace_path, resources_path);
 
             // (可选) 调试时自动打开控制台
