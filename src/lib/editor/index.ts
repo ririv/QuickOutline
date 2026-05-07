@@ -12,7 +12,7 @@ import { bracketMatching } from '@codemirror/language';
 import { classHighlighter } from '@lezer/highlight';
 
 import { myHighlightStyle, baseTheme, codeBlockSyntaxHighlighting, gridTableTheme, academicTableTheme, vsCodeLightHighlightStyle, themeVariables } from './theme';
-import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState, previewModeState, setPreviewMode } from './extensions';
+import { livePreviewState, livePreviewView, MathExtension, mathTooltip, focusState, setFocusState } from './extensions';
 import { markdownKeymap } from './commands';
 import { tableKeymap } from './table-helper';
 import { linkHeadingCompletion } from './autocomplete';
@@ -28,7 +28,7 @@ export interface MarkdownEditorOptions {
     parent: HTMLElement;
 }
 
-export type EditorMode = 'live' | 'source' | 'rich-source' | 'preview';
+export type EditorMode = 'live' | 'source' | 'rich-source';
 
 // Define a type for the editor's exposeable styles configuration
 export type StylesConfig = {
@@ -41,7 +41,6 @@ export class MarkdownEditor {
     private extensionCompartment = new Compartment();
     private styleCompartment = new Compartment();
     private paddingCompartment = new Compartment(); // New: Compartment for dynamic padding
-    private editableCompartment = new Compartment(); // New: Compartment for editable state
     private currentMode: EditorMode;
     
     // Parser State
@@ -63,7 +62,7 @@ export class MarkdownEditor {
         };
 
         // Determine initial extensions based on mode (Live Preview)
-        const initialLivePreviewExtensions = (this.currentMode === 'live' || this.currentMode === 'preview') 
+        const initialLivePreviewExtensions = this.currentMode === 'live'
             ? [livePreviewState, livePreviewView] 
             : [];
 
@@ -111,10 +110,6 @@ export class MarkdownEditor {
                 closeBrackets(),
                 showTooltip.compute(['selection'], mathTooltip), // Enable Math Tooltip
                 focusState, // Track focus state
-                previewModeState, // Track preview mode state
-                
-                // Initial editable state (false if starting in preview mode)
-                this.editableCompartment.of(EditorView.editable.of(this.currentMode !== 'preview')),
 
                 markdown({
                     base: markdownLanguage,
@@ -157,19 +152,14 @@ export class MarkdownEditor {
             state: startState,
             parent: options.parent
         });
-        
-        // If initial mode is preview, enforce it immediately (though state above sets editable, we need setPreviewMode for decorators)
-        if (this.currentMode === 'preview') {
-             this.view.dispatch({ effects: setPreviewMode.of(true) });
-        }
     }
 
     setMode(mode: EditorMode) {
         this.currentMode = mode;
         const effects: StateEffect<unknown>[] = []; // Explicitly type the effects array
 
-        // Configure Extensions (Preview logic)
-        if (mode === 'live' || mode === 'preview') {
+        // Configure live preview extensions
+        if (mode === 'live') {
             effects.push(this.extensionCompartment.reconfigure([livePreviewState, livePreviewView]));
         } else {
             effects.push(this.extensionCompartment.reconfigure([]));
@@ -187,15 +177,6 @@ export class MarkdownEditor {
             ];
 
         effects.push(this.styleCompartment.reconfigure(newSyntaxHighlighting));
-        
-        // Handle Preview Mode Specifics
-        if (mode === 'preview') {
-            effects.push(setPreviewMode.of(true));
-            effects.push(this.editableCompartment.reconfigure(EditorView.editable.of(false)));
-        } else {
-            effects.push(setPreviewMode.of(false));
-            effects.push(this.editableCompartment.reconfigure(EditorView.editable.of(true)));
-        }
 
         this.view.dispatch({ effects });
     }

@@ -64,25 +64,13 @@ export const focusState = StateField.define<boolean>({
     }
 });
 
-// --- Preview Mode State Field ---
-export const setPreviewMode = StateEffect.define<boolean>();
-export const previewModeState = StateField.define<boolean>({
-    create() { return false; },
-    update(val, tr) {
-        for (let e of tr.effects) {
-            if (e.is(setPreviewMode)) return e.value;
-        }
-        return val;
-    }
-});
-
 // 1. StateField for Block Replacements
 export const livePreviewState = StateField.define<DecorationSet>({
     create(state) {
         return buildBlockDecorations(state);
     },
     update(decorations, tr) {
-        if (tr.docChanged || tr.selection || tr.effects.some(e => e.is(setFocusState) || e.is(setPreviewMode))) {
+        if (tr.docChanged || tr.selection || tr.effects.some(e => e.is(setFocusState))) {
             return buildBlockDecorations(tr.state);
         }
         return decorations;
@@ -95,7 +83,6 @@ function buildBlockDecorations(state: EditorState) {
     const selection = state.selection.main;
     // state.field(field, false) returns T | undefined. Ensure boolean.
     const hasFocus = state.field(focusState, false) || false;
-    const forcePreview = state.field(previewModeState, false) || false;
     const tree = syntaxTree(state);
 
     tree.iterate({
@@ -104,8 +91,7 @@ function buildBlockDecorations(state: EditorState) {
             const nodeTo = node.to;
             
             let isCursorOverlapping = false;
-            // If in preview mode, we NEVER consider the cursor overlapping (always render widgets)
-            if (!forcePreview && hasFocus) {
+            if (hasFocus) {
                 isCursorOverlapping = (selection.from >= nodeFrom && selection.from <= nodeTo) || 
                                       (selection.to >= nodeFrom && selection.to <= nodeTo) ||
                                       (selection.from <= nodeFrom && selection.to >= nodeTo);
@@ -116,8 +102,7 @@ function buildBlockDecorations(state: EditorState) {
                 node,
                 builder,
                 isCursorOverlapping,
-                hasFocus,
-                forcePreview
+                hasFocus
             };
 
             for (const provider of blockProviders) {
@@ -147,7 +132,6 @@ export const livePreviewView = ViewPlugin.fromClass(class {
         const { state } = view;
         const selection = state.selection.main;
         const hasFocus = view.hasFocus;
-        const forcePreview = state.field(previewModeState, false) || false;
 
         for (const { from, to } of view.visibleRanges) {
             syntaxTree(state).iterate({
@@ -157,7 +141,7 @@ export const livePreviewView = ViewPlugin.fromClass(class {
                     const nodeTo = node.to;
                     
                     let isCursorOverlapping = false;
-                    if (!forcePreview && hasFocus) {
+                    if (hasFocus) {
                         isCursorOverlapping = (selection.from >= nodeFrom && selection.from <= nodeTo) || 
                                               (selection.to >= nodeFrom && selection.to <= nodeTo) ||
                                               (selection.from <= nodeFrom && selection.to >= nodeTo);
@@ -172,8 +156,7 @@ export const livePreviewView = ViewPlugin.fromClass(class {
                         node,
                         builder,
                         isCursorOverlapping,
-                        hasFocus,
-                        forcePreview
+                        hasFocus
                     };
 
                     for (const provider of inlineProviders) {
