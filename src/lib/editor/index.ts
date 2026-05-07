@@ -50,7 +50,7 @@ export class MarkdownEditor {
     private _stylesConfig: StylesConfig; // Store editor's current styles configuration
 
     constructor(options: MarkdownEditorOptions) {
-        this.currentMode = options.initialMode || 'live'; // Set initial mode
+        this.currentMode = options.initialMode || 'source'; // Set initial mode
         
         // Initialize parser with default config
         this.mdParser = createMdParser(this.currentParserConfig);

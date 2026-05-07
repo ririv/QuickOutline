@@ -11,7 +11,7 @@
 
     let {
         value = $bindable(''),
-        mode = $bindable('live'),
+        mode = $bindable('source'),
         stylesConfig = $bindable({ tableStyle: 'grid' }),
         onchange
     }: Props = $props();
