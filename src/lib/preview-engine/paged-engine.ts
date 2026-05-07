@@ -141,6 +141,10 @@ export class PagedEngine {
     ) {
         // Check Cancellation: Start
         if (token !== this.latestRenderToken) return;
+        if (!container.isConnected || container.getClientRects().length === 0) {
+            console.warn("[PagedEngine] Skipping render because the preview container is not layoutable.");
+            return;
+        }
 
         // Initialize buffers if needed
         if (!this.bufferA || !this.bufferB) {

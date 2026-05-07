@@ -11,6 +11,32 @@
   
     let container: HTMLDivElement;
     let engine: PagedEngine;
+    let lastRenderedPayload: typeof payload | null = null;
+    let visibilityRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+    let wasActive = true;
+
+    function canRenderPagedPreview() {
+        return isActive && container?.isConnected && container.getClientRects().length > 0;
+    }
+
+    function renderPayload(data: typeof payload) {
+        lastRenderedPayload = data;
+        engine.update(data, container, (duration) => {
+            initVirtualization();
+            if (onRenderComplete) onRenderComplete(duration);
+        }, async (buffer) => {
+            // Fix dots on the hidden buffer BEFORE it becomes visible
+            fixDots(DOT_GAP, buffer);
+
+            // Wait for fixDots's internal requestAnimationFrame to execute
+            // We use a double RAF to ensure the DOM update has been scheduled and processed
+            return new Promise<void>(resolve => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => resolve());
+                });
+            });
+        });
+    }
 
     onMount(() => {
         engine = new PagedEngine();
@@ -20,22 +46,8 @@
   
     // 监听 payload 变化并触发渲染
     // 使用 $effect 或 reactive statement
-    $: if (container && payload && engine) {
-        engine.update(payload, container, (duration) => {
-            initVirtualization();
-            if (onRenderComplete) onRenderComplete(duration);
-        }, async (buffer) => {
-            // Fix dots on the hidden buffer BEFORE it becomes visible
-            fixDots(DOT_GAP, buffer);
-            
-            // Wait for fixDots's internal requestAnimationFrame to execute
-            // We use a double RAF to ensure the DOM update has been scheduled and processed
-            return new Promise<void>(resolve => {
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => resolve());
-                });
-            });
-        });
+    $: if (container && payload && engine && canRenderPagedPreview() && payload !== lastRenderedPayload) {
+        renderPayload(payload);
     }
 
     // --- Virtualization Logic ---
@@ -116,20 +128,30 @@
     // Reactively update visibility and virtualization when isActive changes
     $: if (engine) {
         engine.setVisible(isActive);
-        
-        if (isActive) {
-            // Re-enable virtualization when tab becomes active
-            // We use a small timeout to let the display:none toggle settle
-            setTimeout(() => {
-                 if (isActive) initVirtualization();
-            }, 0);
-        } else {
-            // Disconnect observer when tab is hidden to save resources
+
+        if (!isActive) {
+            wasActive = false;
             if (observer) {
                 observer.disconnect();
                 observer = null;
             }
+            if (visibilityRefreshTimer) {
+                clearTimeout(visibilityRefreshTimer);
+                visibilityRefreshTimer = null;
+            }
         }
+    }
+
+    $: if (engine && isActive && !wasActive && !visibilityRefreshTimer) {
+        wasActive = true;
+        visibilityRefreshTimer = setTimeout(() => {
+            visibilityRefreshTimer = null;
+            if (canRenderPagedPreview() && payload && payload !== lastRenderedPayload) {
+                renderPayload(payload);
+            } else if (canRenderPagedPreview()) {
+                initVirtualization();
+            }
+        }, 0);
     }
   
     onDestroy(() => {
@@ -139,6 +161,10 @@
         }
         standardVisualSize = null;
         standardLogicalSize = null;
+        if (visibilityRefreshTimer) {
+            clearTimeout(visibilityRefreshTimer);
+            visibilityRefreshTimer = null;
+        }
         engine?.destroy();
     });
   </script>

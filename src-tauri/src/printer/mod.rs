@@ -180,7 +180,7 @@ pub async fn print_to_pdf<R: Runtime>(
                     {
                          #[cfg(target_os = "macos")]
                          {
-                            native::print_native_with_html_mac_print_operation(window, html_str, output_path, dimensions).await
+                            native::print_native_with_html_mac_wkpdf(window, html_str, output_path, dimensions).await
                          }
                          #[cfg(target_os = "windows")]
                          {
