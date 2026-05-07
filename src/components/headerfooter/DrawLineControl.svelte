@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ArrowPopup from '../controls/ArrowPopup.svelte';
+    import ArrowPopup from 'shared-kit/controls/ArrowPopup.svelte';
 
     interface Props {
         drawLine?: boolean;

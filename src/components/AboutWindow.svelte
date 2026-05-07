@@ -1,5 +1,5 @@
 <script lang="ts">
-    import StyledModal from './controls/StyledModal.svelte';
+    import StyledModal from 'shared-kit/controls/StyledModal.svelte';
     import Icon from './Icon.svelte';
 
     let { showAboutModal = $bindable() } = $props<{ showAboutModal: boolean }>();

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { setContext } from 'svelte';
-  import { clickOutside } from '@/lib/actions/clickOutside.ts';
+  import { clickOutside } from 'shared-kit/actions/clickOutside';
 
   interface Props {
     children?: import('svelte').Snippet;

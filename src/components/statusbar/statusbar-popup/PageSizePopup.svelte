@@ -2,9 +2,9 @@
     import type { PageSize } from '@/lib/types/page.ts';
     import { PAPER_FORMAT_OPTIONS } from '@/lib/types/page.ts';
     import type { PageSizeDetectionState } from '@/lib/pdf-processing/usePdfPageSizeDetection.svelte.js';
-    import ArrowPopup from '../../controls/ArrowPopup.svelte';
-    import StyledSelect from '../../controls/StyledSelect.svelte';
-    import StyledSwitch from '../../controls/StyledSwitch.svelte';
+    import ArrowPopup from 'shared-kit/controls/ArrowPopup.svelte';
+    import StyledSelect from 'shared-kit/controls/StyledSelect.svelte';
+    import StyledSwitch from 'shared-kit/controls/StyledSwitch.svelte';
     import Icon from '../../Icon.svelte';
 
     interface Props {

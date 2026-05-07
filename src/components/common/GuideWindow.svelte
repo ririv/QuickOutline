@@ -1,5 +1,5 @@
 <script lang="ts">
-    import DraggableWindow from '../controls/DraggableWindow.svelte';
+    import DraggableWindow from 'shared-kit/controls/DraggableWindow.svelte';
     import Icon from '@/components/Icon.svelte';
 
     interface Props {

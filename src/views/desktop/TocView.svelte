@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SplitPane from '../../components/controls/SplitPane.svelte';
+  import SplitPane from 'shared-kit/controls/SplitPane.svelte';
   import Preview from '../../components/Preview.svelte';
   import TocEditor from '../../components/editor/TocEditor.svelte';
   import TocStatusBar from './TocStatusBar.svelte';

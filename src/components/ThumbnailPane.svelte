@@ -1,10 +1,10 @@
 <script lang="ts">
     import landscapeIcon from '../assets/icons/landscape.svg';
-    import StyledSlider from './controls/StyledSlider.svelte';
+    import StyledSlider from 'shared-kit/controls/StyledSlider.svelte';
     import { docStore } from '@/stores/docStore.svelte';
     import PreviewPopup from './PreviewPopup.svelte';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte';
-    import Tooltip from './controls/Tooltip.svelte';
+    import Tooltip from 'shared-kit/controls/Tooltip.svelte';
     import { pdfRenderService } from '@/lib/services/PdfRenderService';
     import { onDestroy } from 'svelte';
 

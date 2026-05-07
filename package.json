@@ -2,6 +2,9 @@
   "name": "quickoutline",
   "version": "3.0.0-pre",
   "type": "module",
+  "workspaces": [
+    "packages/shared-kit"
+  ],
   "scripts": {
     "dev": "vite dev",
     "dev:allnet": "vite dev --host",
@@ -64,6 +67,7 @@
     "pagedjs": "^0.4.3",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.4.449",
+    "shared-kit": "file:packages/shared-kit",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {

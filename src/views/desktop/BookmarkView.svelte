@@ -2,7 +2,7 @@
     import TextSubView from '../../components/bookmark/TextSubView.svelte';
     import TreeSubView from '../../components/bookmark/TreeSubView.svelte';
     import BookmarkBottomPane from '../../components/bookmark/BookmarkBottomPane.svelte';
-    import SplitPane from '../../components/controls/SplitPane.svelte';
+    import SplitPane from 'shared-kit/controls/SplitPane.svelte';
     import { useBookmarkActions, type BookmarkViewMode } from '../shared/bookmark.svelte.ts';
     
     let currentView = $state<BookmarkViewMode>('text');

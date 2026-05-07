@@ -17,7 +17,9 @@
     "allowArbitraryExtensions": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "shared-kit": ["packages/shared-kit/src/index.ts"],
+      "shared-kit/*": ["packages/shared-kit/src/*"]
     },
     "types": ["vite/client"],
     "jsx": "react",
@@ -25,6 +27,16 @@
     "jsxFragmentFactory": "Fragment",
     "allowImportingTsExtensions": true
   },
-  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "src/**/*.tsx"],
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.ts",
+    "src/**/*.js",
+    "src/**/*.svelte",
+    "src/**/*.tsx",
+    "packages/shared-kit/src/**/*.d.ts",
+    "packages/shared-kit/src/**/*.ts",
+    "packages/shared-kit/src/**/*.js",
+    "packages/shared-kit/src/**/*.svelte"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

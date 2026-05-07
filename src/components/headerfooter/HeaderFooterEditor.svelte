@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ArrowPopup from '../controls/ArrowPopup.svelte';
+    import ArrowPopup from 'shared-kit/controls/ArrowPopup.svelte';
     import PositionDiagram from '../PositionDiagram.svelte';
     import PageNumberHint from './PageNumberHint.svelte';
     import DrawLineControl from './DrawLineControl.svelte';

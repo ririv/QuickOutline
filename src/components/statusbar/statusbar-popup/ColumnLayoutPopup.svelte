@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ArrowPopup from '../../controls/ArrowPopup.svelte';
+  import ArrowPopup from 'shared-kit/controls/ArrowPopup.svelte';
   import Icon from '@/components/Icon.svelte';
   import { defaultColumnLayout, type ColumnLayoutConfig } from '@/lib/types/page.ts';
   

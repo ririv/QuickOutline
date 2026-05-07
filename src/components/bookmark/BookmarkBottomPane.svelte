@@ -15,10 +15,10 @@
     import SetContentsPopup from './SetContentsPopup.svelte';
     import OffsetPopup from '@/components/statusbar/statusbar-popup/OffsetPopup.svelte';
     import type { ViewScaleType } from '@/lib/types/pdf';
-    import GraphButton from '../controls/GraphButton.svelte';
-    import StyledInput from '../controls/StyledInput.svelte';
+    import GraphButton from 'shared-kit/controls/GraphButton.svelte';
+    import StyledInput from 'shared-kit/controls/StyledInput.svelte';
     import { confirmState } from '@/stores/confirm.svelte';
-    import { ripple } from '@/lib/actions/ripple';
+    import { ripple } from 'shared-kit/actions/ripple';
     
     import { outlineService } from '@/lib/services/OutlineService';
     import { saveOutline, extractToc } from '@/lib/api/rust_pdf';

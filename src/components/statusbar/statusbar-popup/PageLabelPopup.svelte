@@ -1,8 +1,8 @@
 <script lang="ts">
-  import ArrowPopup from '../../controls/ArrowPopup.svelte';
+  import ArrowPopup from 'shared-kit/controls/ArrowPopup.svelte';
   import { type PageLabel, PageLabelNumberingStyle, pageLabelStyleMap } from "@/lib/types/page-label.ts";
-  import StyledSelect from '@/components/controls/StyledSelect.svelte';
-  import StyledInput from '@/components/controls/StyledInput.svelte';
+  import StyledSelect from 'shared-kit/controls/StyledSelect.svelte';
+  import StyledInput from 'shared-kit/controls/StyledInput.svelte';
   import PageLabelPreviewRow from '@/components/pagelabel/PageLabelPreviewRow.svelte';
 
   interface Props {

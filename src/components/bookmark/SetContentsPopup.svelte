@@ -1,6 +1,6 @@
 <script lang="ts">
-    import ArrowPopup from "../controls/ArrowPopup.svelte";
-    import StyledRadioButtonGroup from '../controls/StyledRadioButtonGroup.svelte';
+    import ArrowPopup from "shared-kit/controls/ArrowPopup.svelte";
+    import StyledRadioButtonGroup from 'shared-kit/controls/StyledRadioButtonGroup.svelte';
     import fitToHeightIcon from '@/assets/icons/fit-to-height.svg';
     import fitToWidthIcon from '@/assets/icons/fit-to-width.svg';
     import fitToPageIcon from '@/assets/icons/fit-to-page.svg';

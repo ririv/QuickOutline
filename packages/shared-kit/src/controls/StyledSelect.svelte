@@ -1,5 +1,5 @@
 <script lang="ts" generics="T">
-  import { clickOutside } from '@/lib/actions/clickOutside';
+  import { clickOutside } from '../actions/clickOutside';
 
   interface Props<T> {
     options: T[];

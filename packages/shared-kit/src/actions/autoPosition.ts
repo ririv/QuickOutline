@@ -1,4 +1,4 @@
-// web/src/lib/actions/autoPosition.ts
+// packages/shared-kit/src/actions/autoPosition.ts
 function getScrollParent(node: HTMLElement): HTMLElement | null {
   if (!node) return null;
   

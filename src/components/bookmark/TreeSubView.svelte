@@ -12,7 +12,7 @@
     import { DragController } from '@/lib/drag-drop/DragController.svelte';
     import { setupTauriDragDrop } from '@/lib/drag-drop/tauriDragDrop';
     import Icon from '../Icon.svelte';
-    import ContextMenu from '../controls/ContextMenu.svelte';
+    import ContextMenu from 'shared-kit/controls/ContextMenu.svelte';
     import { removeNode, insertNode } from '@/lib/utils/treeUtils';
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;

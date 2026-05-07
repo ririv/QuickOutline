@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SplitPane from '../../components/controls/SplitPane.svelte';
+  import SplitPane from 'shared-kit/controls/SplitPane.svelte';
   import MdEditor from '../../components/editor/MdEditor.svelte';
   import Preview from '../../components/Preview.svelte';
   import MarkdownStatusBar from './MarkdownStatusBar.svelte';

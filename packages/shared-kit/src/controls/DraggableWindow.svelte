@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { draggable } from '@/lib/actions/draggable';
-    import { portal } from '@/lib/actions/portal';
+    import { draggable } from '../actions/draggable';
+    import { portal } from '../actions/portal';
     import { fade } from 'svelte/transition';
 
     interface Props {

@@ -2,9 +2,9 @@
     import Icon from "@/components/Icon.svelte";
     import addIcon from '@/assets/icons/plus.svg?raw';
     import updateIcon from '@/assets/icons/edit.svg?raw';
-    import StyledSelect from '@/components/controls/StyledSelect.svelte';
-    import StyledInput from "@/components/controls/StyledInput.svelte";
-    import { ripple } from '@/lib/actions/ripple.ts';
+    import StyledSelect from 'shared-kit/controls/StyledSelect.svelte';
+    import StyledInput from "shared-kit/controls/StyledInput.svelte";
+    import { ripple } from 'shared-kit/actions/ripple';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
     import { pageLabelStyleMap, type PageLabel } from '@/lib/types/page-label.ts';
     import { usePageLabelActions } from '@/views/shared/pagelabel.svelte.ts';

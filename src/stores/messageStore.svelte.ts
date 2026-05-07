@@ -1,4 +1,4 @@
-import type { MessageType, Message } from '@/components/controls/Message.svelte';
+import type { MessageType, Message } from 'shared-kit/controls/Message.svelte';
 
 class MessageStore {
     list = $state<Message[]>([]);

@@ -1,6 +1,6 @@
 <script lang="ts">
     import '@/assets/global.css';
-    import SplitPane from '../../components/controls/SplitPane.svelte';
+    import SplitPane from 'shared-kit/controls/SplitPane.svelte';
     import PageLabelPreviewPane from '../../components/PageLabelPreviewPane.svelte';
     import Icon from "@/components/Icon.svelte";
     import deleteIcon from '../../assets/icons/delete-item.svg?raw';
@@ -10,11 +10,11 @@
     import editIcon from '../../assets/icons/edit.svg?raw';
     import labelSimpleIcon from '../../assets/icons/label-simple.svg?raw';
 
-    import { ripple } from '@/lib/actions/ripple.ts';
+    import { ripple } from 'shared-kit/actions/ripple';
     import { docStore } from '@/stores/docStore.svelte.js';
     import { pageLabelStore } from '@/stores/pageLabelStore.svelte.js';
     import { pageLabelStyleMap, generateRulePreview } from '@/lib/types/page-label.ts';
-    import GraphButton from "@/components/controls/GraphButton.svelte";
+    import GraphButton from "shared-kit/controls/GraphButton.svelte";
 
     import { usePageLabelActions } from '../shared/pagelabel.svelte.ts';
     import PageLabelForm from '@/components/pagelabel/PageLabelForm.svelte';

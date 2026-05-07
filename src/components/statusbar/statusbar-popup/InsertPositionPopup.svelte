@@ -1,7 +1,7 @@
 <script lang="ts">
-  import ArrowPopup from '../../controls/ArrowPopup.svelte';
-  import StyledInput from '../../controls/StyledInput.svelte';
-  import StyledSwitch from '../../controls/StyledSwitch.svelte';
+  import ArrowPopup from 'shared-kit/controls/ArrowPopup.svelte';
+  import StyledInput from 'shared-kit/controls/StyledInput.svelte';
+  import StyledSwitch from 'shared-kit/controls/StyledSwitch.svelte';
 
   interface Props {
     insertPos?: number;

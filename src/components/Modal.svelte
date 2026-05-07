@@ -1,5 +1,5 @@
 <script lang="ts">
-    import StyledModal from './controls/StyledModal.svelte';
+    import StyledModal from 'shared-kit/controls/StyledModal.svelte';
 
     let { isOpen = $bindable(false), title, blur = false, children }: { isOpen: boolean, title: string, blur?: boolean, children: any } = $props();
 

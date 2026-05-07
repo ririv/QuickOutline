@@ -1,7 +1,7 @@
 <script lang="ts">
     import { appStore } from '@/stores/appStore.svelte';
     import { printStore } from '@/stores/printStore.svelte';
-    import StyledSelect from '@/components/controls/StyledSelect.svelte';
+    import StyledSelect from 'shared-kit/controls/StyledSelect.svelte';
 
     const printModeOptions = [
         { label: 'Native (iOS Compatible)', value: 'Native' },

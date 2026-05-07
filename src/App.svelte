@@ -7,10 +7,10 @@
     import TocViewView from './views/desktop/TocView.svelte';
     import MarkDownView from './views/desktop/MarkDownView.svelte';
     import ViewerView from './views/desktop/ViewerView.svelte';
-    import MessageContainer from './components/controls/MessageContainer.svelte';
+    import MessageContainer from 'shared-kit/controls/MessageContainer.svelte';
     import FileHeader from './views/desktop/FileHeader.svelte';
     import Settings from './components/Settings.svelte';
-    import ConfirmDialog from './components/controls/ConfirmDialog.svelte';
+    import ConfirmDialog from 'shared-kit/controls/ConfirmDialog.svelte';
     import { provideExternalEditor } from '@/lib/bridge/useExternalEditor.svelte';
     import { messageStore } from '@/stores/messageStore.svelte';
     import { confirmState } from '@/stores/confirm.svelte';

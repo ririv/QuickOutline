@@ -1,9 +1,9 @@
 <script lang="ts">
-    import ArrowPopup from '../controls/ArrowPopup.svelte';
+    import ArrowPopup from 'shared-kit/controls/ArrowPopup.svelte';
     import Icon from '@/components/Icon.svelte';
-    import StyledSelect from '@/components/controls/StyledSelect.svelte';
+    import StyledSelect from 'shared-kit/controls/StyledSelect.svelte';
     import { PageLabelNumberingStyle, pageLabelStyleMap, type PageNumberStyle } from '@/lib/types/page-label.ts';
-    import { clickOutside } from '@/lib/actions/clickOutside';
+    import { clickOutside } from 'shared-kit/actions/clickOutside';
     import codeIcon from '@/assets/icons/code.svg?raw';
     import previewIcon from '@/assets/icons/eye.svg?raw';
 

@@ -2,7 +2,7 @@
   import StatusBar from '@/components/statusbar/StatusBar.svelte';
   import StatusBarGroup from '@/components/statusbar/StatusBarGroup.svelte';
   import Icon from '@/components/Icon.svelte';
-  import Tooltip from '@/components/controls/Tooltip.svelte';
+  import Tooltip from 'shared-kit/controls/Tooltip.svelte';
   
   import StatusItemOffset from '@/components/statusbar/statusbar-items/StatusItemOffset.svelte';
   import StatusItemPageLabel from '@/components/statusbar/statusbar-items/StatusItemPageLabel.svelte';

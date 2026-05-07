@@ -1,8 +1,8 @@
 <script lang="ts">
-  import ArrowPopup from '../../controls/ArrowPopup.svelte';
-  import StyledInput from '../../controls/StyledInput.svelte';
+  import ArrowPopup from 'shared-kit/controls/ArrowPopup.svelte';
+  import StyledInput from 'shared-kit/controls/StyledInput.svelte';
   import PreviewPopup from '../../PreviewPopup.svelte';
-  import VirtualList from '../../controls/VirtualList.svelte';
+  import VirtualList from 'shared-kit/controls/VirtualList.svelte';
   import LazyPdfImage from '../../common/LazyPdfImage.svelte';
   import { docStore } from '@/stores/docStore.svelte.js';
   import { pdfRenderService } from '@/lib/services/PdfRenderService.ts';

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { ripple } from '@/lib/actions/ripple';
+  import { ripple } from '../actions/ripple';
 
   type ButtonType = 'primary' | 'important';
   type RippleColor = 'dark' | 'light';

@@ -9,7 +9,7 @@
     import formatIcon from '@/assets/icons/format.svg'; 
     import sequentialIcon from '@/assets/icons/mode-sequential.svg';
     import indentIcon from '@/assets/icons/mode-indent.svg';
-    import IconSwitch from '../controls/IconSwitch.svelte';
+    import IconSwitch from 'shared-kit/controls/IconSwitch.svelte';
     import BookmarkEditor from '../editor/BookmarkEditor.svelte';
 
     const modeOptions = [

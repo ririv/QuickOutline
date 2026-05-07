@@ -11,6 +11,7 @@ import mdx from '@mdx-js/rollup';
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 
 const host = process.env.TAURI_DEV_HOST;
+
 export default defineConfig({
   define: {
     '__APP_VERSION__': JSON.stringify(packageJson.version)
@@ -57,6 +58,18 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     host: host || false,
+    headers: {
+      'Cache-Control': 'no-store, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    },
+    fs: {
+      allow: [
+        resolve(__dirname, './src'),
+        resolve(__dirname, './packages/shared-kit'),
+        resolve(__dirname, './node_modules')
+      ]
+    },
     hmr: host
         ? {
           protocol: "ws",
@@ -70,9 +83,16 @@ export default defineConfig({
     },
   },
   resolve: {
+    dedupe: ['svelte'],
     alias: {
       '@': resolve(__dirname, './src'),
       '/node_modules': resolve(__dirname, './node_modules')
     }
+  },
+  optimizeDeps: {
+    exclude: [
+      'shared-kit',
+      'svelte'
+    ]
   }
 });

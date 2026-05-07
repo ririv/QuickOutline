@@ -1,8 +1,8 @@
 <script lang="ts">
   import { type Snippet, onMount } from 'svelte';
-  import { autoPosition } from '@/lib/actions/autoPosition';
-  import { portal } from '@/lib/actions/portal';
-  import { registerPortal } from '@/lib/actions/clickOutside';
+  import { autoPosition } from '../actions/autoPosition';
+  import { portal } from '../actions/portal';
+  import { registerPortal } from '../actions/clickOutside';
 
   interface Props {
     placement?: 'top' | 'bottom'; // top: popup is above trigger (arrow points down); bottom: popup is below trigger (arrow points up)

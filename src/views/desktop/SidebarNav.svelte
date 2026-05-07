@@ -1,7 +1,7 @@
 <script lang="ts">
     import { appStore, FnTab } from '@/stores/appStore.svelte.ts';
     import AboutWindow from '../../components/AboutWindow.svelte';
-    import Tooltip from '../../components/controls/Tooltip.svelte';
+    import Tooltip from 'shared-kit/controls/Tooltip.svelte';
     
     const activeTab = $derived(appStore.activeTab);
     let showAboutModal = $state(false);

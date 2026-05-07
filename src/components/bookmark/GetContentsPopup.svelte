@@ -1,6 +1,6 @@
 <script lang="ts">
-    import ArrowPopup from "../controls/ArrowPopup.svelte";
-    import SegmentedControl from '../controls/SegmentedControl.svelte';
+    import ArrowPopup from "shared-kit/controls/ArrowPopup.svelte";
+    import SegmentedControl from 'shared-kit/controls/SegmentedControl.svelte';
     import bookmarkIcon from '@/assets/icons/bookmark.svg';
     import tocIcon from '@/assets/icons/toc.svg';
 

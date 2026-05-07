@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../packages/shared-kit/src";
 
 @theme {
     --color-el-primary: #409eff;
