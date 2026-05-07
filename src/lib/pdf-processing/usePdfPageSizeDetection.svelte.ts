@@ -5,19 +5,42 @@ import { docStore } from '@/stores/docStore.svelte';
 export interface PageSizeDetectionState {
     suggestedPageSize: PageSize | undefined;
     actualDimensions: { width: number, height: number } | undefined;
+    autoDetect: boolean;
     referencePage: number;
     pageCount: number;
     options: {
         above: number | null;
         below: number | null;
     };
+    setAutoDetect: (enabled: boolean) => void;
     onReferenceChange: (page: number) => void;
 }
 
-export function usePdfPageSizeDetection(getPosition: () => number): PageSizeDetectionState {
+interface PageSizeDetectionOptions {
+    getPageSize?: () => PageSize;
+    setPageSize?: (pageSize: PageSize) => void;
+    onPageSizeChange?: () => void;
+}
+
+function isSamePageSize(a: PageSize, b: PageSize) {
+    if (a.type !== b.type) return false;
+    if (a.type === 'preset' && b.type === 'preset') {
+        return a.size === b.size && a.orientation === b.orientation;
+    }
+    if (a.type === 'custom' && b.type === 'custom') {
+        return Math.abs(a.width - b.width) < 0.1 && Math.abs(a.height - b.height) < 0.1;
+    }
+    return false;
+}
+
+export function usePdfPageSizeDetection(
+    getPosition: () => number,
+    options: PageSizeDetectionOptions = {}
+): PageSizeDetectionState {
     let suggestedPageSize = $state<PageSize | undefined>(undefined);
     let actualDimensions = $state<{ width: number, height: number } | undefined>(undefined);
     let manualRefPage = $state<number | null>(null);
+    let autoDetect = $state(true);
 
     // Watch position change to reset manual override
     $effect(() => {
@@ -75,12 +98,24 @@ export function usePdfPageSizeDetection(getPosition: () => number): PageSizeDete
         }
     });
 
+    $effect(() => {
+        if (!autoDetect || !suggestedPageSize || !options.getPageSize || !options.setPageSize) return;
+        const currentPageSize = options.getPageSize();
+        if (isSamePageSize(currentPageSize, suggestedPageSize)) return;
+        options.setPageSize(suggestedPageSize);
+        options.onPageSizeChange?.();
+    });
+
     return {
         get suggestedPageSize() { return suggestedPageSize },
         get actualDimensions() { return actualDimensions },
+        get autoDetect() { return autoDetect },
         get referencePage() { return info.activePage },
         get pageCount() { return docStore.pageCount },
         get options() { return { above: info.above, below: info.below } },
+        setAutoDetect: (enabled: boolean) => {
+            autoDetect = enabled;
+        },
         onReferenceChange: (p: number) => {
             const count = docStore.pageCount;
             // Allow loose input but clamp before setting

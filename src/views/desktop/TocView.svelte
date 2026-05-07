@@ -28,7 +28,13 @@
   
   let activeTab = $derived(appStore.activeTab);
   
-  const layoutDetection = usePdfPageSizeDetection(() => tocStore.insertionConfig.pos);
+  const layoutDetection = usePdfPageSizeDetection(() => tocStore.insertionConfig.pos, {
+      getPageSize: () => tocStore.pageLayout.pageSize,
+      setPageSize: (pageSize) => {
+          tocStore.pageLayout = { ...tocStore.pageLayout, pageSize };
+      },
+      onPageSizeChange: triggerPreview
+  });
 
   function handleGuide() {
       showGuide = true;

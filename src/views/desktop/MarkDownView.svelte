@@ -13,7 +13,13 @@
   
   const { handleRenderStats, debouncedTrigger, triggerPreview, clearDebounce, updatePreview, handleGenerate, saveContent } = useMarkdownActions();
   
-  const layoutDetection = usePdfPageSizeDetection(() => markdownStore.insertionConfig.pos);
+  const layoutDetection = usePdfPageSizeDetection(() => markdownStore.insertionConfig.pos, {
+      getPageSize: () => markdownStore.pageLayout.pageSize,
+      setPageSize: (pageSize) => {
+          markdownStore.pageLayout = { ...markdownStore.pageLayout, pageSize };
+      },
+      onPageSizeChange: triggerPreview
+  });
   
   let editorComponent: MdEditor;
   let previewComponent: Preview;

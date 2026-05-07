@@ -13,6 +13,7 @@
         onchange?: () => void;
         mode?: 'new' | 'edit';
         autoDetect?: boolean;
+        onAutoDetectChange?: (enabled: boolean) => void;
         detection?: PageSizeDetectionState;
     }
 
@@ -21,7 +22,8 @@
         triggerEl, 
         onchange,
         mode = 'edit',
-        autoDetect = $bindable(true),
+        autoDetect = false,
+        onAutoDetectChange,
         detection
     }: Props = $props();
 
@@ -78,29 +80,8 @@
     }
 
     $effect(() => {
-        if (autoDetect && detection?.suggestedPageSize && mode === 'edit') {
-            const suggested = detection.suggestedPageSize;
-            
-            let isSame = false;
-            // Discriminated union handling
-            if (pageSize.type === 'preset' && suggested.type === 'preset') {
-                isSame = pageSize.size === suggested.size && 
-                         pageSize.orientation === suggested.orientation;
-            } else if (pageSize.type === 'custom' && suggested.type === 'custom') {
-                isSame = Math.abs(pageSize.width - suggested.width) < 0.1 && 
-                         Math.abs(pageSize.height - suggested.height) < 0.1;
-            }
-
-            if (!isSame) {
-                pageSize = suggested;
-                onchange?.();
-            }
-        }
-    });
-
-    $effect(() => {
         if (!detection?.suggestedPageSize && autoDetect) {
-            autoDetect = false;
+            onAutoDetectChange?.(false);
         }
     });
 
@@ -115,6 +96,7 @@
                 orientation: 'portrait'
             };
         }
+        onAutoDetectChange?.(checked);
         handleChange();
     }
 </script>
@@ -127,7 +109,7 @@
                 <div class="auto-switch" class:disabled={!detection?.suggestedPageSize}>
                     <span class="switch-label">Auto</span>
                     <StyledSwitch 
-                        bind:checked={autoDetect} 
+                        checked={autoDetect} 
                         onchange={handleAutoDetectChange} 
                         size="small" 
                         disabled={!detection?.suggestedPageSize}

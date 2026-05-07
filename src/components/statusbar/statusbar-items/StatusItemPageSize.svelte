@@ -19,7 +19,7 @@
     onchange 
   }: Props = $props();
 
-  let pageSizeAutoDetect = $state(true);
+  let pageSizeAutoDetect = $derived(layoutDetection?.autoDetect ?? false);
 
   let summary = $derived.by(() => {
       const format = (num: number) => {
@@ -90,7 +90,8 @@
     {#snippet popup(triggerEl)}
         <PageSizePopup 
             bind:pageSize 
-            bind:autoDetect={pageSizeAutoDetect}
+            autoDetect={pageSizeAutoDetect}
+            onAutoDetectChange={(enabled) => layoutDetection?.setAutoDetect(enabled)}
             {onchange} 
             {triggerEl} 
             {mode}
