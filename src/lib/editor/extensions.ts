@@ -16,14 +16,13 @@ export function mathTooltip(state: EditorState): Tooltip | null {
     const pos = main.head;
     const node = syntaxTree(state).resolveInner(pos, -1);
     
-    if (node.name === 'InlineMath') {
-        const from = node.from;
-        const to = node.to;
-        const text = state.sliceDoc(from, to);
-        const formula = text.slice(1, -1); // Strip $
+    if (node.name === 'InlineMath' || node.name === 'DisplayMath' || node.name === 'BlockMath') {
+        const text = state.sliceDoc(node.from, node.to);
+        const displayMode = node.name !== 'InlineMath';
+        const formula = getMathFormula(text, node.name);
         
         return {
-            pos: from,
+            pos: node.from,
             above: true,
             strictSide: true,
             create: () => {
@@ -39,7 +38,7 @@ export function mathTooltip(state: EditorState): Tooltip | null {
                 try {
                     katex.render(formula, dom, {
                         throwOnError: false,
-                        displayMode: false
+                        displayMode
                     });
                 } catch (e) {
                     dom.textContent = "Invalid Formula";
@@ -50,6 +49,26 @@ export function mathTooltip(state: EditorState): Tooltip | null {
         };
     }
     return null;
+}
+
+function getMathFormula(text: string, nodeName: string) {
+    if (nodeName === 'InlineMath') {
+        return text.slice(1, -1);
+    }
+
+    if (nodeName === 'DisplayMath') {
+        return text.slice(2, -2).trim();
+    }
+
+    const startIdx = text.indexOf('$$');
+    const endIdx = text.lastIndexOf('$$');
+    if (startIdx !== -1 && endIdx !== -1 && startIdx < endIdx) {
+        return text.slice(startIdx + 2, endIdx).trim();
+    }
+    if (startIdx !== -1) {
+        return text.slice(startIdx + 2).trim();
+    }
+    return text.trim();
 }
 
 // --- Focus State Field ---

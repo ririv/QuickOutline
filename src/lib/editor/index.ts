@@ -61,7 +61,7 @@ export class MarkdownEditor {
             ...options.stylesConfig // Override with provided options
         };
 
-        // Determine initial extensions based on mode (Live Preview)
+        // Determine initial live preview extensions based on mode
         const initialLivePreviewExtensions = this.currentMode === 'live'
             ? [livePreviewState, livePreviewView] 
             : [];
@@ -108,7 +108,7 @@ export class MarkdownEditor {
                 bracketMatching(), // Add bracketMatching
                 autocompletion({ override: [linkHeadingCompletion] }), // Custom completion source
                 closeBrackets(),
-                showTooltip.compute(['selection'], mathTooltip), // Enable Math Tooltip
+                showTooltip.compute(['doc', 'selection'], mathTooltip), // Enable Math Tooltip
                 focusState, // Track focus state
 
                 markdown({
@@ -131,7 +131,7 @@ export class MarkdownEditor {
                 tableTheme,
                 this.paddingCompartment.of(initialContentPadding), // Inject dynamic padding theme
 
-                // Dynamic Live Preview Extensions
+                // Dynamic live preview extensions
                 this.extensionCompartment.of(initialLivePreviewExtensions),
 
                 EditorView.domEventHandlers({
