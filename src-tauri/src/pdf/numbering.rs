@@ -71,8 +71,12 @@ impl Numbering {
             PageLabelNumberingStyle::DecimalArabicNumerals => number.to_string(),
             PageLabelNumberingStyle::UppercaseRomanNumerals => Self::to_roman_upper_case(number),
             PageLabelNumberingStyle::LowercaseRomanNumerals => Self::to_roman_lower_case(number),
-            PageLabelNumberingStyle::UppercaseLetters => Self::to_latin_alphabet_number_upper_case(number),
-            PageLabelNumberingStyle::LowercaseLetters => Self::to_latin_alphabet_number_lower_case(number),
+            PageLabelNumberingStyle::UppercaseLetters => {
+                Self::to_latin_alphabet_number_upper_case(number)
+            }
+            PageLabelNumberingStyle::LowercaseLetters => {
+                Self::to_latin_alphabet_number_lower_case(number)
+            }
         };
 
         if let Some(p) = prefix {

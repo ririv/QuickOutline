@@ -1,12 +1,12 @@
-use pdfium_render::prelude::{PdfDocument, Pdfium};
 use anyhow::{Result, format_err};
-use tokio::sync::{mpsc, oneshot};
-use std::thread;
-use log::{info, error, debug};
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
+use log::{debug, error, info};
 use lru::LruCache;
+use pdfium_render::prelude::{PdfDocument, Pdfium};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::num::NonZeroUsize;
+use std::thread;
+use tokio::sync::{mpsc, oneshot};
 
 // SAFETY: 50 is a compile-time constant, non-zero
 const CACHE_SIZE: NonZeroUsize = NonZeroUsize::new(50).unwrap();
@@ -31,10 +31,8 @@ impl PdfSession {
         if self.lopdf_doc.is_none() {
             let start = std::time::Instant::now();
             let doc = match self.mode {
-                LoadMode::DirectFile => {
-                    lopdf::Document::load(&self.path)
-                        .map_err(|e| format_err!("Lopdf load failed: {}", e))?
-                },
+                LoadMode::DirectFile => lopdf::Document::load(&self.path)
+                    .map_err(|e| format_err!("Lopdf load failed: {}", e))?,
                 LoadMode::MemoryBuffer => {
                     if let Some(ptr) = self.memory_ptr {
                         let slice = unsafe { &*ptr };
@@ -45,18 +43,21 @@ impl PdfSession {
                     }
                 }
             };
-            debug!("[PdfSession] First-time lopdf::Document::load took {:?}", start.elapsed());
+            debug!(
+                "[PdfSession] First-time lopdf::Document::load took {:?}",
+                start.elapsed()
+            );
             self.lopdf_doc = Some(doc);
         }
-        self.lopdf_doc.as_mut().ok_or_else(|| format_err!("lopdf_doc is None after loading"))
+        self.lopdf_doc
+            .as_mut()
+            .ok_or_else(|| format_err!("lopdf_doc is None after loading"))
     }
 
     pub fn load_lopdf_doc(&self) -> Result<lopdf::Document> {
         match self.mode {
-            LoadMode::DirectFile => {
-                lopdf::Document::load(&self.path)
-                    .map_err(|e| format_err!("Lopdf load failed: {}", e))
-            },
+            LoadMode::DirectFile => lopdf::Document::load(&self.path)
+                .map_err(|e| format_err!("Lopdf load failed: {}", e)),
             LoadMode::MemoryBuffer => {
                 if let Some(ptr) = self.memory_ptr {
                     let slice = unsafe { &*ptr };
@@ -75,7 +76,9 @@ impl Drop for PdfSession {
         self.pdfium_doc = None;
         self.lopdf_doc = None;
         if let Some(ptr) = self.memory_ptr {
-            unsafe { let _ = Box::from_raw(ptr); }
+            unsafe {
+                let _ = Box::from_raw(ptr);
+            }
             info!("[PdfSession] Freed memory buffer for: {}", self.path);
         }
     }
@@ -97,16 +100,20 @@ impl PdfWorker {
         R: Send + 'static,
     {
         let (tx, rx) = oneshot::channel();
-        
+
         let job = Box::new(move |state: &mut PdfWorkerInternalState| {
             let result = f(state);
             // Ignore error if receiver dropped
             let _ = tx.send(result);
         });
 
-        self.0.send(job).await.map_err(|_| format_err!("PDF Worker is closed"))?;
+        self.0
+            .send(job)
+            .await
+            .map_err(|_| format_err!("PDF Worker is closed"))?;
 
-        rx.await.map_err(|_| format_err!("PDF Worker dropped the response channel"))
+        rx.await
+            .map_err(|_| format_err!("PDF Worker dropped the response channel"))
     }
 }
 
@@ -128,12 +135,22 @@ impl PdfWorkerInternalState {
     }
 
     pub fn get_session(&mut self, path: &str) -> Result<&PdfSession> {
-        self.sessions.get(path).ok_or_else(|| format_err!("Session not found for: {}. Please call load_document first.", path))
+        self.sessions.get(path).ok_or_else(|| {
+            format_err!(
+                "Session not found for: {}. Please call load_document first.",
+                path
+            )
+        })
     }
 
     // Helper to get mutable session
     pub fn get_session_mut(&mut self, path: &str) -> Result<&mut PdfSession> {
-        self.sessions.get_mut(path).ok_or_else(|| format_err!("Session not found for: {}. Please call load_document first.", path))
+        self.sessions.get_mut(path).ok_or_else(|| {
+            format_err!(
+                "Session not found for: {}. Please call load_document first.",
+                path
+            )
+        })
     }
 
     pub fn load_document(&mut self, path: String, mode: LoadMode) -> Result<()> {
@@ -144,7 +161,9 @@ impl PdfWorkerInternalState {
 
         let session = match mode {
             LoadMode::DirectFile => {
-                let doc = self.pdfium.load_pdf_from_file(&path, None)
+                let doc = self
+                    .pdfium
+                    .load_pdf_from_file(&path, None)
                     .map_err(|e| format_err!("Pdfium load file failed: {}", e))?;
                 PdfSession {
                     mode,
@@ -154,14 +173,16 @@ impl PdfWorkerInternalState {
                     memory_ptr: None,
                     render_cache: LruCache::new(CACHE_SIZE),
                 }
-            },
+            }
             LoadMode::MemoryBuffer => {
-                let data = std::fs::read(&path)
-                    .map_err(|e| format_err!("Read file failed: {}", e))?;
+                let data =
+                    std::fs::read(&path).map_err(|e| format_err!("Read file failed: {}", e))?;
                 let boxed_slice = data.into_boxed_slice();
                 let leaked_ref = Box::leak(boxed_slice);
                 let ptr = leaked_ref as *mut [u8];
-                let doc = self.pdfium.load_pdf_from_byte_slice(leaked_ref, None)
+                let doc = self
+                    .pdfium
+                    .load_pdf_from_byte_slice(leaked_ref, None)
                     .map_err(|e| format_err!("Pdfium load memory failed: {}", e))?;
 
                 PdfSession {
@@ -229,7 +250,9 @@ mod tests {
         }
 
         let xref_offset = pdf.len();
-        pdf.extend_from_slice(format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).as_bytes());
+        pdf.extend_from_slice(
+            format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).as_bytes(),
+        );
         for offset in offsets {
             pdf.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes());
         }

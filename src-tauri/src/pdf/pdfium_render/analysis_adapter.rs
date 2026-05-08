@@ -1,23 +1,38 @@
-use pdfium_render::prelude::*;
-use crate::pdf_analysis::traits::*;
 use crate::pdf_analysis::models::AnalyzableChar;
+use crate::pdf_analysis::traits::*;
 use anyhow::Result;
+use pdfium_render::prelude::*;
 
 pub struct PdfiumPageAdapter<'a>(pub PdfPage<'a>);
 
 impl<'a> PdfPageTrait for PdfiumPageAdapter<'a> {
     fn extract_chars(&self) -> Vec<AnalyzableChar> {
         if let Ok(text) = self.0.text() {
-            text.chars().iter()
+            text.chars()
+                .iter()
                 .map(|c| {
-                    let bounds = c.loose_bounds()
+                    let bounds = c
+                        .loose_bounds()
                         .or_else(|_| c.tight_bounds())
-                        .unwrap_or_else(|_| PdfRect::new(PdfPoints::ZERO, PdfPoints::ZERO, PdfPoints::ZERO, PdfPoints::ZERO));
-                    
+                        .unwrap_or_else(|_| {
+                            PdfRect::new(
+                                PdfPoints::ZERO,
+                                PdfPoints::ZERO,
+                                PdfPoints::ZERO,
+                                PdfPoints::ZERO,
+                            )
+                        });
+
                     let skew = if let Ok(m) = c.matrix() {
                         let (a, b, c, d) = (m.a(), m.b(), m.c(), m.d());
-                        if a != 0.0 && d != 0.0 { ((b / a).powi(2) + (c / d).powi(2)) as f64 } else { 0.0 }
-                    } else { 0.0 };
+                        if a != 0.0 && d != 0.0 {
+                            ((b / a).powi(2) + (c / d).powi(2)) as f64
+                        } else {
+                            0.0
+                        }
+                    } else {
+                        0.0
+                    };
 
                     AnalyzableChar {
                         text: c.unicode_string().unwrap_or_default(),

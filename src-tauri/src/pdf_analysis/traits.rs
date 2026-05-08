@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::pdf_analysis::models::AnalyzableChar;
+use anyhow::Result;
 
 pub trait PdfPageTrait {
     fn extract_chars(&self) -> Vec<AnalyzableChar>;

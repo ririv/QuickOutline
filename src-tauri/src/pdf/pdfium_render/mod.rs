@@ -1,15 +1,15 @@
-pub mod render;
-pub mod merge;
 pub mod analysis_adapter;
-pub mod toc_merger_adapter;
 pub mod extractor;
+pub mod merge;
+pub mod render;
+pub mod toc_merger_adapter;
 
-use pdfium_render::prelude::*;
 use anyhow::{Result, format_err};
+use log::{debug, error, info, warn};
+use once_cell::sync::{Lazy, OnceCell};
+use pdfium_render::prelude::*;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use once_cell::sync::{Lazy, OnceCell};
-use log::{debug, info, warn, error};
 
 // Wrapper to allow Pdfium to be stored in a static global.
 struct GlobalPdfium(Pdfium);
@@ -36,17 +36,35 @@ static PDFIUM_SINGLETON: Lazy<Result<GlobalPdfium, String>> = Lazy::new(|| {
         .map(Ok)
         .unwrap_or_else(|| {
             Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
-                .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("src-tauri/")))
-                .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("src-tauri/libs/")))
-                .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("libs/")))
-                .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("../src-tauri/")))
-                .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("../src-tauri/libs/")))
+                .or_else(|_| {
+                    Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(
+                        "src-tauri/",
+                    ))
+                })
+                .or_else(|_| {
+                    Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(
+                        "src-tauri/libs/",
+                    ))
+                })
+                .or_else(|_| {
+                    Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("libs/"))
+                })
+                .or_else(|_| {
+                    Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(
+                        "../src-tauri/",
+                    ))
+                })
+                .or_else(|_| {
+                    Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(
+                        "../src-tauri/libs/",
+                    ))
+                })
                 .or_else(|_| Pdfium::bind_to_system_library())
         })
         .map(Pdfium::new)
         .map(GlobalPdfium)
         .map_err(|e| e.to_string());
-    
+
     match &result {
         Ok(_) => info!("[PdfInit] Global Init Result: OK"),
         Err(e) => error!("[PdfInit] Global Init Result: ERR - {}", e),

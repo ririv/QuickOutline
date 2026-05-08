@@ -9,10 +9,8 @@ static NUMBERING_REGEX: LazyLock<Regex> = LazyLock::new(|| {
         .expect("Invalid NUMBERING_REGEX pattern")
 });
 #[allow(clippy::expect_used)]
-static PUNCTUATION_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"[.!?:：。！？．]$")
-        .expect("Invalid PUNCTUATION_REGEX pattern")
-});
+static PUNCTUATION_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"[.!?:：。！？．]$").expect("Invalid PUNCTUATION_REGEX pattern"));
 
 pub struct PdfProcessor;
 
@@ -28,13 +26,15 @@ impl PdfProcessor {
             let by = b.y;
             let ax = a.x;
             let bx = b.x;
-            
-            by.partial_cmp(&ay).unwrap_or(std::cmp::Ordering::Equal)
+
+            by.partial_cmp(&ay)
+                .unwrap_or(std::cmp::Ordering::Equal)
                 .then(ax.partial_cmp(&bx).unwrap_or(std::cmp::Ordering::Equal))
         });
 
         // 2. Pre-calculate metrics
-        let (page_global_space_width, inferred_widths) = Self::calculate_page_metrics(&sorted_chars);
+        let (page_global_space_width, inferred_widths) =
+            Self::calculate_page_metrics(&sorted_chars);
 
         // 3. Build lines and blocks
         let mut current_line: Option<PdfLine> = None;
@@ -46,7 +46,7 @@ impl PdfProcessor {
             if text.contains('\r') || text.contains('\n') {
                 text = text.replace(['\r', '\n'], "");
             }
-            
+
             let baseline_y = char_info.y;
             let bounds = PdfRectValue {
                 left: char_info.left,
@@ -54,7 +54,7 @@ impl PdfProcessor {
                 top: char_info.top,
                 bottom: char_info.bottom,
             };
-            
+
             let space_width = page_global_space_width;
             let advance_width = inferred_widths.get(i).cloned().unwrap_or(char_info.width);
 
@@ -70,14 +70,14 @@ impl PdfProcessor {
                 if let Some(line) = current_line.take() {
                     Self::add_line_to_blocks(&mut blocks, line);
                 }
-                
+
                 let style = PdfStyle::new(char_info.font_name.clone(), char_info.font_size);
                 current_line = Some(PdfLine::new(bounds, page_num, style, skew, baseline_y));
             }
 
             if let Some(ref mut line) = current_line {
                 line.append_char_replica(&text, bounds, space_width, last_char_right);
-                
+
                 let chunk = TextChunk {
                     text: text.clone(),
                     x: char_info.left,
@@ -116,11 +116,11 @@ impl PdfProcessor {
                 let next = &sorted_chars[i + 1];
                 let curr_y = curr.y;
                 let next_y = next.y;
-                
+
                 if (curr_y - next_y).abs() < 1.0 {
                     let curr_x = curr.left;
                     let next_x = next.left;
-                    
+
                     let advance = next_x - curr_x;
                     let font_size = curr.font_size;
                     if advance > 0.0 && advance < font_size * 1.5 {
@@ -132,26 +132,37 @@ impl PdfProcessor {
             inferred_widths[i] = width;
             total_width += width;
             char_count += 1;
-            
+
             if curr.text == " " {
                 space_char_width = width;
             }
         }
 
-        let avg_width = if char_count > 0 { total_width / char_count as f32 } else { 0.0 };
-        let global_space_width = if space_char_width > 0.0 { space_char_width } else { avg_width };
-        
+        let avg_width = if char_count > 0 {
+            total_width / char_count as f32
+        } else {
+            0.0
+        };
+        let global_space_width = if space_char_width > 0.0 {
+            space_char_width
+        } else {
+            avg_width
+        };
+
         (global_space_width, inferred_widths)
     }
 
     fn add_line_to_blocks(blocks: &mut Vec<PdfBlock>, line: PdfLine) {
-        if line.text.trim().is_empty() { return; }
+        if line.text.trim().is_empty() {
+            return;
+        }
 
         if let Some(last_block) = blocks.last_mut()
-            && Self::should_merge_lines(last_block, &line) {
-                last_block.merge_line(line);
-                return;
-            }
+            && Self::should_merge_lines(last_block, &line)
+        {
+            last_block.merge_line(line);
+            return;
+        }
         blocks.push(PdfBlock::from_line(line));
     }
 
@@ -161,22 +172,36 @@ impl PdfProcessor {
             None => return true,
         };
 
-        if last_line.page_num != next_line.page_num { return false; }
+        if last_line.page_num != next_line.page_num {
+            return false;
+        }
 
         let v_gap = (last_line.y - next_line.y).abs();
-        if v_gap > last_line.avg_font_size * 1.8 { return false; }
+        if v_gap > last_line.avg_font_size * 1.8 {
+            return false;
+        }
 
-        if last_line.style != next_line.style { return false; }
+        if last_line.style != next_line.style {
+            return false;
+        }
 
-        if (last_line.bounds.left - next_line.bounds.left).abs() > 5.0 { return false; }
+        if (last_line.bounds.left - next_line.bounds.left).abs() > 5.0 {
+            return false;
+        }
 
         let prev_text = last_line.text.trim();
-        if prev_text.is_empty() { return true; }
+        if prev_text.is_empty() {
+            return true;
+        }
 
-        if PUNCTUATION_REGEX.is_match(prev_text) { return false; }
+        if PUNCTUATION_REGEX.is_match(prev_text) {
+            return false;
+        }
 
         let next_text = next_line.text.trim();
-        if NUMBERING_REGEX.is_match(next_text) { return false; }
+        if NUMBERING_REGEX.is_match(next_text) {
+            return false;
+        }
 
         let is_lowercase_continuation = next_text.chars().next().is_some_and(|c| c.is_lowercase());
         if is_lowercase_continuation {

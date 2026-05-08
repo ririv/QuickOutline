@@ -1,10 +1,9 @@
+pub mod commands;
+pub mod lopdf;
+pub mod manager;
 pub mod numbering;
 pub mod page_label;
-pub mod manager;
-pub mod commands;
-pub mod toc;
-pub mod lopdf;
-pub mod pdfium_render;
-pub mod toc_traits;
 pub mod page_label_traits;
-
+pub mod pdfium_render;
+pub mod toc;
+pub mod toc_traits;

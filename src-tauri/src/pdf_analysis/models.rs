@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[allow(clippy::expect_used)]
 static MATH_SYMBOL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\p{Sm}").expect("Invalid Regex"));
@@ -17,8 +17,12 @@ pub struct PdfRectValue {
 }
 
 impl PdfRectValue {
-    pub fn width(&self) -> f32 { (self.right - self.left).abs() }
-    pub fn height(&self) -> f32 { (self.top - self.bottom).abs() }
+    pub fn width(&self) -> f32 {
+        (self.right - self.left).abs()
+    }
+    pub fn height(&self) -> f32 {
+        (self.top - self.bottom).abs()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,37 +81,59 @@ impl CharacterPattern {
     }
 
     fn get_char_type(c: char) -> i32 {
-        if c.is_lowercase() { return 3; }
-        
-        // 100% Replica: Java treats UpperCase (Lu) and TitleCase (Lt) as type 2
-        if c.is_uppercase() || TITLE_CASE_REGEX.is_match(&c.to_string()) { 
-            return 2; 
+        if c.is_lowercase() {
+            return 3;
         }
-        
-        if c.is_numeric() { return 1; }
-        if c.is_whitespace() { return 10; }
-        if c == '.' || c == '?' || c == '!' { return 6; }
-        if c == '-' || c == '_' || c == '–' || c == '—' { return 7; }
-        if c == '(' || c == '[' || c == '{' || c == ')' || c == ']' || c == '}' { return 8; }
-        
+
+        // 100% Replica: Java treats UpperCase (Lu) and TitleCase (Lt) as type 2
+        if c.is_uppercase() || TITLE_CASE_REGEX.is_match(&c.to_string()) {
+            return 2;
+        }
+
+        if c.is_numeric() {
+            return 1;
+        }
+        if c.is_whitespace() {
+            return 10;
+        }
+        if c == '.' || c == '?' || c == '!' {
+            return 6;
+        }
+        if c == '-' || c == '_' || c == '–' || c == '—' {
+            return 7;
+        }
+        if c == '(' || c == '[' || c == '{' || c == ')' || c == ']' || c == '}' {
+            return 8;
+        }
+
         // 100% Replica: Java uses Character.getType(c) == Character.MATH_SYMBOL
-        if MATH_SYMBOL_REGEX.is_match(&c.to_string()) { return 9; }
-        
-        if c.is_control() { return 0; }
-        8 
+        if MATH_SYMBOL_REGEX.is_match(&c.to_string()) {
+            return 9;
+        }
+
+        if c.is_control() {
+            return 0;
+        }
+        8
     }
 
     pub fn get_pattern_type(&self) -> i32 {
-        if self.total == 0 { return 0; }
+        if self.total == 0 {
+            return 0;
+        }
         let mut scores = [0.0f64; 11];
         let c = self.counts;
 
         // 100% Replica of the scoring formula
         scores[2] = c[2] as f64 * 10.0;
         scores[0] = (c[0] + c[2]) as f64;
-        scores[3] = c[3] as f64 - (c[4] as f64 * 3.0) - (c[5] as f64 * 3.0) 
-                    - (c[6] as f64 * 3.0) - (c[7] as f64 * 3.0) 
-                    - (c[8] as f64 * 3.0) - (c[9] as f64 * 10.0);
+        scores[3] = c[3] as f64
+            - (c[4] as f64 * 3.0)
+            - (c[5] as f64 * 3.0)
+            - (c[6] as f64 * 3.0)
+            - (c[7] as f64 * 3.0)
+            - (c[8] as f64 * 3.0)
+            - (c[9] as f64 * 10.0);
         scores[4] = c[4] as f64;
         scores[5] = c[5] as f64 - (c[6] as f64 * 10.0) - (c[7] as f64 * 10.0);
         scores[6] = c[6] as f64;
@@ -131,7 +157,7 @@ impl CharacterPattern {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PdfStyle {
     pub font_name: String,
-    pub font_size_scaled: i32, 
+    pub font_size_scaled: i32,
 }
 
 impl PdfStyle {
@@ -141,7 +167,9 @@ impl PdfStyle {
             font_size_scaled: (size * 10.0).round() as i32,
         }
     }
-    pub fn get_size(&self) -> f32 { self.font_size_scaled as f32 / 10.0 }
+    pub fn get_size(&self) -> f32 {
+        self.font_size_scaled as f32 / 10.0
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -171,11 +199,19 @@ impl PdfLine {
         }
     }
 
-    pub fn append_char_replica(&mut self, text: &str, bounds: PdfRectValue, space_width: f32, last_right: f32) {
-        if text.trim().is_empty() { return; }
+    pub fn append_char_replica(
+        &mut self,
+        text: &str,
+        bounds: PdfRectValue,
+        space_width: f32,
+        last_right: f32,
+    ) {
+        if text.trim().is_empty() {
+            return;
+        }
 
         let h_gap = bounds.left - last_right;
-        
+
         if h_gap > space_width * 5.0 {
             self.text.push_str("     ");
         } else if h_gap > space_width * 0.3 && !self.text.is_empty() {
@@ -199,10 +235,18 @@ impl PdfLine {
     }
 
     pub fn extend_bounds(&mut self, other: PdfRectValue) {
-        if other.left < self.bounds.left { self.bounds.left = other.left; }
-        if other.right > self.bounds.right { self.bounds.right = other.right; }
-        if other.top > self.bounds.top { self.bounds.top = other.top; }
-        if other.bottom < self.bounds.bottom { self.bounds.bottom = other.bottom; }
+        if other.left < self.bounds.left {
+            self.bounds.left = other.left;
+        }
+        if other.right > self.bounds.right {
+            self.bounds.right = other.right;
+        }
+        if other.top > self.bounds.top {
+            self.bounds.top = other.top;
+        }
+        if other.bottom < self.bounds.bottom {
+            self.bounds.bottom = other.bottom;
+        }
     }
 }
 
@@ -230,7 +274,9 @@ impl PdfBlock {
 
     pub fn get_text_plain(&mut self) -> &str {
         if self.cached_text.is_none() {
-            let text = self.lines.iter()
+            let text = self
+                .lines
+                .iter()
                 .map(|l| l.text.as_str())
                 .collect::<Vec<_>>()
                 .join(" ");
@@ -241,7 +287,7 @@ impl PdfBlock {
 
     pub fn get_text_reconstructed(&self) -> String {
         let mut text_builder = String::new();
-        
+
         for (line_idx, line) in self.lines.iter().enumerate() {
             if line.chunks.is_empty() {
                 text_builder.push_str(&line.text);
@@ -274,7 +320,7 @@ impl PdfBlock {
                 text_builder.push('\n');
             }
         }
-        
+
         text_builder.replace("\r\n", "\n").replace('\r', "\n")
     }
 
@@ -284,7 +330,10 @@ impl PdfBlock {
             self.char_pattern = Some(CharacterPattern::new(&text));
         }
         self.char_pattern.as_ref().unwrap_or_else(|| {
-            static EMPTY_PATTERN: CharacterPattern = CharacterPattern { counts: [0; 12], total: 0 };
+            static EMPTY_PATTERN: CharacterPattern = CharacterPattern {
+                counts: [0; 12],
+                total: 0,
+            };
             &EMPTY_PATTERN
         })
     }
@@ -294,7 +343,10 @@ impl PdfBlock {
             font_name: String::new(),
             font_size_scaled: 100,
         };
-        self.lines.first().map(|l| &l.style).unwrap_or(&DEFAULT_STYLE)
+        self.lines
+            .first()
+            .map(|l| &l.style)
+            .unwrap_or(&DEFAULT_STYLE)
     }
 
     pub fn get_page_num(&self) -> i32 {
@@ -302,7 +354,12 @@ impl PdfBlock {
     }
 
     pub fn is_bold(&self) -> bool {
-        !self.lines.is_empty() && self.get_primary_style().font_name.to_lowercase().contains("bold")
+        !self.lines.is_empty()
+            && self
+                .get_primary_style()
+                .font_name
+                .to_lowercase()
+                .contains("bold")
     }
 
     pub fn get_x(&self) -> f32 {
@@ -314,11 +371,16 @@ impl PdfBlock {
     }
 
     pub fn get_width(&self) -> f32 {
-        self.lines.iter().map(|l| l.bounds.right - l.bounds.left).fold(0.0, f32::max)
+        self.lines
+            .iter()
+            .map(|l| l.bounds.right - l.bounds.left)
+            .fold(0.0, f32::max)
     }
 
     pub fn get_height(&self) -> f32 {
-        if self.lines.is_empty() { return 0.0; }
+        if self.lines.is_empty() {
+            return 0.0;
+        }
         let top = self.lines[0].y;
         if let Some(last) = self.lines.last() {
             let bottom = last.y - last.style.get_size();
@@ -329,7 +391,9 @@ impl PdfBlock {
     }
 
     pub fn get_skew(&self) -> f64 {
-        if self.lines.is_empty() { return 0.0; }
+        if self.lines.is_empty() {
+            return 0.0;
+        }
         self.lines.iter().map(|l| l.skew).sum::<f64>() / self.lines.len() as f64
     }
 }

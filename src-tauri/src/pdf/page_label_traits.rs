@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::pdf::page_label::PageLabel;
+use anyhow::Result;
 
 pub trait PageLabelEngine {
     /// 获取 PDF 的总页数

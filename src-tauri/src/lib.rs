@@ -3,26 +3,28 @@
 #![deny(clippy::unwrap_used, clippy::expect_used)]
 #![allow(dead_code)] // Allow unused code for modules under development
 
+mod external_editor;
 mod java_sidecar;
+mod pdf;
+mod pdf_analysis;
+mod pdf_outline;
 mod printer;
 mod static_server;
-mod pdf;
-mod pdf_outline;
-mod external_editor;
-mod pdf_analysis;
 
-use tauri::{AppHandle, Manager, Runtime};
-use tauri::http::{Response, StatusCode};
+use log::{error, info, warn};
 use std::fs;
 use std::path::{Path, PathBuf};
-use log::{info, warn, error};
+use tauri::http::{Response, StatusCode};
+use tauri::{AppHandle, Manager, Runtime};
 
 // Helper function to set up print workspace (now only creates directory and cleans old files)
 fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBuf, String> {
-    let app_data_dir = app_handle.path().app_data_dir()
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
     let workspace = app_data_dir.join("print_workspace");
-    
+
     // Create workspace directory if not exists
     fs::create_dir_all(&workspace).map_err(|e| format!("Failed to create workspace: {}", e))?;
 
@@ -32,14 +34,18 @@ fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBu
             let path = entry.path();
             if path.is_file()
                 && let Some(filename) = path.file_name().and_then(|s| s.to_str())
-                    && (filename.starts_with("print_job_") || filename.starts_with("print_fallback_")) 
-                       && filename.ends_with(".html") {
-                        if let Err(e) = fs::remove_file(&path) {
-                            warn!("Rust Setup: Failed to delete old print job {:?}: {}", path, e);
-                        } else {
-                            info!("Rust Setup: Cleaned up old print job: {:?}", filename);
-                        }
-                    }
+                && (filename.starts_with("print_job_") || filename.starts_with("print_fallback_"))
+                && filename.ends_with(".html")
+            {
+                if let Err(e) = fs::remove_file(&path) {
+                    warn!(
+                        "Rust Setup: Failed to delete old print job {:?}: {}",
+                        path, e
+                    );
+                } else {
+                    info!("Rust Setup: Cleaned up old print job: {:?}", filename);
+                }
+            }
         }
     }
 
@@ -48,38 +54,47 @@ fn setup_print_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<PathBu
 
 // Helper function to clean up pdf workspace (remove toc_*.pdf files)
 fn cleanup_pdf_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<(), String> {
-    let app_data_dir = app_handle.path().app_data_dir()
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
     let pdf_workspace = app_data_dir.join("pdf_workspace");
 
     if pdf_workspace.exists()
-        && let Ok(entries) = fs::read_dir(&pdf_workspace) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file()
-                    && let Some(filename) = path.file_name().and_then(|s| s.to_str())
-                        && filename.starts_with("toc_") && filename.ends_with(".pdf") {
-                            if let Err(e) = fs::remove_file(&path) {
-                                warn!("Rust Setup: Failed to delete PDF temp file {:?}: {}", path, e);
-                            } else {
-                                info!("Rust Setup: Cleaned up PDF temp file: {:?}", filename);
-                            }
-                        }
+        && let Ok(entries) = fs::read_dir(&pdf_workspace)
+    {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file()
+                && let Some(filename) = path.file_name().and_then(|s| s.to_str())
+                && filename.starts_with("toc_")
+                && filename.ends_with(".pdf")
+            {
+                if let Err(e) = fs::remove_file(&path) {
+                    warn!(
+                        "Rust Setup: Failed to delete PDF temp file {:?}: {}",
+                        path, e
+                    );
+                } else {
+                    info!("Rust Setup: Cleaned up PDF temp file: {:?}", filename);
+                }
             }
         }
+    }
     Ok(())
 }
 
-use crate::pdf_outline::model::{Bookmark, ViewScaleType};
 use crate::pdf::page_label::{PageLabel, PageLabelProcessor};
 use crate::pdf::page_label_traits::PageLabelEngine;
+use crate::pdf_outline::model::{Bookmark, ViewScaleType};
 
 fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
     if let Some(path) = dest_path
-        && !path.trim().is_empty() {
-            return path;
-        }
-    
+        && !path.trim().is_empty()
+    {
+        return path;
+    }
+
     let src = Path::new(src_path);
     let parent = src.parent().unwrap_or(Path::new(""));
     let file_stem = src.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
@@ -87,7 +102,7 @@ fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
 
     let mut candidate_name = format!("{}_new.{}", file_stem, ext);
     let mut candidate_path = parent.join(&candidate_name);
-    
+
     if !candidate_path.exists() {
         return candidate_path.to_string_lossy().to_string();
     }
@@ -104,43 +119,61 @@ fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
 
 #[tauri::command]
 async fn get_outline_as_bookmark(
-    state: tauri::State<'_, pdf::manager::PdfWorker>, 
-    path: String, 
-    offset: i32
+    state: tauri::State<'_, pdf::manager::PdfWorker>,
+    path: String,
+    offset: i32,
 ) -> Result<Bookmark, String> {
-    state.call(move |worker| -> Result<Bookmark, String> {
-        let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
-        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
-        let adapter = crate::pdf::lopdf::outline_adapter::LopdfOutlineAdapter::new(doc);
-        crate::pdf_outline::processor::PdfOutlineProcessor::get_outline(&adapter, offset).map_err(|e| e.to_string())
-    }).await.map_err(|e| e.to_string())?
+    state
+        .call(move |worker| -> Result<Bookmark, String> {
+            let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
+            let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+            let adapter = crate::pdf::lopdf::outline_adapter::LopdfOutlineAdapter::new(doc);
+            crate::pdf_outline::processor::PdfOutlineProcessor::get_outline(&adapter, offset)
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
 async fn save_outline(
     state: tauri::State<'_, pdf::manager::PdfWorker>,
-    src_path: String, 
-    bookmark_root: Bookmark, 
-    dest_path: Option<String>, 
-    offset: i32, 
-    view_mode: Option<ViewScaleType>
+    src_path: String,
+    bookmark_root: Bookmark,
+    dest_path: Option<String>,
+    offset: i32,
+    view_mode: Option<ViewScaleType>,
 ) -> Result<String, String> {
     let actual_dest = resolve_dest_path(&src_path, dest_path);
     let scale = view_mode.unwrap_or(ViewScaleType::None);
-    
+
     let dest_path_clone = actual_dest.clone();
 
-    state.call(move |worker| -> Result<(), String> {
-        let session = worker.get_session_mut(&src_path).map_err(|e| e.to_string())?;
-        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
-        
-        let mut adapter = crate::pdf::lopdf::outline_adapter::LopdfOutlineAdapter::new(doc);
-        crate::pdf_outline::processor::PdfOutlineProcessor::set_outline(&mut adapter, bookmark_root, offset, scale)
+    state
+        .call(move |worker| -> Result<(), String> {
+            let session = worker
+                .get_session_mut(&src_path)
+                .map_err(|e| e.to_string())?;
+            let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+
+            let mut adapter = crate::pdf::lopdf::outline_adapter::LopdfOutlineAdapter::new(doc);
+            crate::pdf_outline::processor::PdfOutlineProcessor::set_outline(
+                &mut adapter,
+                bookmark_root,
+                offset,
+                scale,
+            )
             .map_err(|e| format!("Failed to set outline: {}", e))?;
-            
-        adapter.doc.save(&dest_path_clone).map(|_| ()).map_err(|e| format!("Failed to save PDF: {}", e))
-    }).await.map_err(|e| e.to_string())??;
-    
+
+            adapter
+                .doc
+                .save(&dest_path_clone)
+                .map(|_| ())
+                .map_err(|e| format!("Failed to save PDF: {}", e))
+        })
+        .await
+        .map_err(|e| e.to_string())??;
+
     Ok(actual_dest)
 }
 
@@ -149,54 +182,82 @@ async fn set_page_labels(
     state: tauri::State<'_, pdf::manager::PdfWorker>,
     src_path: String,
     rules: Vec<PageLabel>,
-    dest_path: Option<String>
+    dest_path: Option<String>,
 ) -> Result<String, String> {
     let actual_dest = resolve_dest_path(&src_path, dest_path);
     let dest_clone = actual_dest.clone();
 
-    state.call(move |worker| -> Result<(), String> {
-        let session = worker.get_session_mut(&src_path).map_err(|e| e.to_string())?;
-        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
-        
-        let mut adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
-        crate::pdf::page_label::PageLabelProcessor::merge_rules(&mut adapter, rules)
-            .map_err(|e| e.to_string())?;
-            
-        adapter.doc.save(&dest_clone).map(|_| ()).map_err(|e| e.to_string())
-    }).await.map_err(|e| e.to_string())??;
+    state
+        .call(move |worker| -> Result<(), String> {
+            let session = worker
+                .get_session_mut(&src_path)
+                .map_err(|e| e.to_string())?;
+            let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+
+            let mut adapter =
+                crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
+            crate::pdf::page_label::PageLabelProcessor::merge_rules(&mut adapter, rules)
+                .map_err(|e| e.to_string())?;
+
+            adapter
+                .doc
+                .save(&dest_clone)
+                .map(|_| ())
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| e.to_string())??;
 
     Ok(actual_dest)
 }
 
 #[tauri::command]
-async fn get_page_labels(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
-    state.call(move |worker| -> Result<Vec<String>, String> {
-        let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
-        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
-        let adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
-        crate::pdf::page_label::PageLabelProcessor::get_formatted_labels(&adapter).map_err(|e| e.to_string())
-    }).await.map_err(|e| e.to_string())?
+async fn get_page_labels(
+    state: tauri::State<'_, pdf::manager::PdfWorker>,
+    path: String,
+) -> Result<Vec<String>, String> {
+    state
+        .call(move |worker| -> Result<Vec<String>, String> {
+            let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
+            let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+            let adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
+            crate::pdf::page_label::PageLabelProcessor::get_formatted_labels(&adapter)
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-async fn get_page_label_rules(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<PageLabel>, String> {
-    state.call(move |worker| -> Result<Vec<PageLabel>, String> {
-        let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
-        let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
-        let adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
-        adapter.get_label_rules().map_err(|e| e.to_string())
-    }).await.map_err(|e| e.to_string())?
+async fn get_page_label_rules(
+    state: tauri::State<'_, pdf::manager::PdfWorker>,
+    path: String,
+) -> Result<Vec<PageLabel>, String> {
+    state
+        .call(move |worker| -> Result<Vec<PageLabel>, String> {
+            let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
+            let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
+            let adapter = crate::pdf::lopdf::page_label_adapter::LopdfPageLabelAdapter::new(doc);
+            adapter.get_label_rules().map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-async fn simulate_page_labels(rules: Vec<PageLabel>, total_pages: u32) -> Result<Vec<String>, String> {
+async fn simulate_page_labels(
+    rules: Vec<PageLabel>,
+    total_pages: u32,
+) -> Result<Vec<String>, String> {
     Ok(PageLabelProcessor::simulate_page_labels(rules, total_pages))
 }
 
 #[tauri::command]
 async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, String> {
     if let Some(state) = app.try_state::<static_server::LocalServerState>() {
-        state.port.lock()
+        state
+            .port
+            .lock()
             .map_err(|e| format!("Lock poisoned: {}", e))?
             .ok_or("Server not started yet".to_string())
     } else {
@@ -205,10 +266,17 @@ async fn get_static_server_port<R: Runtime>(app: AppHandle<R>) -> Result<u16, St
 }
 
 #[tauri::command]
-async fn extract_toc(state: tauri::State<'_, pdf::manager::PdfWorker>, path: String) -> Result<Vec<String>, String> {
-    state.call(move |worker| -> Result<Vec<String>, String> {
-        pdf::pdfium_render::extractor::internal_extract_toc(worker, path).map_err(|e| e.to_string())
-    }).await.map_err(|e| e.to_string())?
+async fn extract_toc(
+    state: tauri::State<'_, pdf::manager::PdfWorker>,
+    path: String,
+) -> Result<Vec<String>, String> {
+    state
+        .call(move |worker| -> Result<Vec<String>, String> {
+            pdf::pdfium_render::extractor::internal_extract_toc(worker, path)
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -218,7 +286,9 @@ fn greet(name: &str) -> String {
 
 #[tauri::command]
 async fn get_print_workspace_path<R: Runtime>(app: AppHandle<R>) -> Result<String, String> {
-    let app_data_dir = app.path().app_data_dir()
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
     let workspace_path = app_data_dir.join("print_workspace");
     Ok(workspace_path.to_string_lossy().to_string())
@@ -227,11 +297,13 @@ async fn get_print_workspace_path<R: Runtime>(app: AppHandle<R>) -> Result<Strin
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::default()
-            .level(log::LevelFilter::Warn) // Global default: only Warn/Error
-            .level_for("quickoutline_lib", log::LevelFilter::Debug) // Our lib: Debug
-            .level_for("quickoutline", log::LevelFilter::Debug) // Our bin: Debug
-            .build())
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .level(log::LevelFilter::Warn) // Global default: only Warn/Error
+                .level_for("quickoutline_lib", log::LevelFilter::Debug) // Our lib: Debug
+                .level_for("quickoutline", log::LevelFilter::Debug) // Our bin: Debug
+                .build(),
+        )
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
@@ -242,7 +314,7 @@ pub fn run() {
         .register_uri_scheme_protocol("pdfstream", move |app, request| {
             let uri = request.uri();
             let url_str = uri.to_string();
-            
+
             // Helper to build error response
             let error_response = |status: StatusCode, body: Vec<u8>| -> Response<Vec<u8>> {
                 Response::builder()
@@ -250,7 +322,7 @@ pub fn run() {
                     .body(body)
                     .unwrap_or_else(|_| Response::new(vec![]))
             };
-            
+
             // Parse query: pdfstream://render?path=...&page=...&scale=...
             let url = match url::Url::parse(&url_str) {
                 Ok(u) => u,
@@ -260,20 +332,30 @@ pub fn run() {
             let pairs: std::collections::HashMap<_, _> = url.query_pairs().collect();
             let path = pairs.get("path").map(|v| v.to_string());
             let page_index = pairs.get("page").and_then(|v| v.parse::<u16>().ok());
-            let scale = pairs.get("scale").and_then(|v| v.parse::<f32>().ok()).unwrap_or(1.0);
+            let scale = pairs
+                .get("scale")
+                .and_then(|v| v.parse::<f32>().ok())
+                .unwrap_or(1.0);
 
             if let (Some(path), Some(page_index)) = (path, page_index) {
                 let Some(state) = app.app_handle().try_state::<pdf::manager::PdfWorker>() else {
                     error!("PDF worker state is not initialized");
-                    return error_response(StatusCode::INTERNAL_SERVER_ERROR, b"PDF worker state is not initialized".to_vec());
+                    return error_response(
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        b"PDF worker state is not initialized".to_vec(),
+                    );
                 };
                 let state = state.inner().clone();
-                
+
                 // Execute render synchronously
                 let result = tauri::async_runtime::block_on(async {
-                    state.call(move |worker| {
-                        pdf::pdfium_render::render::internal_render_page(worker, path, page_index, scale)
-                    }).await
+                    state
+                        .call(move |worker| {
+                            pdf::pdfium_render::render::internal_render_page(
+                                worker, path, page_index, scale,
+                            )
+                        })
+                        .await
                 });
 
                 match result {
@@ -283,17 +365,23 @@ pub fn run() {
                             .header("Access-Control-Allow-Origin", "*")
                             // Aggressive caching: Cache for 1 year.
                             // The frontend handles invalidation by appending ?v=... to the URL when file changes.
-                            .header("Cache-Control", "public, max-age=31536000, immutable") 
+                            .header("Cache-Control", "public, max-age=31536000, immutable")
                             .body(png_data)
                             .unwrap_or_else(|_| Response::new(vec![]));
-                    },
+                    }
                     Ok(Err(e)) => {
                         error!("Protocol Render Error: {}", e);
-                        return error_response(StatusCode::INTERNAL_SERVER_ERROR, e.to_string().into_bytes());
-                    },
+                        return error_response(
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            e.to_string().into_bytes(),
+                        );
+                    }
                     Err(e) => {
                         error!("Worker Error: {}", e);
-                        return error_response(StatusCode::INTERNAL_SERVER_ERROR, e.to_string().into_bytes());
+                        return error_response(
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            e.to_string().into_bytes(),
+                        );
                     }
                 }
             }
@@ -334,11 +422,11 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            greet, 
-            printer::print_to_pdf, 
+            greet,
+            printer::print_to_pdf,
             pdf::commands::load_pdf_document,
             pdf::commands::close_pdf_document,
-            pdf::pdfium_render::render::render_pdf_page, 
+            pdf::pdfium_render::render::render_pdf_page,
             pdf::pdfium_render::render::get_pdf_page_count,
             get_outline_as_bookmark,
             save_outline,
@@ -356,12 +444,14 @@ pub fn run() {
             app.run(|app_handle, event| {
                 if let tauri::RunEvent::Exit = event {
                     // Cleanup: Kill active external editor process
-                    if let Some(state) = app_handle.try_state::<external_editor::ExternalEditorState>()
+                    if let Some(state) =
+                        app_handle.try_state::<external_editor::ExternalEditorState>()
                         && let Ok(mut child_guard) = state.active_child.lock()
-                            && let Some(mut child) = child_guard.take() {
-                                let _ = child.kill();
-                                info!("Rust Exit Hook: Killed active external editor.");
-                            }
+                        && let Some(mut child) = child_guard.take()
+                    {
+                        let _ = child.kill();
+                        info!("Rust Exit Hook: Killed active external editor.");
+                    }
                 }
             });
         })

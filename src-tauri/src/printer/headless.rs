@@ -1,9 +1,9 @@
-use tauri::{AppHandle, Manager, Runtime};
-use std::path::PathBuf;
-use std::process::Command;
+use log::info;
 use std::fs;
 use std::io::Cursor;
-use log::info;
+use std::path::PathBuf;
+use std::process::Command;
+use tauri::{AppHandle, Manager, Runtime};
 
 #[cfg(target_os = "windows")]
 pub async fn print_with_html_windows(html: String, output_path: PathBuf) -> Result<String, String> {
@@ -12,12 +12,12 @@ pub async fn print_with_html_windows(html: String, output_path: PathBuf) -> Resu
     fs::write(&temp_html, html).map_err(|e| e.to_string())?;
 
     let output_str = output_path.to_string_lossy().to_string();
-    
+
     // Find Edge
     let edge_paths = vec![
         "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
         "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-        "msedge" // Try PATH
+        "msedge", // Try PATH
     ];
 
     let mut browser_path = None;
@@ -33,7 +33,7 @@ pub async fn print_with_html_windows(html: String, output_path: PathBuf) -> Resu
         let chrome_paths = vec![
             "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
             "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-            "chrome"
+            "chrome",
         ];
         for path in chrome_paths {
             if path_exists(path) {
@@ -75,7 +75,7 @@ pub async fn print_with_url_windows(url: String, output_path: PathBuf) -> Result
     let edge_paths = vec![
         "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
         "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-        "msedge" // Try PATH
+        "msedge", // Try PATH
     ];
 
     let mut browser_path = None;
@@ -91,7 +91,7 @@ pub async fn print_with_url_windows(url: String, output_path: PathBuf) -> Result
         let chrome_paths = vec![
             "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
             "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-            "chrome"
+            "chrome",
         ];
         for path in chrome_paths {
             if path_exists(path) {
@@ -108,22 +108,24 @@ pub async fn print_with_url_windows(url: String, output_path: PathBuf) -> Result
     }
 }
 
-async fn execute_headless_print_target(browser: &str, target: &str, output_path: &std::path::Path) -> Result<String, String> {
+async fn execute_headless_print_target(
+    browser: &str,
+    target: &str,
+    output_path: &std::path::Path,
+) -> Result<String, String> {
     let output_str = output_path.to_string_lossy().to_string();
-    
+
     let mut cmd = Command::new(browser);
     cmd.arg("--headless");
-    
+
     if browser.to_lowercase().contains("firefox") {
-        cmd.arg("--print-to-file")
-           .arg(&output_str)
-           .arg(target);
+        cmd.arg("--print-to-file").arg(&output_str).arg(target);
     } else {
         cmd.arg("--disable-gpu")
-           .arg("--force-device-scale-factor=2") // Simulate HiDPI for better raster quality
-           .arg(format!("--print-to-pdf={}", output_str))
-           .arg("--no-pdf-header-footer")
-           .arg(target);
+            .arg("--force-device-scale-factor=2") // Simulate HiDPI for better raster quality
+            .arg(format!("--print-to-pdf={}", output_str))
+            .arg("--no-pdf-header-footer")
+            .arg(target);
     }
 
     let output = cmd.output().map_err(|e| e.to_string())?;
@@ -134,43 +136,62 @@ async fn execute_headless_print_target(browser: &str, target: &str, output_path:
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
         if std::path::Path::new(&output_str).exists() {
-             Ok(output_str)
+            Ok(output_str)
         } else {
-             Err(format!("Browser print failed (exit code {}): {}", output.status, stderr))
+            Err(format!(
+                "Browser print failed (exit code {}): {}",
+                output.status, stderr
+            ))
         }
     }
 }
 
-async fn execute_headless_print_with_html(browser: &str, html: String, output_path: &std::path::Path) -> Result<String, String> {
+async fn execute_headless_print_with_html(
+    browser: &str,
+    html: String,
+    output_path: &std::path::Path,
+) -> Result<String, String> {
     let temp_dir = std::env::temp_dir();
     let temp_html = temp_dir.join("temp_print.html");
     fs::write(&temp_html, html).map_err(|e| e.to_string())?;
-    
+
     execute_headless_print_target(browser, &temp_html.to_string_lossy(), output_path).await
 }
 
 #[cfg(target_os = "macos")]
-pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, output_path: PathBuf, browser_path: Option<String>, force_download: bool) -> Result<String, String> {
+pub async fn print_with_html_mac<R: Runtime>(
+    app: &AppHandle<R>,
+    html: String,
+    output_path: PathBuf,
+    browser_path: Option<String>,
+    force_download: bool,
+) -> Result<String, String> {
     // 1. Use explicitly provided path
     if let Some(path) = browser_path {
         if path_exists(&path) {
-             info!("Using custom browser: {}", path);
-             return execute_headless_print_with_html(&path, html, &output_path).await;
+            info!("Using custom browser: {}", path);
+            return execute_headless_print_with_html(&path, html, &output_path).await;
         } else {
-             return Err(format!("Custom browser path not found: {}", path));
+            return Err(format!("Custom browser path not found: {}", path));
         }
     }
 
     // 2. Use locally downloaded Chromium (if exists and we are not forcing a new download)
     if !force_download {
         if let Ok(local_browser) = get_local_chromium_path(app)
-            && local_browser.exists() {
-                let exec_path = local_browser.join("Contents/MacOS/Chromium");
-                if exec_path.exists() {
-                     info!("Using local Chromium: {:?}", exec_path);
-                     return execute_headless_print_with_html(&exec_path.to_string_lossy(), html, &output_path).await;
-                }
+            && local_browser.exists()
+        {
+            let exec_path = local_browser.join("Contents/MacOS/Chromium");
+            if exec_path.exists() {
+                info!("Using local Chromium: {:?}", exec_path);
+                return execute_headless_print_with_html(
+                    &exec_path.to_string_lossy(),
+                    html,
+                    &output_path,
+                )
+                .await;
             }
+        }
 
         // 3. Use system browsers
         let browsers = vec![
@@ -178,7 +199,7 @@ pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, o
             "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
             "/Applications/Firefox.app/Contents/MacOS/firefox",
             "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
-            "/Applications/Chromium.app/Contents/MacOS/Chromium"
+            "/Applications/Chromium.app/Contents/MacOS/Chromium",
         ];
 
         for browser in browsers {
@@ -188,40 +209,57 @@ pub async fn print_with_html_mac<R: Runtime>(app: &AppHandle<R>, html: String, o
             }
         }
     }
-    
+
     // 4. Download Chromium if forced or nothing else found
     info!("No suitable browser found. Downloading Chromium...");
     match download_chromium(app).await {
         Ok(path) => {
-             let exec_path = path.join("Contents/MacOS/Chromium");
-             return execute_headless_print_with_html(&exec_path.to_string_lossy(), html, &output_path).await;
+            let exec_path = path.join("Contents/MacOS/Chromium");
+            return execute_headless_print_with_html(
+                &exec_path.to_string_lossy(),
+                html,
+                &output_path,
+            )
+            .await;
         }
-        Err(e) => Err(format!("Failed to download Chromium: {}", e))
+        Err(e) => Err(format!("Failed to download Chromium: {}", e)),
     }
 }
 
 #[cfg(target_os = "macos")]
-pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, output_path: PathBuf, browser_path: Option<String>, force_download: bool) -> Result<String, String> {
+pub async fn print_with_url_mac<R: Runtime>(
+    app: &AppHandle<R>,
+    url: String,
+    output_path: PathBuf,
+    browser_path: Option<String>,
+    force_download: bool,
+) -> Result<String, String> {
     // 1. Use explicitly provided path
     if let Some(path) = browser_path {
         if path_exists(&path) {
-             info!("Using custom browser: {}", path);
-             return execute_headless_print_target(&path, &url, &output_path).await;
+            info!("Using custom browser: {}", path);
+            return execute_headless_print_target(&path, &url, &output_path).await;
         } else {
-             return Err(format!("Custom browser path not found: {}", path));
+            return Err(format!("Custom browser path not found: {}", path));
         }
     }
 
     // 2. Use locally downloaded Chromium (if exists and we are not forcing a new download)
     if !force_download {
         if let Ok(local_browser) = get_local_chromium_path(app)
-            && local_browser.exists() {
-                let exec_path = local_browser.join("Contents/MacOS/Chromium");
-                if exec_path.exists() {
-                     info!("Using local Chromium: {:?}", exec_path);
-                     return execute_headless_print_target(&exec_path.to_string_lossy(), &url, &output_path).await;
-                }
+            && local_browser.exists()
+        {
+            let exec_path = local_browser.join("Contents/MacOS/Chromium");
+            if exec_path.exists() {
+                info!("Using local Chromium: {:?}", exec_path);
+                return execute_headless_print_target(
+                    &exec_path.to_string_lossy(),
+                    &url,
+                    &output_path,
+                )
+                .await;
             }
+        }
 
         // 3. Use system browsers
         let browsers = vec![
@@ -229,7 +267,7 @@ pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, out
             "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
             "/Applications/Firefox.app/Contents/MacOS/firefox",
             "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
-            "/Applications/Chromium.app/Contents/MacOS/Chromium"
+            "/Applications/Chromium.app/Contents/MacOS/Chromium",
         ];
 
         for browser in browsers {
@@ -239,15 +277,16 @@ pub async fn print_with_url_mac<R: Runtime>(app: &AppHandle<R>, url: String, out
             }
         }
     }
-    
+
     // 4. Download Chromium if forced or nothing else found
     info!("No suitable browser found. Downloading Chromium...");
     match download_chromium(app).await {
         Ok(path) => {
-             let exec_path = path.join("Contents/MacOS/Chromium");
-             return execute_headless_print_target(&exec_path.to_string_lossy(), &url, &output_path).await;
+            let exec_path = path.join("Contents/MacOS/Chromium");
+            return execute_headless_print_target(&exec_path.to_string_lossy(), &url, &output_path)
+                .await;
         }
-        Err(e) => Err(format!("Failed to download Chromium: {}", e))
+        Err(e) => Err(format!("Failed to download Chromium: {}", e)),
     }
 }
 
@@ -258,7 +297,7 @@ pub async fn print_with_html_linux(html: String, output_path: PathBuf) -> Result
         "microsoft-edge",
         "firefox",
         "chromium",
-        "chromium-browser"
+        "chromium-browser",
     ];
 
     for browser in browsers {
@@ -277,7 +316,7 @@ pub async fn print_with_url_linux(url: String, output_path: PathBuf) -> Result<S
         "microsoft-edge",
         "firefox",
         "chromium",
-        "chromium-browser"
+        "chromium-browser",
     ];
 
     for browser in browsers {
@@ -303,7 +342,11 @@ fn path_exists(path: &str) -> bool {
     }
     #[cfg(target_os = "windows")]
     {
-        return Command::new("where").arg(path).output().map(|o| o.status.success()).unwrap_or(false);
+        return Command::new("where")
+            .arg(path)
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false);
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -313,7 +356,10 @@ fn path_exists(path: &str) -> bool {
 
 fn get_local_chromium_path<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
     let app_data = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    Ok(app_data.join("chromium").join("chrome-mac").join("Chromium.app"))
+    Ok(app_data
+        .join("chromium")
+        .join("chrome-mac")
+        .join("Chromium.app"))
 }
 
 #[cfg(target_os = "macos")]
@@ -324,40 +370,50 @@ async fn download_chromium<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, St
 
     let arch = std::env::consts::ARCH;
     let platform_key = if arch == "aarch64" { "Mac_Arm" } else { "Mac" };
-    
-    let last_change_url = format!("https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/{platform_key}%2FLAST_CHANGE?alt=media");
-    
-    let version = reqwest::get(&last_change_url).await.map_err(|e| e.to_string())?
-        .text().await.map_err(|e| e.to_string())?;
-        
-    let download_url = format!("https://storage.googleapis.com/chromium-browser-snapshots/{platform_key}/{version}/chrome-mac.zip");
-    
+
+    let last_change_url = format!(
+        "https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/{platform_key}%2FLAST_CHANGE?alt=media"
+    );
+
+    let version = reqwest::get(&last_change_url)
+        .await
+        .map_err(|e| e.to_string())?
+        .text()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let download_url = format!(
+        "https://storage.googleapis.com/chromium-browser-snapshots/{platform_key}/{version}/chrome-mac.zip"
+    );
+
     info!("Downloading Chromium from: {}", download_url);
-    
-    let response = reqwest::get(&download_url).await.map_err(|e| e.to_string())?;
+
+    let response = reqwest::get(&download_url)
+        .await
+        .map_err(|e| e.to_string())?;
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
-    
+
     let cursor = Cursor::new(bytes);
     let mut archive = zip::ZipArchive::new(cursor).map_err(|e| e.to_string())?;
-    
+
     archive.extract(&install_dir).map_err(|e| e.to_string())?;
-    
+
     let app_path = install_dir.join("chrome-mac").join("Chromium.app");
-    
+
     info!("Removing quarantine attribute...");
     let _ = Command::new("xattr")
         .arg("-d")
         .arg("com.apple.quarantine")
         .arg(&app_path)
         .status();
-        
+
     let exec_path = app_path.join("Contents/MacOS/Chromium");
     use std::os::unix::fs::PermissionsExt;
     if let Ok(mut perms) = fs::metadata(&exec_path).map(|m| m.permissions()) {
         perms.set_mode(0o755);
         let _ = fs::set_permissions(&exec_path, perms);
     }
-    
+
     Ok(app_path)
 }
 

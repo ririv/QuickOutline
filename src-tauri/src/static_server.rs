@@ -1,11 +1,11 @@
+use log::{debug, error, info};
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::thread;
-use tiny_http::{Server, Response, Header, Method};
-use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
 use tauri::{AppHandle, Manager, Runtime}; // Import Manager and Runtime trait
-use log::{info, error, debug};
+use tiny_http::{Header, Method, Response, Server};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ActiveDocument {
@@ -31,13 +31,17 @@ impl LocalServerState {
     }
 }
 
-pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBuf, resources_path: Option<PathBuf>) {
+pub fn start_server<R: Runtime>(
+    app_handle: AppHandle<R>,
+    workspace_path: PathBuf,
+    resources_path: Option<PathBuf>,
+) {
     let state = app_handle.state::<LocalServerState>();
-    
+
     // Log paths for debugging
     info!("Static server: workspace_path = {:?}", workspace_path);
     info!("Static server: resources_path = {:?}", resources_path);
-    
+
     // Store workspace and resources path
     match state.workspace.lock() {
         Ok(mut w) => *w = workspace_path.clone(),
@@ -72,10 +76,10 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
 
         // Update state with the port
         if let Some(state) = app_handle.try_state::<LocalServerState>() {
-             match state.port.lock() {
-                 Ok(mut p) => *p = Some(port),
-                 Err(e) => error!("Failed to lock port state: {}", e),
-             }
+            match state.port.lock() {
+                Ok(mut p) => *p = Some(port),
+                Err(e) => error!("Failed to lock port state: {}", e),
+            }
         } else {
             error!("Failed to access LocalServerState to set port.");
         }
@@ -83,12 +87,13 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
         for request in server.incoming_requests() {
             // Only allow GET requests
             if request.method() != &Method::Get {
-                 let _ = request.respond(Response::from_string("Method Not Allowed").with_status_code(405));
-                 continue;
+                let _ = request
+                    .respond(Response::from_string("Method Not Allowed").with_status_code(405));
+                continue;
             }
 
             let url = request.url();
-            
+
             // Intercept PDF request: /pdf/view?path=...
             if url.starts_with("/pdf/view") {
                 if let Some(path_param) = extract_path_from_url(url) {
@@ -98,7 +103,8 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                         continue;
                     }
                 }
-                let _ = request.respond(Response::from_string("PDF Not Found").with_status_code(404));
+                let _ =
+                    request.respond(Response::from_string("PDF Not Found").with_status_code(404));
                 continue;
             }
 
@@ -110,7 +116,7 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
 
             // Remove leading slash
             let relative_path = if url.len() > 1 { &url[1..] } else { "" };
-            
+
             // Allow querying URL params (ignore them for file lookup)
             let path_end = relative_path.find('?').unwrap_or(relative_path.len());
             let clean_path = &relative_path[0..path_end];
@@ -122,24 +128,35 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
 
             // Strategy: Check workspace first, then resources fallback
             if !file_path.exists()
-                && let Some(res_dir) = &resources_path {
-                    // Only fallback for specific asset directories to avoid serving unintended files
-                    // Assuming structure: resources/libs/..., resources/fonts/...
-                    // Match "libs", "libs/", "fonts", "fonts/"
-                    if clean_path == "libs" || clean_path.starts_with("libs/") || 
-                       clean_path == "fonts" || clean_path.starts_with("fonts/") {
-                        
-                        let potential_path = res_dir.join(&clean_path);
-                        debug!("Checking resources path: {} (exists: {})", potential_path.display(), potential_path.exists());
-                        if potential_path.exists() {
-                            file_path = potential_path;
-                            debug!("Serving from resources: {}", file_path.display());
-                        }
+                && let Some(res_dir) = &resources_path
+            {
+                // Only fallback for specific asset directories to avoid serving unintended files
+                // Assuming structure: resources/libs/..., resources/fonts/...
+                // Match "libs", "libs/", "fonts", "fonts/"
+                if clean_path == "libs"
+                    || clean_path.starts_with("libs/")
+                    || clean_path == "fonts"
+                    || clean_path.starts_with("fonts/")
+                {
+                    let potential_path = res_dir.join(&clean_path);
+                    debug!(
+                        "Checking resources path: {} (exists: {})",
+                        potential_path.display(),
+                        potential_path.exists()
+                    );
+                    if potential_path.exists() {
+                        file_path = potential_path;
+                        debug!("Serving from resources: {}", file_path.display());
                     }
                 }
+            }
 
             if !file_path.exists() {
-                debug!("File not found: {} (clean_path: {})", file_path.display(), clean_path);
+                debug!(
+                    "File not found: {} (clean_path: {})",
+                    file_path.display(),
+                    clean_path
+                );
                 let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
                 continue;
             }
@@ -147,7 +164,7 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
             if file_path.is_file() {
                 if let Ok(file) = File::open(&file_path) {
                     let mut response = Response::from_file(file);
-                    
+
                     // Add MIME type
                     let mime_type = match file_path.extension().and_then(|s| s.to_str()) {
                         Some("html") => "text/html",
@@ -162,27 +179,40 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                         Some("ttf") => "font/ttf",
                         _ => "application/octet-stream",
                     };
-                    
-                    if let Ok(header) = Header::from_bytes(&b"Content-Type"[..], mime_type.as_bytes()) {
+
+                    if let Ok(header) =
+                        Header::from_bytes(&b"Content-Type"[..], mime_type.as_bytes())
+                    {
                         response.add_header(header);
                     }
 
                     // Add CORS headers just in case
-                    if let Ok(cors) = Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]) {
+                    if let Ok(cors) =
+                        Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..])
+                    {
                         response.add_header(cors);
                     }
 
                     let _ = request.respond(response);
                 } else {
-                    let _ = request.respond(Response::from_string("Internal Server Error").with_status_code(500));
+                    let _ = request.respond(
+                        Response::from_string("Internal Server Error").with_status_code(500),
+                    );
                 }
             } else if file_path.is_dir() {
                 // Generate directory listing with merged view
-                let mut html = String::from("<html><head><title>Directory Listing</title><style>body{font-family:sans-serif;} table{border-collapse:collapse;width:100%;} td,th{padding:8px;text-align:left;border-bottom:1px solid #ddd;} .src{color:#888;font-size:0.8em;}</style></head><body>");
-                html.push_str(&format!("<h1>Index of /{}</h1><table><tr><th>Name</th><th>Source</th></tr>", clean_path));
-                
+                let mut html = String::from(
+                    "<html><head><title>Directory Listing</title><style>body{font-family:sans-serif;} table{border-collapse:collapse;width:100%;} td,th{padding:8px;text-align:left;border-bottom:1px solid #ddd;} .src{color:#888;font-size:0.8em;}</style></head><body>",
+                );
+                html.push_str(&format!(
+                    "<h1>Index of /{}</h1><table><tr><th>Name</th><th>Source</th></tr>",
+                    clean_path
+                ));
+
                 if !clean_path.is_empty() {
-                    html.push_str("<tr><td><a href=\"..\">.. (Parent Directory)</a></td><td></td></tr>");
+                    html.push_str(
+                        "<tr><td><a href=\"..\">.. (Parent Directory)</a></td><td></td></tr>",
+                    );
                 }
 
                 // Use a Set to track seen filenames to avoid duplicates
@@ -202,16 +232,19 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                 // 2. Scan Resources (Fallback)
                 if let Some(res_dir) = &resources_path {
                     let res_target = res_dir.join(&clean_path);
-                    if res_target.exists() && res_target.is_dir()
-                        && let Ok(res_entries) = std::fs::read_dir(&res_target) {
-                            for entry in res_entries.flatten() {
-                                let filename = entry.file_name().to_string_lossy().to_string();
-                                if !seen_files.contains(&filename) {
-                                    let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-                                    entries.push((filename, is_dir, "Resources (Virtual)"));
-                                }
+                    if res_target.exists()
+                        && res_target.is_dir()
+                        && let Ok(res_entries) = std::fs::read_dir(&res_target)
+                    {
+                        for entry in res_entries.flatten() {
+                            let filename = entry.file_name().to_string_lossy().to_string();
+                            if !seen_files.contains(&filename) {
+                                let is_dir =
+                                    entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
+                                entries.push((filename, is_dir, "Resources (Virtual)"));
                             }
                         }
+                    }
                 }
 
                 // Sort entries: Directories first, then alphabetical
@@ -224,17 +257,24 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
                 });
 
                 for (filename, is_dir, source) in entries {
-                    let display_name = if is_dir { format!("{}/", filename) } else { filename.clone() };
+                    let display_name = if is_dir {
+                        format!("{}/", filename)
+                    } else {
+                        filename.clone()
+                    };
                     // 注意：链接构建可能需要根据浏览器处理相对链接的方式进行调整。
                     // 如果当前路径是 /libs/，href="paged.js" 可以正常工作。
                     // 如果当前路径是 /libs（无尾部斜杠），href="paged.js" 会替换 "libs"。
                     // 假设 tiny_http 或浏览器能正确处理当前 URL 上下文。
                     // 使用相对文件名是最安全的标准行为。
-                    html.push_str(&format!("<tr><td><a href=\"{}\">{}</a></td><td class=\"src\">{}</td></tr>", filename, display_name, source));
+                    html.push_str(&format!(
+                        "<tr><td><a href=\"{}\">{}</a></td><td class=\"src\">{}</td></tr>",
+                        filename, display_name, source
+                    ));
                 }
 
                 html.push_str("</table></body></html>");
-                
+
                 let mut response = Response::from_string(html);
                 if let Ok(header) = Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]) {
                     response.add_header(header);
@@ -251,7 +291,10 @@ pub fn start_server<R: Runtime>(app_handle: AppHandle<R>, workspace_path: PathBu
 fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
     let mut file = match File::open(&path) {
         Ok(f) => f,
-        Err(_) => { let _ = request.respond(Response::from_string("Not Found").with_status_code(404)); return; }
+        Err(_) => {
+            let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
+            return;
+        }
     };
     let file_len = file.metadata().map(|m| m.len()).unwrap_or(0);
 
@@ -267,38 +310,56 @@ fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
                 if let Ok(s) = ranges[0].parse::<u64>() {
                     start = s;
                 }
-                if ranges.len() > 1 && !ranges[1].is_empty()
-                    && let Ok(e) = ranges[1].parse::<u64>() {
-                        end = e;
-                    }
+                if ranges.len() > 1
+                    && !ranges[1].is_empty()
+                    && let Ok(e) = ranges[1].parse::<u64>()
+                {
+                    end = e;
+                }
                 is_range = true;
             }
         }
     }
-    
-    if end >= file_len { end = if file_len > 0 { file_len - 1 } else { 0 }; }
-    if start > end && file_len > 0 { 
-        let _ = request.respond(Response::from_string("Range Not Satisfiable").with_status_code(416));
+
+    if end >= file_len {
+        end = if file_len > 0 { file_len - 1 } else { 0 };
+    }
+    if start > end && file_len > 0 {
+        let _ =
+            request.respond(Response::from_string("Range Not Satisfiable").with_status_code(416));
         return;
     }
 
     let len = end - start + 1;
-    
+
     if file.seek(SeekFrom::Start(start)).is_err() {
-         let _ = request.respond(Response::from_string("Seek Failed").with_status_code(500));
-         return;
+        let _ = request.respond(Response::from_string("Seek Failed").with_status_code(500));
+        return;
     }
 
     let reader = Box::new(file.take(len)) as Box<dyn Read + Send + Sync + 'static>;
 
     let mut response = Response::new(
-        if is_range { tiny_http::StatusCode(206) } else { tiny_http::StatusCode(200) },
+        if is_range {
+            tiny_http::StatusCode(206)
+        } else {
+            tiny_http::StatusCode(200)
+        },
         {
             let mut headers = Vec::new();
-            if let Ok(h) = Header::from_bytes(&b"Content-Type"[..], &b"application/pdf"[..]) { headers.push(h); }
-            if let Ok(h) = Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]) { headers.push(h); }
-            if let Ok(h) = Header::from_bytes(&b"Accept-Ranges"[..], &b"bytes"[..]) { headers.push(h); }
-            if let Ok(h) = Header::from_bytes(&b"Content-Length"[..], format!("{}", len).as_bytes()) { headers.push(h); }
+            if let Ok(h) = Header::from_bytes(&b"Content-Type"[..], &b"application/pdf"[..]) {
+                headers.push(h);
+            }
+            if let Ok(h) = Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]) {
+                headers.push(h);
+            }
+            if let Ok(h) = Header::from_bytes(&b"Accept-Ranges"[..], &b"bytes"[..]) {
+                headers.push(h);
+            }
+            if let Ok(h) = Header::from_bytes(&b"Content-Length"[..], format!("{}", len).as_bytes())
+            {
+                headers.push(h);
+            }
             headers
         },
         reader,
@@ -307,9 +368,13 @@ fn serve_file_with_range(request: tiny_http::Request, path: PathBuf) {
     );
 
     if is_range
-        && let Ok(h) = Header::from_bytes(&b"Content-Range"[..], format!("bytes {}-{}/{}", start, end, file_len).as_bytes()) {
-            response.add_header(h);
-        }
+        && let Ok(h) = Header::from_bytes(
+            &b"Content-Range"[..],
+            format!("bytes {}-{}/{}", start, end, file_len).as_bytes(),
+        )
+    {
+        response.add_header(h);
+    }
 
     let _ = request.respond(response);
 }

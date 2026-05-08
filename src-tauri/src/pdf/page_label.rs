@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use crate::pdf::numbering::Numbering;
 use crate::pdf::page_label_traits::PageLabelEngine;
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum PageLabelNumberingStyle {
@@ -31,7 +31,6 @@ pub struct PageLabel {
 pub struct PageLabelProcessor;
 
 impl PageLabelProcessor {
-
     /// Pure logic to simulate page labels based on rules.
     pub fn simulate_page_labels(rules: Vec<PageLabel>, total_pages: u32) -> Vec<String> {
         let mut simulated_labels = Vec::with_capacity(total_pages as usize);
@@ -39,14 +38,19 @@ impl PageLabelProcessor {
         sorted_rules.sort_by_key(|r| r.page_index);
 
         for i in 1..=total_pages {
-            let active_rule = sorted_rules.iter()
+            let active_rule = sorted_rules
+                .iter()
                 .filter(|r| i as i32 >= r.page_index)
                 .next_back();
 
             let label = if let Some(rule) = active_rule {
                 let page_offset = (i as i32) - rule.page_index;
                 let start_val = rule.start_value.unwrap_or(1);
-                Numbering::format_page_number(&rule.numbering_style, start_val + page_offset, rule.label_prefix.as_deref())
+                Numbering::format_page_number(
+                    &rule.numbering_style,
+                    start_val + page_offset,
+                    rule.label_prefix.as_deref(),
+                )
             } else {
                 i.to_string()
             };
@@ -63,10 +67,16 @@ impl PageLabelProcessor {
     }
 
     /// Business Logic: Merge new rules.
-    pub fn merge_rules<E: PageLabelEngine>(engine: &mut E, new_rules: Vec<PageLabel>) -> Result<()> {
+    pub fn merge_rules<E: PageLabelEngine>(
+        engine: &mut E,
+        new_rules: Vec<PageLabel>,
+    ) -> Result<()> {
         let mut current_rules = engine.get_label_rules()?;
         for new_label in new_rules {
-            if let Some(existing_rule) = current_rules.iter_mut().find(|r| r.page_index == new_label.page_index) {
+            if let Some(existing_rule) = current_rules
+                .iter_mut()
+                .find(|r| r.page_index == new_label.page_index)
+            {
                 *existing_rule = new_label;
             } else {
                 current_rules.push(new_label);

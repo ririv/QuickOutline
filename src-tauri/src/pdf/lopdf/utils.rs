@@ -1,5 +1,5 @@
-use lopdf::{Document, Object};
 use anyhow::{Result, anyhow};
+use lopdf::{Document, Object};
 
 /// Safely resolves indirect objects (Deref).
 /// Limits recursion depth to prevent infinite loops in malformed PDFs.
@@ -10,7 +10,9 @@ pub fn resolve_object<'a>(doc: &'a Document, mut obj: &'a Object) -> Result<&'a 
         if depth > 10 {
             return Err(anyhow!("Reference depth limit exceeded"));
         }
-        obj = doc.get_object(*id).map_err(|e| anyhow!("Failed to get object {}: {}", id.0, e))?;
+        obj = doc
+            .get_object(*id)
+            .map_err(|e| anyhow!("Failed to get object {}: {}", id.0, e))?;
     }
     Ok(obj)
 }

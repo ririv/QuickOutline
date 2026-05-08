@@ -1,7 +1,7 @@
-use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
-use std::path::PathBuf;
-use std::fs;
 use log::error;
+use std::fs;
+use std::path::PathBuf;
+use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 
 #[cfg(target_os = "windows")]
 pub use super::native_windows::print_native_windows;
@@ -10,10 +10,7 @@ pub use super::native_windows::print_native_windows;
 pub use super::native_linux::print_native_linux;
 
 #[cfg(target_os = "macos")]
-pub use super::native_macos::{
-    print_native_with_url_mac_wkpdf,
-    print_native_with_html_mac_wkpdf,
-};
+pub use super::native_macos::{print_native_with_html_mac_wkpdf, print_native_with_url_mac_wkpdf};
 
 #[derive(Debug, Clone, Copy, serde::Deserialize)]
 pub struct PageDimensions {
@@ -29,7 +26,9 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
     filename: String,
     dimensions: Option<PageDimensions>,
 ) -> Result<String, String> {
-    let output_path = app.path().app_data_dir()
+    let output_path = app
+        .path()
+        .app_data_dir()
         .map_err(|e| e.to_string())?
         .join(&filename);
 
@@ -39,7 +38,14 @@ pub async fn print_to_pdf_with_html_string_native<R: Runtime>(
 
     #[cfg(target_os = "macos")]
     {
-        match print_native_with_html_mac_wkpdf(window.clone(), html.clone(), output_path.clone(), dimensions).await {
+        match print_native_with_html_mac_wkpdf(
+            window.clone(),
+            html.clone(),
+            output_path.clone(),
+            dimensions,
+        )
+        .await
+        {
             Ok(path) => Ok(path),
             Err(e) => {
                 error!("Native PDF generation (WKPDF) failed: {}", e);

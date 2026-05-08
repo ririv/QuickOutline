@@ -1,8 +1,8 @@
-use lopdf::{Document, Object, ObjectId, Dictionary};
-use crate::pdf_outline::traits::OutlineEngine;
+use crate::pdf::lopdf::utils::{decode_pdf_string, encode_pdf_string, resolve_object};
 use crate::pdf_outline::model::ViewScaleType;
-use crate::pdf::lopdf::utils::{resolve_object, decode_pdf_string, encode_pdf_string};
+use crate::pdf_outline::traits::OutlineEngine;
 use anyhow::{Result, anyhow};
+use lopdf::{Dictionary, Document, Object, ObjectId};
 use std::collections::BTreeMap;
 
 pub struct LopdfOutlineAdapter<'a> {
@@ -20,12 +20,18 @@ impl<'a> LopdfOutlineAdapter<'a> {
             page_id_to_num.insert(*id, *num);
             page_num_to_id.insert(*num, *id);
         }
-        Self { doc, page_id_to_num, page_num_to_id }
+        Self {
+            doc,
+            page_id_to_num,
+            page_num_to_id,
+        }
     }
 
     fn parse_id(id_str: &str) -> Result<ObjectId> {
         let parts: Vec<&str> = id_str.split(',').collect();
-        if parts.len() != 2 { return Err(anyhow!("Invalid ID format: {}", id_str)); }
+        if parts.len() != 2 {
+            return Err(anyhow!("Invalid ID format: {}", id_str));
+        }
         Ok((parts[0].parse()?, parts[1].parse()?))
     }
 
@@ -58,22 +64,27 @@ impl<'a> OutlineEngine for LopdfOutlineAdapter<'a> {
     fn get_node_dest_page(&self, node_id: &str) -> Result<Option<i32>> {
         let id = Self::parse_id(node_id)?;
         let dict = self.doc.get_object(id)?.as_dict()?;
-        
+
         let dest_obj = if let Ok(dest) = dict.get(b"Dest") {
             Some(dest)
         } else if let Ok(action) = dict.get(b"A").and_then(|o| o.as_dict()) {
             if matches!(action.get(b"S").and_then(|o| o.as_name()), Ok(b"GoTo")) {
                 action.get(b"D").ok()
-            } else { None }
-        } else { None };
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         if let Some(dest) = dest_obj {
             let resolved = resolve_object(self.doc, dest)?;
             if let Object::Array(arr) = resolved
                 && !arr.is_empty()
-                    && let Ok(page_ref) = arr[0].as_reference() {
-                        return Ok(self.page_id_to_num.get(&page_ref).map(|&n| n as i32));
-                    }
+                && let Ok(page_ref) = arr[0].as_reference()
+            {
+                return Ok(self.page_id_to_num.get(&page_ref).map(|&n| n as i32));
+            }
         }
         Ok(None)
     }
@@ -96,37 +107,73 @@ impl<'a> OutlineEngine for LopdfOutlineAdapter<'a> {
         Ok(None)
     }
 
-    fn create_node(&mut self, title: &str, page_num: Option<i32>, scale: ViewScaleType) -> Result<String> {
+    fn create_node(
+        &mut self,
+        title: &str,
+        page_num: Option<i32>,
+        scale: ViewScaleType,
+    ) -> Result<String> {
         let mut dict = Dictionary::new();
-        dict.set("Title", Object::String(encode_pdf_string(title), lopdf::StringFormat::Literal));
-        
+        dict.set(
+            "Title",
+            Object::String(encode_pdf_string(title), lopdf::StringFormat::Literal),
+        );
+
         if let Some(pn) = page_num
-            && let Some(page_id) = self.page_num_to_id.get(&(pn as u32)) {
-                let dest = match scale {
-                    ViewScaleType::FitToPage => vec![Object::Reference(*page_id), Object::Name(b"Fit".to_vec())],
-                    _ => vec![Object::Reference(*page_id), Object::Name(b"XYZ".to_vec()), Object::Null, Object::Null, Object::Null],
-                };
-                dict.set("Dest", Object::Array(dest));
-            }
+            && let Some(page_id) = self.page_num_to_id.get(&(pn as u32))
+        {
+            let dest = match scale {
+                ViewScaleType::FitToPage => {
+                    vec![Object::Reference(*page_id), Object::Name(b"Fit".to_vec())]
+                }
+                _ => vec![
+                    Object::Reference(*page_id),
+                    Object::Name(b"XYZ".to_vec()),
+                    Object::Null,
+                    Object::Null,
+                    Object::Null,
+                ],
+            };
+            dict.set("Dest", Object::Array(dest));
+        }
 
         let id = self.doc.add_object(dict);
         Ok(Self::format_id(id))
     }
 
-    fn link_nodes(&mut self, parent_id: &str, first_child_id: Option<&str>, last_child_id: Option<&str>, count: i32) -> Result<()> {
+    fn link_nodes(
+        &mut self,
+        parent_id: &str,
+        first_child_id: Option<&str>,
+        last_child_id: Option<&str>,
+        count: i32,
+    ) -> Result<()> {
         let pid = Self::parse_id(parent_id)?;
         let dict = self.doc.get_object_mut(pid)?.as_dict_mut()?;
-        if let Some(fid) = first_child_id { dict.set("First", Object::Reference(Self::parse_id(fid)?)); }
-        if let Some(lid) = last_child_id { dict.set("Last", Object::Reference(Self::parse_id(lid)?)); }
+        if let Some(fid) = first_child_id {
+            dict.set("First", Object::Reference(Self::parse_id(fid)?));
+        }
+        if let Some(lid) = last_child_id {
+            dict.set("Last", Object::Reference(Self::parse_id(lid)?));
+        }
         dict.set("Count", Object::Integer(count as i64));
         Ok(())
     }
 
-    fn set_sibling_links(&mut self, current_id: &str, next_id: Option<&str>, prev_id: Option<&str>) -> Result<()> {
+    fn set_sibling_links(
+        &mut self,
+        current_id: &str,
+        next_id: Option<&str>,
+        prev_id: Option<&str>,
+    ) -> Result<()> {
         let cid = Self::parse_id(current_id)?;
         let dict = self.doc.get_object_mut(cid)?.as_dict_mut()?;
-        if let Some(nid) = next_id { dict.set("Next", Object::Reference(Self::parse_id(nid)?)); }
-        if let Some(pid) = prev_id { dict.set("Prev", Object::Reference(Self::parse_id(pid)?)); }
+        if let Some(nid) = next_id {
+            dict.set("Next", Object::Reference(Self::parse_id(nid)?));
+        }
+        if let Some(pid) = prev_id {
+            dict.set("Prev", Object::Reference(Self::parse_id(pid)?));
+        }
         Ok(())
     }
 

@@ -26,7 +26,10 @@ impl TextMetrics {
     /**
      * Applies the Transformation Matrix to convert design space to user space (Points).
      */
-    fn apply_transformation_matrix_to_width(unscaled_width: f32, char_info: &AnalyzableChar) -> f32 {
+    fn apply_transformation_matrix_to_width(
+        unscaled_width: f32,
+        char_info: &AnalyzableChar,
+    ) -> f32 {
         unscaled_width * char_info.font_size
     }
 }
