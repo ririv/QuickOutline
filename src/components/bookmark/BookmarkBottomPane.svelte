@@ -254,9 +254,9 @@
 
 </script>
 
-<div class="flex items-center gap-[15px] py-[10px] pl-[15px] pr-[10px] bg-white border-none">
+<div class="flex items-center gap-[15px] py-[10px] pl-[15px] pr-[10px] bg-white border-none overflow-x-auto">
     <!-- Left Group: Delete and Load -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 shrink-0">
         <GraphButton class="graph-button-important group" title={m.bookmark_delete_pdf_bookmarks()} onclick={handleDeleteClick}>
             <img 
                 src={trashIcon} 
@@ -272,7 +272,7 @@
             <button 
                 bind:this={getContentsBtnEl} 
                 onclick={handleGetContentsClick}
-                class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100"
+                class="inline-flex items-center justify-center w-[100px] shrink-0 whitespace-nowrap gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-gray-100"
                 use:ripple
             >
                 <svg class="w-4 h-4 opacity-70 group-hover:opacity-100" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -297,7 +297,7 @@
     <button 
         bind:this={setContentsBtnEl} 
         onclick={handleSetContentsClick}
-        class="inline-flex items-center justify-center w-[100px] gap-1.5 px-3 py-2 text-sm font-medium text-[#409eff] rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#ecf5ff] hover:bg-[#d9ecff] active:bg-[#c6e2ff]"
+        class="inline-flex items-center justify-center w-[100px] shrink-0 whitespace-nowrap gap-1.5 px-3 py-2 text-sm font-medium text-[#409eff] rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#ecf5ff] hover:bg-[#d9ecff] active:bg-[#c6e2ff]"
         use:ripple={{ color: 'rgba(64,158,255,0.2)' }}
     >
         <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -310,7 +310,7 @@
     <!-- Right Spacer Area: Contains Offset and Settings, and pushes Segmented Control to the right -->
     <div class="flex-1 flex items-center gap-2 pl-4">
         <!-- Offset Input Group -->
-        <div class="relative inline-flex" 
+        <div class="relative inline-flex"
              role="group"
              bind:this={offsetContainerEl} 
              onmouseenter={() => showPopup('offset')} 

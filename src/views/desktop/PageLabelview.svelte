@@ -103,7 +103,7 @@
 
             <div class="mt-4 flex justify-center">
                  <button
-                    class="inline-flex items-center justify-center min-w-[140px] gap-1.5 px-4 py-2 text-sm font-medium text-el-primary rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-el-plain-primary-bg hover:bg-el-plain-primary-bg-hover active:bg-el-plain-primary-border"
+                    class="inline-flex items-center justify-center min-w-[140px] shrink-0 whitespace-nowrap gap-1.5 px-4 py-2 text-sm font-medium text-el-primary rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-el-plain-primary-bg hover:bg-el-plain-primary-bg-hover active:bg-el-plain-primary-border"
                     use:ripple={{ color: 'var(--color-el-primary-shadow)' }}
                     onclick={apply}
                 >
