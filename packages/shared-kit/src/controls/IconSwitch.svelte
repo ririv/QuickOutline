@@ -21,10 +21,10 @@
     let selectedIndex = $derived(options.findIndex(o => o.value === value));
 </script>
 
-<div class={`inline-flex items-center gap-3 ${className}`}>
+<div class={`icon-switch-root inline-flex items-center gap-3 ${className}`}>
     <!-- Capsule Switch -->
     <div 
-        class="relative flex p-0.5 bg-gray-100 rounded-full gap-2 select-none border border-gray-200 cursor-pointer"
+        class="icon-switch-control relative flex p-0.5 bg-gray-100 rounded-full gap-2 select-none border border-gray-200 cursor-pointer"
         onclick={() => value = options[(selectedIndex + 1) % options.length].value}
         onkeydown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -67,7 +67,7 @@
 
     <!-- Label on the right -->
     {#key selectedOption.value}
-        <span class="text-xs font-medium text-gray-600 min-w-[60px] transition-all">
+        <span class="icon-switch-label text-xs font-medium text-gray-600 min-w-[60px] transition-all">
             {selectedOption.label}
         </span>
     {/key}

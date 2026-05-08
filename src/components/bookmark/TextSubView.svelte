@@ -128,25 +128,26 @@
 
 <div class="flex flex-col h-full w-full bg-white">
     <!-- Top Toolbar -->
-    <div class="flex items-center justify-between shrink-0 py-2 px-2 bg-white">
+    <div class="bookmark-toolbar flex items-center justify-between shrink-0 py-2 px-2 bg-white">
         <IconSwitch
+            class="parse-mode-switch"
             bind:value={bookmarkStore.method}
             options={modeOptions}
             highlightValue={highlightedMode}
         />
         
-        <div class="flex items-center gap-2">
+        <div class="toolbar-actions flex items-center gap-2">
             <button 
-                class="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-xs text-gray-600 font-medium transition-colors border border-transparent hover:border-gray-200"
+                class="toolbar-action-btn flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-xs text-gray-600 font-medium transition-colors border border-transparent hover:border-gray-200"
                 onclick={handleAutoFormat} 
                 title="Auto Format Indentation"
                 disabled={isExternalEditing}
             >
-                <img src={formatIcon} alt="Auto Format" class="w-4 h-4 opacity-70" />
-                <span>Auto-Format</span>
+                <img src={formatIcon} alt="Auto Format" class="w-4 h-4 opacity-70 shrink-0" />
+                <span class="toolbar-action-label">Auto-Format</span>
             </button>
             <button
-                class="flex items-center gap-1.5 px-2 py-1.5 rounded transition-all duration-300 text-xs font-medium border
+                class="toolbar-action-btn flex items-center gap-1.5 px-2 py-1.5 rounded transition-all duration-300 text-xs font-medium border
                        {isExternalEditing 
                         ? 'bg-blue-50 text-blue-600 border-blue-200' 
                         : 'hover:bg-gray-100 text-gray-600 border-transparent hover:border-gray-200'}"
@@ -155,14 +156,14 @@
                 disabled={isExternalEditing}
             >
                 {#if isExternalEditing}
-                    <span class="relative flex h-2 w-2">
+                    <span class="relative flex h-2 w-2 shrink-0">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                     </span>
                 {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code opacity-70"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code opacity-70 shrink-0"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
                 {/if}
-                <span>{isExternalEditing ? 'Syncing' : editorName}</span>
+                <span class="toolbar-action-label">{isExternalEditing ? 'Syncing' : editorName}</span>
             </button>
         </div>
     </div>
@@ -198,3 +199,57 @@
         </div>
     </div>
 </div>
+
+<style>
+    .bookmark-toolbar {
+        container-type: inline-size;
+        gap: 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .bookmark-toolbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .toolbar-actions,
+    .toolbar-action-btn {
+        flex: 0 0 auto;
+    }
+
+    .toolbar-action-btn {
+        white-space: nowrap;
+    }
+
+    .bookmark-toolbar :global(.parse-mode-switch) {
+        flex: 0 0 auto;
+    }
+
+    @container (max-width: 430px) {
+        .bookmark-toolbar {
+            gap: 4px;
+        }
+
+        .toolbar-actions {
+            gap: 4px;
+        }
+
+        .bookmark-toolbar :global(.icon-switch-label) {
+            display: none;
+        }
+
+        .bookmark-toolbar :global(.icon-switch-root) {
+            gap: 0;
+        }
+    }
+
+    @container (max-width: 360px) {
+        .toolbar-action-label {
+            display: none;
+        }
+
+        .toolbar-action-btn {
+            padding-inline: 8px;
+        }
+    }
+</style>
