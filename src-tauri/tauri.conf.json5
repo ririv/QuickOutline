@@ -49,7 +49,91 @@
   "plugins": {
     "cli": {
       "description": "QuickOutline CLI",
-      "args": []
+      "args": [
+        {
+          "name": "port",
+          "takesValue": true,
+          "description": "Port used by the Java sidecar in development"
+        },
+        {
+          "name": "external-sidecar",
+          "description": "Connect to an externally managed Java sidecar"
+        }
+      ],
+      "subcommands": {
+        "outline": {
+          "description": "Run outline operations through the QuickOutline app",
+          "subcommands": {
+            "set": {
+              "description": "Write bookmarks from outline text to a PDF",
+              "args": [
+                {
+                  "name": "pdf",
+                  "takesValue": true,
+                  "required": true,
+                  "description": "Input PDF path"
+                },
+                {
+                  "name": "outline",
+                  "takesValue": true,
+                  "required": true,
+                  "description": "Outline text path"
+                },
+                {
+                  "name": "output",
+                  "takesValue": true,
+                  "description": "Output PDF path"
+                },
+                {
+                  "name": "offset",
+                  "takesValue": true,
+                  "description": "Page offset applied to bookmark page numbers"
+                },
+                {
+                  "name": "method",
+                  "takesValue": true,
+                  "possibleValues": ["seq", "indent"],
+                  "description": "Outline parser method"
+                },
+                {
+                  "name": "view-mode",
+                  "takesValue": true,
+                  "possibleValues": [
+                    "none",
+                    "fit-to-page",
+                    "fit-to-width",
+                    "fit-to-height",
+                    "fit-to-box",
+                    "actual-size"
+                  ],
+                  "description": "Bookmark destination scale"
+                }
+              ]
+            },
+            "export": {
+              "description": "Export PDF bookmarks to outline text",
+              "args": [
+                {
+                  "name": "pdf",
+                  "takesValue": true,
+                  "required": true,
+                  "description": "Input PDF path"
+                },
+                {
+                  "name": "output",
+                  "takesValue": true,
+                  "description": "Output outline text path"
+                },
+                {
+                  "name": "offset",
+                  "takesValue": true,
+                  "description": "Page offset applied to exported page numbers"
+                }
+              ]
+            }
+          }
+        }
+      }
     }
   }
 }

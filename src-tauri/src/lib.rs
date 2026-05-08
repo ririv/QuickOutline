@@ -5,15 +5,15 @@
 
 mod external_editor;
 mod java_sidecar;
-mod pdf;
+pub mod pdf;
 mod pdf_analysis;
-mod pdf_outline;
+pub mod pdf_outline;
 mod printer;
 mod static_server;
 
 use log::{error, info, warn};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tauri::http::{Response, StatusCode};
 use tauri::{AppHandle, Manager, Runtime};
 
@@ -88,35 +88,6 @@ use crate::pdf::page_label::{PageLabel, PageLabelProcessor};
 use crate::pdf::page_label_traits::PageLabelEngine;
 use crate::pdf_outline::model::{Bookmark, ViewScaleType};
 
-fn resolve_dest_path(src_path: &str, dest_path: Option<String>) -> String {
-    if let Some(path) = dest_path
-        && !path.trim().is_empty()
-    {
-        return path;
-    }
-
-    let src = Path::new(src_path);
-    let parent = src.parent().unwrap_or(Path::new(""));
-    let file_stem = src.file_stem().and_then(|s| s.to_str()).unwrap_or("output");
-    let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("pdf");
-
-    let mut candidate_name = format!("{}_new.{}", file_stem, ext);
-    let mut candidate_path = parent.join(&candidate_name);
-
-    if !candidate_path.exists() {
-        return candidate_path.to_string_lossy().to_string();
-    }
-
-    let mut counter = 1;
-    while candidate_path.exists() {
-        candidate_name = format!("{}_new_{}.{}", file_stem, counter, ext);
-        candidate_path = parent.join(&candidate_name);
-        counter += 1;
-    }
-
-    candidate_path.to_string_lossy().to_string()
-}
-
 #[tauri::command]
 async fn get_outline_as_bookmark(
     state: tauri::State<'_, pdf::manager::PdfWorker>,
@@ -127,8 +98,7 @@ async fn get_outline_as_bookmark(
         .call(move |worker| -> Result<Bookmark, String> {
             let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
             let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
-            let adapter = crate::pdf::lopdf::outline_adapter::LopdfOutlineAdapter::new(doc);
-            crate::pdf_outline::processor::PdfOutlineProcessor::get_outline(&adapter, offset)
+            crate::pdf_outline::io::get_outline_from_document(doc, offset)
                 .map_err(|e| e.to_string())
         })
         .await
@@ -144,7 +114,8 @@ async fn save_outline(
     offset: i32,
     view_mode: Option<ViewScaleType>,
 ) -> Result<String, String> {
-    let actual_dest = resolve_dest_path(&src_path, dest_path);
+    let actual_dest =
+        crate::pdf_outline::io::resolve_dest_path_string(&src_path, dest_path.as_deref());
     let scale = view_mode.unwrap_or(ViewScaleType::None);
 
     let dest_path_clone = actual_dest.clone();
@@ -156,18 +127,15 @@ async fn save_outline(
                 .map_err(|e| e.to_string())?;
             let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
 
-            let mut adapter = crate::pdf::lopdf::outline_adapter::LopdfOutlineAdapter::new(doc);
-            crate::pdf_outline::processor::PdfOutlineProcessor::set_outline(
-                &mut adapter,
+            crate::pdf_outline::io::set_outline_on_document(
+                doc,
                 bookmark_root,
                 offset,
                 scale,
             )
             .map_err(|e| format!("Failed to set outline: {}", e))?;
 
-            adapter
-                .doc
-                .save(&dest_path_clone)
+            doc.save(&dest_path_clone)
                 .map(|_| ())
                 .map_err(|e| format!("Failed to save PDF: {}", e))
         })
@@ -184,7 +152,8 @@ async fn set_page_labels(
     rules: Vec<PageLabel>,
     dest_path: Option<String>,
 ) -> Result<String, String> {
-    let actual_dest = resolve_dest_path(&src_path, dest_path);
+    let actual_dest =
+        crate::pdf_outline::io::resolve_dest_path_string(&src_path, dest_path.as_deref());
     let dest_clone = actual_dest.clone();
 
     state

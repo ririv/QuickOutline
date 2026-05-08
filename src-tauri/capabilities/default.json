@@ -10,6 +10,7 @@
     "core:window:allow-start-dragging",
     "log:default",
     "core:webview:allow-print",
+    "cli:default",
     "opener:default",
     {
       "identifier": "opener:allow-open-path",
