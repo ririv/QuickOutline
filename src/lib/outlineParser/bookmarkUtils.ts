@@ -1,8 +1,18 @@
-import type {BookmarkUI} from "../types/bookmark.ts";
+import type {BookmarkData, BookmarkUI} from "../types/bookmark.ts";
 
-export type LinkedBookmark = BookmarkUI & {
+type LinkedBookmark = BookmarkUI & {
     parent?: LinkedBookmark;
 };
+
+export function toBookmarkData(bookmark: BookmarkUI): BookmarkData {
+    return {
+        id: bookmark.id,
+        title: bookmark.title,
+        pageNum: bookmark.pageNum,
+        level: bookmark.level,
+        children: bookmark.children.map(toBookmarkData)
+    };
+}
 
 export function createBookmark(title: string, page: string | null, level: number): LinkedBookmark {
     return {
@@ -93,22 +103,6 @@ function cleanupParentReferences(node: LinkedBookmark) {
     }
 }
 
-function flatten(nodes: BookmarkUI[]): BookmarkUI[] {
-    const result: BookmarkUI[] = [];
-    function traverse(list: BookmarkUI[]) {
-        for (const node of list) {
-            result.push(node);
-            if (node.children) traverse(node.children);
-        }
-    }
-    traverse(nodes);
-    return result;
-}
-
-function isSameContent(a: BookmarkUI, b: BookmarkUI): boolean {
-    return a.title === b.title && a.pageNum === b.pageNum && a.level === b.level;
-}
-
 function transferState(oldNode: BookmarkUI, newNode: BookmarkUI) {
     newNode.id = oldNode.id;
     if (oldNode.expanded !== undefined) {
@@ -117,67 +111,89 @@ function transferState(oldNode: BookmarkUI, newNode: BookmarkUI) {
 }
 
 export function reconcileTrees(oldRoots: BookmarkUI[], newRoots: BookmarkUI[]) {
-    const oldList = flatten(oldRoots);
-    const newList = flatten(newRoots);
-    
-    const m = oldList.length;
-    const n = newList.length;
-    
-    // Costs (local to reconcileTrees)
-    const INS_DEL_COST = 2;
-    const MODIFY_COST = 1;
+    const oldList = flattenWithPath(oldRoots);
+    const newList = flattenWithPath(newRoots);
+    const oldByPath = new Map<string, FlattenedBookmark>();
+    const oldBySignature = new Map<string, FlattenedBookmark[]>();
+    const signatureCursor = new Map<string, number>();
+    const usedOldNodes = new Set<BookmarkUI>();
 
-    function getEditCost(oldNode: BookmarkUI, newNode: BookmarkUI): number {
-        if (oldNode.level !== newNode.level) {
-            return Infinity; // Cannot match across levels
-        }
-        return isSameContent(oldNode, newNode) ? 0 : MODIFY_COST;
-    }
+    for (const oldItem of oldList) {
+        oldByPath.set(oldItem.path, oldItem);
 
-    // dp[i][j] stores the minimum edit distance between oldList[0..i] and newList[0..j]
-    const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-
-    // Initialize base cases
-    for (let i = 0; i <= m; i++) dp[i][0] = i * INS_DEL_COST;
-    for (let j = 0; j <= n; j++) dp[0][j] = j * INS_DEL_COST;
-
-    for (let i = 1; i <= m; i++) {
-        for (let j = 1; j <= n; j++) {
-            const oldNode = oldList[i-1];
-            const newNode = newList[j-1];
-            
-            const matchCost = getEditCost(oldNode, newNode);
-            
-            dp[i][j] = Math.min(
-                dp[i-1][j] + INS_DEL_COST, // Delete from old
-                dp[i][j-1] + INS_DEL_COST, // Insert into new
-                dp[i-1][j-1] + matchCost   // Match or Modify
-            );
-        }
-    }
-
-    // Backtrack to apply state transfer for Matched or Modified nodes
-    let i = m, j = n;
-    while (i > 0 && j > 0) {
-        const oldNode = oldList[i-1];
-        const newNode = newList[j-1];
-        
-        const matchCost = getEditCost(oldNode, newNode);
-        const currentScore = dp[i][j];
-        
-        // Prioritize diagonal (Match/Modify) if the score matches
-        if (matchCost !== Infinity && currentScore === dp[i-1][j-1] + matchCost) {
-            // We found a correspondence!
-            // Whether it's an exact match (0) or a modification (1), we reuse the ID.
-            transferState(oldNode, newNode);
-            i--;
-            j--;
-        } else if (currentScore === dp[i-1][j] + INS_DEL_COST) {
-            // Deletion from old list (oldNode is gone)
-            i--;
+        const signature = bookmarkSignature(oldItem.node);
+        const bucket = oldBySignature.get(signature);
+        if (bucket) {
+            bucket.push(oldItem);
         } else {
-            // Insertion into new list (newNode is fresh)
-            j--;
+            oldBySignature.set(signature, [oldItem]);
         }
     }
+
+    for (const newItem of newList) {
+        const signature = bookmarkSignature(newItem.node);
+        const exactMatch = takeUnused(oldBySignature.get(signature), usedOldNodes, signatureCursor, signature);
+        if (exactMatch) {
+            transferState(exactMatch.node, newItem.node);
+            usedOldNodes.add(exactMatch.node);
+            continue;
+        }
+
+        const pathMatch = oldByPath.get(newItem.path);
+        if (pathMatch && !usedOldNodes.has(pathMatch.node) && isLikelySameNode(pathMatch.node, newItem.node)) {
+            transferState(pathMatch.node, newItem.node);
+            usedOldNodes.add(pathMatch.node);
+        }
+    }
+}
+
+type FlattenedBookmark = {
+    node: BookmarkUI;
+    path: string;
+};
+
+function flattenWithPath(nodes: BookmarkUI[], parentPath = ""): FlattenedBookmark[] {
+    const result: FlattenedBookmark[] = [];
+
+    nodes.forEach((node, index) => {
+        const path = parentPath ? `${parentPath}/${index}` : String(index);
+        result.push({ node, path });
+        result.push(...flattenWithPath(node.children || [], path));
+    });
+
+    return result;
+}
+
+function bookmarkSignature(node: BookmarkUI): string {
+    return JSON.stringify([node.level, node.title, node.pageNum || ""]);
+}
+
+function takeUnused(
+    items: FlattenedBookmark[] | undefined,
+    usedOldNodes: Set<BookmarkUI>,
+    signatureCursor: Map<string, number>,
+    signature: string
+): FlattenedBookmark | undefined {
+    if (!items) return undefined;
+
+    let index = signatureCursor.get(signature) || 0;
+    while (index < items.length && usedOldNodes.has(items[index].node)) {
+        index++;
+    }
+    signatureCursor.set(signature, index + 1);
+
+    return items[index];
+}
+
+function isLikelySameNode(oldNode: BookmarkUI, newNode: BookmarkUI): boolean {
+    if (oldNode.level !== newNode.level) return false;
+
+    const oldPage = oldNode.pageNum || "";
+    const newPage = newNode.pageNum || "";
+    if (oldPage && newPage && oldPage === newPage) return true;
+
+    const oldTitle = oldNode.title.trim();
+    const newTitle = newNode.title.trim();
+    const shorterTitleLength = Math.min(oldTitle.length, newTitle.length);
+    return shorterTitleLength >= 3 && (oldTitle.includes(newTitle) || newTitle.includes(oldTitle));
 }

@@ -23,10 +23,11 @@
     import { outlineService } from '@/lib/services/OutlineService';
     import { saveOutline, extractToc } from '@/lib/api/rust_pdf';
     import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
+    import { toBookmarkData } from '@/lib/outlineParser/bookmarkUtils';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte.ts';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
-    import type { BookmarkUI } from '@/lib/types/bookmark.ts';
+    import type { BookmarkData, BookmarkUI } from '@/lib/types/bookmark.ts';
     import { untrack } from 'svelte';
     import * as m from '@/lib/paraglide/messages.js';
 
@@ -198,7 +199,7 @@
 
             // 2. Parse locally and save tree
             const tree = processText(text);
-            await saveOutline(path, tree as any, null, offset, viewMode);
+            await saveOutline(path, toBookmarkData(tree), null, offset, viewMode);
             
             messageStore.add(m.bookmark_outline_saved_success(), 'SUCCESS');
         } catch (e: any) {
@@ -226,7 +227,7 @@
                 if (!path) return;
 
                 // Create an empty virtual root to effectively clear bookmarks
-                const emptyRoot: BookmarkUI = {
+                const emptyRoot: BookmarkData = {
                     id: 'virtual-root',
                     title: 'Outlines',
                     level: 0,
@@ -234,7 +235,7 @@
                     pageNum: null
                 };
 
-                await saveOutline(path, emptyRoot as any, null, 0, 'NONE');
+                await saveOutline(path, emptyRoot, null, 0, 'NONE');
                 
                 // Sync frontend
                 bookmarkStore.reset();

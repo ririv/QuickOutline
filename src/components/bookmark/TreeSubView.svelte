@@ -1,11 +1,12 @@
 <script lang="ts">
-    import type { BookmarkUI } from "@/lib/types/bookmark.ts";
+    import type { BookmarkData, BookmarkUI } from "@/lib/types/bookmark.ts";
     import BookmarkNode from "./BookmarkNode.svelte";
     import { onMount, onDestroy, setContext, untrack, tick } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { serializeBookmarkTree } from '@/lib/outlineParser';
+    import { toBookmarkData } from '@/lib/outlineParser/bookmarkUtils';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
-    import { moveNode, getVisibleNodes } from '@/lib/utils/treeUtils';
+    import { getVisibleNodes } from '@/lib/utils/treeUtils';
     import { calculateDragState, getDragTargetInfo } from '@/lib/drag-drop/dragLogic';
     import PreviewPopup from '../PreviewPopup.svelte';
     import offsetIconRaw from '@/assets/icons/offset.svg?raw';
@@ -63,6 +64,7 @@
     );
     
     setContext('dragContext', dragController);
+    let bookmarkData = $derived(bookmarks.map(toBookmarkData));
 
     let unlistenFns: (() => void)[] = [];
 
@@ -218,70 +220,53 @@
         };
     }
 
-    // Debounced function to sync tree changes with backend and update text
-    const debouncedSyncTreeWithBackend = debounce(async (tree: BookmarkUI[]) => {
+    // 树内容变化后再同步文本，避免编辑过程中频繁序列化整棵树。
+    const debouncedSyncTreeWithText = debounce((tree: BookmarkData[]) => {
         try {
-            // Construct a virtual root BookmarkDto for sending to backend
-            const rootDto: BookmarkUI = {
-                id: 'virtual-root', // Use a consistent ID for the virtual root
+            const rootDto: BookmarkData = {
+                id: 'virtual-root',
                 title: 'Virtual Root',
                 pageNum: null,
                 level: 0,
                 children: tree
             };
             const text = serializeBookmarkTree(rootDto);
-            // Only update text if it's different to avoid loops
             if (bookmarkStore.text !== text) {
                 bookmarkStore.setText(text);
             }
         } catch (e: any) {
-            console.error("Failed to sync tree with backend:", e);
+            console.error("Failed to sync tree with text:", e);
             messageStore.add('Failed to sync changes: ' + (e.message || String(e)), 'ERROR');
         }
-    }, 500); // 500ms debounce delay
+    }, 500); // 500ms 防抖
 
 
     let isUpdatingFromStore = false;
 
-    onMount(() => {
-        // Initialize bookmarks from store
-        isUpdatingFromStore = true;
-        bookmarks = bookmarkStore.tree;
-        tick().then(() => isUpdatingFromStore = false);
-    });
-
-    onDestroy(() => {
-        clearTimeout(debounceTimer); // Clear any pending debounced calls
-    });
-
-    // Sync from Store to Local
+    // 从 Store 同步到本地树
     $effect(() => {
-        const storeTree = bookmarkStore.tree; // Track store
+        const storeTree = bookmarkStore.tree;
         untrack(() => {
-             // Check for deep equality to avoid unnecessary updates and re-renders if the tree is the same
-             // Using JSON stringify is a bit expensive but robust for deep structures
-             if (JSON.stringify(storeTree) !== JSON.stringify(bookmarks)) {
-                 isUpdatingFromStore = true;
-                 bookmarks = storeTree;
-                 tick().then(() => isUpdatingFromStore = false);
+             if (storeTree !== bookmarks) {
+                  isUpdatingFromStore = true;
+                  bookmarks = storeTree;
+                  tick().then(() => isUpdatingFromStore = false);
              }
         });
     });
 
-    // Sync from Local to Store & Backend
+    // 从本地树同步到 Store 和文本
     $effect(() => {
-        // Track local bookmarks changes (including deep changes due to JSON.stringify usage implicitly or just access)
-        JSON.stringify(bookmarks); // Explicitly track deep changes
         const currentBookmarks = bookmarks;
-        
+        const currentBookmarkData = bookmarkData;
+
         untrack(() => {
             if (isUpdatingFromStore) return;
 
-            // Always sync when local changes are detected, assuming they are user interactions.
-            // We skip the JSON comparison against the store because shared references (e.g. from drag & drop mutations)
-            // can make the store and local state appear identical even when a sync is needed.
-            bookmarkStore.setTree(currentBookmarks); // Keep the store's tree up-to-date with local mutations
-            debouncedSyncTreeWithBackend(currentBookmarks);
+            if (bookmarkStore.tree !== currentBookmarks) {
+                bookmarkStore.setTree(currentBookmarks);
+            }
+            debouncedSyncTreeWithText(currentBookmarkData);
         });
     });
 </script>

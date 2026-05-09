@@ -1,10 +1,10 @@
 import {FOUR_NORM_SPACE, INDENT_UNIT} from "@/lib/outlineParser/constants.ts";
-import type {BookmarkUI} from "@/lib/types/bookmark.ts";
+import type {BookmarkData} from "@/lib/types/bookmark.ts";
 
-export function serializeBookmarkTree(root: BookmarkUI): string {
+export function serializeBookmarkTree(root: BookmarkData): string {
     let result = "";
 
-    function traverse(node: BookmarkUI) {
+    function traverse(node: BookmarkData) {
         if (node.level > 0) {
             const pageNumStr = node.pageNum ? node.pageNum : "";
             result += buildLine(node.level, node.title, pageNumStr);
