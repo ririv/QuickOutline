@@ -4,9 +4,75 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: Release type
+        required: true
+        default: pre-release
+        type: choice
+        options:
+          - pre-release
+          - release
+      release_tag:
+        description: Tag for a formal release, for example v3.0.0
+        required: false
 
 jobs:
+  prepare:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+      release_name: ${{ steps.release.outputs.release_name }}
+      release_body: ${{ steps.release.outputs.release_body }}
+
+    steps:
+      - name: Calculate release metadata
+        id: release
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          RELEASE_TYPE: ${{ inputs.release_type }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$RELEASE_TYPE" = "pre-release" ]; then
+            echo "tag_name=dev-build" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "release_name=QuickOutline pre-release" >> "$GITHUB_OUTPUT"
+            echo "release_body=Latest pre-release build. This release is replaced by each pre-release workflow run." >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -z "$RELEASE_TAG" ]; then
+              echo "::error::release_tag is required for a formal release."
+              exit 1
+            fi
+            echo "tag_name=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "release_name=QuickOutline v__VERSION__" >> "$GITHUB_OUTPUT"
+            echo "release_body=See the assets to download this version and install." >> "$GITHUB_OUTPUT"
+          else
+            echo "tag_name=$REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "release_name=QuickOutline v__VERSION__" >> "$GITHUB_OUTPUT"
+            echo "release_body=See the assets to download this version and install." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reset pre-release
+        if: steps.release.outputs.prerelease == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete "${{ steps.release.outputs.tag_name }}" --cleanup-tag --yes || true
+          gh release create "${{ steps.release.outputs.tag_name }}" \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "${{ steps.release.outputs.release_name }}" \
+            --notes "${{ steps.release.outputs.release_body }}"
+
   release:
+    needs: prepare
     permissions:
       contents: write
     strategy:
@@ -17,16 +83,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Calculate Tag Name
-        id: tag_calc
-        shell: bash
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "tag_name=dev-build" >> $GITHUB_OUTPUT
-          else
-            echo "tag_name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          fi
 
       - name: setup bun
         uses: oven-sh/setup-bun@v2
@@ -59,8 +115,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: --verbose -- --verbose
-          tagName: ${{ steps.tag_calc.outputs.tag_name }}
-          releaseName: 'QuickOutline v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          tagName: ${{ needs.prepare.outputs.tag_name }}
+          releaseName: ${{ needs.prepare.outputs.release_name }}
+          releaseBody: ${{ needs.prepare.outputs.release_body }}
           releaseDraft: false
-          prerelease: true
+          prerelease: ${{ needs.prepare.outputs.prerelease }}
