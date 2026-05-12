@@ -22,12 +22,12 @@
     
     import { outlineService } from '@/lib/services/OutlineService';
     import { saveOutline, extractToc } from '@/lib/api/rust_pdf';
-    import { processText, serializeBookmarkTree } from '@/lib/outlineParser';
-    import { toBookmarkData } from '@/lib/outlineParser/bookmarkUtils';
+    import { processText, serializeBookmarkTree } from 'outline-parser';
+    import { toBookmarkData } from 'outline-parser/bookmarkUtils';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte.ts';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
-    import type { BookmarkData, BookmarkUI } from '@/lib/types/bookmark.ts';
+    import type { BookmarkData, BookmarkUI } from 'outline-parser/bookmark';
     import { untrack } from 'svelte';
     import * as m from '@/lib/paraglide/messages.js';
 

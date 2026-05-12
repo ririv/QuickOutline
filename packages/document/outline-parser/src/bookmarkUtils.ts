@@ -1,4 +1,4 @@
-import type {BookmarkData, BookmarkUI} from "../types/bookmark.ts";
+import type { BookmarkData, BookmarkUI } from "./bookmark";
 
 type LinkedBookmark = BookmarkUI & {
     parent?: LinkedBookmark;

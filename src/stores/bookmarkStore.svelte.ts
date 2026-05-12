@@ -1,6 +1,6 @@
-import type { BookmarkUI } from '@/lib/types/bookmark.ts';
-import { reconcileTrees } from '@/lib/outlineParser/bookmarkUtils';
-import { Method } from '@/lib/outlineParser';
+import type { BookmarkUI } from 'outline-parser/bookmark';
+import { reconcileTrees } from 'outline-parser/bookmarkUtils';
+import { Method } from 'outline-parser';
 import { offsetStore } from './offsetStore.svelte';
 
 class BookmarkStore {

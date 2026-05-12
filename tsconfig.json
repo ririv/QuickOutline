@@ -18,6 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
+      "outline-parser": ["packages/document/outline-parser/src/index.ts"],
+      "outline-parser/*": ["packages/document/outline-parser/src/*"],
       "shared-kit": ["packages/shared-kit/src/index.ts"],
       "shared-kit/*": ["packages/shared-kit/src/*"]
     },
@@ -33,6 +35,9 @@
     "src/**/*.js",
     "src/**/*.svelte",
     "src/**/*.tsx",
+    "packages/document/outline-parser/src/**/*.d.ts",
+    "packages/document/outline-parser/src/**/*.ts",
+    "packages/document/outline-parser/src/**/*.js",
     "packages/shared-kit/src/**/*.d.ts",
     "packages/shared-kit/src/**/*.ts",
     "packages/shared-kit/src/**/*.js",

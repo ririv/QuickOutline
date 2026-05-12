@@ -1,5 +1,5 @@
 // Ported from parser.java
-import type { BookmarkUI } from "../types/bookmark.ts";
+import type { BookmarkUI } from "./bookmark";
 
 export interface Parser {
     /**

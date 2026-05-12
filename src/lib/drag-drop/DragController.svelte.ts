@@ -1,5 +1,5 @@
 import { moveNode } from '../utils/treeUtils.ts';
-import type { BookmarkUI } from '../types/bookmark.ts';
+import type { BookmarkUI } from 'outline-parser/bookmark';
 
 export class DragController {
     draggedNodeId = $state<string | null>(null);

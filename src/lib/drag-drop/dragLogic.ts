@@ -1,4 +1,4 @@
-import type { BookmarkUI } from '../types/bookmark';
+import type { BookmarkUI } from 'outline-parser/bookmark';
 import { calculateLevelFromX } from './treeLayout';
 
 export interface DragState {

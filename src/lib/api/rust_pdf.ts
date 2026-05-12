@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { PageLabel } from '@/lib/types/page-label.ts';
 import type { ViewScaleType } from '@/lib/types/pdf';
-import type { BookmarkData } from '@/lib/types/bookmark';
+import type { BookmarkData } from 'outline-parser/bookmark';
 import type { HeaderFooterConfig } from '@/lib/types/header-footer';
 
 export type LoadMode = 'DirectFile' | 'MemoryBuffer';

@@ -3,9 +3,9 @@
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
     import { docStore } from '@/stores/docStore.svelte';
     import { useExternalEditor } from '@/lib/bridge/useExternalEditor.svelte';
-    import { processText, autoFormat, Method } from '@/lib/outlineParser';
+    import { processText, autoFormat, Method } from 'outline-parser';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
-    import type { BookmarkUI } from '@/lib/types/bookmark.ts';
+    import type { BookmarkUI } from 'outline-parser/bookmark';
     import formatIcon from '@/assets/icons/format.svg'; 
     import sequentialIcon from '@/assets/icons/mode-sequential.svg';
     import indentIcon from '@/assets/icons/mode-indent.svg';

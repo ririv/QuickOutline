@@ -66,6 +66,7 @@ export default defineConfig({
     fs: {
       allow: [
         resolve(__dirname, './src'),
+        resolve(__dirname, './packages/document/outline-parser'),
         resolve(__dirname, './packages/shared-kit'),
         resolve(__dirname, './node_modules')
       ]

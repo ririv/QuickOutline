@@ -1,7 +1,7 @@
 import { getOutlineAsBookmark } from '@/lib/api/rust_pdf';
 import { tocStore } from '@/stores/tocStore.svelte';
 import { tocService } from './TocService';
-import type { BookmarkUI } from '@/lib/types/bookmark';
+import type { BookmarkUI } from 'outline-parser/bookmark';
 
 export class OutlineService {
     // Engine Options: 'lopdf' (Rust Backend) | 'pdfjs' (Frontend JS)

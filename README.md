@@ -24,6 +24,16 @@
 3. Set page offset = (page number in PDF) - (page number in original book)
 4. Add the bookmarks, done!
 
+### 命令行 CLI
+
+```bash
+quickoutline outline import --pdf input.pdf --outline toc.txt
+quickoutline outline export --pdf input.pdf
+```
+
+`outline import` 未指定 `--output` 时会生成 `*_new.pdf`，`outline export`
+未指定 `--output` 时会生成 `*_outline.txt`。
+
 ---
 
 ### 添加目录

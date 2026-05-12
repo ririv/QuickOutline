@@ -1,6 +1,6 @@
 import { processText, Method, containsChinese } from "./index";
 import { CnSeqParser } from "./methods/seq/CnSeqParser";
-import type { BookmarkUI } from "../types/bookmark.ts";
+import type { BookmarkUI } from "./bookmark";
 
 // Simple test runner helper
 function test(name: string, fn: () => void) {

@@ -27,7 +27,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: asset: http://asset.localhost http://127.0.0.1:*; connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:*"
+      "csp": "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data: asset: http://asset.localhost http://127.0.0.1:*; img-src 'self' blob: data: asset: http://asset.localhost http://127.0.0.1:*; connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:*"
     }
   },
   "bundle": {
@@ -43,6 +43,7 @@
     ],
     "resources": {
       "../build/libs/": "resources/libs/",
+      "resources/outline-parser-cli.mjs": "resources/outline-parser-cli.mjs",
       "libs/": "libs/"
     }
   },
@@ -64,7 +65,7 @@
         "outline": {
           "description": "Run outline operations through the QuickOutline app",
           "subcommands": {
-            "set": {
+            "import": {
               "description": "Write bookmarks from outline text to a PDF",
               "args": [
                 {

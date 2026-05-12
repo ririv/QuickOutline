@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { BookmarkData, BookmarkUI } from "@/lib/types/bookmark.ts";
+    import type { BookmarkData, BookmarkUI } from "outline-parser/bookmark";
     import BookmarkNode from "./BookmarkNode.svelte";
     import { onMount, onDestroy, setContext, untrack, tick } from 'svelte';
     import { bookmarkStore } from '@/stores/bookmarkStore.svelte';
-    import { serializeBookmarkTree } from '@/lib/outlineParser';
-    import { toBookmarkData } from '@/lib/outlineParser/bookmarkUtils';
+    import { serializeBookmarkTree } from 'outline-parser';
+    import { toBookmarkData } from 'outline-parser/bookmarkUtils';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
     import { getVisibleNodes } from '@/lib/utils/treeUtils';
     import { calculateDragState, getDragTargetInfo } from '@/lib/drag-drop/dragLogic';

@@ -53,6 +53,47 @@ pub fn resolve_dest_path_string(src_path: &str, dest_path: Option<&str>) -> Stri
         .to_string()
 }
 
+pub fn resolve_outline_text_path(src_path: &Path, dest_path: Option<&Path>) -> PathBuf {
+    if let Some(path) = dest_path
+        && !path.as_os_str().is_empty()
+    {
+        return path.to_path_buf();
+    }
+
+    let parent = src_path.parent().unwrap_or_else(|| Path::new(""));
+    let file_stem = src_path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or("outline");
+
+    let mut candidate_name = format!("{}_outline.txt", file_stem);
+    let mut candidate_path = parent.join(&candidate_name);
+
+    if !candidate_path.exists() {
+        return candidate_path;
+    }
+
+    let mut counter = 1;
+    while candidate_path.exists() {
+        candidate_name = format!("{}_outline_{}.txt", file_stem, counter);
+        candidate_path = parent.join(&candidate_name);
+        counter += 1;
+    }
+
+    candidate_path
+}
+
+pub fn resolve_outline_text_path_string(src_path: &str, dest_path: Option<&str>) -> String {
+    let dest = dest_path
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(Path::new);
+
+    resolve_outline_text_path(Path::new(src_path), dest)
+        .to_string_lossy()
+        .to_string()
+}
+
 pub fn get_outline_from_path(src_path: &Path, offset: i32) -> Result<Bookmark> {
     let mut doc = Document::load(src_path)
         .map_err(|err| anyhow!("Failed to load PDF {}: {err}", src_path.display()))?;

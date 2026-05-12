@@ -1,5 +1,5 @@
-import {FOUR_NORM_SPACE, INDENT_UNIT} from "@/lib/outlineParser/constants.ts";
-import type {BookmarkData} from "@/lib/types/bookmark.ts";
+import { FOUR_NORM_SPACE, INDENT_UNIT } from './constants';
+import type { BookmarkData } from './bookmark';
 
 export function serializeBookmarkTree(root: BookmarkData): string {
     let result = "";
@@ -24,3 +24,4 @@ function buildLine(level: number, title: string, pageNum: string): string {
     const indent = INDENT_UNIT.repeat(level - 1);
     return `${indent}${title}${FOUR_NORM_SPACE}${pageNum}\n`;
 }
+

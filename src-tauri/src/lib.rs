@@ -5,6 +5,7 @@
 
 mod external_editor;
 mod java_sidecar;
+mod outline_cli;
 pub mod pdf;
 mod pdf_analysis;
 pub mod pdf_outline;
@@ -127,13 +128,8 @@ async fn save_outline(
                 .map_err(|e| e.to_string())?;
             let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
 
-            crate::pdf_outline::io::set_outline_on_document(
-                doc,
-                bookmark_root,
-                offset,
-                scale,
-            )
-            .map_err(|e| format!("Failed to set outline: {}", e))?;
+            crate::pdf_outline::io::set_outline_on_document(doc, bookmark_root, offset, scale)
+                .map_err(|e| format!("Failed to set outline: {}", e))?;
 
             doc.save(&dest_path_clone)
                 .map(|_| ())
@@ -358,6 +354,17 @@ pub fn run() {
             error_response(StatusCode::BAD_REQUEST, vec![])
         })
         .setup(move |app| {
+            match outline_cli::run_if_needed(app) {
+                Ok(true) => return Ok(()),
+                Ok(false) => {}
+                Err(err) => {
+                    error!("QuickOutline CLI failed: {}", err);
+                    eprintln!("QuickOutline CLI failed: {err}");
+                    app.handle().exit(1);
+                    return Ok(());
+                }
+            }
+
             // Setup print workspace on app startup
             let workspace_path = setup_print_workspace(app.handle())?;
 

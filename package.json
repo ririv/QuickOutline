@@ -3,12 +3,13 @@
   "version": "3.0.0-pre",
   "type": "module",
   "workspaces": [
+    "packages/document/*",
     "packages/shared-kit"
   ],
   "scripts": {
     "dev": "vite dev",
     "dev:allnet": "vite dev --host",
-    "build": "npm run copy:assets && vite build",
+    "build": "npm run copy:assets && npm run build:outline-parser-cli && vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -18,6 +19,7 @@
     "copy:pagedjs": "node scripts/copy-pagedjs.mjs",
     "copy:pdfjs": "node scripts/copy-pdfjs.mjs",
     "copy:assets": "npm run copy:katex && npm run copy:pagedjs && npm run copy:pdfjs",
+    "build:outline-parser-cli": "node scripts/build-outline-parser-cli.mjs",
     "build:unocss": "node scripts/build-unocss-runtime.mjs"
   },
   "dependencies": {
@@ -66,6 +68,7 @@
     "markdown-it-texmath": "^1.0.0",
     "pagedjs": "^0.4.3",
     "pdf-lib": "^1.17.1",
+    "outline-parser": "file:packages/document/outline-parser",
     "pdfjs-dist": "^5.4.449",
     "shared-kit": "file:packages/shared-kit",
     "tailwindcss": "^4.1.17"

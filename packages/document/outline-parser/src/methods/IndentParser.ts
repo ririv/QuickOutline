@@ -1,4 +1,4 @@
-import type { BookmarkUI } from "../../types/bookmark.ts";
+import type { BookmarkUI } from "../bookmark";
 import { BaseParser } from "../Parser";
 import { createBookmark } from "../bookmarkUtils";
 

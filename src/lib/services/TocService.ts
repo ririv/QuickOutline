@@ -1,5 +1,5 @@
-import type { BookmarkUI } from "@/lib/types/bookmark";
-import { INDENT_UNIT } from "@/lib/outlineParser/constants";
+import type { BookmarkUI } from "outline-parser/bookmark";
+import { INDENT_UNIT } from "outline-parser/constants";
 
 export class TocService {
     /**

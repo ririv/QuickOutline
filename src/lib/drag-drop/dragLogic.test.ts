@@ -1,5 +1,5 @@
 import { calculateDragState } from './dragLogic';
-import type { BookmarkUI } from '../types/bookmark';
+import type { BookmarkUI } from 'outline-parser/bookmark';
 
 function assertEquals(actual: any, expected: any, message: string) {
     if (JSON.stringify(actual) !== JSON.stringify(expected)) {
