@@ -1,213 +1,214 @@
 # QuickOutline
 
-> [!note] 
-> QuickOutline 3.0.0-pre（预览版）已发布，支持制作TOC、Markdown插入PDF页面等新功能
-> 
-> 想提前体验的小伙伴们可以下载预发布版本！
+QuickOutline 是一个专注于 **PDF 目录 / 书签（Outline / Bookmark）编辑** 的桌面工具。它可以把文本目录写入 PDF，也可以从已有 PDF 书签中导出目录文本，适合整理电子书、教材、论文和长文档。
 
-
-## 使用方式 Usage
-
+当前版本：`3.0.0-pre`
 
 ![interface](image/screenshot.png)
 
+---
+
+## 主要功能
+
+- 给 PDF 添加、编辑和导出目录书签
+- 支持按序号或按缩进解析目录文本
+- 支持页码偏移，适配 PDF 页码与书籍页码不一致的情况
+- 支持设置目录跳转缩放模式
+- 文本视图与树视图双向编辑
+- 支持从已有 PDF 书签载入目录
+- 支持从文字类 PDF 中提取 TOC 作为目录参考
+- 支持页面标签（Page Label）
+- 支持命令行导入 / 导出目录
+- 支持 Windows、macOS、Linux
+- 支持中文和英文界面，会根据系统语言自动切换
+
+> QuickOutline 不支持 OCR。扫描版 / 图片版 PDF 需要先使用系统 OCR、PowerToys、专业 OCR 软件或其他工具提取文本目录。
 
 ---
 
-1. 选择/拖动PDF文件到窗口
-2. 写入目录文本，格式如下
-3. 设定 页面偏移量=PDF中的页码–原书的页码
-4. 添加目录，完成！
----
-1. Select / drag the PDF file to the window
-2. Write the table of contents text in the following format
-3. Set page offset = (page number in PDF) - (page number in original book)
-4. Add the bookmarks, done!
+## 桌面端使用
 
-### 命令行 CLI
+1. 选择或拖入 PDF 文件。
+2. 在目录文本区域输入或粘贴目录。
+3. 设置页码偏移量：`PDF 中的页码 - 原书中的页码`。
+4. 选择解析方式和缩放模式。
+5. 点击添加目录并保存 PDF。
 
-```bash
-quickoutline outline import --pdf input.pdf --outline toc.txt
-quickoutline outline export --pdf input.pdf
-```
-
-`outline import` 未指定 `--output` 时会生成 `*_new.pdf`，`outline export`
-未指定 `--output` 时会生成 `*_outline.txt`。
-
----
-
-### 添加目录
+### 目录文本格式
 
 #### 按序号
-```
+
+```text
 1  我是标题  1
 1.1  我是子标题  2
-1.1.1  我是子子标题 3
+1.1.1  我是子子标题  3
 ```
-此方式如有缩进将会自动去除，最终生成的PDF中标题中也会带序号
 
-#### 按缩进（推荐使用制表符Tab键）
-```
+这种方式会根据标题序号解析层级。写入 PDF 后，标题中的序号会保留。
+
+#### 按缩进
+
+```text
 我是标题  1
     我是子标题  2
         我是子子标题  3
 ```
-此方式如有序号将会视作标题
 
-> **正则表达式**可以使用软件内置的VSCode同步功能：文本视图下使用 VSCode 功能进行编辑，内容会自动同步，期间可以使用”自动缩进"功能
+这种方式会根据缩进解析层级。推荐使用 Tab 或统一宽度的空格。
 
+### 页码偏移
 
+添加目录时，QuickOutline 会给目录文本中的页码加上页码偏移量。
 
-#### Tips
-1. 页码偏移量
-   添加目录时，会自动加上页码偏移量，支持负数，但相加后的结果不要超出实际页码范围
+例如：原书目录写的是第 1 页，但 PDF 阅读器里实际对应第 12 页，则偏移量为：
 
-2. 自动缩进
-
-自动缩进是按序号进行的
-
-不仅仅是会自动缩进， 同时也会自动格式化：
-
-- 自动切分，如
+```text
+12 - 1 = 11
 ```
+
+页码偏移支持负数，但相加后的结果不能超出 PDF 实际页码范围。
+
+### 自动缩进
+
+自动缩进会根据序号整理目录层级，并尽量格式化标题和页码，例如：
+
+```text
 第一章我是标题21
-->
+```
+
+会被整理为：
+
+```text
 第一章 我是标题 21
 ```
 
-使用自动缩进得到的文本层次结构，与直接使用按序号的方式添加的目录层次结构是一样的
+> 中文序号识别只覆盖常见形式，例如“篇、章、节、部分”等。
 
-> 请注意自动缩进识别**中文序号**，仅支持部分可识别的序号，如 篇、章、节、部分
+---
 
+## 命令行 CLI
 
+安装桌面应用后，可以使用 `quickoutline` 命令进行目录导入和导出。
 
+### 导入目录到 PDF
 
-### 获取目录
+```bash
+quickoutline outline import --pdf input.pdf --outline toc.txt
+```
 
-- 本身自带书签，需要微调，打开文件后直接载入
+常用参数：
 
-- 文字类 PDF，如带有TOC，选中获取目录弹出框的的 **提取 TOC** 功能
+```bash
+quickoutline outline import \
+  --pdf input.pdf \
+  --outline toc.txt \
+  --output output.pdf \
+  --offset 0 \
+  --method seq \
+  --view-mode none
+```
 
-- 将PDF上传到 AI（如DeepSeek，注意容量限制），让它识别
+参数说明：
 
-- 各大书评、卖书等网站，均能找到相应书的目录，这里推荐，京东、豆瓣、淘宝
+| 参数 | 说明 |
+| --- | --- |
+| `--pdf` | 输入 PDF 路径，必填 |
+| `--outline` | 目录文本路径，必填 |
+| `--output` | 输出 PDF 路径，不填时生成 `*_new.pdf` |
+| `--offset` | 页码偏移，默认 `0` |
+| `--method` | 解析方式：`seq` 或 `indent`，默认 `seq` |
+| `--view-mode` | 跳转缩放模式，默认 `none` |
 
+`--view-mode` 可选值：
 
-> **Note**: 本软件不支持 OCR，因此也不支持图片类PDF（如扫描件）的 TOC 提取，图片 PDF 可以先使用外部 OCR 提取
->
-> 目前最新的 Mac 与 Windows 系统均自带 OCR 功能，Windows 也可使用微软官方出品的 PowerToys 里的文本提取器功能。
+```text
+none
+fit-to-page
+fit-to-width
+fit-to-height
+fit-to-box
+actual-size
+```
 
+### 从 PDF 导出目录
 
+```bash
+quickoutline outline export --pdf input.pdf
+```
 
+常用参数：
+
+```bash
+quickoutline outline export \
+  --pdf input.pdf \
+  --output outline.txt \
+  --offset 0
+```
+
+参数说明：
+
+| 参数 | 说明 |
+| --- | --- |
+| `--pdf` | 输入 PDF 路径，必填 |
+| `--output` | 输出目录文本路径，不填时生成 `*_outline.txt` |
+| `--offset` | 导出时应用的页码偏移，默认 `0` |
+
+---
+
+## 获取目录文本的方式
+
+- 如果 PDF 本身已经有书签，打开后可以直接载入并微调。
+- 如果是文字类 PDF，可以尝试使用内置的 TOC 提取功能。
+- 可以从出版社、书评网站、电商页面等来源复制目录。
+- 可以借助 AI 或 OCR 工具识别目录文本，再粘贴到 QuickOutline 中整理。
+
+---
 
 ## 下载与安装
 
-请到 [GitHub Releases](https://github.com/ririv/QuickOutline/releases) 下载
+请到 [GitHub Releases](https://github.com/ririv/QuickOutline/releases) 下载对应平台的安装包。
 
-### Windows:
-- msi 安装包
-- zip 压缩包（解压后直接运行 exe 文件）
+### Windows
 
-### Mac
-- dmg 安装包
+- 推荐下载安装包。
+- 如果使用压缩包版本，解压后直接运行程序。
 
-**如果打开应用时提示‘文件已损坏’，请打开终端（Terminal），复制并执行以下命令：**
+### macOS
+
+- 推荐下载 `dmg` 安装包。
+
+如果打开应用时提示“文件已损坏”，请打开终端执行：
 
 ```bash
 xattr -cr /Applications/QuickOutline.app
 ```
 
-*(前提：已经把 App 拖到了“应用程序”文件夹。如果App在下载文件夹里，路径就是 `~/Downloads/QuickOutline.app`，其他路径同理)*
+如果 App 不在“应用程序”文件夹，请把路径替换为实际路径，例如：
 
-
-### Linux
-- deb 安装包
-- tar.gz
-
-测试环境为 Ubuntu 22
-
-
-Q：缺少对应的依赖 liboss4-salsa-asound2 或 libasound2t64
-
-A：安装对应的依赖即可
-
-Q: 安装出现 `xdg-desktop-menu: No writable system menu directory found.`
-
-该问题常见于 WSL2，没有真正的 Ubuntu 图形界面引起的
-
-A：运行如下命令
-
-```shell
-sudo mkdir /usr/share/desktop-directories/
+```bash
+xattr -cr ~/Downloads/QuickOutline.app
 ```
 
+### Linux
+
+- 支持 `deb`、`rpm` 和 `AppImage` 等包格式。
+- 当前主要测试环境为 Ubuntu 22.04。
+
+如果安装时缺少系统依赖，请按发行版提示安装对应包。
+
+如果在 WSL2 中安装桌面包时遇到：
+
+```text
+xdg-desktop-menu: No writable system menu directory found.
+```
+
+通常是因为 WSL2 没有完整图形桌面环境。可以尝试：
+
+```bash
+sudo mkdir -p /usr/share/desktop-directories/
+```
 
 ---
-
-## 功能特性
-
-- 添加目录
-  - 按缩进添加目录
-  - 按序号添加目录
-  - 页码偏移（支持负数）
-  - 设置缩放模式
-  - 文本 / 树 双视图操作
-- 文本编辑模式下
-  - 自动缩进
-  - Tab | Shift+Tab 快速缩进
-  - VSCode编辑器同步（可使用正则表达式替换）
-- TOC提取
-- 添加页面标签（PageLabel）
-- 多平台 Windows，Mac，Linux(Ubuntu)
-- 语言 / Language: 中文，English
-
-> Tip: This software has added English support and will automatically switch the software language according to the system language and region.
-
----
-
-
-## 使用 VSCode 编辑以使用正则表达式等功能
-<details>
-<summary>展开/收起</summary>
-
-本软件不提供高级编辑功能（如正则表达式，VSCode 自带此功能）
-
-如想使用，请使用软件中提供的 VSCode 按钮以启动
-
-VSCode 中的内容会自动同步至软件窗口中（需在 VSCode 中保存文件，可以打开自动保存功能）
-
-注意此同步是单项同步，即 VSCode → 本软件
-
-但在此期间，你可以使用软件中的自动缩进功能，此时软件中文本也会立即至 VSCode 中
-
-### 配置
-
-请先下载 [VSCode](https://code.visualstudio.com/)
-
-需要添加至环境变量，方法也很简单
-
-### Windows
-
-参考 [Visual Studio Code on Windows](https://code.visualstudio.com/docs/setup/windows)
-
-安装时勾选"添加到 Path"（默认已勾选，用户无需进行任何操作），安装后需重启
-
-> **Tip:** 若在下载时将其不慎取消勾选，可在找到安装目录下的 bin 文件夹，将其添加到系统环境变量中的 Path
-
-### MacOS
-
-> **Note:** 由于该功能需要签名，目前 v2.0+ 的 Mac 版本已停用该功能
-
-参考 [Visual Studio Code on macOS](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)
-
-1. 启动 VSCode.
-
-2. 按下组合键 (Cmd+Shift+P)，输入 'shell command' 找到命令行: Install 'code' command in PATH command.
-
-</details>
-
----
-
 
 ## ☕ 感谢支持！
 
