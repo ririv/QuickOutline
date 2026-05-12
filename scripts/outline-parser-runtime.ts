@@ -1,5 +1,5 @@
 import { Method, processText, serializeBookmarkTree } from 'outline-parser';
-import { toBookmarkData } from 'outline-parser/bookmarkUtils';
+import { toBookmarkData, withBookmarkIdGenerator } from 'outline-parser/bookmarkUtils';
 import type { BookmarkData } from 'outline-parser/bookmark';
 
 type RustBookmark = Omit<BookmarkData, 'pageNum' | 'children'> & {
@@ -47,7 +47,11 @@ function toBookmarkDataForSerialize(bookmark: RustBookmark): BookmarkData {
 }
 
 export function parseOutline(text: string, method?: string): string {
-  const tree = processText(text, parseMethod(method));
+  let id = 0;
+  const tree = withBookmarkIdGenerator(() => {
+    id += 1;
+    return `bookmark-${id.toString(36)}`;
+  }, () => processText(text, parseMethod(method)));
   return JSON.stringify(toRustBookmark(toBookmarkData(tree)));
 }
 

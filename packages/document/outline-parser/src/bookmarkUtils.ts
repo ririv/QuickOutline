@@ -4,16 +4,24 @@ type LinkedBookmark = BookmarkUI & {
     parent?: LinkedBookmark;
 };
 
-let fallbackId = 0;
+type BookmarkIdGenerator = () => string;
 
-function createBookmarkId(): string {
-    const randomUUID = globalThis.crypto?.randomUUID;
-    if (randomUUID) {
-        return randomUUID.call(globalThis.crypto);
+let bookmarkIdGenerator: BookmarkIdGenerator = () => {
+    if (!globalThis.crypto?.randomUUID) {
+        throw new Error("Bookmark id generator is unavailable.");
     }
 
-    fallbackId += 1;
-    return `bookmark-${Date.now().toString(36)}-${fallbackId.toString(36)}`;
+    return globalThis.crypto.randomUUID();
+};
+
+export function withBookmarkIdGenerator<T>(generator: BookmarkIdGenerator, callback: () => T): T {
+    const previous = bookmarkIdGenerator;
+    bookmarkIdGenerator = generator;
+    try {
+        return callback();
+    } finally {
+        bookmarkIdGenerator = previous;
+    }
 }
 
 export function toBookmarkData(bookmark: BookmarkUI): BookmarkData {
@@ -28,7 +36,7 @@ export function toBookmarkData(bookmark: BookmarkUI): BookmarkData {
 
 export function createBookmark(title: string, page: string | null, level: number): LinkedBookmark {
     return {
-        id: createBookmarkId(),
+        id: bookmarkIdGenerator(),
         title,
         pageNum: page,
         level,
