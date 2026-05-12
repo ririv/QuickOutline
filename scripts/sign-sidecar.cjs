@@ -1,7 +1,7 @@
 /**
  * macOS 独立签名脚本
  * 作用：对 src-tauri/resources/java-runtime 下的二进制文件进行 Ad-hoc 签名
- * 用法：node scripts/sign-sidecar.cjs
+ * 用法：bun scripts/sign-sidecar.cjs
  */
 
 const { execSync } = require('child_process');
@@ -36,7 +36,7 @@ function run(command) {
     // 2. 目录检测
     if (!fs.existsSync(TAURI_RESOURCES_DIR)) {
         console.error(`\x1b[31m[Error]\x1b[0m 找不到资源目录: ${TAURI_RESOURCES_DIR}`);
-        console.error('请先执行 npm run update:sidecar 生成资源文件。');
+        console.error('请先执行 bun run update:sidecar 生成资源文件。');
         process.exit(1);
     }
 

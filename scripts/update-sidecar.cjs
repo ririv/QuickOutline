@@ -76,7 +76,7 @@ try {
 
     // 5. 调用独立签名脚本 (使用统一配置中的路径)
     console.log('\n✍️ Step 4: 调用签名脚本...');
-    run(`node "${SIGN_SCRIPT}"`);
+    run(`bun "${SIGN_SCRIPT}"`);
 
     console.log('\n✅✅✅ Sidecar 更新全部完成！\n');
 

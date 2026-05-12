@@ -7,6 +7,7 @@ declare module 'markdown-it-sup';
 declare module 'markdown-it-abbr';
 declare module 'markdown-it-attrs';
 declare module 'markdown-it-bracketed-spans';
+declare module 'markdown-it-container';
 
 declare module '*?worker' {
     const workerConstructor: {
@@ -14,4 +15,3 @@ declare module '*?worker' {
     };
     export default workerConstructor;
 }
-// markdown-it-container has @types package installed

@@ -184,6 +184,6 @@ fn parser_bundle_path(app: &App) -> Result<PathBuf> {
     }
 
     Err(anyhow!(
-        "Outline parser bundle not found. Run `npm run build:outline-parser-cli` first."
+        "Outline parser bundle not found. Run `bun run build:outline-parser-cli` first."
     ))
 }
