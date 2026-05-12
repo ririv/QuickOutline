@@ -1,8 +1,7 @@
-use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 
 use anyhow::{Result, anyhow};
+use rquickjs::{Context, Function, Object, Runtime};
 use tauri::{App, Manager};
 use tauri_plugin_cli::{CliExt, Matches};
 
@@ -117,55 +116,53 @@ fn parse_view_mode(value: Option<&str>) -> Result<ViewScaleType> {
 }
 
 fn parse_outline_text(app: &App, text: &str, method: &str) -> Result<Bookmark> {
-    let output = run_parser_bundle(app, "parse", &[("--method", method)], text)?;
+    let output = run_parser_bundle(app, "parseOutline", text, Some(method))?;
     serde_json::from_str(&output).map_err(|err| anyhow!("Failed to parse outline JSON: {err}"))
 }
 
 fn serialize_outline(app: &App, root: &Bookmark) -> Result<String> {
     let input = serde_json::to_string(root)
         .map_err(|err| anyhow!("Failed to serialize outline JSON: {err}"))?;
-    run_parser_bundle(app, "serialize", &[], &input)
+    run_parser_bundle(app, "serializeOutline", &input, None)
 }
 
-fn run_parser_bundle(app: &App, mode: &str, args: &[(&str, &str)], input: &str) -> Result<String> {
+fn run_parser_bundle(
+    app: &App,
+    function_name: &str,
+    input: &str,
+    method: Option<&str>,
+) -> Result<String> {
     let bundle_path = parser_bundle_path(app)?;
-    let mut command = Command::new("node");
-    command.arg(&bundle_path).arg(mode);
-    for (name, value) in args {
-        command.arg(name).arg(value);
-    }
+    let bundle = std::fs::read_to_string(&bundle_path).map_err(|err| {
+        anyhow!(
+            "Failed to read outline parser bundle {}: {err}",
+            bundle_path.display()
+        )
+    })?;
+    let runtime =
+        Runtime::new().map_err(|err| anyhow!("Failed to create QuickJS runtime: {err}"))?;
+    let context = Context::full(&runtime)
+        .map_err(|err| anyhow!("Failed to create QuickJS context: {err}"))?;
 
-    let mut child = command
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|err| {
-            anyhow!(
-                "Failed to start system node for outline parser. Make sure node is available in PATH: {err}"
-            )
+    context.with(|ctx| -> Result<String> {
+        ctx.eval::<(), _>(bundle.as_str())
+            .map_err(|err| anyhow!("Failed to evaluate outline parser bundle: {err}"))?;
+
+        let globals = ctx.globals();
+        let parser: Object = globals
+            .get("quickOutlineParser")
+            .map_err(|err| anyhow!("Outline parser global was not initialized: {err}"))?;
+        let function: Function = parser.get(function_name).map_err(|err| {
+            anyhow!("Outline parser function {function_name} was not found: {err}")
         })?;
 
-    let mut stdin = child
-        .stdin
-        .take()
-        .ok_or_else(|| anyhow!("Failed to open outline parser stdin."))?;
-    stdin
-        .write_all(input.as_bytes())
-        .map_err(|err| anyhow!("Failed to write outline parser input: {err}"))?;
-    drop(stdin);
-
-    let output = child
-        .wait_with_output()
-        .map_err(|err| anyhow!("Failed to read outline parser output: {err}"))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(anyhow!("Outline parser failed: {}", stderr.trim()));
-    }
-
-    String::from_utf8(output.stdout)
-        .map_err(|err| anyhow!("Outline parser returned invalid UTF-8: {err}"))
+        let output = match method {
+            Some(method) => function.call((input, method)),
+            None => function.call((input,)),
+        }
+        .map_err(|err| anyhow!("Outline parser function {function_name} failed: {err}"))?;
+        Ok(output)
+    })
 }
 
 fn parser_bundle_path(app: &App) -> Result<PathBuf> {
@@ -174,14 +171,14 @@ fn parser_bundle_path(app: &App) -> Result<PathBuf> {
         .resource_dir()
         .map_err(|err| anyhow!("Failed to locate app resource directory: {err}"))?
         .join("resources")
-        .join("outline-parser-cli.mjs");
+        .join("outline-parser-runtime.js");
     if resource_path.exists() {
         return Ok(resource_path);
     }
 
     let dev_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("resources")
-        .join("outline-parser-cli.mjs");
+        .join("outline-parser-runtime.js");
     if dev_path.exists() {
         return Ok(dev_path);
     }

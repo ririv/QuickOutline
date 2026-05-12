@@ -51,6 +51,7 @@ once_cell = "1.19"
 rayon = "1.10"
 url = "2.5.7"
 lru = "0.16.2"
+rquickjs = "0.11.0"
 
 
 [target.'cfg(windows)'.dependencies]

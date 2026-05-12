@@ -1,5 +1,3 @@
-/// <reference types="node" />
-
 import { Method, processText, serializeBookmarkTree } from 'outline-parser';
 import { toBookmarkData } from 'outline-parser/bookmarkUtils';
 import type { BookmarkData } from 'outline-parser/bookmark';
@@ -18,11 +16,6 @@ function parseMethod(value: string | undefined) {
     default:
       throw new Error(`Invalid method: ${value}`);
   }
-}
-
-function getArgValue(args: string[], name: string) {
-  const index = args.indexOf(name);
-  return index >= 0 ? args[index + 1] : undefined;
 }
 
 function toRustBookmark(bookmark: BookmarkData): RustBookmark {
@@ -53,36 +46,12 @@ function toBookmarkDataForSerialize(bookmark: RustBookmark): BookmarkData {
   };
 }
 
-async function readStdin() {
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks).toString('utf8');
+export function parseOutline(text: string, method?: string): string {
+  const tree = processText(text, parseMethod(method));
+  return JSON.stringify(toRustBookmark(toBookmarkData(tree)));
 }
 
-async function main() {
-  const [mode, ...args] = process.argv.slice(2);
-  const input = await readStdin();
-
-  switch (mode) {
-    case 'parse': {
-      const tree = processText(input, parseMethod(getArgValue(args, '--method')));
-      process.stdout.write(JSON.stringify(toRustBookmark(toBookmarkData(tree))));
-      return;
-    }
-    case 'serialize': {
-      const tree = JSON.parse(input) as RustBookmark;
-      process.stdout.write(serializeBookmarkTree(toBookmarkDataForSerialize(tree)));
-      return;
-    }
-    default:
-      throw new Error(`Unsupported mode: ${mode || '<empty>'}`);
-  }
+export function serializeOutline(input: string): string {
+  const tree = JSON.parse(input) as RustBookmark;
+  return serializeBookmarkTree(toBookmarkDataForSerialize(tree));
 }
-
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-});
-

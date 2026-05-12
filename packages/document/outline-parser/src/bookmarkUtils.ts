@@ -4,6 +4,18 @@ type LinkedBookmark = BookmarkUI & {
     parent?: LinkedBookmark;
 };
 
+let fallbackId = 0;
+
+function createBookmarkId(): string {
+    const randomUUID = globalThis.crypto?.randomUUID;
+    if (randomUUID) {
+        return randomUUID.call(globalThis.crypto);
+    }
+
+    fallbackId += 1;
+    return `bookmark-${Date.now().toString(36)}-${fallbackId.toString(36)}`;
+}
+
 export function toBookmarkData(bookmark: BookmarkUI): BookmarkData {
     return {
         id: bookmark.id,
@@ -16,7 +28,7 @@ export function toBookmarkData(bookmark: BookmarkUI): BookmarkData {
 
 export function createBookmark(title: string, page: string | null, level: number): LinkedBookmark {
     return {
-        id: crypto.randomUUID(),
+        id: createBookmarkId(),
         title,
         pageNum: page,
         level,
