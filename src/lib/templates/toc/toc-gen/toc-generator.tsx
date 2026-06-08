@@ -5,6 +5,7 @@ import { createElement, Fragment } from '@/lib/utils/jsx';
 import { parseTocLine, scanMathInString } from './parser';
 import katex from 'katex';
 import { generateColumnCss } from '@/lib/templates/utils/column-layout';
+import { createTocIndentLevelResolver } from './indent-level';
 
 interface DotConfig {
     width?: number;
@@ -87,6 +88,7 @@ export function generateTocHtml(
 ): { html: string, styles: string } {
 
     const lines = content.split('\n');
+    const resolveIndentLevel = createTocIndentLevelResolver(lines);
 
     const dotDiameter = DOT_DIAMETER;
     const dotGap = DOT_GAP;
@@ -135,9 +137,7 @@ export function generateTocHtml(
                     const indentMatch = line.match(/^(\s*)/);
                     const whitespace = indentMatch ? indentMatch[1] : '';
 
-                    const tabCount = (whitespace.match(/\t/g) || []).length;
-                    const spaceCount = (whitespace.match(/ /g) || []).length;
-                    const level = tabCount + Math.floor(spaceCount / 2);
+                    const level = resolveIndentLevel(whitespace);
 
                     const trimmed = line.trim();
                     const parsed = parseTocLine(trimmed);
@@ -247,6 +247,7 @@ export function _generateTocHtmlCanvas(
     indentStep: number = 20
 ): { html: string, styles: string } {
     const lines = content.split('\n');
+    const resolveIndentLevel = createTocIndentLevelResolver(lines);
     let html = `<h1 class="toc-title">${escapeHtml(title)}</h1>`;
     html += `<ul class="toc-list" style="--toc-indent-step: ${indentStep}pt;">`;
 
@@ -302,9 +303,7 @@ export function _generateTocHtmlCanvas(
         if (!line.trim()) continue;
         const indentMatch = line.match(/^(\s*)/);
         const whitespace = indentMatch ? indentMatch[1] : '';
-        const tabCount = (whitespace.match(/\t/g) || []).length;
-        const spaceCount = (whitespace.match(/ /g) || []).length;
-        const level = tabCount + Math.floor(spaceCount / 2);
+        const level = resolveIndentLevel(whitespace);
         const trimmed = line.trim();
         const pageMatch = trimmed.match(/^(.*?)\s+(\d+|[ivxIVX]+)$/);
         let label = trimmed;
