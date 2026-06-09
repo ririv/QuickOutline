@@ -63,6 +63,7 @@ jobs:
         if: steps.release.outputs.prerelease == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release delete "${{ steps.release.outputs.tag_name }}" --cleanup-tag --yes || true
           gh release create "${{ steps.release.outputs.tag_name }}" \
