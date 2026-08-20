@@ -1087,7 +1087,6 @@ dependencies = [
  "anyhow",
  "lopdf",
  "serde",
- "uuid",
 ]
 
 [[package]]

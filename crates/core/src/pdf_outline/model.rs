@@ -10,6 +10,13 @@ pub struct Bookmark {
     pub children: Vec<Bookmark>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct OutlineDocument {
+    pub page_count: u32,
+    pub outline: Bookmark,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ViewScaleType {
@@ -34,9 +41,9 @@ pub enum ViewScaleType {
 }
 
 impl Bookmark {
-    pub fn new(title: String, page_num: Option<i32>, level: i32) -> Self {
+    pub fn new(id: String, title: String, page_num: Option<i32>, level: i32) -> Self {
         Self {
-            id: uuid::Uuid::new_v4().to_string(),
+            id,
             title,
             page_num,
             level,

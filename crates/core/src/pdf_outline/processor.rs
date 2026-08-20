@@ -6,12 +6,15 @@ pub struct PdfOutlineProcessor;
 
 impl PdfOutlineProcessor {
     pub fn get_outline<E: OutlineEngine>(engine: &E, offset: i32) -> Result<Bookmark> {
-        let mut root_bookmark = Bookmark::new("Outlines".to_string(), None, 0);
+        let mut root_bookmark =
+            Bookmark::new("outline-root".to_string(), "Outlines".to_string(), None, 0);
+        let mut next_id = 0_u64;
 
         if let Some(root_id) = engine.get_root_node_id()?
             && let Some(first_child_id) = engine.get_first_child_id(&root_id)?
         {
-            root_bookmark.children = Self::parse_chain(engine, &first_child_id, offset, 1)?;
+            root_bookmark.children =
+                Self::parse_chain(engine, &first_child_id, offset, 1, &mut next_id)?;
         }
 
         Ok(root_bookmark)
@@ -22,6 +25,7 @@ impl PdfOutlineProcessor {
         start_id: &str,
         offset: i32,
         level: i32,
+        next_id: &mut u64,
     ) -> Result<Vec<Bookmark>> {
         let mut bookmarks = Vec::new();
         let mut current_id = Some(start_id.to_string());
@@ -31,10 +35,13 @@ impl PdfOutlineProcessor {
             let page_num = engine.get_node_dest_page(&id)?;
 
             let final_page_num = page_num.map(|n| n + offset);
-            let mut bookmark = Bookmark::new(title, final_page_num, level);
+            let bookmark_id = format!("outline-{next_id}");
+            *next_id += 1;
+            let mut bookmark = Bookmark::new(bookmark_id, title, final_page_num, level);
 
             if let Some(child_id) = engine.get_first_child_id(&id)? {
-                bookmark.children = Self::parse_chain(engine, &child_id, offset, level + 1)?;
+                bookmark.children =
+                    Self::parse_chain(engine, &child_id, offset, level + 1, next_id)?;
             }
 
             bookmarks.push(bookmark);

@@ -7,8 +7,11 @@ publish = false
 [lib]
 name = "outline_core"
 
+[features]
+default = ["native"]
+native = ["lopdf/default"]
+
 [dependencies]
 anyhow = "1.0"
-lopdf = "0.38.0"
+lopdf = { version = "0.38.0", default-features = false }
 serde = { version = "1", features = ["derive"] }
-uuid = { version = "1.19", features = ["v4"] }
