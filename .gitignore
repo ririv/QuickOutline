@@ -37,6 +37,10 @@ nodejs/
 
 dist/
 
+# 小程序专属工程仅保留在本地，不进入当前仓库
+/apps/miniapp/
+/services/miniapp-api/
+
 TODO.md
 
 

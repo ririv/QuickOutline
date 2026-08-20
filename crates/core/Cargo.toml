@@ -1,0 +1,14 @@
+[package]
+name = "core"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "outline_core"
+
+[dependencies]
+anyhow = "1.0"
+lopdf = "0.38.0"
+serde = { version = "1", features = ["derive"] }
+uuid = { version = "1.19", features = ["v4"] }

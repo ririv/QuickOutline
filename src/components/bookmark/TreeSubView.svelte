@@ -6,7 +6,7 @@
     import { serializeBookmarkTree } from 'outline-parser';
     import { toBookmarkData } from 'outline-parser/bookmarkUtils';
     import { messageStore } from '@/stores/messageStore.svelte.ts';
-    import { getVisibleNodes } from '@/lib/utils/treeUtils';
+    import { getVisibleNodes } from 'outline-parser/treeUtils';
     import { calculateDragState, getDragTargetInfo } from '@/lib/drag-drop/dragLogic';
     import PreviewPopup from '../PreviewPopup.svelte';
     import offsetIconRaw from '@/assets/icons/offset.svg?raw';
@@ -14,7 +14,7 @@
     import { setupTauriDragDrop } from '@/lib/drag-drop/tauriDragDrop';
     import Icon from '../Icon.svelte';
     import ContextMenu from 'shared-kit/controls/ContextMenu.svelte';
-    import { removeNode, insertNode } from '@/lib/utils/treeUtils';
+    import { removeNode, insertNode } from 'outline-parser/treeUtils';
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
     

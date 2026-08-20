@@ -19,7 +19,10 @@
     "./constants": {
       "types": "./src/constants.ts",
       "default": "./src/constants.ts"
+    },
+    "./treeUtils": {
+      "types": "./src/treeUtils.ts",
+      "default": "./src/treeUtils.ts"
     }
   }
 }
-

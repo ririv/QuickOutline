@@ -1081,6 +1081,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lopdf",
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4651,6 +4661,7 @@ version = "3.0.0-pre"
 dependencies = [
  "anyhow",
  "block2",
+ "core",
  "flate2",
  "gtk",
  "headless_chrome",

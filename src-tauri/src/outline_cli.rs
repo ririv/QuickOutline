@@ -5,8 +5,8 @@ use rquickjs::{Context, Function, Object, Runtime};
 use tauri::{App, Manager};
 use tauri_plugin_cli::{CliExt, Matches};
 
-use crate::pdf_outline::io;
-use crate::pdf_outline::model::{Bookmark, ViewScaleType};
+use outline_core::pdf_outline::io;
+use outline_core::pdf_outline::model::{Bookmark, ViewScaleType};
 
 pub fn run_if_needed(app: &mut App) -> Result<bool> {
     let matches = app

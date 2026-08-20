@@ -1,4 +1,4 @@
-pub mod outline_adapter;
 pub mod page_label_adapter;
 pub mod toc_editor_adapter;
-pub mod utils;
+
+pub use outline_core::pdf::lopdf::{outline_adapter, utils};

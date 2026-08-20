@@ -1,4 +1,4 @@
-import { moveNode } from '../utils/treeUtils.ts';
+import { moveNode } from 'outline-parser/treeUtils';
 import type { BookmarkUI } from 'outline-parser/bookmark';
 
 export class DragController {

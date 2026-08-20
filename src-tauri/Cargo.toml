@@ -23,6 +23,7 @@ flate2 = "1.0"
 anyhow = "1.0"
 
 [dependencies]
+outline-core = { package = "core", path = "../crates/core" }
 tauri = { version = "2", features = ["macos-private-api", "config-json5"] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }

@@ -8,7 +8,6 @@ mod java_sidecar;
 mod outline_cli;
 pub mod pdf;
 mod pdf_analysis;
-pub mod pdf_outline;
 mod printer;
 mod static_server;
 
@@ -87,7 +86,7 @@ fn cleanup_pdf_workspace<R: Runtime>(app_handle: &AppHandle<R>) -> Result<(), St
 
 use crate::pdf::page_label::{PageLabel, PageLabelProcessor};
 use crate::pdf::page_label_traits::PageLabelEngine;
-use crate::pdf_outline::model::{Bookmark, ViewScaleType};
+use outline_core::pdf_outline::model::{Bookmark, ViewScaleType};
 
 #[tauri::command]
 async fn get_outline_as_bookmark(
@@ -99,7 +98,7 @@ async fn get_outline_as_bookmark(
         .call(move |worker| -> Result<Bookmark, String> {
             let session = worker.get_session_mut(&path).map_err(|e| e.to_string())?;
             let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
-            crate::pdf_outline::io::get_outline_from_document(doc, offset)
+            outline_core::pdf_outline::io::get_outline_from_document(doc, offset)
                 .map_err(|e| e.to_string())
         })
         .await
@@ -116,7 +115,7 @@ async fn save_outline(
     view_mode: Option<ViewScaleType>,
 ) -> Result<String, String> {
     let actual_dest =
-        crate::pdf_outline::io::resolve_dest_path_string(&src_path, dest_path.as_deref());
+        outline_core::pdf_outline::io::resolve_dest_path_string(&src_path, dest_path.as_deref());
     let scale = view_mode.unwrap_or(ViewScaleType::None);
 
     let dest_path_clone = actual_dest.clone();
@@ -128,8 +127,13 @@ async fn save_outline(
                 .map_err(|e| e.to_string())?;
             let doc = session.get_lopdf_doc_mut().map_err(|e| e.to_string())?;
 
-            crate::pdf_outline::io::set_outline_on_document(doc, bookmark_root, offset, scale)
-                .map_err(|e| format!("Failed to set outline: {}", e))?;
+            outline_core::pdf_outline::io::set_outline_on_document(
+                doc,
+                bookmark_root,
+                offset,
+                scale,
+            )
+            .map_err(|e| format!("Failed to set outline: {}", e))?;
 
             doc.save(&dest_path_clone)
                 .map(|_| ())
@@ -149,7 +153,7 @@ async fn set_page_labels(
     dest_path: Option<String>,
 ) -> Result<String, String> {
     let actual_dest =
-        crate::pdf_outline::io::resolve_dest_path_string(&src_path, dest_path.as_deref());
+        outline_core::pdf_outline::io::resolve_dest_path_string(&src_path, dest_path.as_deref());
     let dest_clone = actual_dest.clone();
 
     state
