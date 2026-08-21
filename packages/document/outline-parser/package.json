@@ -23,6 +23,14 @@
     "./treeUtils": {
       "types": "./src/treeUtils.ts",
       "default": "./src/treeUtils.ts"
+    },
+    "./pageOffset": {
+      "types": "./src/pageOffset.ts",
+      "default": "./src/pageOffset.ts"
+    },
+    "./rustBookmark": {
+      "types": "./src/rustBookmark.ts",
+      "default": "./src/rustBookmark.ts"
     }
   }
 }

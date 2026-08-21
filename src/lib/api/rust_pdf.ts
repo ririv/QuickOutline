@@ -3,35 +3,9 @@ import type { PageLabel } from '@/lib/types/page-label.ts';
 import type { ViewScaleType } from '@/lib/types/pdf';
 import type { BookmarkData } from 'outline-parser/bookmark';
 import type { HeaderFooterConfig } from '@/lib/types/header-footer';
+import { fromRustBookmark, toRustBookmark, type RustBookmark } from 'outline-parser/rustBookmark';
 
 export type LoadMode = 'DirectFile' | 'MemoryBuffer';
-
-function convertForRust(bookmark: any): any {
-    const copy = { ...bookmark };
-    if (copy.pageNum !== null && copy.pageNum !== undefined) {
-        const num = parseInt(String(copy.pageNum), 10);
-        copy.pageNum = isNaN(num) ? null : num;
-    } else {
-        copy.pageNum = null;
-    }
-    if (copy.children && Array.isArray(copy.children)) {
-        copy.children = copy.children.map((child: any) => convertForRust(child));
-    }
-    return copy;
-}
-
-function convertFromRust(bookmark: any): any {
-    const copy = { ...bookmark };
-    if (copy.pageNum !== null && copy.pageNum !== undefined) {
-        copy.pageNum = String(copy.pageNum);
-    } else {
-        copy.pageNum = null;
-    }
-    if (copy.children && Array.isArray(copy.children)) {
-        copy.children = copy.children.map((child: any) => convertFromRust(child));
-    }
-    return copy;
-}
 
 export interface TocLinkDto {
     tocPageIndex: number;
@@ -142,8 +116,8 @@ export async function simulatePageLabels(rules: PageLabel[], totalPages: number)
  * Fetches the outline as a hierarchical bookmark structure.
  */
 export async function getOutlineAsBookmark(srcFilePath: string, offset: number): Promise<BookmarkData> {
-    const result = await invoke<any>('get_outline_as_bookmark', { path: srcFilePath, offset });
-    return convertFromRust(result);
+    const result = await invoke<RustBookmark>('get_outline_as_bookmark', { path: srcFilePath, offset });
+    return fromRustBookmark(result);
 }
 
 /**
@@ -156,10 +130,10 @@ export async function saveOutline(
     offset: number, 
     viewMode: ViewScaleType = 'NONE'
 ): Promise<string> {
-    const rustRoot = convertForRust(bookmarkRoot);
+    const rustRoot = toRustBookmark(bookmarkRoot);
     return invoke<string>('save_outline', { 
         srcPath: srcFilePath, 
-        bookmarkRoot: rustRoot, 
+        bookmarkRoot: rustRoot,
         destPath: destFilePath, 
         offset, 
         viewMode 
