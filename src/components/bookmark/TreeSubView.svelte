@@ -15,6 +15,7 @@
     import Icon from '../Icon.svelte';
     import ContextMenu from 'shared-kit/controls/ContextMenu.svelte';
     import { removeNode, insertNode } from 'outline-parser/treeUtils';
+    import type { PageNumberDisplayMode } from 'outline-parser/pageOffset';
     let bookmarks = $state<BookmarkUI[]>([]);
     let debounceTimer: number | undefined;
     
@@ -182,7 +183,7 @@
     
     // Preview State
     let hoveredPage = $state<{src: string, y: number, x: number} | null>(null);
-    let showOffsetPage = $state(false);
+    let pageNumberDisplayMode = $state<PageNumberDisplayMode>('original');
 
     setContext('previewContext', {
         show: (src: string, y: number, x: number) => {
@@ -194,7 +195,7 @@
     });
 
     setContext('offsetContext', {
-        get show() { return showOffsetPage; }
+        get mode() { return pageNumberDisplayMode; }
     });
 
     let isAllExpanded = $state(true);
@@ -299,9 +300,9 @@
             <span>Page</span>
                 <button 
                     class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer border-none bg-transparent p-0 transition-colors group relative"
-                    class:!text-[#409eff]={showOffsetPage}
-                    onclick={() => showOffsetPage = !showOffsetPage}
-                    title={showOffsetPage ? "当前显示偏移后的页码" : "当前显示原始页码"}
+                    class:!text-[#409eff]={pageNumberDisplayMode === 'calculated'}
+                    onclick={() => pageNumberDisplayMode = pageNumberDisplayMode === 'original' ? 'calculated' : 'original'}
+                    title={pageNumberDisplayMode === 'calculated' ? "当前显示偏移后的页码" : "当前显示原始页码"}
                 >
                     <Icon data={offsetIconRaw} width={16} height={16} />
                 </button>

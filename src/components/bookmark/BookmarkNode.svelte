@@ -11,6 +11,7 @@
     import dragHandleIcon from '@/assets/icons/drag-handle.svg?raw';
     import { DragController } from "@/lib/drag-drop/DragController.svelte";
     import { getNodePadding, getGapIndent } from "@/lib/drag-drop/treeLayout";
+    import { resolveDisplayedPageNumber, type PageNumberDisplayMode } from 'outline-parser/pageOffset';
     
     interface Props {
         bookmark: BookmarkUI;
@@ -33,7 +34,7 @@
     }
 
     const previewContext = getContext<{ show: (src: string, y: number, x: number) => void, hide: () => void }>('previewContext');
-    const offsetContext = getContext<{ show: boolean }>('offsetContext');
+    const offsetContext = getContext<{ mode: PageNumberDisplayMode }>('offsetContext');
     const treeContext = getContext<{ 
         openContextMenu: (e: MouseEvent, nodeId: string) => void,
         pendingFocusId: string | null,
@@ -171,13 +172,11 @@
     }
 
     let displayedPage = $derived.by(() => {
-        if (!bookmark.pageNum) return '';
-        if (bookmark.pageNum.startsWith('#') || bookmark.pageNum.startsWith('@') || isNaN(parseInt(bookmark.pageNum, 10))) {
-            return bookmark.pageNum;
-        }
-        const pageNum = parseInt(bookmark.pageNum, 10);
-        const offset = bookmarkStore.offset || 0;
-        return offsetContext.show ? String(pageNum + offset) : bookmark.pageNum;
+        return resolveDisplayedPageNumber(
+            bookmark.pageNum,
+            bookmarkStore.offset || 0,
+            offsetContext.mode,
+        );
     });
 
     let isOutOfRange = $derived.by(() => {
@@ -282,7 +281,7 @@
                 </div>
             {:else}
                 <div 
-                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-center cursor-text w-full truncate hover:bg-gray-200 rounded-lg transition-colors font-sans whitespace-pre border border-transparent {isOutOfRange ? 'bg-[rgba(255,0,0,0.15)]' : ''} {offsetContext.show ? 'text-[#409eff] font-medium' : 'text-gray-500'}"
+                    class="px-1.5 py-0.5 m-0 text-sm leading-tight text-center cursor-text w-full truncate hover:bg-gray-200 rounded-lg transition-colors font-sans whitespace-pre border border-transparent {isOutOfRange ? 'bg-[rgba(255,0,0,0.15)]' : ''} {offsetContext.mode === 'calculated' ? 'text-[#409eff] font-medium' : 'text-gray-500'}"
                     onclick={editPage}
                     onmouseenter={handlePageMouseEnter}
                     onmouseleave={handlePageMouseLeave}
