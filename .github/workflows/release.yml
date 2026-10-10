@@ -121,3 +121,39 @@ jobs:
           releaseBody: ${{ needs.prepare.outputs.release_body }}
           releaseDraft: false
           prerelease: ${{ needs.prepare.outputs.prerelease }}
+
+      - name: Verify AppImage desktop metadata
+        if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          appimages=(src-tauri/target/release/bundle/appimage/*.AppImage)
+          if [ "${#appimages[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one AppImage, found ${#appimages[@]}"
+            exit 1
+          fi
+
+          appimage="$(realpath "${appimages[0]}")"
+          extract_dir="$(mktemp -d)"
+          cd "$extract_dir"
+          "$appimage" --appimage-extract > /dev/null
+
+          icon="squashfs-root/.DirIcon"
+          if [ ! -f "$icon" ] || [ "$(file -Lb --mime-type "$icon")" != "image/png" ]; then
+            echo "::error::.DirIcon must resolve to a PNG inside the AppImage"
+            exit 1
+          fi
+          if [ -L "$icon" ] && [[ "$(readlink "$icon")" = /* ]]; then
+            echo "::error::.DirIcon must not point to the build machine"
+            exit 1
+          fi
+
+          desktop_files=(squashfs-root/*.desktop)
+          if [ "${#desktop_files[@]}" -ne 1 ] || [ ! -f "${desktop_files[0]}" ]; then
+            echo "::error::Expected one working root desktop entry"
+            exit 1
+          fi
+          if [ -L "${desktop_files[0]}" ] && [[ "$(readlink "${desktop_files[0]}")" = /* ]]; then
+            echo "::error::Root desktop entry must not point to the build machine"
+            exit 1
+          fi
