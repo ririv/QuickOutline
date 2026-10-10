@@ -111,6 +111,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: build tauri
+        id: tauri-build
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -125,15 +126,12 @@ jobs:
       - name: Verify AppImage desktop metadata
         if: matrix.platform == 'ubuntu-22.04'
         shell: bash
+        env:
+          ARTIFACT_PATHS: ${{ steps.tauri-build.outputs.artifactPaths }}
         run: |
           shopt -s nullglob
-          appimages=(src-tauri/target/release/bundle/appimage/*.AppImage)
-          if [ "${#appimages[@]}" -ne 1 ]; then
-            echo "::error::Expected exactly one AppImage, found ${#appimages[@]}"
-            exit 1
-          fi
-
-          appimage="$(realpath "${appimages[0]}")"
+          appimage="$(jq -er 'map(select(endswith(".AppImage"))) | if length == 1 then .[0] else error("Expected exactly one AppImage") end' <<< "$ARTIFACT_PATHS")"
+          appimage="$(realpath "$appimage")"
           extract_dir="$(mktemp -d)"
           cd "$extract_dir"
           "$appimage" --appimage-extract > /dev/null
