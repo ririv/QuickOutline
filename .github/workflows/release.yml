@@ -110,6 +110,21 @@ jobs:
       - name: install frontend dependencies
         run: bun install --frozen-lockfile
 
+      - name: Verify system language selection
+        run: bun test tests/appLocale.test.ts
+
+      - name: Prepare AppImage launcher permissions
+        if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          # Tauri 2.11.4 下载启动器时使用 770；Firejail 挂载后普通用户无法执行。
+          launcher_dir="$HOME/.cache/tauri"
+          mkdir -p "$launcher_dir"
+          curl --fail --location \
+            https://github.com/tauri-apps/binary-releases/releases/download/apprun-old/AppRun-x86_64 \
+            --output "$launcher_dir/AppRun-x86_64"
+          chmod 755 "$launcher_dir/AppRun-x86_64"
+
       - name: build tauri
         id: tauri-build
         uses: tauri-apps/tauri-action@v0
@@ -135,6 +150,13 @@ jobs:
           extract_dir="$(mktemp -d)"
           cd "$extract_dir"
           "$appimage" --appimage-extract > /dev/null
+
+          for launcher in squashfs-root/AppRun squashfs-root/AppRun.wrapped squashfs-root/usr/bin/quickoutline; do
+            if [ ! -f "$launcher" ] || [ "$(stat -c '%a' "$launcher")" != "755" ]; then
+              echo "::error::$launcher must be executable by every user with mode 755"
+              exit 1
+            fi
+          done
 
           icon="squashfs-root/.DirIcon"
           if [ ! -f "$icon" ] || [ "$(file -Lb --mime-type "$icon")" != "image/png" ]; then

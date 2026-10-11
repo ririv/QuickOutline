@@ -20,7 +20,7 @@ QuickOutline 是一个专注于 **PDF 目录 / 书签（Outline / Bookmark）编
 - 支持页面标签（Page Label）
 - 支持命令行导入 / 导出目录
 - 支持 Windows、macOS、Linux
-- 支持中文和英文界面，会根据系统语言自动切换
+- 支持中文和英文界面：中文系统语言环境默认中文，其他语言环境默认英文
 
 > QuickOutline 不支持 OCR。扫描版 / 图片版 PDF 需要先使用系统 OCR、PowerToys、专业 OCR 软件或其他工具提取文本目录。
 
